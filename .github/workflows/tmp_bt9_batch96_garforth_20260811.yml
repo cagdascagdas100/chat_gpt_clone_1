@@ -1,0 +1,111 @@
+name: AAYS building_type_9 Garforth batch96
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - '.github/tmp_bt9_batch96_garforth_20260811.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-9-serial
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Restore and render fail-closed Garforth batch 96 locally
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 2dd1104bc682198b075fa9283d98f1c2e039102e:.github/tmp_bt9_batch46_ripon_v3.py > .github/tmp_bt9_batch96_garforth_20260811.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/tmp_bt9_batch96_garforth_20260811.py')
+          text = path.read_text(encoding='utf-8')
+          replacements = [
+              ('CITY = "Ripon"', 'CITY = "Garforth"'),
+              ('GRID = "RIPON_CENTRAL_02"', 'GRID = "GARFORTH_CENTRAL_01"'),
+              ('LOCAL_AUTHORITY = "North Yorkshire"', 'LOCAL_AUTHORITY = "West Yorkshire"'),
+              ('BATCH = 46', 'BATCH = 96'),
+              ('EXPECTED_BEFORE = 2250', 'EXPECTED_BEFORE = 4750'),
+              ('TARGET_AFTER = 2300', 'TARGET_AFTER = 4800'),
+              ('NEXT_TARGET = 2350', 'NEXT_TARGET = 4850'),
+              ('xs = [-1.5650, -1.5350, -1.5050, -1.4750]', 'xs = [-1.4300, -1.4000, -1.3700, -1.3400, -1.3100]'),
+              ('ys = [54.1100, 54.1320, 54.1540, 54.1760]', 'ys = [53.7700, 53.7900, 53.8100, 53.8300, 53.8500]'),
+              ('(+evidence batch 46)', '(+evidence batch 96)'),
+              ('OpenStreetMap API 0.6 - Ripon batch 46', 'OpenStreetMap API 0.6 - Garforth batch 96'),
+              ('appended 50 Ripon OSM API records', 'appended 50 Garforth OSM API records'),
+              ('Batch 46 appended 50 new Ripon OSM API evidence-backed building features', 'Batch 96 appended 50 new Garforth OSM API evidence-backed building features'),
+              ('BATCH_046_APPENDED_50_RIPON_OSM_FEATURES_CONTINUATION_REQUIRED', 'BATCH_096_APPENDED_50_GARFORTH_OSM_FEATURES_CONTINUATION_REQUIRED'),
+              ('APPEND_NEW_BATCH_047_AFTER_FEATURE_2300', 'APPEND_NEW_BATCH_097_AFTER_FEATURE_4800'),
+              ('for attempt in range(4):', 'for attempt in range(3):'),
+          ]
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'FAIL_CLOSED replacement target count {count} for: {old}')
+              text = text.replace(old, new)
+          stale = [
+              'CITY = "Ripon"', 'GRID = "RIPON_CENTRAL_02"', 'LOCAL_AUTHORITY = "North Yorkshire"',
+              'BATCH = 46', 'EXPECTED_BEFORE = 2250', 'TARGET_AFTER = 2300', 'for attempt in range(4):'
+          ]
+          for literal in stale:
+              if literal in text:
+                  raise SystemExit(f'FAIL_CLOSED stale template literal remains: {literal}')
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Run fail-closed Garforth batch 96
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .github/tmp_bt9_batch96_garforth_20260811.py
+
+      - name: Commit and push only building_type_9 outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -f --ignore-unmatch -- \
+            .github/tmp_bt9_batch96_garforth_20260811.py \
+            .github/workflows/tmp_bt9_batch96_garforth_20260811.yml
+          git add -- \
+            england_map_web/data/building_type/shards/building_type_9_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_9_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json
+          git diff --cached --check
+          git diff --cached --name-only
+          git commit -m 'data: append building_type_9 Garforth batch 96'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if git rebase "origin/$BRANCH"; then
+              if git push origin "HEAD:$BRANCH"; then exit 0; fi
+            else
+              git rebase --abort || true
+              echo 'Rebase conflict; refusing to overwrite concurrent changes.' >&2
+              exit 1
+            fi
+            sleep $((attempt*2))
+          done
+          exit 1
