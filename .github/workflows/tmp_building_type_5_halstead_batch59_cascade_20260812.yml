@@ -1,0 +1,156 @@
+name: AAYS building_type_5 Halstead batch59 cascade
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - '.github/workflows/tmp_building_type_5_halstead_batch59_cascade_20260812.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-5-halstead-batch59-cascade-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Refresh branch and verify continuation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          git merge-base --is-ancestor 76422300f5dee2d2be3fd68b287fce19686da07d HEAD
+
+      - name: Append exactly 50 new evidence-backed Halstead features
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import textwrap
+          from pathlib import Path
+
+          source = Path('.github/workflows/tmp_building_type_5_haverhill_batch51_cascade_20260811.yml').read_text(encoding='utf-8')
+          marker = "          python - <<'PY'\n"
+          start = source.index(marker) + len(marker)
+          end = source.index("\n          PY", start)
+          script = textwrap.dedent(source[start:end])
+
+          replacements = [
+              ("CITY='Haverhill'; AUTHORITY='West Suffolk'; GRID='HAVERHILL_01'", "CITY='Halstead'; AUTHORITY='Braintree'; GRID='HALSTEAD_01'"),
+              ("BATCH=51; EXPECTED_BEFORE=2500; TARGET_AFTER=2550; NEXT_TARGET=2600", "BATCH=59; EXPECTED_BEFORE=2900; TARGET_AFTER=2950; NEXT_TARGET=3000"),
+              ("SOUTH,WEST,NORTH,EAST=52.0600,0.4000,52.1050,0.4750", "SOUTH,WEST,NORTH,EAST=51.9000,0.5200,52.0000,0.7400"),
+              ("xs=[0.4000,0.4250,0.4500,0.4750]; ys=[52.0600,52.0750,52.0900,52.1050]", "xs=[0.5200,0.5933,0.6667,0.7400]; ys=[51.9000,51.9333,51.9667,52.0000]"),
+              ('Haverhill', 'Halstead'),
+              ('HAVERHILL', 'HALSTEAD'),
+          ]
+          for old, new in replacements:
+              if old not in script:
+                  raise SystemExit(f'fail closed: expected template token missing: {old}')
+              script = script.replace(old, new)
+
+          exec(compile(script, 'building_type_5_halstead_batch59.py', 'exec'), {})
+          PY
+
+      - name: Validate slot-only outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          geo_path=Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson')
+          manifest_path=Path('england_map_web/data/building_type/shards/building_type_5_manifest_latest.json')
+          runner_path=Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json')
+          status_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json')
+          checkpoint_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json')
+          task_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json')
+
+          geo=json.loads(geo_path.read_text(encoding='utf-8')); fs=geo.get('features',[])
+          assert len(fs)==2950, len(fs)
+          ids=[]; parcels=[]; osms=[]
+          for f in fs:
+              p=f.get('properties') or {}
+              if f.get('id') is not None: ids.append(str(f['id']))
+              if p.get('parcel_id') is not None: parcels.append(str(p['parcel_id']))
+              if p.get('osm_id') is not None: osms.append(str(p['osm_id']))
+              assert p.get('fake_data') is not True
+              assert p.get('final_ready') is not True
+          assert len(ids)==len(set(ids))
+          assert len(parcels)==len(set(parcels))
+          assert len(osms)==len(set(osms))
+
+          runner=json.loads(runner_path.read_text(encoding='utf-8'))
+          assert runner['batch_index']==59 and runner['city']=='Halstead' and runner['grid_id']=='HALSTEAD_01'
+          assert runner['feature_count_before']==2900 and runner['feature_count_after']==2950 and runner['new_feature_count']==50
+          assert runner.get('fake_data') is False and runner.get('final_ready') is False
+          assert len(runner.get('records',[]))==50
+          for r in runner['records']:
+              assert isinstance(r.get('evidence_excerpt'),dict) and r['evidence_excerpt']
+              assert r.get('evidence_level') in {'A','B','C','D','U'}
+              assert isinstance(r.get('confidence_level_1_to_4'),int) and 1 <= r['confidence_level_1_to_4'] <= 4
+              assert r.get('sources')
+              assert r.get('fake_data') is False and r.get('final_ready') is False
+
+          cp=json.loads(checkpoint_path.read_text(encoding='utf-8'))
+          assert cp['feature_count_before']==2900 and cp['feature_count_after']==2950 and cp['current_feature_count']==2950
+          assert cp['next_batch_index']==60 and cp['next_target_feature_count']==3000
+          assert cp['last_batch']['batch_index']==59 and cp['last_batch']['city']=='Halstead' and cp['last_batch']['grid_id']=='HALSTEAD_01'
+          assert cp['last_batch']['added_feature_count']==50
+          assert cp.get('fake_data') is False and cp.get('final_ready') is False
+
+          st=json.loads(status_path.read_text(encoding='utf-8'))
+          assert st['feature_count_before']==2900 and st['feature_count_after']==2950 and st['current_feature_count']==2950
+          assert st['next_batch_index']==60 and st['next_target_feature_count']==3000
+          assert st.get('owner') in (None,'') and st.get('fake_data') is False and st.get('final_ready') is False
+
+          task=json.loads(task_path.read_text(encoding='utf-8'))
+          assert task['task_id']=='building-type-5-england-classification-v1-20260808'
+          assert task.get('owner') in (None,'') and task.get('continuation_key','')==''
+          assert task.get('fake_data') is False and task.get('final_ready') is False
+
+          mf=json.loads(manifest_path.read_text(encoding='utf-8'))
+          assert mf.get('total_features')==2950 and mf.get('feature_count_after')==2950
+          assert mf.get('fake_data') is False and mf.get('final_ready') is False
+          print('validation ok: 2900 -> 2950 (+50), unique feature/parcel/osm ids')
+          PY
+
+      - name: Commit and push slot-only business paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH=codex/aays-single-runner-v5-20260706
+          git config user.name 'aays-building-type-5-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          paths=(
+            england_map_web/data/building_type/shards/building_type_5_latest.geojson
+            england_map_web/data/building_type/shards/building_type_5_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json
+          )
+          git add -- "${paths[@]}"
+          git diff --cached --quiet && { echo 'no business delta'; exit 1; }
+          git commit -m 'Append building_type_5 Halstead batch 59'
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:$BRANCH; then exit 0; fi
+            echo "push attempt $attempt failed; rebasing on fresh remote"
+            git fetch origin "$BRANCH"
+            if ! git rebase "origin/$BRANCH"; then
+              git rebase --abort || true
+              echo 'rebase conflict; fail closed without force push'
+              exit 1
+            fi
+          done
+          echo 'push failed after 5 safe attempts'
+          exit 1
