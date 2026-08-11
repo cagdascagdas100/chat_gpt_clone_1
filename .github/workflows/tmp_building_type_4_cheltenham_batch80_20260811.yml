@@ -1,4 +1,4 @@
-name: tmp building_type_4 Warminster OSM batch 89
+name: tmp building_type_4 Okehampton OSM batch 90
 
 on:
   push:
@@ -32,7 +32,7 @@ jobs:
           git fetch origin codex/aays-single-runner-v5-20260706
           git pull --ff-only origin codex/aays-single-runner-v5-20260706
 
-      - name: Append 50 unseen Warminster OSM building-use features
+      - name: Append 50 unseen Okehampton OSM building-use features
         shell: bash
         run: |
           set -euo pipefail
@@ -45,22 +45,22 @@ jobs:
           if not m: raise RuntimeError('append python block not found in trusted batch81 helper')
           code=textwrap.dedent(m.group(1))
           replacements=[
-            ("CITY='Stroud'","CITY='Warminster'"),
-            ("AUTHORITY='Gloucestershire'","AUTHORITY='Wiltshire'"),
-            ("GRID='51.710,-2.280,51.790,-2.150'","GRID='51.170,-2.230,51.240,-2.120'"),
-            ("BEFORE=4000; TARGET=4050; BATCH=81; NEXT_BATCH=82; NEXT_TARGET=4100","BEFORE=4400; TARGET=4450; BATCH=89; NEXT_BATCH=90; NEXT_TARGET=4500"),
-            ('BATCH_81','BATCH_89'),
-            ('Stroud','Warminster'),
-            ('batch 81','batch 89'),
-            ('batch81','batch89'),
-            ('20.25','22.25'),
+            ("CITY='Stroud'","CITY='Okehampton'"),
+            ("AUTHORITY='Gloucestershire'","AUTHORITY='Devon'"),
+            ("GRID='51.710,-2.280,51.790,-2.150'","GRID='50.700,-4.040,50.800,-3.850'"),
+            ("BEFORE=4000; TARGET=4050; BATCH=81; NEXT_BATCH=82; NEXT_TARGET=4100","BEFORE=4450; TARGET=4500; BATCH=90; NEXT_BATCH=91; NEXT_TARGET=4550"),
+            ('BATCH_81','BATCH_90'),
+            ('Stroud','Okehampton'),
+            ('batch 81','batch 90'),
+            ('batch81','batch90'),
+            ('20.25','22.5'),
           ]
           for a,b in replacements:
               code=code.replace(a,b)
           code=code.replace("for endpoint in ['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']:","for endpoint in ['https://overpass-api.de/api/interpreter']:")
-          required=["CITY='Warminster'","AUTHORITY='Wiltshire'","BEFORE=4400; TARGET=4450; BATCH=89; NEXT_BATCH=90; NEXT_TARGET=4500","GRID='51.170,-2.230,51.240,-2.120'","for endpoint in ['https://overpass-api.de/api/interpreter']:"]
+          required=["CITY='Okehampton'","AUTHORITY='Devon'","BEFORE=4450; TARGET=4500; BATCH=90; NEXT_BATCH=91; NEXT_TARGET=4550","GRID='50.700,-4.040,50.800,-3.850'","for endpoint in ['https://overpass-api.de/api/interpreter']:"]
           assert all(x in code for x in required)
-          exec(compile(code,'batch89_warminster_append.py','exec'),{'__name__':'__main__'})
+          exec(compile(code,'batch90_okehampton_append.py','exec'),{'__name__':'__main__'})
           PY
 
       - name: Validate append and evidence contract
@@ -77,24 +77,24 @@ jobs:
           st=load('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
           run=load('docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json')
           task=load('docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json')
-          assert len(shard['features'])==4450 and manifest['total_features']==4450
-          assert cp['feature_count_before']==4400 and cp['feature_count_after']==4450 and cp['current_feature_count']==4450
-          assert cp['next_batch_index']==90 and cp['next_target_feature_count']==4500
-          assert st['current_feature_count']==4450 and st['next_batch_index']==90
-          assert run['batch_index']==89 and run['city']=='Warminster' and run['feature_count_before']==4400 and run['feature_count_after']==4450
+          assert len(shard['features'])==4500 and manifest['total_features']==4500
+          assert cp['feature_count_before']==4450 and cp['feature_count_after']==4500 and cp['current_feature_count']==4500
+          assert cp['next_batch_index']==91 and cp['next_target_feature_count']==4550
+          assert st['current_feature_count']==4500 and st['next_batch_index']==91
+          assert run['batch_index']==90 and run['city']=='Okehampton' and run['feature_count_before']==4450 and run['feature_count_after']==4500
           assert run['already_processed_ids_policy_applied'] is True and len(run['new_feature_ids'])==50 and len(set(run['new_feature_ids']))==50
           ids=set(run['new_feature_ids']); batch=[f for f in shard['features'] if f.get('id') in ids]; assert len(batch)==50
           all_ids=[str(f.get('id')) for f in shard['features']]; assert len(all_ids)==len(set(all_ids))
           parcels=[str((f.get('properties') or {}).get('parcel_id')) for f in shard['features'] if (f.get('properties') or {}).get('parcel_id') is not None]; assert len(parcels)==len(set(parcels))
           osms=[str((f.get('properties') or {}).get('osm_id')) for f in shard['features'] if (f.get('properties') or {}).get('osm_id') is not None]; assert len(osms)==len(set(osms))
           for f in batch:
-              p=f['properties']; assert p['area']=='Warminster' and p['local_authority']=='Wiltshire' and p['evidence_level']=='B' and p['confidence_level_1_to_4']==3
+              p=f['properties']; assert p['area']=='Okehampton' and p['local_authority']=='Devon' and p['evidence_level']=='B' and p['confidence_level_1_to_4']==3
               assert p['evidence_excerpt'] and p['source_evidence_excerpt'] and p['sources'][0].get('evidence_excerpt')
               assert p['source_url'] and p['source_hash'] and p['match_method'] and p['sources'][0].get('sha256')
               assert p['fake_data'] is False and p['final_ready'] is False
           assert task['task_id']=='building-type-4-england-classification-v1-20260808' and task.get('owner') in (None,'')
           for obj in (manifest,cp,st,run,task): assert obj.get('fake_data') is False and obj.get('final_ready') is False
-          print('VALIDATED building_type_4 4400->4450 Warminster batch89=50 evidence=B confidence=3/4')
+          print('VALIDATED building_type_4 4450->4500 Okehampton batch90=50 evidence=B confidence=3/4')
           PY
 
       - name: Commit and push only building_type_4 outputs
@@ -105,7 +105,7 @@ jobs:
           git add -- "${paths[@]}"
           test -n "$(git diff --cached --name-only)"
           while read -r p; do ok=0; for e in "${paths[@]}"; do [[ "$p" == "$e" ]] && ok=1; done; [[ "$ok" == 1 ]] || { echo "unexpected staged path: $p"; exit 1; }; done < <(git diff --cached --name-only)
-          git commit -m "data(building_type_4): append Warminster OSM batch 89 4400->4450"
+          git commit -m "data(building_type_4): append Okehampton OSM batch 90 4450->4500"
           echo "DATA_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           for a in 1 2 3 4 5; do
             git fetch origin codex/aays-single-runner-v5-20260706
@@ -126,12 +126,12 @@ jobs:
           cp=load('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json')
           st=load('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
           run=load('docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json')
-          assert len(shard['features'])==4450 and cp['current_feature_count']==4450 and st['current_feature_count']==4450 and cp['next_batch_index']==90
-          assert run['batch_index']==89 and run['city']=='Warminster' and run['feature_count_before']==4400 and run['feature_count_after']==4450
+          assert len(shard['features'])==4500 and cp['current_feature_count']==4500 and st['current_feature_count']==4500 and cp['next_batch_index']==91
+          assert run['batch_index']==90 and run['city']=='Okehampton' and run['feature_count_before']==4450 and run['feature_count_after']==4500
           ids=set(run['new_feature_ids']); batch=[f for f in shard['features'] if f.get('id') in ids]; assert len(ids)==50 and len(batch)==50
           assert all(f['properties']['evidence_level']=='B' and f['properties']['confidence_level_1_to_4']==3 and f['properties']['evidence_excerpt'] for f in batch)
           assert all(f['properties']['fake_data'] is False and f['properties']['final_ready'] is False for f in batch)
-          print('REMOTE_READBACK_OK building_type_4 4400->4450 Warminster batch89=50')
+          print('REMOTE_READBACK_OK building_type_4 4450->4500 Okehampton batch90=50')
           PY
 
       - name: Record remote readback metadata
@@ -145,13 +145,13 @@ jobs:
           now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'); head=os.environ['DATA_COMMIT']
           cp_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json'); st_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
           cp=json.loads(cp_path.read_text()); st=json.loads(st_path.read_text())
-          cp.update({'remote_head':head,'remote_readback_verified':True,'updated_at':now,'first_unverified_step_status':'BATCH_89_REMOTE_READBACK_VERIFIED_CONTINUATION_REQUIRED','final_ready':False,'fake_data':False})
-          cp.setdefault('summary',{})['note']='PROGRESS: feature_count 4400 -> 4450. Batch 89 Warminster remote readback verified; continue at batch 90. final_ready remains false.'
-          st.update({'remote_head':head,'remote_readback_verified':True,'updated_at':now,'last_update':now,'note':'Batch 89 Warminster OSM: 50 unique evidence-backed features appended; total 4450. Remote readback verified. Continue batch 90.','final_ready':False,'fake_data':False})
+          cp.update({'remote_head':head,'remote_readback_verified':True,'updated_at':now,'first_unverified_step_status':'BATCH_90_REMOTE_READBACK_VERIFIED_CONTINUATION_REQUIRED','final_ready':False,'fake_data':False})
+          cp.setdefault('summary',{})['note']='PROGRESS: feature_count 4450 -> 4500. Batch 90 Okehampton remote readback verified; continue at batch 91. final_ready remains false.'
+          st.update({'remote_head':head,'remote_readback_verified':True,'updated_at':now,'last_update':now,'note':'Batch 90 Okehampton OSM: 50 unique evidence-backed features appended; total 4500. Remote readback verified. Continue batch 91.','final_ready':False,'fake_data':False})
           cp_path.write_text(json.dumps(cp,ensure_ascii=False,indent=2)+'\n'); st_path.write_text(json.dumps(st,ensure_ascii=False,indent=2)+'\n')
           PY
           git add -- docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json
-          git commit -m "building_type_4: record batch 89 remote readback"
+          git commit -m "building_type_4: record batch 90 remote readback"
           for a in 1 2 3 4 5; do
             git fetch origin codex/aays-single-runner-v5-20260706
             if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then git merge --abort || true; exit 1; fi
@@ -168,8 +168,8 @@ jobs:
           import json, subprocess
           ref='origin/codex/aays-single-runner-v5-20260706'; load=lambda p: json.loads(subprocess.check_output(['git','show',f'{ref}:{p}']))
           cp=load('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json'); st=load('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
-          assert cp['current_feature_count']==4450 and cp['next_batch_index']==90 and cp['remote_readback_verified'] is True
-          assert st['current_feature_count']==4450 and st['next_batch_index']==90 and st['remote_readback_verified'] is True
+          assert cp['current_feature_count']==4500 and cp['next_batch_index']==91 and cp['remote_readback_verified'] is True
+          assert st['current_feature_count']==4500 and st['next_batch_index']==91 and st['remote_readback_verified'] is True
           assert cp['final_ready'] is False and st['final_ready'] is False and cp['fake_data'] is False and st['fake_data'] is False
-          print('FINAL_REMOTE_METADATA_OK building_type_4 current=4450 next_batch=90 final_ready=false')
+          print('FINAL_REMOTE_METADATA_OK building_type_4 current=4500 next_batch=91 final_ready=false')
           PY
