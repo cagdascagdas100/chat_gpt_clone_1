@@ -1,0 +1,99 @@
+name: tmp-building-type-1-london-postrecovery-batch90-20260812
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: ['.github/workflows/tmp_building_type_1_london_postrecovery_batch90_20260812.yml']
+permissions:
+  contents: write
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+          sparse-checkout: |
+            england_map_web/data/building_type/shards/building_type_1_latest.geojson
+            england_map_web/data/building_type/shards/building_type_1_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_1
+            docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs
+            .github/workflows/tmp_building_type_1_london_postrecovery_batch46_20260811.yml
+            .github/workflows/tmp_building_type_1_london_postrecovery_batch90_20260812.yml
+          sparse-checkout-cone-mode: false
+      - name: Append 60 unseen London Inner OSM features
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHARD='england_map_web/data/building_type/shards/building_type_1_latest.geojson'
+          git rev-parse "HEAD:${SHARD}" > /tmp/building_type_1_start_blob
+          python - <<'PY'
+          import pathlib,re,textwrap
+          src=pathlib.Path('.github/workflows/tmp_building_type_1_london_postrecovery_batch46_20260811.yml').read_text(encoding='utf-8')
+          code=src.split("python - <<'PY'\n",1)[1].split("\n          PY",1)[0]
+          code=textwrap.dedent(code)
+          required=["assert before==3360,before","after==3420","'next_batch_index':47","London_Inner_PostRecovery_46"]
+          for marker in required: assert marker in code, marker
+          code=code.replace("assert before==3360,before","assert before==6000,before")
+          code=code.replace("after==3420","after==6060")
+          code=code.replace("'next_batch_index':47","'next_batch_index':91")
+          code=code.replace("London_Inner_PostRecovery_46","London_Inner_PostRecovery_90")
+          code=code.replace("TerraYield-AAYS-building_type_1/38.0","TerraYield-AAYS-building_type_1/82.0")
+          code=re.sub(r"grids=\[.*\]", "grids=[('Southwark_Bermondsey_West_AA',(51.485,-0.08,51.495,-0.04),'Southwark'),('Southwark_Bermondsey_Central_West_AA',(51.495,-0.08,51.505,-0.04),'Southwark'),('Southwark_Bermondsey_North_West_AA',(51.505,-0.08,51.515,-0.04),'Southwark')]", code, count=1)
+          exec(compile(code,'batch90_reused_batch46_logic','exec'),{})
+          PY
+      - name: Commit push and remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          BR='codex/aays-single-runner-v5-20260706'
+          SHARD='england_map_web/data/building_type/shards/building_type_1_latest.geojson'
+          MANIFEST='england_map_web/data/building_type/shards/building_type_1_manifest_latest.json'
+          RUNNER='docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json'
+          STATUS='docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json'
+          CHECKPOINT='docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json'
+          TASK='docs/chatgpt_status/_shared/slots_21/building_type_1/current_task_latest.json'
+          START_BLOB="$(cat /tmp/building_type_1_start_blob)"
+          git config user.name 'aays-building-type-1-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git fetch origin "$BR"
+          test "$(git rev-parse FETCH_HEAD:"$SHARD")" = "$START_BLOB" || { echo 'same-slot shard changed before commit'; exit 1; }
+          git add -- "$SHARD" "$MANIFEST" "$RUNNER" "$STATUS" "$CHECKPOINT" "$TASK"
+          git diff --cached --quiet && { echo 'NO_BUSINESS_DIFF'; exit 1; }
+          git diff --cached --check
+          git commit -m 'Append building_type_1 London post-recovery batch 90'
+          pushed=0
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BR"
+            test "$(git rev-parse FETCH_HEAD:"$SHARD")" = "$START_BLOB" || { echo 'same-slot shard changed during push loop'; exit 1; }
+            git rebase FETCH_HEAD
+            if git push origin HEAD:"$BR"; then pushed=1; break; fi
+            sleep 2
+          done
+          test "$pushed" = 1
+          git fetch origin "$BR"
+          git show FETCH_HEAD:"$SHARD" > /tmp/remote_shard.geojson
+          git show FETCH_HEAD:"$CHECKPOINT" > /tmp/remote_checkpoint.json
+          git show FETCH_HEAD:"$STATUS" > /tmp/remote_status.json
+          git show FETCH_HEAD:"$RUNNER" > /tmp/remote_runner.json
+          git show FETCH_HEAD:"$TASK" > /tmp/remote_task.json
+          python - <<'PY'
+          import json,hashlib,pathlib
+          fc=json.load(open('/tmp/remote_shard.geojson',encoding='utf-8')); assert len(fc['features'])==6060
+          cp=json.load(open('/tmp/remote_checkpoint.json')); st=json.load(open('/tmp/remote_status.json')); rn=json.load(open('/tmp/remote_runner.json')); task=json.load(open('/tmp/remote_task.json'))
+          assert cp['feature_count_before']==6000 and cp['feature_count_after']==6060 and cp['last_batch_new_features']==60 and cp['next_batch_index']==91 and cp['fake_data'] is False and cp['final_ready'] is False
+          assert st['feature_count_before']==6000 and st['feature_count_after']==6060 and st['new_features_added']==60 and st['fake_data'] is False and st['final_ready'] is False
+          assert rn['feature_count_before']==6000 and rn['feature_count_after']==6060 and rn['new_features_added']==60 and rn['new_evidence_level']=='B' and rn['new_confidence_level_1_to_4']==3 and rn['fake_data'] is False and rn['final_ready'] is False
+          assert task['progress']['completed_count']==6060 and task['owner'] is None and task['fake_data'] is False and task['final_ready'] is False
+          new=set(rn['new_feature_ids']); assert len(new)==60; got=0
+          for f in fc['features']:
+              if f.get('id') in new:
+                  p=f.get('properties') or {}; got+=1
+                  assert p.get('source_url') and p.get('source_hash') and p.get('match_method') and p.get('evidence_excerpt') and p.get('source_evidence_excerpt') and p.get('sources')
+                  assert p.get('evidence_level')=='B' and p.get('confidence_level_1_to_4')==3 and p.get('fake_data') is False and p.get('final_ready') is False
+          assert got==60
+          sha=hashlib.sha256(pathlib.Path('/tmp/remote_shard.geojson').read_bytes()).hexdigest(); assert sha==st['output_sha256']==rn['output_sha256']
+          for p in ('/tmp/remote_checkpoint.json','/tmp/remote_status.json','/tmp/remote_runner.json','/tmp/remote_task.json'): assert 'PUBLISHED' not in pathlib.Path(p).read_text(encoding='utf-8')
+          print(json.dumps({'remote_count':6060,'remote_new':60,'remote_output_sha256':sha,'remote_readback':True}))
+          PY
