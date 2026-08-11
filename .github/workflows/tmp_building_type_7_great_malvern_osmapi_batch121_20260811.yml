@@ -1,0 +1,233 @@
+name: tmp building_type_7 Great Malvern OSM API batch 121
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_7_great_malvern_osmapi_batch121_20260811.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-7-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Prepare current head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "aays-building-type-7-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json').read_text())
+          st=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json').read_text())
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json').read_text())
+          assert cp['current_feature_count']==6000 and cp['next_batch_index']==121 and cp['next_target_feature_count']==6050, cp
+          assert st['current_feature_count']==6000 and st['next_batch_index']==121 and st['next_target_feature_count']==6050, st
+          assert task['task_id']=='building-type-7-england-classification-v1-20260808' and task.get('owner') in (None,''), task
+          assert cp.get('fake_data') is False and cp.get('final_ready') is False
+          assert st.get('fake_data') is False and st.get('final_ready') is False
+          PY
+
+      - name: Append exactly 50 unseen Great Malvern OSM API records
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re, json, subprocess
+          historic='306b1032bab74c2d85055573dedf79b4204a94f1:.github/workflows/tmp_building_type_7_worcester_osmapi_batch107_20260811.yml'
+          src=subprocess.check_output(['git','show',historic],text=True)
+          anchor=src.index('- name: Append exactly 50 unseen Worcester OSM API records')
+          marker="          python3 <<'PY'\n"
+          start=src.index(marker,anchor)+len(marker)
+          end=src.index("\n          PY",start)
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in src[start:end].splitlines())
+          replacements=[
+            ("CITY='Worcester'","CITY='Great Malvern'"),
+            ('BATCH=107','BATCH=121'),
+            ('BEFORE=5300','BEFORE=6000'),
+            ('AFTER=5350','AFTER=6050'),
+            ('NEXT_BATCH=108','NEXT_BATCH=122'),
+            ('NEXT_TARGET=5400','NEXT_TARGET=6100'),
+            ('NEXT_CITY_INDEX=18','NEXT_CITY_INDEX=32'),
+            ("GRID='52.185,-2.250,52.215,-2.190'","GRID='52.095,-2.335,52.140,-2.265'"),
+          ]
+          for old,new in replacements:
+            assert old in code, old
+            code=code.replace(old,new)
+          boxes="BBOXES=[(-2.3350,52.0950,-2.3150,52.1100),(-2.3150,52.0950,-2.2950,52.1100),(-2.2950,52.0950,-2.2750,52.1100),(-2.2750,52.0950,-2.2650,52.1100),(-2.3350,52.1100,-2.3150,52.1250),(-2.3150,52.1100,-2.2950,52.1250),(-2.2950,52.1100,-2.2750,52.1250),(-2.2750,52.1100,-2.2650,52.1250),(-2.3350,52.1250,-2.3150,52.1400),(-2.3150,52.1250,-2.2950,52.1400),(-2.2950,52.1250,-2.2750,52.1400),(-2.2750,52.1250,-2.2650,52.1400)]"
+          code,n=re.subn(r'BBOXES=\[\n.*?\n          \]',boxes,code,count=1,flags=re.S)
+          if n!=1:
+            code,n=re.subn(r'BBOXES=\[\n.*?\n\]',boxes,code,count=1,flags=re.S)
+          assert n==1, 'bbox replacement failed'
+          exec(compile(code,'building_type_7_great_malvern_osmapi_batch121.py','exec'),{})
+          cp_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          st_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          for p in (cp_path,st_path):
+            o=json.loads(p.read_text())
+            o['remote_readback_verified']=False
+            o['remote_data_commit']=None
+            o['remote_head']=None
+            o['fake_data']=False
+            o['final_ready']=False
+            p.write_text(json.dumps(o,ensure_ascii=False,indent=2)+'\n')
+          PY
+          git checkout -- docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json
+
+      - name: Validate append and evidence contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+          L=lambda p:json.loads(Path(p).read_text())
+          geo=L('england_map_web/data/building_type/shards/building_type_7_latest.geojson')
+          man=L('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json')
+          cp=L('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          st=L('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          run=L('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
+          task=L('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+          assert len(geo['features'])==6050
+          assert man.get('total_features',man.get('feature_count'))==6050
+          assert cp['current_feature_count']==6050 and cp['next_batch_index']==122 and cp['next_target_feature_count']==6100
+          assert st['current_feature_count']==6050 and st['next_batch_index']==122 and st['next_target_feature_count']==6100
+          assert run['batch_index']==121 and run['feature_count_before']==6000 and run['feature_count_after']==6050 and run.get('progress_counted') is True
+          assert task['task_id']=='building-type-7-england-classification-v1-20260808' and task.get('owner') in (None,'')
+          ids=set(run.get('new_feature_ids') or run.get('selected_feature_ids') or [])
+          assert len(ids)==50
+          batch=[f for f in geo['features'] if f.get('id') in ids]
+          assert len(batch)==50
+          old=geo['features'][:6000]
+          processed=set()
+          for f in old:
+            p=f.get('properties') or {}
+            for v in (f.get('id'),p.get('feature_id'),p.get('parcel_id'),p.get('osm_id')):
+              if v is not None: processed.add(str(v))
+          F=[str(f['id']) for f in geo['features']]
+          FI=[str((f.get('properties') or {}).get('feature_id')) for f in geo['features'] if (f.get('properties') or {}).get('feature_id')]
+          P=[str((f.get('properties') or {}).get('parcel_id')) for f in geo['features'] if (f.get('properties') or {}).get('parcel_id')]
+          O=[str((f.get('properties') or {}).get('osm_id')) for f in geo['features'] if (f.get('properties') or {}).get('osm_id')]
+          assert len(F)==len(set(F)) and len(FI)==len(set(FI)) and len(P)==len(set(P)) and len(O)==len(set(O))
+          for f in batch:
+            p=f['properties']
+            assert p['area']=='Great Malvern' and p['local_authority']=='Worcestershire'
+            assert p['evidence_level'] in ('B','C') and p['confidence_level_1_to_4'] in (2,3)
+            assert p.get('evidence_excerpt') and p.get('source_hash') and p.get('match_method') and p.get('sources')
+            assert p['sources'][0].get('evidence_excerpt')
+            assert p['fake_data'] is False and p['final_ready'] is False
+            for v in (f.get('id'),p.get('feature_id'),p.get('parcel_id'),p.get('osm_id')):
+              if v is not None: assert str(v) not in processed
+          assert run.get('already_processed_ids_policy_applied') is True
+          assert run.get('raw_source_committed',False) is False and run.get('raw_source_stored_in_git',False) is False
+          assert all(x.get('fake_data') is False and x.get('final_ready') is False for x in (man,cp,st,run,task))
+          print('VALIDATED Great Malvern OSM API batch121 6000->6050 +50')
+          PY
+          git diff --exit-code -- docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json
+
+      - name: Commit and push only building_type_7 outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(england_map_web/data/building_type/shards/building_type_7_latest.geojson england_map_web/data/building_type/shards/building_type_7_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json)
+          git add -- "${paths[@]}"
+          test -n "$(git diff --cached --name-only)"
+          test -z "$(git diff --cached --name-only | grep -vE '^(england_map_web/data/building_type/shards/building_type_7_(latest.geojson|manifest_latest.json)|docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json|docs/chatgpt_status/_shared/slots_21/building_type_7/(status_latest|checkpoint_latest).json)$')"
+          git commit -m "data(building_type_7): append Great Malvern OSM API batch 121 6000->6050"
+          echo "DATA_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          for a in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }
+            git push origin HEAD:codex/aays-single-runner-v5-20260706 && break
+            [[ $a -lt 5 ]] || exit 1
+            sleep $((a*2))
+          done
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json,subprocess
+          R='origin/codex/aays-single-runner-v5-20260706'
+          L=lambda p:json.loads(subprocess.check_output(['git','show',f'{R}:{p}']))
+          geo=L('england_map_web/data/building_type/shards/building_type_7_latest.geojson')
+          cp=L('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          run=L('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
+          task=L('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+          assert len(geo['features'])==6050 and cp['current_feature_count']==6050 and cp['next_batch_index']==122 and cp['next_target_feature_count']==6100
+          assert run['batch_index']==121 and run['feature_count_before']==6000 and run['feature_count_after']==6050 and task.get('owner') in (None,'')
+          ids=set(run.get('new_feature_ids') or run.get('selected_feature_ids') or []); assert len(ids)==50
+          batch=[f for f in geo['features'] if f.get('id') in ids]
+          assert len(batch)==50 and all(f['properties']['fake_data'] is False and f['properties']['final_ready'] is False and f['properties'].get('evidence_excerpt') for f in batch)
+          print('REMOTE_READBACK_OK Great Malvern 6000->6050')
+          PY
+
+      - name: Record remote readback metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json,os
+          from datetime import datetime,timezone
+          from pathlib import Path
+          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          head=os.environ['DATA_COMMIT']
+          cp_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          st_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          cp=json.loads(cp_path.read_text()); st=json.loads(st_path.read_text())
+          cp.update({'remote_head':head,'remote_data_commit':head,'remote_readback_verified':True,'updated_at':now,'first_unverified_step_status':'BATCH_121_REMOTE_READBACK_VERIFIED_CONTINUATION_REQUIRED','fake_data':False,'final_ready':False})
+          cp.setdefault('summary',{})['note']='PROGRESS: feature_count 6000 -> 6050. Batch 121 Great Malvern OSM API remote readback verified; continue at batch 122. final_ready remains false.'
+          cp.setdefault('summary',{})['current_feature_count']=6050
+          cp.setdefault('summary',{})['new_features_added_this_attempt']=50
+          cp.setdefault('summary',{})['progress_counted']=True
+          cp.setdefault('remaining_items',{})['note']='Next batch 122: treat all 6050 canonical feature.id/feature_id/parcel_id/osm_id values as already_processed_ids and append at least 50 genuinely new West Midlands records; do not replay prior batches.'
+          st.update({'remote_head':head,'remote_data_commit':head,'remote_readback_verified':True,'updated_at':now,'fake_data':False,'final_ready':False,'note':'Batch 121 Great Malvern OSM API: 50 unique evidence-backed features appended; total 6050. Remote readback verified. Continue batch 122.'})
+          cp_path.write_text(json.dumps(cp,ensure_ascii=False,indent=2)+'\n'); st_path.write_text(json.dumps(st,ensure_ascii=False,indent=2)+'\n')
+          PY
+          git add docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json
+          git commit -m "building_type_7: record Great Malvern batch 121 remote readback"
+          for a in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }
+            git push origin HEAD:codex/aays-single-runner-v5-20260706 && break
+            [[ $a -lt 5 ]] || exit 1
+            sleep $((a*2))
+          done
+
+      - name: Final remote metadata readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json,subprocess
+          R='origin/codex/aays-single-runner-v5-20260706'
+          L=lambda p:json.loads(subprocess.check_output(['git','show',f'{R}:{p}']))
+          cp=L('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          st=L('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          task=L('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+          assert cp['current_feature_count']==6050 and cp['next_batch_index']==122 and cp['next_target_feature_count']==6100
+          assert st['current_feature_count']==6050 and st['next_batch_index']==122 and st['next_target_feature_count']==6100
+          assert cp.get('remote_readback_verified') is True and st.get('remote_readback_verified') is True
+          assert cp.get('remote_data_commit') and cp.get('remote_data_commit')==st.get('remote_data_commit')
+          assert task.get('owner') in (None,'') and task.get('fake_data') is False and task.get('final_ready') is False
+          assert cp.get('fake_data') is False and cp.get('final_ready') is False and st.get('fake_data') is False and st.get('final_ready') is False
+          print('FINAL_REMOTE_METADATA_OK Great Malvern batch121 6000->6050')
+          PY
