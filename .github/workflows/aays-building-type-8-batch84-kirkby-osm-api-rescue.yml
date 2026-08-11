@@ -59,13 +59,7 @@ jobs:
               if old not in code:
                   raise SystemExit(f'missing rescue replacement token: {old}')
               code = code.replace(old, new, 1)
-          new_bboxes = '''BBOXES = [
-    (-2.9100, 53.4700, -2.8900, 53.4850),
-    (-2.8900, 53.4700, -2.8700, 53.4850),
-    (-2.9100, 53.4850, -2.8900, 53.5000),
-    (-2.8900, 53.4850, -2.8700, 53.5000),
-]
-GEO ='''
+          new_bboxes = "BBOXES = [\n    (-2.9100, 53.4700, -2.8900, 53.4850),\n    (-2.8900, 53.4700, -2.8700, 53.4850),\n    (-2.9100, 53.4850, -2.8900, 53.5000),\n    (-2.8900, 53.4850, -2.8700, 53.5000),\n]\nGEO ="
           code, n = re.subn(r'BBOXES = \[\n.*?\n\]\nGEO =', new_bboxes, code, count=1, flags=re.S)
           if n != 1:
               raise SystemExit('failed to replace rescue BBOXES')
