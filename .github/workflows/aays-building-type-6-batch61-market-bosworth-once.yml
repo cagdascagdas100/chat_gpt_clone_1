@@ -1,0 +1,145 @@
+name: AAYS building_type_6 batch61 Market Bosworth one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-6-batch61-market-bosworth-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-6-batch61-market-bosworth-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 20
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-6-batch26-skegness-once.yml
+            england_map_web/data/building_type/shards/building_type_6_latest.geojson
+            england_map_web/data/building_type/shards/building_type_6_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_6
+            docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs
+
+      - name: Fast-forward sparse checkout to latest canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Execute guarded batch61 Market Bosworth continuation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          src = Path('.github/workflows/aays-building-type-6-batch26-skegness-once.yml').read_text(encoding='utf-8')
+          marker = "          python - <<'PY'\n"
+          start = src.index(marker) + len(marker)
+          end = src.index("\n          PY", start)
+          block = src[start:end]
+          lines = [line[10:] if line.startswith('          ') else line for line in block.splitlines()]
+          code = '\n'.join(lines) + '\n'
+          replacements = {
+              'CITY = "Skegness"': 'CITY = "Market Bosworth"',
+              'LOCAL_AUTHORITY = "East Lindsey"': 'LOCAL_AUTHORITY = "Hinckley and Bosworth"',
+              'BATCH_INDEX = 26': 'BATCH_INDEX = 61',
+              'EXPECTED_BEFORE = 2250': 'EXPECTED_BEFORE = 11000',
+              'TARGET_AFTER = 2500': 'TARGET_AFTER = 11250',
+              'NEXT_TARGET = 2750': 'NEXT_TARGET = 11500',
+              'BBOX = [0.20, 53.08, 0.48, 53.21]': 'BBOX = [-1.43, 52.60, -1.35, 52.66]',
+          }
+          for old, new in replacements.items():
+              if old not in code:
+                  raise SystemExit(f'missing canonical replacement token: {old}')
+              code = code.replace(old, new, 1)
+          code = code.replace('Skegness', 'Market Bosworth').replace('SKEGNESS', 'MARKET_BOSWORTH').replace('skegness', 'market_bosworth')
+          code = code.replace('market_bosworth_east_lindsey_source_sha256', 'market_bosworth_hinckley_and_bosworth_source_sha256')
+          Path('/tmp/building_type_6_batch61_market_bosworth.py').write_text(code, encoding='utf-8')
+          PY
+          python /tmp/building_type_6_batch61_market_bosworth.py
+
+      - name: Commit and push batch 61
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            england_map_web/data/building_type/shards/building_type_6_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_6_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_6/current_task_latest.json
+          git diff --cached --quiet && { echo "No slot changes to commit; refusing false progress"; exit 1; }
+          git commit -m "building_type_6: append batch 61 Market Bosworth +250"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              exit 0
+            fi
+            git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+            if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then
+              git merge --abort || true
+              echo "merge conflict; refusing to overwrite concurrent slot changes"
+              exit 1
+            fi
+          done
+          echo "push failed after 5 attempts"
+          exit 1
+
+      - name: Remote readback invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+          python - <<'PY'
+          import json, subprocess
+          BR = 'origin/codex/aays-single-runner-v5-20260706'
+          def remote_json(path):
+              raw = subprocess.check_output(['git','show',f'{BR}:{path}'])
+              return json.loads(raw.decode('utf-8'))
+          geo = remote_json('england_map_web/data/building_type/shards/building_type_6_latest.geojson')
+          cp = remote_json('docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json')
+          st = remote_json('docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json')
+          run = remote_json('docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json')
+          task = remote_json('docs/chatgpt_status/_shared/slots_21/building_type_6/current_task_latest.json')
+          feats = geo.get('features') or []
+          assert len(feats) == 11250, len(feats)
+          assert cp.get('current_feature_count') == 11250
+          assert cp.get('feature_count_before') == 11000 and cp.get('feature_count_after') == 11250
+          assert cp.get('next_batch_index') == 62 and cp.get('next_target_feature_count') == 11500
+          assert cp.get('already_processed_ids',{}).get('unique_key_count') == 22400
+          assert st.get('total_elements') == 11250 and st.get('new_features_added') == 250
+          assert run.get('city') == 'Market Bosworth' and run.get('new_feature_count') == 250
+          assert run.get('local_authority') == 'Hinckley and Bosworth'
+          assert run.get('feature_count_before') == 11000 and run.get('feature_count_after') == 11250
+          assert task.get('task_id') == 'building-type-6-england-classification-v1-20260808'
+          assert task.get('continuation_key') == 'c1418ec751ca09ee40aa5704d014ad3e25ee346e2fc9eec7c32d3c11d565027a'
+          assert task.get('owner') is None
+          assert cp.get('fake_data') is False and st.get('fake_data') is False and run.get('fake_data') is False and task.get('fake_data') is False
+          assert cp.get('final_ready') is False and st.get('final_ready') is False and run.get('final_ready') is False and task.get('final_ready') is False
+          records = run.get('records') or []
+          assert len(records) == 250
+          fids = set(); pids = set(); osmids = set()
+          for r in records:
+              assert r.get('evidence_excerpt')
+              assert r.get('evidence_level') in {'A','B','C','D','U'}
+              assert r.get('confidence_level_1_to_4') in {1,2,3,4}
+              assert r.get('source_url') and r.get('sources')
+              assert r.get('fake_data') is False and r.get('final_ready') is False
+              assert r.get('feature_id') not in fids
+              assert r.get('parcel_id') not in pids
+              assert r.get('osm_id') not in osmids
+              fids.add(r.get('feature_id')); pids.add(r.get('parcel_id')); osmids.add(r.get('osm_id'))
+          geo_ids = [str(f.get('id')) for f in feats if f.get('id') not in (None,'')]
+          assert len(geo_ids) == len(set(geo_ids))
+          print('REMOTE_READBACK_OK building_type_6 11000->11250 batch61 Market Bosworth; evidence fields present; final_ready=false')
+          PY
