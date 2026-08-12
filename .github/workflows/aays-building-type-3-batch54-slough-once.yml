@@ -1,4 +1,4 @@
-name: AAYS building_type_3 batch54 Slough once
+name: AAYS building_type_3 batch55 Windsor once
 
 "on":
   push:
@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  append-slough-batch54:
+  append-windsor-batch55:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -25,19 +25,21 @@ jobs:
           ref: codex/aays-single-runner-v5-20260706
           fetch-depth: 0
 
-      - name: Rebase onto fresh branch head
+      - name: Hydrate fresh branch head
         run: |
+          set -euo pipefail
           git config user.name "aays-building-type-3-bot"
           git config user.email "actions@users.noreply.github.com"
           git pull --rebase origin codex/aays-single-runner-v5-20260706
 
-      - name: Fetch live OSM evidence and append exactly 50 new features
+      - name: Fetch Windsor OSM evidence and append exactly 50 new features
         env:
           EXPECTED_TASK: building-type-3-england-classification-v1-20260808
           EXPECTED_CONTINUATION: 03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e
-          EXPECTED_COUNT: "7400"
-          EXPECTED_BATCH: "54"
+          EXPECTED_COUNT: "7450"
+          EXPECTED_BATCH: "55"
         run: |
+          set -euo pipefail
           python3 - <<'PY'
           import collections
           import datetime as dt
@@ -55,8 +57,9 @@ jobs:
           CONT = os.environ["EXPECTED_CONTINUATION"]
           BEFORE = int(os.environ["EXPECTED_COUNT"])
           BATCH = int(os.environ["EXPECTED_BATCH"])
-          CITY = "Slough"
-          GRID = "Slough 51.4800,-0.6600,51.5500,-0.5000"
+          CITY = "Windsor"
+          LOCAL_AUTHORITY = "Windsor and Maidenhead"
+          GRID = "Windsor 51.4550,-0.6400,51.4850,-0.5700"
           ENDPOINT = "https://api.openstreetmap.org/api/0.6/map"
           NOW = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
@@ -82,20 +85,19 @@ jobs:
           checkpoint = load(checkpoint_p)
           task = load(task_p)
 
-          # Same task/checkpoint only. Do not create/claim an owner.
-          assert checkpoint.get("slot_id") == SLOT, checkpoint.get("slot_id")
-          assert checkpoint.get("continuation_key") == CONT, checkpoint.get("continuation_key")
-          assert checkpoint.get("current_feature_count") == BEFORE, checkpoint.get("current_feature_count")
-          assert checkpoint.get("next_batch_index") == BATCH, checkpoint.get("next_batch_index")
-          assert checkpoint.get("owner") in (None, "") if "owner" in checkpoint else True
-          assert task.get("task_id") == TASK, task.get("task_id")
-          assert task.get("continuation_key") == CONT, task.get("continuation_key")
-          assert task.get("owner") is None, task.get("owner")
-          assert status.get("owner") is None, status.get("owner")
-          assert status.get("current_feature_count") == BEFORE, status.get("current_feature_count")
-          assert len(shard.get("features", [])) == BEFORE, len(shard.get("features", []))
+          # Same task/checkpoint only; never claim a second owner.
+          assert checkpoint.get("slot_id") == SLOT
+          assert checkpoint.get("continuation_key") == CONT
+          assert checkpoint.get("current_feature_count") == BEFORE
+          assert checkpoint.get("next_batch_index") == BATCH
+          assert task.get("task_id") == TASK
+          assert task.get("continuation_key") == CONT
+          assert task.get("owner") is None
+          assert status.get("owner") is None
+          assert status.get("current_feature_count") == BEFORE
+          assert len(shard.get("features", [])) == BEFORE
 
-          # Every existing feature.id, parcel_id and osm_id is already processed.
+          # Every current feature.id, parcel_id and osm_id is already processed.
           processed = set()
           for f in shard["features"]:
               if f.get("id") is not None:
@@ -106,15 +108,15 @@ jobs:
               if p.get("osm_id") is not None:
                   processed.add(str(p["osm_id"]))
 
-          recognized = {
+          direct = {
               "detached": ("residential_detached", "R_DET", "residential"),
               "semidetached_house": ("residential_semi_detached", "R_SEMI", "residential"),
               "semi": ("residential_semi_detached", "R_SEMI", "residential"),
+              "terrace": ("residential_terrace", "R_TERRACE", "residential"),
               "house": ("residential_house", "R_HOUSE", "residential"),
               "bungalow": ("residential_bungalow", "R_BUNGALOW", "residential"),
               "apartments": ("flat_or_apartment", "R_FLAT", "residential"),
               "residential": ("residential", "R_RES", "residential"),
-              "terrace": ("residential_terrace", "R_TERRACE", "residential"),
               "retail": ("commercial_retail", "C_RETAIL", "commercial"),
               "commercial": ("commercial_other", "C_OTHER", "commercial"),
               "office": ("commercial_office", "C_OFFICE", "commercial"),
@@ -135,12 +137,16 @@ jobs:
               "cowshed": ("agricultural", "A_AGRI", "agricultural"),
               "stable": ("agricultural", "A_AGRI", "agricultural"),
               "greenhouse": ("agricultural", "A_AGRI", "agricultural"),
+              "shed": ("other_building", "X_OTHER", "other"),
+              "outbuilding": ("other_building", "X_OTHER", "other"),
+              "roof": ("other_building", "X_OTHER", "other"),
+              "carport": ("other_building", "X_OTHER", "other"),
           }
 
           def classify(tags):
               b = (tags.get("building") or "").strip().lower()
-              if b in recognized:
-                  t, code, cat = recognized[b]
+              if b in direct:
+                  t, code, cat = direct[b]
                   return t, code, cat, 0.86, 3, "B", f"building={b}"
               if b == "yes":
                   if tags.get("shop"):
@@ -155,16 +161,16 @@ jobs:
                       return "education", "P_EDU", "public", 0.72, 2, "C", f"building=yes; amenity={tags['amenity']}"
                   if tags.get("industrial"):
                       return "industrial", "I_IND", "industrial", 0.72, 2, "C", f"building=yes; industrial={tags['industrial']}"
-                  return "other_building", "X_OTHER", "other", 0.60, 2, "C", "building=yes"
-              # The building tag itself proves a building exists but an unmapped subtype is lower-confidence.
-              return "other_building", "X_OTHER", "other", 0.60, 2, "C", f"building={b or 'unknown'}"
+                  return "unknown", "U_UNKNOWN", "unknown", 0.0, 1, "U", "building=yes without type-specific supporting tag"
+              # Unmapped explicit building value is real building evidence, but subtype is not asserted.
+              return "unknown", "U_UNKNOWN", "unknown", 0.0, 1, "U", f"unmapped building={b or 'missing'}"
 
           def fetch_tile(w, s, e, n):
               bbox = f"{w:.4f},{s:.4f},{e:.4f},{n:.4f}"
               url = ENDPOINT + "?" + urllib.parse.urlencode({"bbox": bbox})
-              req = urllib.request.Request(url, headers={"User-Agent": "AAYS-building-type-3-batch54/1.0"})
+              req = urllib.request.Request(url, headers={"User-Agent": "AAYS-building-type-3-batch55/1.0"})
               last = None
-              for attempt in range(4):
+              for attempt in range(3):
                   try:
                       with urllib.request.urlopen(req, timeout=90) as r:
                           body = r.read()
@@ -173,23 +179,22 @@ jobs:
                       return url, body
                   except Exception as exc:
                       last = exc
-                      time.sleep(3 * (attempt + 1))
-              raise RuntimeError(f"OSM fetch failed for {url}: {last}")
+                      if attempt < 2:
+                          time.sleep(3 * (attempt + 1))
+              raise RuntimeError(f"OSM fetch failed after 3 tries for {url}: {last}")
 
           candidates = []
           seen_way = set()
           fetched_urls = []
           aggregate_hash = hashlib.sha256()
-
-          # Small official-API tiles across Slough; raw XML remains runtime-only.
-          south, north = 51.4800, 51.5500
-          west, east = -0.6600, -0.5000
+          south, north = 51.4550, 51.4850
+          west, east = -0.6400, -0.5700
           lat_step, lon_step = 0.0100, 0.0200
           s = south
-          while s < north - 1e-9 and len(candidates) < 140:
-              w = west
+          while s < north - 1e-9 and len(candidates) < 160:
               n = min(s + lat_step, north)
-              while w < east - 1e-9 and len(candidates) < 140:
+              w = west
+              while w < east - 1e-9 and len(candidates) < 160:
                   e = min(w + lon_step, east)
                   url, body = fetch_tile(w, s, e, n)
                   fetched_urls.append(url)
@@ -215,25 +220,19 @@ jobs:
                       lon = sum(x for x, _ in coords) / len(coords)
                       lat = sum(y for _, y in coords) / len(coords)
                       seen_way.add(wid)
-                      candidates.append({
-                          "wid": wid,
-                          "fid": fid,
-                          "osm_id": osm_id,
-                          "tags": tags,
-                          "geometry": {"type": "Point", "coordinates": [lon, lat]},
-                          "tile_url": url,
-                          "tile_sha": tile_sha,
-                      })
+                      candidates.append({"wid": wid, "fid": fid, "osm_id": osm_id, "tags": tags,
+                                         "geometry": {"type": "Point", "coordinates": [lon, lat]},
+                                         "tile_url": url, "tile_sha": tile_sha})
                   w = round(e, 4)
               s = round(n, 4)
 
           if len(candidates) < 50:
-              raise SystemExit(f"NO_PROGRESS: only {len(candidates)} unprocessed Slough building ways found; canonical files unchanged")
+              raise SystemExit(f"NO_PROGRESS: only {len(candidates)} unprocessed Windsor building ways; canonical files unchanged")
 
-          # Prefer directly mapped explicit building tags; fallback remains evidence-backed C/2.
+          # Prefer evidence that can support a specific building type.
           def priority(c):
-              b = (c["tags"].get("building") or "").lower()
-              return (0 if b in recognized else 1, int(c["wid"]))
+              typ = classify(c["tags"])[0]
+              return (0 if typ != "unknown" else 1, int(c["wid"]))
           selected = sorted(candidates, key=priority)[:50]
 
           new_records = []
@@ -242,13 +241,14 @@ jobs:
           conf = collections.Counter()
           types = collections.Counter()
           new_ids = []
+          new_parcels = []
+          new_osms = []
+
           for c in selected:
               tags = c["tags"]
               typ, code, cat, score, conf_level, evidence, match = classify(tags)
               fields = [k for k in ("building", "shop", "office", "tourism", "amenity", "industrial", "name", "addr:street", "addr:postcode", "addr:city") if tags.get(k)]
-              excerpt = " | ".join(f"{k}={tags[k]}" for k in fields)[:600]
-              if not excerpt:
-                  excerpt = match
+              excerpt = " | ".join(f"{k}={tags[k]}" for k in fields)[:600] or match
               source_url = f"https://www.openstreetmap.org/way/{c['wid']}"
               source = {
                   "source_name": "OpenStreetMap API 0.6 map",
@@ -267,39 +267,59 @@ jobs:
                   "feature_id": c["fid"],
                   "parcel_id": c["fid"],
                   "osm_id": c["osm_id"],
+                  "slot_id": SLOT,
+                  "region": "South East",
+                  "area": CITY,
+                  "local_authority": LOCAL_AUTHORITY,
+                  "postcode": tags.get("addr:postcode", ""),
                   "building_type_primary": typ,
                   "building_type_code": code,
                   "building_category": cat,
                   "confidence_score": score,
                   "confidence_level_1_to_4": conf_level,
                   "evidence_level": evidence,
+                  "source_count": 1,
                   "source_url": source_url,
                   "source_hash": c["tile_sha"],
+                  "match_method": match,
                   "evidence_excerpt": excerpt,
+                  "source_evidence_excerpt": excerpt,
                   "sources": [source],
+                  "geometry_match_method": "osm_way_centroid",
+                  "address_match_method": "osm_tags_only",
+                  "limitations": "OSM-only classification; no EPC/VOA/HMLR type corroboration in this batch.",
+                  "needs_manual_review": evidence in ("U", "D"),
                   "fake_data": False,
+                  "final_ready": False,
+                  "updated_at": NOW,
                   "geometry": c["geometry"],
               }
               new_records.append(record)
               props = {k: v for k, v in record.items() if k != "geometry"}
-              new_features.append({"type": "Feature", "id": c["fid"], "properties": props, "geometry": c["geometry"]})
+              new_features.append({"type": "Feature", "id": c["fid"], "geometry": c["geometry"], "properties": props})
               ev[evidence] += 1
               conf[str(conf_level)] += 1
               types[typ] += 1
               new_ids.append(c["fid"])
+              new_parcels.append(c["fid"])
+              new_osms.append(c["osm_id"])
 
-          assert len(new_ids) == 50 and len(set(new_ids)) == 50
-          assert not any(x in processed for x in new_ids)
-          assert not any(r["osm_id"] in processed for r in new_records)
+          assert len(new_ids) == len(new_parcels) == len(new_osms) == 50
+          assert len(set(new_ids)) == len(set(new_parcels)) == len(set(new_osms)) == 50
+          assert not (set(new_ids) & processed)
+          assert not (set(new_parcels) & processed)
+          assert not (set(new_osms) & processed)
 
           shard["features"].extend(new_features)
           AFTER = len(shard["features"])
-          assert AFTER == BEFORE + 50, (BEFORE, AFTER)
+          assert AFTER == BEFORE + 50
           shard["updated_at"] = NOW
           shard["latest_batch"] = CITY
           shard["last_batch_index"] = BATCH
 
           source_sha = aggregate_hash.hexdigest()
+          classified_added = sum(v for k, v in types.items() if k != "unknown")
+          unknown_added = types.get("unknown", 0)
           batch_meta = {
               "batch_index": BATCH,
               "batch_name": CITY,
@@ -311,30 +331,33 @@ jobs:
               "source_sha256": source_sha,
               "features_used": 50,
               "added_feature_count": 50,
+              "classified_added": classified_added,
+              "unknown_added": unknown_added,
               "accessed_at": NOW,
               "evidence_level_distribution": dict(ev),
               "confidence_level_distribution": dict(conf),
               "building_type_distribution": dict(types),
               "new_feature_ids": new_ids,
+              "new_parcel_ids": new_parcels,
+              "new_osm_ids": new_osms,
               "fetched_urls": fetched_urls,
               "raw_source_stored_in_git": False,
           }
 
-          # Manifest: preserve history, increment only from actual appended rows.
           manifest["generated_at"] = NOW
           manifest["total_features"] = AFTER
           manifest["feature_count"] = AFTER
           manifest["feature_count_before"] = BEFORE
           manifest["feature_count_after"] = AFTER
           manifest["added_feature_count"] = 50
-          manifest["classified"] = int(manifest.get("classified", 0)) + 50
-          manifest["unknown"] = int(manifest.get("unknown", 0))
+          manifest["classified"] = int(manifest.get("classified", 0)) + classified_added
+          manifest["unknown"] = int(manifest.get("unknown", 0)) + unknown_added
           for k, v in ev.items():
-              manifest.setdefault("evidence_distribution", {})[k] = int(manifest.setdefault("evidence_distribution", {}).get(k, 0)) + v
+              manifest.setdefault("evidence_distribution", {})[k] = int(manifest["evidence_distribution"].get(k, 0)) + v
           for k, v in conf.items():
-              manifest.setdefault("confidence_level_distribution", {})[k] = int(manifest.setdefault("confidence_level_distribution", {}).get(k, 0)) + v
+              manifest.setdefault("confidence_level_distribution", {})[k] = int(manifest["confidence_level_distribution"].get(k, 0)) + v
           for k, v in types.items():
-              manifest.setdefault("type_distribution", {})[k] = int(manifest.setdefault("type_distribution", {}).get(k, 0)) + v
+              manifest.setdefault("type_distribution", {})[k] = int(manifest["type_distribution"].get(k, 0)) + v
           manifest.setdefault("sources", []).append({
               "name": f"OpenStreetMap API 0.6 map - {CITY} batch {BATCH}",
               "url": ENDPOINT,
@@ -347,7 +370,7 @@ jobs:
               "confidence_level_distribution": dict(conf),
               "grid_bbox": GRID,
               "raw_source_stored_in_git": False,
-              "note": "50 new OSM building ways after feature.id/parcel_id/osm_id exclusion; raw XML runtime-only."
+              "note": "50 new Windsor OSM building ways after feature.id/parcel_id/osm_id exclusion; raw XML runtime-only."
           })
           manifest["last_batch_index"] = BATCH
           manifest["last_batch_name"] = CITY
@@ -365,6 +388,8 @@ jobs:
               "feature_count_before": BEFORE,
               "feature_count_after": AFTER,
               "added_feature_count": 50,
+              "classified_added": classified_added,
+              "unknown_added": unknown_added,
               "classified_count_after": manifest["classified"],
               "unknown_count_after": manifest["unknown"],
               "source": "OpenStreetMap API 0.6 map",
@@ -375,9 +400,9 @@ jobs:
               "building_type_distribution": dict(types),
               "records": new_records,
               "fake_data": False,
+              "final_ready": False,
           }
 
-          # Checkpoint keeps same continuation and same task lineage.
           checkpoint["first_unverified_step_status"] = f"BATCH_{BATCH}_APPENDED_50_{CITY.upper()}_OSM_CONTINUATION_REQUIRED"
           checkpoint["updated_at"] = NOW
           checkpoint["final_ready"] = False
@@ -408,7 +433,6 @@ jobs:
           if CITY not in checkpoint.setdefault("attempted_cities", []):
               checkpoint["attempted_cities"].append(CITY)
 
-          # Status mirrors the verified increment; do not claim owner/final state.
           status["state"] = "IN_PROGRESS"
           status["status"] = "in_progress"
           status["panel_status"] = "DEVAM"
@@ -436,7 +460,7 @@ jobs:
           status["evidence_distribution"] = dict(manifest["evidence_distribution"])
           status["blocker"] = None
           status["blocker_reason"] = ""
-          status["note"] = f"Batch {BATCH} appended 50 new {CITY} OSM evidence-backed features outside all prior feature.id/parcel_id/osm_id values; same task/continuation retained."
+          status["note"] = f"Batch {BATCH} appended 50 new Windsor OSM evidence-backed features outside all prior feature.id/parcel_id/osm_id values; same task/continuation retained."
           status["last_batch_city"] = CITY
           status["last_batch_added_feature_count"] = 50
           status["last_batch_source"] = "OpenStreetMap API 0.6 map"
@@ -449,12 +473,11 @@ jobs:
           status["last_batch_evidence"] = batch_meta
           status["candidate_batch"] = None
           status["no_progress_reason"] = None
-          status["progress_reason"] = f"50 new {CITY} OSM records appended after processed-ID exclusion"
+          status["progress_reason"] = "50 new Windsor OSM records appended after processed-ID exclusion"
           status.setdefault("summary", {})["current_feature_count"] = AFTER
           status["summary"]["new_features_added_this_attempt"] = 50
           status["summary"]["progress_counted"] = True
 
-          # Same task; only its progress checkpoint moves.
           task["updated_at"] = NOW
           task["owner"] = None
           task["final_ready"] = False
@@ -467,7 +490,6 @@ jobs:
           task["next_batch_index"] = BATCH + 1
           task["next_target_feature_count"] = AFTER + 300
 
-          # Write shard first, then hash exactly what will be committed.
           dump(shard_p, shard)
           shard_sha = hashlib.sha256(shard_p.read_bytes()).hexdigest()
           manifest["output_sha256"] = shard_sha
@@ -478,29 +500,28 @@ jobs:
           dump(checkpoint_p, checkpoint)
           dump(task_p, task)
 
-          # Final local invariants.
-          reloaded = load(shard_p)
-          assert len(reloaded["features"]) == AFTER == 7450
+          # Local acceptance gate.
+          assert AFTER > BEFORE and AFTER == 7500
           assert load(checkpoint_p)["feature_count_after"] > load(checkpoint_p)["feature_count_before"]
           assert load(checkpoint_p)["fake_data"] is False and load(checkpoint_p)["final_ready"] is False
-          assert all(r["fake_data"] is False for r in classification["records"])
-          assert all(r["evidence_excerpt"] and r["evidence_level"] in ("B", "C") and r["confidence_level_1_to_4"] in (1,2,3,4) for r in classification["records"])
-          print(json.dumps({"before": BEFORE, "after": AFTER, "added": 50, "city": CITY, "evidence": dict(ev), "confidence": dict(conf), "types": dict(types), "source_sha256": source_sha, "fetched_tiles": len(fetched_urls)}, sort_keys=True))
+          assert classification["fake_data"] is False and classification["final_ready"] is False
+          assert len(classification["records"]) == 50
+          assert all(r["sources"] and r["evidence_excerpt"] and r["evidence_level"] in ("B", "C", "D", "U") and r["confidence_level_1_to_4"] in (1,2,3,4) and r["fake_data"] is False for r in classification["records"])
+          print(json.dumps({"before": BEFORE, "after": AFTER, "added": 50, "city": CITY, "classified_added": classified_added, "unknown_added": unknown_added, "evidence": dict(ev), "confidence": dict(conf), "types": dict(types), "source_sha256": source_sha, "fetched_tiles": len(fetched_urls)}, sort_keys=True))
           PY
 
-      - name: Guard remote checkpoint then commit and push canonical six files
+      - name: Remote checkpoint guard then commit and push six canonical files
         run: |
           set -euo pipefail
           BRANCH=codex/aays-single-runner-v5-20260706
-          CP=docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json
           for attempt in 1 2 3 4 5; do
             git fetch origin "$BRANCH"
             python3 - <<'PY'
           import json, subprocess
-          p='docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json'
-          raw=subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:'+p], text=True)
-          cp=json.loads(raw)
-          if cp.get('current_feature_count') != 7400 or cp.get('next_batch_index') != 54 or cp.get('continuation_key') != '03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e':
+          base='origin/codex/aays-single-runner-v5-20260706:'
+          cp=json.loads(subprocess.check_output(['git','show',base+'docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json'], text=True))
+          task=json.loads(subprocess.check_output(['git','show',base+'docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json'], text=True))
+          if cp.get('current_feature_count') != 7450 or cp.get('next_batch_index') != 55 or cp.get('continuation_key') != '03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e' or task.get('owner') is not None:
               raise SystemExit('REMOTE_GUARD_ABORT: building_type_3 moved; do not overwrite')
           PY
             git add \
@@ -511,7 +532,7 @@ jobs:
               docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json \
               docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json
             if ! git diff --cached --quiet; then
-              git commit -m "data(building_type_3): append Slough batch 54"
+              git commit -m "data(building_type_3): append Windsor batch 55"
             fi
             git rebase "origin/$BRANCH"
             if git push origin "HEAD:$BRANCH"; then
@@ -519,10 +540,10 @@ jobs:
             fi
             sleep $((attempt * 3))
           done
-          echo "Push failed after retries" >&2
+          echo "Push failed after bounded retries" >&2
           exit 1
 
-      - name: Remote readback gate
+      - name: Remote readback acceptance gate
         run: |
           set -euo pipefail
           BRANCH=codex/aays-single-runner-v5-20260706
@@ -537,20 +558,25 @@ jobs:
           mf=read('england_map_web/data/building_type/shards/building_type_3_manifest_latest.json')
           cl=read('docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json')
           sh=read('england_map_web/data/building_type/shards/building_type_3_latest.geojson')
-          assert cp['feature_count_before']==7400 and cp['feature_count_after']==7450 and cp['progress_counted'] is True
-          assert cp['last_batch_name']=='Slough' and cp['fake_data'] is False and cp['final_ready'] is False
-          assert st['current_feature_count']==7450 and st['last_batch_name']=='Slough'
-          assert mf['total_features']==7450 and mf['feature_count_after']==7450
-          assert cl['added_feature_count']==50 and len(cl['records'])==50 and cl['batch_name']=='Slough'
-          assert len(sh['features'])==7450 and sh.get('latest_batch')=='Slough'
-          ids=[]; parcels=[]; osms=[]
-          for f in sh['features']:
-              ids.append(str(f.get('id')))
+          assert cp['feature_count_before']==7450 and cp['feature_count_after']==7500 and cp['progress_counted'] is True
+          assert cp['current_feature_count']==7500 and cp['last_batch_name']=='Windsor' and cp['fake_data'] is False and cp['final_ready'] is False
+          assert st['current_feature_count']==7500 and st['last_batch_name']=='Windsor' and st['final_ready'] is False
+          assert mf['total_features']==7500 and mf['feature_count_after']==7500
+          assert cl['feature_count_before']==7450 and cl['feature_count_after']==7500 and cl['added_feature_count']==50 and len(cl['records'])==50 and cl['batch_name']=='Windsor'
+          assert len(sh['features'])==7500 and sh.get('latest_batch')=='Windsor'
+          prior=sh['features'][:7450]
+          new=sh['features'][7450:]
+          prior_ids=set(); prior_parcels=set(); prior_osms=set()
+          for f in prior:
+              if f.get('id') is not None: prior_ids.add(str(f['id']))
               p=f.get('properties') or {}
-              parcels.append(str(p.get('parcel_id')))
-              osms.append(str(p.get('osm_id')))
-          assert len(ids)==len(set(ids))
-          assert len(parcels)==len(set(parcels))
-          assert len(osms)==len(set(osms))
-          print(json.dumps({'remote_readback':'OK','feature_count_before':7400,'feature_count_after':7450,'added':50,'batch':'Slough','next_batch':cp['next_batch_index']}, sort_keys=True))
+              if p.get('parcel_id') is not None: prior_parcels.add(str(p['parcel_id']))
+              if p.get('osm_id') is not None: prior_osms.add(str(p['osm_id']))
+          new_ids=[str(f.get('id')) for f in new]
+          new_parcels=[str((f.get('properties') or {}).get('parcel_id')) for f in new]
+          new_osms=[str((f.get('properties') or {}).get('osm_id')) for f in new]
+          assert len(new)==50 and len(set(new_ids))==len(set(new_parcels))==len(set(new_osms))==50
+          assert not (set(new_ids)&prior_ids) and not (set(new_parcels)&prior_parcels) and not (set(new_osms)&prior_osms)
+          assert all(r.get('sources') and r.get('evidence_excerpt') and r.get('evidence_level') in ('B','C','D','U') and r.get('confidence_level_1_to_4') in (1,2,3,4) and r.get('fake_data') is False for r in cl['records'])
+          print(json.dumps({'remote_readback':'OK','feature_count_before':7450,'feature_count_after':7500,'added':50,'batch':'Windsor','classified_added':cl['classified_added'],'unknown_added':cl['unknown_added'],'evidence':cl['evidence_level_distribution'],'confidence':cl['confidence_level_distribution'],'next_batch':cp['next_batch_index']}, sort_keys=True))
           PY
