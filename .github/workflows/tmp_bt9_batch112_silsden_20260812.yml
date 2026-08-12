@@ -1,0 +1,175 @@
+name: AAYS building_type_9 Silsden batch112
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - '.github/tmp_bt9_batch112_silsden_20260812.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-9-serial
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Render fail-closed Silsden batch 112 runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 2dd1104bc682198b075fa9283d98f1c2e039102e:.github/tmp_bt9_batch46_ripon_v3.py > .github/tmp_bt9_batch112_silsden_20260812.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/tmp_bt9_batch112_silsden_20260812.py')
+          text = path.read_text(encoding='utf-8')
+          replacements = [
+              ('CITY = "Ripon"', 'CITY = "Silsden"'),
+              ('GRID = "RIPON_CENTRAL_02"', 'GRID = "SILSDEN_AIREDALE_01"'),
+              ('BATCH = 46', 'BATCH = 112'),
+              ('EXPECTED_BEFORE = 2250', 'EXPECTED_BEFORE = 5550'),
+              ('TARGET_AFTER = 2300', 'TARGET_AFTER = 5600'),
+              ('NEXT_TARGET = 2350', 'NEXT_TARGET = 5650'),
+              ('xs = [-1.5650, -1.5350, -1.5050, -1.4750]', 'xs = [-1.9900, -1.9650, -1.9400, -1.9150, -1.8900]'),
+              ('ys = [54.1100, 54.1320, 54.1540, 54.1760]', 'ys = [53.8750, 53.8950, 53.9150, 53.9350, 53.9550]'),
+              ('(+evidence batch 46)', '(+evidence batch 112)'),
+              ('OpenStreetMap API 0.6 - Ripon batch 46', 'OpenStreetMap API 0.6 - Silsden batch 112'),
+              ('appended 50 Ripon OSM API records', 'appended 50 Silsden OSM API records'),
+              ('Batch 46 appended 50 new Ripon OSM API evidence-backed building features', 'Batch 112 appended 50 new Silsden OSM API evidence-backed building features'),
+              ('BATCH_046_APPENDED_50_RIPON_OSM_FEATURES_CONTINUATION_REQUIRED', 'BATCH_112_APPENDED_50_SILSDEN_OSM_FEATURES_CONTINUATION_REQUIRED'),
+              ('APPEND_NEW_BATCH_047_AFTER_FEATURE_2300', 'APPEND_NEW_BATCH_113_AFTER_FEATURE_5600'),
+              ('for attempt in range(4):', 'for attempt in range(3):'),
+          ]
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'FAIL_CLOSED replacement target count {count} for: {old}')
+              text = text.replace(old, new)
+          stale = [
+              'CITY = "Ripon"', 'GRID = "RIPON_CENTRAL_02"', 'BATCH = 46',
+              'EXPECTED_BEFORE = 2250', 'TARGET_AFTER = 2300', 'NEXT_TARGET = 2350',
+              'APPEND_NEW_BATCH_047_AFTER_FEATURE_2300'
+          ]
+          for literal in stale:
+              if literal in text:
+                  raise SystemExit(f'FAIL_CLOSED stale template literal remains: {literal}')
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Run fail-closed Silsden batch 112
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .github/tmp_bt9_batch112_silsden_20260812.py
+
+      - name: Remote checkpoint guard then commit and push only building_type_9 outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin "$BRANCH"
+          python - <<'PY'
+          import json, subprocess
+          base='origin/codex/aays-single-runner-v5-20260706:'
+          cp=json.loads(subprocess.check_output(['git','show',base+'docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json'], text=True))
+          task=json.loads(subprocess.check_output(['git','show',base+'docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json'], text=True))
+          expected='d350a5a37a836c7a2d36fc243b0692c1cffa5b3d65f7e01ff1108c4215340512'
+          if cp.get('current_feature_count') != 5550 or cp.get('next_batch_index') != 112:
+              raise SystemExit('REMOTE_GUARD_ABORT: building_type_9 checkpoint moved; do not overwrite')
+          if task.get('task_id') != 'building-type-9-england-classification-v1-20260808' or task.get('continuation_key') != expected:
+              raise SystemExit('REMOTE_GUARD_ABORT: building_type_9 task/continuation moved')
+          if task.get('owner') is not None or task.get('blocker') is not None:
+              raise SystemExit('REMOTE_GUARD_ABORT: building_type_9 owner/blocker changed')
+          PY
+          git rm -f --ignore-unmatch -- \
+            .github/tmp_bt9_batch112_silsden_20260812.py \
+            .github/workflows/tmp_bt9_batch112_silsden_20260812.yml
+          git add -- \
+            england_map_web/data/building_type/shards/building_type_9_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_9_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json
+          git diff --cached --check
+          git diff --cached --name-only
+          git commit -m 'data: append building_type_9 Silsden batch 112'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if git rebase "origin/$BRANCH"; then
+              if git push origin "HEAD:$BRANCH"; then exit 0; fi
+            else
+              git rebase --abort || true
+              echo 'Rebase conflict; refusing to overwrite concurrent slot changes.' >&2
+              exit 1
+            fi
+            sleep $((attempt*2))
+          done
+          exit 1
+
+      - name: Remote readback acceptance gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          git fetch origin "$BRANCH"
+          python - <<'PY'
+          import json, subprocess
+          base='origin/codex/aays-single-runner-v5-20260706:'
+          def read(path):
+              return json.loads(subprocess.check_output(['git','show',base+path], text=True))
+          cp=read('docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json')
+          st=read('docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json')
+          mf=read('england_map_web/data/building_type/shards/building_type_9_manifest_latest.json')
+          cl=read('docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json')
+          sh=read('england_map_web/data/building_type/shards/building_type_9_latest.geojson')
+          task=read('docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json')
+          expected='d350a5a37a836c7a2d36fc243b0692c1cffa5b3d65f7e01ff1108c4215340512'
+          assert cp['feature_count_before']==5550 and cp['feature_count_after']==5600
+          assert cp['current_feature_count']==5600 and cp['next_batch_index']==113
+          assert cp['last_batch']['batch_index']==112 and cp['last_batch']['city']=='Silsden'
+          assert cp['fake_data'] is False and cp['final_ready'] is False
+          assert st['feature_count_before']==5550 and st['feature_count_after']==5600 and st['current_feature_count']==5600
+          assert st['last_batch_city']=='Silsden' and st['fake_data'] is False and st['final_ready'] is False
+          assert mf['total_features']==5600 and mf['feature_count_after']==5600 and mf['last_batch_city']=='Silsden'
+          assert cl['feature_count_before']==5550 and cl['feature_count_after']==5600 and cl['added_feature_count']==50 and cl['progress'] is True
+          assert cl['city']=='Silsden' and cl['batch_index']==112 and cl['continuation_key']==expected
+          assert cl['fake_data'] is False and cl['final_ready'] is False and len(cl['records'])==50
+          assert task['continuation_key']==expected and task['owner'] is None and task['blocker'] is None
+          assert task['first_unverified_step']=='APPEND_NEW_BATCH_113_AFTER_FEATURE_5600' and task['final_ready'] is False and task['fake_data'] is False
+          assert len(sh['features'])==5600
+          prior=sh['features'][:5550]
+          new=sh['features'][5550:]
+          prior_ids=set(); prior_parcels=set(); prior_osms=set()
+          for f in prior:
+              if f.get('id') is not None: prior_ids.add(str(f['id']))
+              p=f.get('properties') or {}
+              if p.get('parcel_id') is not None: prior_parcels.add(str(p['parcel_id']))
+              if p.get('osm_id') is not None: prior_osms.add(str(p['osm_id']))
+          new_ids=[str(f.get('id')) for f in new]
+          new_parcels=[str((f.get('properties') or {}).get('parcel_id')) for f in new]
+          new_osms=[str((f.get('properties') or {}).get('osm_id')) for f in new]
+          assert len(new)==50 and len(set(new_ids))==len(set(new_parcels))==len(set(new_osms))==50
+          assert not (set(new_ids)&prior_ids) and not (set(new_parcels)&prior_parcels) and not (set(new_osms)&prior_osms)
+          assert all((f.get('properties') or {}).get('fake_data') is False and (f.get('properties') or {}).get('final_ready') is False for f in new)
+          assert all(r.get('sources') and r.get('evidence_excerpt') and r.get('evidence_level') in ('B','C','D','U') and r.get('confidence_level_1_to_4') in (1,2,3,4) for r in cl['records'])
+          print(json.dumps({'remote_readback':'OK','feature_count_before':5550,'feature_count_after':5600,'added':50,'batch':112,'city':'Silsden','evidence':cl['evidence_level_new_features'],'confidence':cl['confidence_level_new_features'],'next_batch':cp['next_batch_index']}, sort_keys=True))
+          PY
