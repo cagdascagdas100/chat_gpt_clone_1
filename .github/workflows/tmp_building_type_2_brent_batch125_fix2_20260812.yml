@@ -1,0 +1,171 @@
+name: tmp building_type_2 Brent FHRS continuation batch 125 correction
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_2_brent_batch125_fix2_20260812.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-2-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Prepare current head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append exactly 50 processed-ID-external Brent FHRS features
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show HEAD:.github/workflows/tmp_building_type_2_bexley_batch124_20260812.yml > /tmp/bexley.yml
+          python3 <<'PY'
+          from pathlib import Path
+          text=Path('/tmp/bexley.yml').read_text(encoding='utf-8')
+          anchor='      - name: Append exactly 50 processed-ID-external Bexley FHRS features'
+          marker="          python3 <<'PY'\n"
+          a=text.index(anchor)
+          start=text.index(marker,a)+len(marker)
+          end=text.index("\n          PY",start)
+          wrapper='\n'.join(line[10:] if line.startswith('          ') else line for line in text[start:end].splitlines())+'\n'
+          exact=[
+            ('BEFORE=6150; TARGET=6200; BATCH=124; NEXT_BATCH=125; NEXT_TARGET=6250','BEFORE=6200; TARGET=6250; BATCH=125; NEXT_BATCH=126; NEXT_TARGET=6300'),
+            ('feature_count 6150 -> 6200','feature_count 6200 -> 6250'),
+            ('Sonraki adim batch 125: mevcut 6200 featurein feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 6200 kaydi tekrar isleme.','Sonraki adim batch 126: mevcut 6250 featurein feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 6250 kaydi tekrar isleme.'),
+            ('FHRS503en-GB.xml','FHRS504en-GB.xml'),
+            ('Bexley','Brent'),
+            ('bexley','brent'),
+            ('BEXLEY','BRENT'),
+            ('batch124','batch125'),
+            ('batch 124','batch 125'),
+            ('Batch 124','Batch 125'),
+          ]
+          for old,new in exact:
+              if old not in wrapper:
+                  raise SystemExit(f'FAIL_CLOSED missing correction token: {old}')
+              wrapper=wrapper.replace(old,new)
+          required=[
+            "CITY='Brent'; AUTH_SUB='brent'",
+            'FHRS504en-GB.xml',
+            'BEFORE=6200; TARGET=6250; BATCH=125; NEXT_BATCH=126; NEXT_TARGET=6300',
+            "features_used',-1))==250",
+            "'features_used':300",
+            'BATCH_125_APPENDED_50_BRENT_FHRS_CONTINUATION_REQUIRED',
+            'evidence_excerpt',
+            "'fake_data':False",
+            "'final_ready':False"
+          ]
+          for token in required:
+              if token not in wrapper:
+                  raise SystemExit(f'FAIL_CLOSED corrected wrapper missing: {token}')
+          exec(compile(wrapper,'<bt2_batch125_brent_correction>','exec'),{'__name__':'__main__'})
+          PY
+
+      - name: Validate guarded append
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+          URL='https://ratings.food.gov.uk/api/open-data-files/FHRS504en-GB.xml'
+          def load(p): return json.loads(Path(p).read_text(encoding='utf-8'))
+          shard=load('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          manifest=load('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          checkpoint=load('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          status=load('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          runner=load('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          task=load('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          assert len(shard['features'])==6250
+          assert manifest['feature_count_before']==6200 and manifest['feature_count_after']==6250 and manifest['added_feature_count']==50
+          assert checkpoint['current_feature_count']==6250 and checkpoint['next_batch_index']==126 and checkpoint['next_target_feature_count']==6300
+          assert status['current_feature_count']==6250 and runner['feature_count_before']==6200 and runner['feature_count_after']==6250 and runner['added_feature_count']==50
+          assert task['owner'] is None and task['task_id']=='building-type-2-england-classification-v1-20260808'
+          for o in (manifest,checkpoint,status,runner,task): assert o.get('fake_data') is False and o.get('final_ready') is False
+          assert runner.get('already_processed_ids_policy_applied') is True and runner['city']=='Brent'
+          ids=list(runner['new_feature_ids']); assert len(ids)==50 and len(set(ids))==50
+          batch=[f for f in shard['features'] if f.get('id') in set(ids)]; assert len(batch)==50 and len(runner['records'])==50
+          assert len({f.get('id') for f in shard['features']})==6250
+          assert len({(f.get('properties') or {}).get('parcel_id') for f in batch})==50
+          assert len({str((f.get('properties') or {}).get('fhrs_id')) for f in batch})==50
+          source_rows=[f for f in shard['features'] if (f.get('properties') or {}).get('source_url')==URL]; assert len(source_rows)==300
+          src=[s for s in manifest.get('sources') or [] if s.get('url')==URL]; assert len(src)==1 and src[0]['features_used']==300
+          for f in batch:
+              p=f.get('properties') or {}
+              assert p.get('source_url')==URL and p.get('source_hash') and p.get('sources')
+              assert p.get('evidence_excerpt') and p.get('source_evidence_excerpt')
+              assert p.get('evidence_level')=='D' and p.get('confidence_level_1_to_4')==2 and p.get('confidence_score')==0.55
+              assert p.get('needs_manual_review') is True and p.get('fake_data') is False and p.get('final_ready') is False
+          print('validated building_type_2 6200->6250 with exactly 50 new Brent features')
+          PY
+
+      - name: Commit and push only slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json
+          )
+          git restore -- docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json
+          git add -- "${paths[@]}"
+          test -n "$(git diff --cached --name-only)"
+          while read -r p; do ok=0; for e in "${paths[@]}"; do [[ "$p" == "$e" ]] && ok=1; done; [[ "$ok" == 1 ]] || { echo "unexpected staged path: $p"; exit 1; }; done < <(git diff --cached --name-only)
+          git commit -m "data(building_type_2): append Brent FHRS batch 125 6200->6250"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then git merge --abort || true; exit 1; fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            sleep $((attempt*2))
+          done
+          exit 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json, subprocess
+          ref='origin/codex/aays-single-runner-v5-20260706'; URL='https://ratings.food.gov.uk/api/open-data-files/FHRS504en-GB.xml'
+          def load(p): return json.loads(subprocess.check_output(['git','show',f'{ref}:{p}']))
+          shard=load('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          manifest=load('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          runner=load('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          checkpoint=load('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          status=load('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          task=load('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          assert len(shard['features'])==6250
+          assert manifest['feature_count_before']==6200 and manifest['feature_count_after']==6250 and manifest['added_feature_count']==50
+          assert checkpoint['current_feature_count']==6250 and checkpoint['next_batch_index']==126 and checkpoint['next_target_feature_count']==6300
+          assert status['current_feature_count']==6250 and runner['city']=='Brent' and len(runner['new_feature_ids'])==50 and runner.get('already_processed_ids_policy_applied') is True
+          assert task['owner'] is None and task['task_id']=='building-type-2-england-classification-v1-20260808'
+          for o in (manifest,checkpoint,status,runner,task): assert o.get('fake_data') is False and o.get('final_ready') is False
+          ids=set(runner['new_feature_ids']); batch=[f for f in shard['features'] if f.get('id') in ids]; assert len(batch)==50
+          assert all((f.get('properties') or {}).get('evidence_excerpt') and (f.get('properties') or {}).get('source_evidence_excerpt') for f in batch)
+          assert all((f.get('properties') or {}).get('evidence_level')=='D' and (f.get('properties') or {}).get('confidence_level_1_to_4')==2 for f in batch)
+          assert all((f.get('properties') or {}).get('fake_data') is False and (f.get('properties') or {}).get('final_ready') is False for f in batch)
+          source_rows=[f for f in shard['features'] if (f.get('properties') or {}).get('source_url')==URL]; assert len(source_rows)==300
+          src=[s for s in manifest.get('sources') or [] if s.get('url')==URL]; assert len(src)==1 and src[0]['features_used']==300
+          print('remote readback verified building_type_2 6200->6250 batch125 Brent; final_ready=false')
+          PY
