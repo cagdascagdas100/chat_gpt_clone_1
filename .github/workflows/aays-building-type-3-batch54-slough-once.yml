@@ -1,4 +1,4 @@
-name: AAYS building_type_3 batch66 Seaford once
+name: AAYS building_type_3 batch67 Uckfield once
 
 "on":
   push:
@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  append-seaford-batch66:
+  append-uckfield-batch67:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -30,12 +30,12 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git pull --rebase origin codex/aays-single-runner-v5-20260706
 
-      - name: Append Seaford batch 66
+      - name: Append Uckfield batch 67
         env:
           TASK: building-type-3-england-classification-v1-20260808
           CONT: 03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e
-          BEFORE: "8000"
-          BATCH: "66"
+          BEFORE: "8050"
+          BATCH: "67"
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -45,8 +45,8 @@ jobs:
 
           SLOT="building_type_3"; TASK=os.environ["TASK"]; CONT=os.environ["CONT"]
           BEFORE=int(os.environ["BEFORE"]); BATCH=int(os.environ["BATCH"])
-          CITY="Seaford"; AUTH="Lewes"; GRID="Seaford 50.7650,0.0600,50.8050,0.1300"
-          WEST,SOUTH,EAST,NORTH=0.0600,50.7650,0.1300,50.8050
+          CITY="Uckfield"; AUTH="Wealden"; GRID="Uckfield 50.9550,0.0700,51.0050,0.1250"
+          WEST,SOUTH,EAST,NORTH=0.0700,50.9550,0.1250,51.0050
           ENDPOINT="https://api.openstreetmap.org/api/0.6/map"
           NOW=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00","Z")
           P={"shard":Path("england_map_web/data/building_type/shards/building_type_3_latest.geojson"),"manifest":Path("england_map_web/data/building_type/shards/building_type_3_manifest_latest.json"),"class":Path("docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json"),"status":Path("docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json"),"cp":Path("docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json"),"task":Path("docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json")}
@@ -86,7 +86,7 @@ jobs:
 
           def fetch_tile(w,s,e,n):
             url=ENDPOINT+"?"+urllib.parse.urlencode({"bbox":f"{w:.4f},{s:.4f},{e:.4f},{n:.4f}"})
-            req=urllib.request.Request(url,headers={"User-Agent":"AAYS-building-type-3-batch66/1.0"})
+            req=urllib.request.Request(url,headers={"User-Agent":"AAYS-building-type-3-batch67/1.0"})
             last=None
             for i in range(3):
               try:
@@ -115,7 +115,7 @@ jobs:
                 seen.add(wid); cand.append({"wid":wid,"fid":fid,"oid":oid,"tags":tags,"url":url,"sha":tile,"geometry":{"type":"Point","coordinates":[sum(x for x,_ in coords)/len(coords),sum(y for _,y in coords)/len(coords)]}})
               w=round(e,4)
             s=round(n,4)
-          if len(cand)<50: raise SystemExit(f"NO_PROGRESS: only {len(cand)} unprocessed Seaford building ways; canonical files unchanged")
+          if len(cand)<50: raise SystemExit(f"NO_PROGRESS: only {len(cand)} unprocessed Uckfield building ways; canonical files unchanged")
           selected=sorted(cand,key=lambda c:(0 if classify(c["tags"])[0]!="unknown" else 1,int(c["wid"])))[:50]
 
           ev=collections.Counter(); conf=collections.Counter(); types=collections.Counter(); records=[]; feats=[]; ids=[]; parcels=[]; osms=[]
@@ -139,25 +139,25 @@ jobs:
           for k,v in ev.items(): mf.setdefault("evidence_distribution",{})[k]=int(mf["evidence_distribution"].get(k,0))+v
           for k,v in conf.items(): mf.setdefault("confidence_level_distribution",{})[k]=int(mf["confidence_level_distribution"].get(k,0))+v
           for k,v in types.items(): mf.setdefault("type_distribution",{})[k]=int(mf["type_distribution"].get(k,0))+v
-          mf.setdefault("sources",[]).append({"name":f"OpenStreetMap API 0.6 map - {CITY} batch {BATCH}","url":ENDPOINT,"features_used":50,"accessed_at":NOW,"source_sha256":source_sha,"source_hash_method":"sha256_concatenated_raw_osm_xml_tiles","license":"ODbL 1.0","evidence_level_distribution":dict(ev),"confidence_level_distribution":dict(conf),"grid_bbox":GRID,"raw_source_stored_in_git":False,"note":"50 new Seaford OSM building ways after feature.id/parcel_id/osm_id exclusion; raw XML runtime-only."})
+          mf.setdefault("sources",[]).append({"name":f"OpenStreetMap API 0.6 map - {CITY} batch {BATCH}","url":ENDPOINT,"features_used":50,"accessed_at":NOW,"source_sha256":source_sha,"source_hash_method":"sha256_concatenated_raw_osm_xml_tiles","license":"ODbL 1.0","evidence_level_distribution":dict(ev),"confidence_level_distribution":dict(conf),"grid_bbox":GRID,"raw_source_stored_in_git":False,"note":"50 new Uckfield OSM building ways after feature.id/parcel_id/osm_id exclusion; raw XML runtime-only."})
           cl={"schema_version":3,"slot_id":SLOT,"task_id":TASK,"continuation_key":CONT,"generated_at":NOW,"state":"IN_PROGRESS","batch_index":BATCH,"batch_name":CITY,"feature_count_before":BEFORE,"feature_count_after":AFTER,"added_feature_count":50,"classified_added":classified,"unknown_added":unknown,"classified_count_after":mf["classified"],"unknown_count_after":mf["unknown"],"source":"OpenStreetMap API 0.6 map","endpoint":ENDPOINT,"source_sha256":source_sha,"evidence_level_distribution":dict(ev),"confidence_level_distribution":dict(conf),"building_type_distribution":dict(types),"records":records,"fake_data":False,"final_ready":False}
-          cp.update({"first_unverified_step_status":f"BATCH_{BATCH}_APPENDED_50_SEAFORD_OSM_CONTINUATION_REQUIRED","terminal_status":"IN_PROGRESS","updated_at":NOW,"final_ready":False,"state":"IN_PROGRESS","feature_count_before":BEFORE,"feature_count_after":AFTER,"current_feature_count":AFTER,"next_batch_index":BATCH+1,"next_target_feature_count":AFTER+300,"last_processed_ids_sample":ids[-20:],"attempted_new_city_batch":CITY,"source_access_evidence":{"osm_api":"Live OSM API 0.6 map tiles succeeded","endpoint":ENDPOINT,"source_sha256":source_sha,"raw_source_stored_in_git":False},"blocker":None,"blocker_reason":"","next_required_action":f"APPEND_ONLY_BATCH_{BATCH+1}_NEW_SOUTH_EAST_CITY_GRID_DO_NOT_REPROCESS_EXISTING_IDS","fake_data":False,"last_batch_name":CITY,"last_batch_new_features":50,"last_batch_evidence":batch,"candidate_batch":None,"no_progress_reason":None,"new_features_added_this_attempt":50,"progress_counted":True})
+          cp.update({"first_unverified_step_status":f"BATCH_{BATCH}_APPENDED_50_UCKFIELD_OSM_CONTINUATION_REQUIRED","terminal_status":"IN_PROGRESS","updated_at":NOW,"final_ready":False,"state":"IN_PROGRESS","feature_count_before":BEFORE,"feature_count_after":AFTER,"current_feature_count":AFTER,"next_batch_index":BATCH+1,"next_target_feature_count":AFTER+300,"last_processed_ids_sample":ids[-20:],"attempted_new_city_batch":CITY,"source_access_evidence":{"osm_api":"Live OSM API 0.6 map tiles succeeded","endpoint":ENDPOINT,"source_sha256":source_sha,"raw_source_stored_in_git":False},"blocker":None,"blocker_reason":"","next_required_action":f"APPEND_ONLY_BATCH_{BATCH+1}_NEW_SOUTH_EAST_CITY_GRID_DO_NOT_REPROCESS_EXISTING_IDS","fake_data":False,"last_batch_name":CITY,"last_batch_new_features":50,"last_batch_evidence":batch,"candidate_batch":None,"no_progress_reason":None,"new_features_added_this_attempt":50,"progress_counted":True})
           cp.setdefault("summary",{}).update({"current_feature_count":AFTER,"new_features_added_this_attempt":50,"progress_counted":True})
           cities=cp.setdefault("attempted_cities",[])
           if CITY not in cities: cities.append(CITY)
-          st.update({"state":"IN_PROGRESS","updated_at":NOW,"owner":None,"final_ready":False,"classified_count":mf["classified"],"unknown_count":mf["unknown"],"total_elements":AFTER,"feature_count_before":BEFORE,"feature_count_after":AFTER,"new_features_added":50,"progress_counted":True,"next_batch_index":BATCH+1,"next_target_feature_count":AFTER+300,"confidence_distribution":dict(mf.get("confidence_level_distribution",{})),"evidence_distribution":dict(mf.get("evidence_distribution",{})),"blocker":None,"blocker_reason":"","note":f"Batch {BATCH} appended 50 new Seaford OSM evidence-backed features outside all prior feature.id/parcel_id/osm_id values; same task/continuation retained.","current_feature_count":AFTER,"fake_data":False,"total_features":AFTER,"classified":mf["classified"],"unknown":mf["unknown"],"confidence_level_distribution":dict(mf.get("confidence_level_distribution",{})),"progress_count_delta":50,"new_feature_count":50,"last_batch_city":CITY,"last_batch_name":CITY,"last_batch_new_features":50,"last_batch_added_feature_count":50,"last_batch_source":"OpenStreetMap API 0.6 map","last_batch_evidence_distribution":dict(ev),"last_batch_confidence_distribution":dict(conf),"last_batch_index":BATCH,"candidate_batch":None,"no_progress_reason":None,"progress_reason":"50 new Seaford OSM records appended after processed-ID exclusion","last_batch":batch,"last_batch_evidence":batch})
+          st.update({"state":"IN_PROGRESS","updated_at":NOW,"owner":None,"final_ready":False,"classified_count":mf["classified"],"unknown_count":mf["unknown"],"total_elements":AFTER,"feature_count_before":BEFORE,"feature_count_after":AFTER,"new_features_added":50,"progress_counted":True,"next_batch_index":BATCH+1,"next_target_feature_count":AFTER+300,"confidence_distribution":dict(mf.get("confidence_level_distribution",{})),"evidence_distribution":dict(mf.get("evidence_distribution",{})),"blocker":None,"blocker_reason":"","note":f"Batch {BATCH} appended 50 new Uckfield OSM evidence-backed features outside all prior feature.id/parcel_id/osm_id values; same task/continuation retained.","current_feature_count":AFTER,"fake_data":False,"total_features":AFTER,"classified":mf["classified"],"unknown":mf["unknown"],"confidence_level_distribution":dict(mf.get("confidence_level_distribution",{})),"progress_count_delta":50,"new_feature_count":50,"last_batch_city":CITY,"last_batch_name":CITY,"last_batch_new_features":50,"last_batch_added_feature_count":50,"last_batch_source":"OpenStreetMap API 0.6 map","last_batch_evidence_distribution":dict(ev),"last_batch_confidence_distribution":dict(conf),"last_batch_index":BATCH,"candidate_batch":None,"no_progress_reason":None,"progress_reason":"50 new Uckfield OSM records appended after processed-ID exclusion","last_batch":batch,"last_batch_evidence":batch})
           tk.update({"updated_at":NOW,"owner":None,"fake_data":False,"final_ready":False,"last_batch_index":BATCH,"last_batch_name":CITY,"last_batch_added_feature_count":50,"next_batch_index":BATCH+1,"next_target_feature_count":AFTER+300})
           tk.setdefault("progress",{}).update({"completed_count":AFTER,"target_count":AFTER+300})
           dump("shard",sh); dump("manifest",mf); dump("class",cl); dump("cp",cp); dump("task",tk)
           st["output_sha256"]=hashlib.sha256(P["shard"].read_bytes()).hexdigest(); dump("status",st)
-          print(f"BATCH66_BUILD_OK before={BEFORE} after={AFTER} new=50 evidence={dict(ev)} confidence={dict(conf)} types={dict(types)}")
+          print(f"BATCH67_BUILD_OK before={BEFORE} after={AFTER} new=50 evidence={dict(ev)} confidence={dict(conf)} types={dict(types)}")
           PY
 
       - name: Guard, commit and push six canonical files
         env:
           CONT: 03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e
-          BEFORE: "8000"
-          BATCH: "66"
+          BEFORE: "8050"
+          BATCH: "67"
         run: |
           set -euo pipefail
           BR=codex/aays-single-runner-v5-20260706
@@ -173,7 +173,7 @@ jobs:
           PY
           FILES=(england_map_web/data/building_type/shards/building_type_3_latest.geojson england_map_web/data/building_type/shards/building_type_3_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json)
           git add "${FILES[@]}"; test -n "$(git diff --cached --name-only)"
-          git commit -m "data(building_type_3): append Seaford batch 66"
+          git commit -m "data(building_type_3): append Uckfield batch 67"
           for attempt in 1 2 3; do
             if git push origin HEAD:"$BR"; then exit 0; fi
             git pull --rebase origin "$BR"; sleep $((attempt*2))
@@ -194,16 +194,16 @@ jobs:
           def remote(p): return json.loads(raw(p))
           cp=remote(paths['cp']); st=remote(paths['status']); tk=remote(paths['task']); mf=remote(paths['manifest']); cl=remote(paths['class']); shard_bytes=raw(paths['shard']); sh=json.loads(shard_bytes); cont=os.environ['CONT']
           assert cp['continuation_key']==st['continuation_key']==tk['continuation_key']==mf['continuation_key']==cl['continuation_key']==cont
-          assert cp['feature_count_before']==8000 and cp['feature_count_after']==8050 and cp['current_feature_count']==8050
-          assert st['feature_count_before']==8000 and st['feature_count_after']==8050 and st['current_feature_count']==8050
-          assert mf['feature_count_before']==8000 and mf['feature_count_after']==8050 and mf['total_features']==8050
-          assert cl['feature_count_before']==8000 and cl['feature_count_after']==8050 and cl['added_feature_count']==50 and len(cl.get('records',[]))==50
-          assert len(sh.get('features',[]))==8050 and cp.get('progress_counted') is True and st.get('progress_counted') is True
+          assert cp['feature_count_before']==8050 and cp['feature_count_after']==8100 and cp['current_feature_count']==8100
+          assert st['feature_count_before']==8050 and st['feature_count_after']==8100 and st['current_feature_count']==8100
+          assert mf['feature_count_before']==8050 and mf['feature_count_after']==8100 and mf['total_features']==8100
+          assert cl['feature_count_before']==8050 and cl['feature_count_after']==8100 and cl['added_feature_count']==50 and len(cl.get('records',[]))==50
+          assert len(sh.get('features',[]))==8100 and cp.get('progress_counted') is True and st.get('progress_counted') is True
           assert st.get('output_sha256')==hashlib.sha256(shard_bytes).hexdigest()
           assert cp.get('fake_data') is False and st.get('fake_data') is False and mf.get('fake_data') is False and cl.get('fake_data') is False
           assert cp.get('final_ready') is False and st.get('final_ready') is False and tk.get('final_ready') is False and mf.get('final_ready') is False and cl.get('final_ready') is False
-          assert cp.get('next_batch_index')==67 and cp.get('next_target_feature_count')==8350
-          assert cp.get('last_batch_name')=='Seaford' and cl.get('batch_name')=='Seaford'
+          assert cp.get('next_batch_index')==68 and cp.get('next_target_feature_count')==8400
+          assert cp.get('last_batch_name')=='Uckfield' and cl.get('batch_name')=='Uckfield'
           old=sh.get('features',[])[:-50]; processed=set()
           for f in old:
             if f.get('id') is not None: processed.add(str(f['id']))
@@ -213,11 +213,11 @@ jobs:
           ids=[]; parcels=[]; osms=[]
           for f in sh.get('features',[])[-50:]:
             p=f.get('properties') or {}; ids.append(str(f.get('id'))); parcels.append(str(p.get('parcel_id'))); osms.append(str(p.get('osm_id')))
-            assert p.get('area')=='Seaford' and p.get('local_authority')=='Lewes'
+            assert p.get('area')=='Uckfield' and p.get('local_authority')=='Wealden'
             assert p.get('sources') and p.get('source_url') and p.get('source_hash') and p.get('match_method')
             assert p.get('evidence_excerpt') is not None and p.get('evidence_level') in ('B','C','D','U')
             assert p.get('confidence_level_1_to_4') in (1,2,3,4) and p.get('fake_data') is False and p.get('final_ready') is False
           assert len(set(ids))==len(set(parcels))==len(set(osms))==50
           assert not(set(ids)&processed) and not(set(parcels)&processed) and not(set(osms)&processed)
-          print('REMOTE_READBACK_OK before=8000 after=8050 new=50 batch=66 city=Seaford hash_ok=1')
+          print('REMOTE_READBACK_OK before=8050 after=8100 new=50 batch=67 city=Uckfield hash_ok=1')
           PY
