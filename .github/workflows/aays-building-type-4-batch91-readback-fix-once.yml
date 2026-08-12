@@ -1,0 +1,159 @@
+name: AAYS building_type_4 batch91 readback metadata fix one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-4-batch91-readback-fix-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-4-batch91-readback-fix-once
+  cancel-in-progress: false
+
+jobs:
+  verify-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 20
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            england_map_web/data/building_type/shards/building_type_4_latest.geojson
+            england_map_web/data/building_type/shards/building_type_4_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_4
+            docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+      - name: Verify shard and fix batch91 state metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import datetime as dt, hashlib, json
+          from pathlib import Path
+          GEO=Path('england_map_web/data/building_type/shards/building_type_4_latest.geojson')
+          MAN=Path('england_map_web/data/building_type/shards/building_type_4_manifest_latest.json')
+          CP=Path('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json')
+          ST=Path('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
+          CT=Path('docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json')
+          RUN=Path('docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json')
+          def load(p): return json.loads(p.read_text(encoding='utf-8'))
+          def dump(p,o): p.write_text(json.dumps(o,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          geo,man,cp,st,task,run=map(load,[GEO,MAN,CP,ST,CT,RUN])
+          feats=geo.get('features') or []
+          assert len(feats)==4550
+          assert run.get('batch_index')==91 and run.get('city')=='Tavistock' and run.get('local_authority')=='West Devon'
+          assert run.get('feature_count_before')==4500 and run.get('feature_count_after')==4550 and run.get('new_feature_count')==50
+          records=run.get('records') or []
+          assert len(records)==50
+          for r in records:
+              assert r.get('evidence_excerpt')
+              assert r.get('evidence_level')=='B'
+              assert r.get('confidence_level_1_to_4')==3
+              assert r.get('source_url') and r.get('sources')
+              assert r.get('fake_data') is False and r.get('final_ready') is False
+          # Correct uniqueness semantics: unique within each ID namespace, not across namespaces.
+          for key_getter in [lambda f:f.get('id'), lambda f:(f.get('properties') or {}).get('parcel_id'), lambda f:(f.get('properties') or {}).get('osm_id')]:
+              vals=[str(v) for f in feats if (v:=key_getter(f)) not in (None,'')]
+              assert len(vals)==len(set(vals)), 'duplicate within canonical ID namespace'
+          new_fids=[r['feature_id'] for r in records]
+          new_pids=[r['parcel_id'] for r in records]
+          new_osm=[r['osm_id'] for r in records]
+          assert len(new_fids)==len(set(new_fids))==50
+          assert len(new_pids)==len(set(new_pids))==50
+          assert len(new_osm)==len(set(new_osm))==50
+          assert task.get('task_id')=='building-type-4-england-classification-v1-20260808'
+          assert (task.get('continuation_key') or '')=='' and task.get('owner') is None
+          assert all(x.get('fake_data') is False for x in [cp,st,task,run])
+          assert all(x.get('final_ready') is False for x in [cp,st,task,run])
+          now=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          source_sha=run['source_sha256']
+          bbox=[-4.18,50.53,-4.10,50.58]
+          bbox_s='50.530,-4.180,50.580,-4.100'
+          query='[out:json][timeout:90];\nnwr["building"](50.53,-4.18,50.58,-4.1);\nout body center qt 3500;\n'
+          query_sha=hashlib.sha256(query.encode()).hexdigest()
+          geo_sha=hashlib.sha256(GEO.read_bytes()).hexdigest()
+          last_batch={
+            'batch_index':91,'city':'Tavistock','grid_bbox':bbox_s,
+            'source':'OpenStreetMap via Overpass API','source_url':'https://overpass-api.de/api/interpreter',
+            'source_sha256':source_sha,'query_sha256':query_sha,'evidence_level':'B',
+            'confidence_level_1_to_4':3,'added_feature_count':50,'new_feature_ids':new_fids
+          }
+          cp.update({
+            'state':'IN_PROGRESS','terminal_status':'IN_PROGRESS','updated_at':now,'final_ready':False,
+            'remote_head':'40da230fcaa42dfc774271885577420fa6690d05','remote_readback_verified':True,
+            'first_unverified_step':'AŞAMA_1_OSM_GENISLETME_APPEND_NEW_BATCH_THEN_OPTIONAL_EPC_VOA_HMLR_UPGRADE',
+            'first_unverified_step_status':'BATCH_91_REMOTE_READBACK_VERIFIED_CONTINUATION_REQUIRED',
+            'feature_count_before':4500,'feature_count_after':4550,'current_feature_count':4550,
+            'next_batch_index':92,'next_target_feature_count':4600,'last_batch':last_batch,
+            'next_required_action':'APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; OPTIONAL EPC/VOA/HMLR CORROBORATION FOR OSM RECORDS',
+            'blocker':None,'fake_data':False,'candidate_batch':None,'no_progress_reason':None
+          })
+          cp.setdefault('summary',{}).update({'note':'PROGRESS: feature_count 4500 -> 4550. Batch 91 Tavistock remote readback verified; continue at batch 92. final_ready remains false.','new_features_appended':50,'current_feature_count':4550})
+          cp.setdefault('remaining_items',{})['note']='Next batch 92: treat all 4550 canonical feature.id/parcel_id/osm_id values as already_processed_ids and append at least 50 genuinely new South West records; do not replay prior batches.'
+          cp['last_processed_ids_sample']=new_fids[-20:]
+          cp['source_access_evidence']={'tavistock_west_devon_source_sha256':source_sha}
+          st.update({
+            'state':'IN_PROGRESS','updated_at':now,'final_ready':False,'classified_count':4319,'unknown_count':231,
+            'total_elements':4550,'output_sha256':geo_sha,'output_sha256_note':'Current canonical GeoJSON SHA256 after batch 91 append.',
+            'note':'Batch 91 Tavistock OSM: 50 unique evidence-backed features appended; total 4550. Remote readback verified. Continue batch 92.',
+            'feature_count_before':4500,'feature_count_after':4550,'current_feature_count':4550,'last_batch':last_batch,
+            'total_features':4550,'classified':4319,'unknown':231,'confidence_level_distribution':{'1':231,'2':1923,'3':2396},
+            'last_batch_city':'Tavistock','last_batch_added_feature_count':50,'last_batch_source':'OpenStreetMap via Overpass API',
+            'last_batch_evidence_distribution':{'B':50},'last_batch_confidence_distribution':{'3':50},
+            'progress_count_delta':50,'next_batch_index':92,'next_target_feature_count':4600,'candidate_batch':None,'no_progress_reason':None,
+            'new_feature_count':50,'new_features_added':50,'last_batch_index':91,
+            'progress_reason':'50 new Tavistock OSM evidence-backed records appended after processed-id exclusion','progress_counted':True,
+            'last_update':now,'status':'READY','health':'GREEN','progress_pct':22.75,'blocker':'',
+            'remote_head':'40da230fcaa42dfc774271885577420fa6690d05','remote_readback_verified':True,'continuation_key':'','fake_data':False
+          })
+          man.update({
+            'generated_at':now,'total_features':4550,'classified':4319,'unknown':231,
+            'confidence_level_distribution':{'1':231,'2':1923,'3':2396},'fake_data':False,'final_ready':False,
+            'note':'Existing shard preserved; appended 50 new Tavistock OSM evidence-backed records outside all prior feature.id, parcel_id and osm_id values.',
+            'feature_count':4550,'geojson_sha256':geo_sha,'manifest_updated_at':now,
+            'feature_count_before':4500,'feature_count_after':4550,'added_feature_count':50,
+            'last_batch_city':'Tavistock','last_batch_source':'OpenStreetMap via Overpass API',
+            'last_batch_source_sha256':source_sha,'last_batch_index':91,
+            'last_batch':dict(last_batch,evidence_level_distribution={'B':50},confidence_level_distribution={'3':50})
+          })
+          dump(CP,cp); dump(ST,st); dump(MAN,man)
+          print(json.dumps({'verified_features':len(feats),'verified_records':len(records),'geo_sha256':geo_sha,'source_sha256':source_sha},indent=2))
+          PY
+      - name: Commit corrected metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add england_map_web/data/building_type/shards/building_type_4_manifest_latest.json docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json
+          git diff --cached --quiet && { echo 'No metadata changes'; exit 1; }
+          git commit -m "state(building_type_4): verify Tavistock batch91 readback"
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
+      - name: Remote readback corrected state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+          python - <<'PY'
+          import json,subprocess
+          br='origin/codex/aays-single-runner-v5-20260706'
+          def j(p): return json.loads(subprocess.check_output(['git','show',f'{br}:{p}']).decode())
+          cp=j('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json')
+          st=j('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
+          man=j('england_map_web/data/building_type/shards/building_type_4_manifest_latest.json')
+          run=j('docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json')
+          assert cp['feature_count_after']==4550 and cp['next_batch_index']==92 and cp['last_batch']['batch_index']==91 and cp['last_batch']['city']=='Tavistock'
+          assert st['current_feature_count']==4550 and st['last_batch_index']==91 and st['remote_readback_verified'] is True
+          assert man['feature_count_after']==4550 and man['last_batch_index']==91
+          assert run['new_feature_count']==50 and len(run['records'])==50
+          assert cp['fake_data'] is False and cp['final_ready'] is False and st['final_ready'] is False and man['final_ready'] is False and run['final_ready'] is False
+          print('REMOTE_READBACK_OK building_type_4 batch91 4500->4550 Tavistock; final_ready=false')
+          PY
