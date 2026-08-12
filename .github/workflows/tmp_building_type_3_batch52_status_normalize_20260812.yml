@@ -1,0 +1,82 @@
+name: tmp building_type_3 batch 52 status normalize
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_3_batch52_status_normalize_20260812.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-3-continuation
+  cancel-in-progress: false
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Normalize guarded batch 52 status summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json, pathlib
+          p=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json')
+          o=json.loads(p.read_text(encoding='utf-8'))
+          expected_task='building-type-3-england-classification-v1-20260808'
+          expected_cont='03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e'
+          guards={
+            'task_id': expected_task,
+            'continuation_key': expected_cont,
+            'owner': None,
+            'fake_data': False,
+            'final_ready': False,
+            'current_feature_count': 7350,
+            'feature_count_after': 7350,
+            'last_batch_index': 52,
+          }
+          for k,v in guards.items():
+            if o.get(k)!=v:
+              raise SystemExit(f'guard moved: {k}={o.get(k)!r}, expected {v!r}')
+          s=o.setdefault('summary',{})
+          if s.get('current_feature_count')==7350:
+            raise SystemExit('already normalized; refusing no-op rewrite')
+          s['current_feature_count']=7350
+          s['new_features_added_this_attempt']=50
+          s['progress_counted']=True
+          p.write_text(json.dumps(o,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+
+      - name: Commit push and remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          git config user.name 'aays-building-type-3-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json
+          git diff --cached --quiet && { echo 'No metadata change'; exit 1; }
+          git commit -m 'chore(building_type_3): normalize batch 52 status metadata'
+          if [ -n "$(git status --porcelain)" ]; then
+            git stash push --include-untracked -m 'tmp-bt3-b52-normalize-cleanliness'
+          fi
+          pushed=0
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if ! git merge-base --is-ancestor origin/"$BRANCH" HEAD; then git rebase origin/"$BRANCH"; fi
+            if git push origin HEAD:"$BRANCH"; then pushed=1; break; fi
+            sleep 2
+          done
+          test "$pushed" = 1
+          REMOTE_COMMIT=$(git rev-parse HEAD)
+          git fetch origin "$BRANCH"
+          git merge-base --is-ancestor "$REMOTE_COMMIT" origin/"$BRANCH"
+          echo "REMOTE_READBACK_OK commit=$REMOTE_COMMIT"
