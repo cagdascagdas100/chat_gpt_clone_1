@@ -62,6 +62,10 @@ jobs:
               code=code.replace(old,new,1)
           code=code.replace('building_type_6','building_type_5').replace('Skegness','Saffron Walden').replace('SKEGNESS','SAFFRON_WALDEN').replace('skegness','saffron_walden').replace('East Lindsey','Uttlesford').replace('East Midlands','East of England')
           code=code.replace('saffron_walden_east_lindsey_source_sha256','saffron_walden_uttlesford_source_sha256')
+          endpoint_old='ENDPOINT = "https://overpass-api.de/api/interpreter"'
+          endpoint_new='ENDPOINT = "https://overpass.kumi.systems/api/interpreter"'
+          if endpoint_old not in code: raise SystemExit('missing Overpass endpoint token')
+          code=code.replace(endpoint_old,endpoint_new,1)
           old='if checkpoint.get("continuation_key") != CONT or status.get("continuation_key") != CONT or task.get("continuation_key") != CONT:'
           new='if (checkpoint.get("continuation_key") or "") != CONT or (status.get("continuation_key") or "") != CONT or (task.get("continuation_key") or "") != CONT:'
           if old not in code: raise SystemExit('missing continuation guard')
