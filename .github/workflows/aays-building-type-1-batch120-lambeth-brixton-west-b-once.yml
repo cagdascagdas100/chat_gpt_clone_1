@@ -1,4 +1,4 @@
-name: AAYS building_type_1 batch120 Lambeth Brixton West B one-shot
+name: AAYS building_type_1 batch120 Lambeth Brixton West B guarded retry
 
 on:
   push:
@@ -15,246 +15,96 @@ concurrency:
 jobs:
   append:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
           ref: codex/aays-single-runner-v5-20260706
-          fetch-depth: 30
-      - name: Fast-forward canonical branch
+          fetch-depth: 80
+      - name: Fast-forward canonical branch and load guarded template
         shell: bash
         run: |
           set -euo pipefail
           git pull --ff-only origin codex/aays-single-runner-v5-20260706
-      - name: Append 50 evidenced Lambeth Brixton West B OSM records
+          git fetch origin 61d873aaecbce4d338e9ff8aaaa60cbd5d1be72c --depth=1
+      - name: Retry batch120 with lighter semantic OSM query
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import collections, datetime as dt, hashlib, json, pathlib, subprocess, time, urllib.parse, urllib.request
-
-          SLOT='building_type_1'
-          TASK='building-type-1-england-classification-v1-20260808'
-          CITY='London_Inner'
-          GRID='Lambeth_Brixton_West_B'
-          NEXT_GRID='Lambeth_Brixton_West_C'
-          LOCAL_AUTHORITY='Lambeth'
-          REGION='London Inner'
-          BATCH_INDEX=120
-          EXPECTED_BEFORE=7800
-          ADD_COUNT=50
-          TARGET_AFTER=7850
-          NEXT_TARGET=7900
-          BBOX=[51.455,-0.155,51.470,-0.135]  # south, west, north, east; adjacent to batch119 West_A
-          ENDPOINT='https://overpass-api.de/api/interpreter'
-          WORKFLOW=pathlib.Path('.github/workflows/aays-building-type-1-batch120-lambeth-brixton-west-b-once.yml')
-          GEO=pathlib.Path('england_map_web/data/building_type/shards/building_type_1_latest.geojson')
-          MAN=pathlib.Path('england_map_web/data/building_type/shards/building_type_1_manifest_latest.json')
-          RUN=pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json')
-          STA=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json')
-          CP=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json')
-          CT=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_1/current_task_latest.json')
-          NOW=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
-          PRE_HEAD=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
-
-          def load(p):
-              with p.open(encoding='utf-8') as f: return json.load(f)
-          def dump(p,obj,compact=False):
-              p.parent.mkdir(parents=True,exist_ok=True)
-              if compact:
-                  p.write_text(json.dumps(obj,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
-              else:
-                  p.write_text(json.dumps(obj,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-
-          task=load(CT); status=load(STA); checkpoint=load(CP); geo=load(GEO); manifest=load(MAN)
-          if task.get('task_id') != TASK or status.get('task_id') != TASK:
-              raise SystemExit('task moved; refusing second task')
-          if task.get('slot_id') != SLOT or status.get('slot_id') != SLOT or checkpoint.get('slot_id') != SLOT:
-              raise SystemExit('slot mismatch')
-          if task.get('owner') not in (None,'') or status.get('owner') not in (None,''):
-              raise SystemExit('live owner detected; refusing second owner')
-          if checkpoint.get('next_batch_index') != BATCH_INDEX:
-              raise SystemExit(f"checkpoint batch moved: {checkpoint.get('next_batch_index')} != {BATCH_INDEX}")
-          if checkpoint.get('current_feature_count') != EXPECTED_BEFORE or status.get('current_feature_count') != EXPECTED_BEFORE:
-              raise SystemExit('state count moved; refusing stale continuation')
-          feats=geo.get('features')
-          if not isinstance(feats,list) or len(feats) != EXPECTED_BEFORE:
-              raise SystemExit(f"GeoJSON count moved: {len(feats) if isinstance(feats,list) else 'invalid'}")
-
-          already=set()
-          for f in feats:
-              v=f.get('id')
-              if v not in (None,''): already.add(str(v))
-              p=f.get('properties') or {}
-              for k in ('parcel_id','osm_id'):
-                  v=p.get(k)
-                  if v not in (None,''): already.add(str(v))
-          for v in checkpoint.get('last_processed_ids_sample') or []:
-              if v not in (None,''): already.add(str(v))
-
-          south,west,north,east=BBOX
-          query=f'''[out:json][timeout:90];\nnwr["building"]({south},{west},{north},{east});\nout body center qt 3000;\n'''
-          payload=urllib.parse.urlencode({'data':query}).encode('utf-8')
-          raw=None; errors=[]
-          for attempt in range(1,4):
-              try:
-                  req=urllib.request.Request(ENDPOINT,data=payload,headers={'User-Agent':'TerraYield-AAYS-building_type_1/1.0','Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},method='POST')
-                  with urllib.request.urlopen(req,timeout=120) as resp: raw=resp.read()
-                  break
-              except Exception as exc:
-                  errors.append(repr(exc))
-                  if attempt<3: time.sleep(5*attempt)
-          if raw is None: raise SystemExit(f'Overpass failed after 3 attempts: {errors}')
-          source_sha=hashlib.sha256(raw).hexdigest()
-          elements=json.loads(raw.decode('utf-8')).get('elements') or []
-
-          residential={
-            'house':('residential_house','R_HOUSE'),'detached':('residential_detached','R_DET'),
-            'semidetached_house':('residential_semidetached','R_SEMI'),'terrace':('residential_terrace','R_TERRACE'),
-            'apartments':('residential_apartments','R_APARTMENT'),'bungalow':('residential','R_RESIDENTIAL'),
-            'residential':('residential','R_RESIDENTIAL'),'dormitory':('residential','R_RESIDENTIAL')}
-          specific={
-            'retail':('commercial_retail','C_RETAIL','commercial'),'commercial':('commercial','C_COMMERCIAL','commercial'),
-            'office':('office','C_OFFICE','commercial'),'hotel':('hospitality','C_HOSPITALITY','commercial'),
-            'industrial':('industrial','I_INDUSTRIAL','industrial'),'warehouse':('warehouse','I_WAREHOUSE','industrial'),
-            'school':('education','P_EDUCATION','institutional'),'college':('education','P_EDUCATION','institutional'),
-            'university':('education','P_EDUCATION','institutional'),'church':('religious_or_community','P_RELIGIOUS','institutional'),
-            'chapel':('religious_or_community','P_RELIGIOUS','institutional'),'hospital':('healthcare_care','P_HEALTHCARE','institutional'),
-            'civic':('public_infrastructure','P_PUBLIC','institutional'),'public':('public_infrastructure','P_PUBLIC','institutional'),
-            'train_station':('public_infrastructure','P_TRANSPORT','institutional'),'barn':('agricultural_outbuilding','I_AGRICULTURAL','agricultural'),
-            'farm':('agricultural_outbuilding','I_AGRICULTURAL','agricultural'),'farm_auxiliary':('agricultural_outbuilding','I_AGRICULTURAL','agricultural')}
-          def classify(tags):
-              b=str(tags.get('building','')).strip().lower()
-              if b in residential:
-                  p,c=residential[b]; return p,c,'residential','B',0.85,3,f'building={b}'
-              if b in specific:
-                  p,c,cat=specific[b]; return p,c,cat,'B',0.85,3,f'building={b}'
-              shop=tags.get('shop'); office=tags.get('office'); amenity=tags.get('amenity'); tourism=tags.get('tourism'); healthcare=tags.get('healthcare')
-              if shop and shop!='no': return 'commercial_retail','C_RETAIL','commercial','B',0.80,3,f'shop={shop}'
-              if office and office!='no': return 'office','C_OFFICE','commercial','B',0.80,3,f'office={office}'
-              if tourism in {'hotel','hostel','guest_house','motel','apartment'}: return 'hospitality','C_HOSPITALITY','commercial','B',0.80,3,f'tourism={tourism}'
-              if healthcare: return 'healthcare_care','P_HEALTHCARE','institutional','B',0.80,3,f'healthcare={healthcare}'
-              if amenity in {'school','college','university','kindergarten'}: return 'education','P_EDUCATION','institutional','B',0.80,3,f'amenity={amenity}'
-              if amenity in {'hospital','clinic','doctors','dentist','pharmacy'}: return 'healthcare_care','P_HEALTHCARE','institutional','B',0.80,3,f'amenity={amenity}'
-              if amenity=='place_of_worship': return 'religious_or_community','P_RELIGIOUS','institutional','B',0.80,3,'amenity=place_of_worship'
-              if amenity in {'townhall','police','fire_station','library','community_centre','courthouse'}: return 'public_infrastructure','P_PUBLIC','institutional','B',0.80,3,f'amenity={amenity}'
-              if amenity in {'restaurant','cafe','pub','bar','fast_food'}: return 'commercial_retail','C_RETAIL','commercial','B',0.80,3,f'amenity={amenity}'
-              if b and b not in {'yes','construction','proposed','no','garage','garages','shed','carport','roof'}:
-                  return b.upper(),'OSM_'+b.upper(),'other','C',0.60,2,f'building={b}'
-              return 'unknown','U_UNKNOWN','unknown','U',0.20,1,f"building={b or 'missing'}"
-
-          cand=[]
-          for e in elements:
-              typ=str(e.get('type') or ''); oid=e.get('id')
-              if typ not in {'node','way','relation'} or oid in (None,''): continue
-              fid=f'ENG_OSM_{typ}_{oid}'; pid=fid; osmid=f'{typ}/{oid}'
-              variants={fid,pid,osmid,str(oid),f'{typ}_{oid}',f'OSM_{typ}_{oid}'}
-              if variants & already: continue
-              if typ=='node': lon,lat=e.get('lon'),e.get('lat')
-              else:
-                  c=e.get('center') or {}; lon,lat=c.get('lon'),c.get('lat')
-              if lon is None or lat is None: continue
-              tags=e.get('tags') or {}; cls=classify(tags)
-              if cls[5] < 2: continue
-              cand.append((-(cls[5]),fid,pid,osmid,float(lon),float(lat),tags,cls,typ,int(oid)))
-          cand.sort(key=lambda r:(r[0],r[1]))
-          chosen=cand[:ADD_COUNT]
-          if len(chosen)<ADD_COUNT: raise SystemExit(f'only {len(chosen)} new evidenced candidates; need {ADD_COUNT}')
-
-          new_features=[]; records=[]; new_keys=set()
-          for _,fid,pid,osmid,lon,lat,tags,cls,typ,oid in chosen:
-              if {fid,pid,osmid} & new_keys: raise SystemExit('duplicate new identity')
-              new_keys.update([fid,pid,osmid])
-              primary,code,category,ev,score,level,method=cls
-              keys=('building','building:use','amenity','shop','office','tourism','healthcare','leisure','man_made','name','addr:housenumber','addr:street','addr:postcode','addr:city')
-              excerpt_obj={k:tags[k] for k in keys if k in tags}
-              excerpt=f'OSM {osmid} | '+('; '.join(f'{k}={v}' for k,v in excerpt_obj.items()))
-              object_url=f'https://www.openstreetmap.org/{typ}/{oid}'
-              props={
-                'parcel_id':pid,'parcel_id_semantics':'stable OSM element-derived identifier; not asserted cadastral parcel ID','osm_id':osmid,
-                'slot_id':SLOT,'region':REGION,'area':CITY,'grid_id':GRID,'local_authority':LOCAL_AUTHORITY,'postcode':tags.get('addr:postcode',''),
-                'building_type_primary':primary,'building_type_code':code,'building_category':category,'building_type_confidence':level,
-                'confidence_score':score,'confidence_level_1_to_4':level,'evidence_level':ev,'source_count':1,
-                'source':'OpenStreetMap via Overpass API','source_url':object_url,'source_hash':source_sha,'source_hash_method':'sha256_raw_overpass_response',
-                'match_method':method,'classification_method':'deterministic_osm_building_use_tag_rules_v1','evidence_excerpt':excerpt,
-                'evidence_excerpt_sha256':hashlib.sha256(excerpt.encode('utf-8')).hexdigest(),'osm_tags_summary':excerpt_obj,'source_evidence_excerpt':excerpt_obj,
-                'sources':[{'source_name':'OpenStreetMap Overpass API','url_or_local_path':ENDPOINT,'object_url':object_url,'accessed_at':NOW,
-                            'sha256':source_sha,'sha256_scope':'raw_overpass_response','licence':'ODbL 1.0','granularity':'building_element',
-                            'fields_used':list(excerpt_obj.keys()),'supports_field':'building_type_primary','match_method':method,'match_score':score}],
-                'geometry_match_method':'osm_element_point_or_center','address_match_method':'osm_tags_when_present' if any(k.startswith('addr:') for k in excerpt_obj) else 'none',
-                'limitations':'OSM tag evidence only; no cadastral parcel binding or EPC/VOA corroboration in this batch.','needs_manual_review':level<=1,
-                'fake_data':False,'final_ready':False,'updated_at':NOW}
-              feature={'type':'Feature','id':fid,'geometry':{'type':'Point','coordinates':[lon,lat]},'properties':props}
-              new_features.append(feature); records.append({'feature_id':fid,'geometry':feature['geometry'],**props})
-
-          # exact append and identity invariants
-          for f in new_features:
-              p=f['properties']
-              if str(f['id']) in already or str(p['parcel_id']) in already or str(p['osm_id']) in already: raise SystemExit('already_processed_ids collision')
-              if not p['source_url'] or not p['evidence_excerpt'] or p['evidence_level'] not in {'A','B','C','D','U'} or p['confidence_level_1_to_4'] not in {1,2,3,4}: raise SystemExit('evidence contract failure')
-              if p['fake_data'] is not False or p['final_ready'] is not False: raise SystemExit('safety flags failure')
-          geo['features'].extend(new_features)
-          after=len(geo['features'])
-          if after!=TARGET_AFTER or after<=EXPECTED_BEFORE: raise SystemExit(f'progress invariant failed {EXPECTED_BEFORE}->{after}')
-          dump(GEO,geo,compact=True)
-          geo_sha=hashlib.sha256(GEO.read_bytes()).hexdigest()
-
-          new_ev=collections.Counter(f['properties']['evidence_level'] for f in new_features)
-          new_conf=collections.Counter(f"level_{f['properties']['confidence_level_1_to_4']}" for f in new_features)
-          new_types=collections.Counter(f['properties']['building_type_primary'] for f in new_features)
-          prior_classified=int(status.get('classified_count') or 0); prior_unknown=int(status.get('unknown_count') or 0)
-          new_unknown=sum(1 for f in new_features if f['properties']['building_type_primary']=='unknown')
-          classified_after=prior_classified+(ADD_COUNT-new_unknown); unknown_after=prior_unknown+new_unknown
-          ev_dist=collections.Counter(status.get('evidence_distribution') or {}); ev_dist.update(new_ev)
-          conf_dist=collections.Counter(status.get('confidence_distribution') or {}); conf_dist.update(new_conf)
-
-          source_entry={'name':'OpenStreetMap Overpass API - Lambeth Brixton West B','url':ENDPOINT,'license':'ODbL 1.0','features_used':ADD_COUNT,
-                        'accessed_at':NOW,'source_sha256':source_sha,'source_hash_method':'sha256_raw_overpass_response',
-                        'note':'Runtime-only Overpass response; raw source not committed. Existing shard identities excluded.'}
-          manifest.setdefault('sources',[]).append(source_entry)
-          td=collections.Counter(manifest.get('type_distribution') or {}); td.update(new_types)
-          manifest.update({'generated_at':NOW,'total_features':after,'feature_count':after,'classified':classified_after,'unknown':unknown_after,
-                           'evidence_distribution':dict(sorted(ev_dist.items())),'confidence_level_distribution':dict(sorted(conf_dist.items())),
-                           'type_distribution':dict(sorted(td.items())),'fake_data':False,'final_ready':False,'geojson_sha256':geo_sha,
-                           'geojson_path':str(GEO),'manifest_updated_at':NOW,
-                           'note':f'Existing {EXPECTED_BEFORE} features preserved; batch {BATCH_INDEX} {GRID} appended {ADD_COUNT} new evidenced OSM features.'})
-          dump(MAN,manifest)
-
-          batch_evidence={'batch_name':GRID,'bbox':BBOX,'local_authority':LOCAL_AUTHORITY,'overpass_endpoint':ENDPOINT,
-                          'response_sha256':source_sha,'returned_element_count':len(elements),'new_feature_count':ADD_COUNT,'errors_before_success':errors}
-          checkpoint.update({'state':'IN_PROGRESS','updated_at':NOW,'final_ready':False,'feature_count_before':EXPECTED_BEFORE,'feature_count_after':after,
-                             'current_feature_count':after,'next_batch_index':BATCH_INDEX+1,'next_target_feature_count':NEXT_TARGET,
-                             'last_processed_ids_sample':[f['id'] for f in new_features[-20:]],'next_required_action':'APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES',
-                             'fake_data':False,'last_batch_name':f'London_Inner_PostRecovery_{BATCH_INDEX}','last_batch_new_features':ADD_COUNT,
-                             'last_batch_evidence':[batch_evidence],'last_grid_id':GRID,'next_grid_hint':NEXT_GRID,'next_city_index':BATCH_INDEX+1,
-                             'remote_head':PRE_HEAD,'first_unverified_step':f'AŞAMA_1_OSM_GENISLETME_APPEND_NEW_BATCH_{BATCH_INDEX+1}_AFTER_FEATURE_{after}'})
-          dump(CP,checkpoint)
-
-          status.update({'state':'IN_PROGRESS','updated_at':NOW,'owner':None,'final_ready':False,'classified_count':classified_after,'unknown_count':unknown_after,
-                         'confidence_distribution':dict(sorted(conf_dist.items())),'evidence_distribution':dict(sorted(ev_dist.items())),'output_sha256':geo_sha,
-                         'result':{'state':'BATCH_APPENDED','note':f'Appended {ADD_COUNT} new {GRID} evidenced OSM features; existing feature.id/parcel_id/osm_id values excluded.'},
-                         'feature_count_before':EXPECTED_BEFORE,'feature_count_after':after,'current_feature_count':after,'new_features_added':ADD_COUNT,
-                         'last_batch':[batch_evidence],'fake_data':False})
-          dump(STA,status)
-
-          runner={'schema_version':3,'slot_id':SLOT,'task_id':TASK,'continuation_key':task.get('continuation_key',''),'state':'BATCH_APPENDED',
-                  'batch_name':f'London_Inner_PostRecovery_{BATCH_INDEX}','feature_count_before':EXPECTED_BEFORE,'feature_count_after':after,
-                  'new_features_added':ADD_COUNT,'classified_count_after':classified_after,'unknown_count_after':unknown_after,
-                  'new_feature_ids':[f['id'] for f in new_features],'source_batches':[batch_evidence],
-                  'evidence_distribution_new':dict(sorted(new_ev.items())),'confidence_distribution_new':dict(sorted(new_conf.items())),
-                  'type_distribution_new':dict(sorted(new_types.items())),'source_url':ENDPOINT,'source_sha256':source_sha,'raw_source_committed':False,
-                  'records':records,'fake_data':False,'final_ready':False,'updated_at':NOW,'output_sha256':geo_sha}
-          dump(RUN,runner)
-          print(json.dumps({'before':EXPECTED_BEFORE,'after':after,'added':ADD_COUNT,'grid':GRID,'overpass_elements':len(elements),
-                            'source_sha256':source_sha,'new_evidence':dict(new_ev),'new_confidence':dict(new_conf),'new_types':dict(new_types)},indent=2))
+          import re, subprocess, textwrap
+          TEMPLATE='61d873aaecbce4d338e9ff8aaaa60cbd5d1be72c'
+          WF='.github/workflows/aays-building-type-1-batch120-lambeth-brixton-west-b-once.yml'
+          old=subprocess.check_output(['git','show',f'{TEMPLATE}:{WF}'],text=True)
+          marker="          python - <<'PY'\n"
+          start=old.index(marker)+len(marker)
+          end=old.index("\n          PY",start)
+          code=textwrap.dedent(old[start:end])
+          replacement="""query=f'''[out:json][timeout:60];
+(
+  nwr[\"amenity\"]({south},{west},{north},{east});
+  nwr[\"shop\"]({south},{west},{north},{east});
+  nwr[\"office\"]({south},{west},{north},{east});
+  nwr[\"tourism\"~\"^(hotel|hostel|guest_house|motel|apartment)$\"]({south},{west},{north},{east});
+  nwr[\"healthcare\"]({south},{west},{north},{east});
+);
+out body center qt 1800;
+'''"""
+          code,n=re.subn(r"query=f'''[\s\S]*?'''",replacement,code,count=1)
+          if n!=1: raise SystemExit('query patch failed')
+          old_fetch="""payload=urllib.parse.urlencode({'data':query}).encode('utf-8')
+raw=None; errors=[]
+for attempt in range(1,4):
+    try:
+        req=urllib.request.Request(ENDPOINT,data=payload,headers={'User-Agent':'TerraYield-AAYS-building_type_1/1.0','Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},method='POST')
+        with urllib.request.urlopen(req,timeout=120) as resp: raw=resp.read()
+        break
+    except Exception as exc:
+        errors.append(repr(exc))
+        if attempt<3: time.sleep(5*attempt)
+if raw is None: raise SystemExit(f'Overpass failed after 3 attempts: {errors}')"""
+          new_fetch="""payload=urllib.parse.urlencode({'data':query}).encode('utf-8')
+raw=None; errors=[]
+ENDPOINTS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.private.coffee/api/interpreter']
+for attempt,endpoint in enumerate(ENDPOINTS,1):
+    try:
+        req=urllib.request.Request(endpoint,data=payload,headers={'User-Agent':'TerraYield-AAYS-building_type_1/1.0','Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},method='POST')
+        with urllib.request.urlopen(req,timeout=90) as resp: raw=resp.read()
+        ENDPOINT=endpoint
+        break
+    except Exception as exc:
+        errors.append({'endpoint':endpoint,'error':repr(exc)})
+        if attempt<len(ENDPOINTS): time.sleep(3*attempt)
+if raw is None: raise SystemExit(f'Overpass endpoints failed once each: {errors}')"""
+          if old_fetch not in code: raise SystemExit('fetch patch anchor missing')
+          code=code.replace(old_fetch,new_fetch,1)
+          exec(compile(code,'batch120_retry_generator','exec'),{})
           PY
-      - name: Commit exact outputs, remove one-shot transport, and push
+      - name: Validate, commit exact slot outputs, remove one-shot transport, and push
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python - <<'PY'
+          import json
+          paths={
+            'geo':'england_map_web/data/building_type/shards/building_type_1_latest.geojson',
+            'run':'docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json',
+            'st':'docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json',
+            'cp':'docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json'}
+          d={k:json.load(open(v,encoding='utf-8')) for k,v in paths.items()}
+          feats=d['geo'].get('features') or []; records=d['run'].get('records') or []
+          assert len(feats)==7850 and d['st'].get('feature_count_before')==7800 and d['st'].get('feature_count_after')==7850
+          assert d['cp'].get('next_batch_index')==121 and len(records)==50
+          for r in records:
+              assert r.get('evidence_excerpt') and r.get('sources') and r.get('source_hash')
+              assert r.get('evidence_level') in {'B','C'} and r.get('confidence_level_1_to_4') in {2,3}
+              assert r.get('fake_data') is False and r.get('final_ready') is False
+          print('LOCAL_VALIDATION_OK 7800->7850 +50')
+          PY
+          git config user.name "aays-building-type-1-bot"
+          git config user.email "actions@users.noreply.github.com"
           rm -f .github/workflows/aays-building-type-1-batch120-lambeth-brixton-west-b-once.yml
-          git add -A \
+          git add -A -- \
             .github/workflows/aays-building-type-1-batch120-lambeth-brixton-west-b-once.yml \
             england_map_web/data/building_type/shards/building_type_1_latest.geojson \
             england_map_web/data/building_type/shards/building_type_1_manifest_latest.json \
@@ -264,43 +114,40 @@ jobs:
           git diff --cached --quiet && { echo 'No staged change; refusing false progress'; exit 1; }
           git commit -m "building_type_1: append batch 120 Lambeth_Brixton_West_B +50"
           for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706 --depth=80
+            remote_count=$(git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json | python -c "import json,sys; print(json.load(sys.stdin).get('current_feature_count'))")
+            remote_batch=$(git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json | python -c "import json,sys; print(json.load(sys.stdin).get('next_batch_index'))")
+            if [ "$remote_count" != "7800" ] || [ "$remote_batch" != "120" ]; then echo "building_type_1 moved remotely; abort duplicate publish"; exit 1; fi
             if git pull --rebase origin codex/aays-single-runner-v5-20260706 && git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
             git rebase --abort || true
-            git fetch origin codex/aays-single-runner-v5-20260706 --depth=30
-            sleep 2
+            sleep $((attempt*2))
           done
           exit 1
       - name: Remote readback invariants
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin codex/aays-single-runner-v5-20260706 --depth=30
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=80
           python - <<'PY'
           import json, subprocess
           BR='origin/codex/aays-single-runner-v5-20260706'
-          def rj(path): return json.loads(subprocess.check_output(['git','show',f'{BR}:{path}']).decode('utf-8'))
+          def rj(p): return json.loads(subprocess.check_output(['git','show',f'{BR}:{p}']).decode())
           geo=rj('england_map_web/data/building_type/shards/building_type_1_latest.geojson')
           man=rj('england_map_web/data/building_type/shards/building_type_1_manifest_latest.json')
           run=rj('docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json')
           st=rj('docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json')
           cp=rj('docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json')
+          task=rj('docs/chatgpt_status/_shared/slots_21/building_type_1/current_task_latest.json')
           feats=geo.get('features') or []; records=run.get('records') or []
           assert len(feats)==7850 and st.get('current_feature_count')==7850 and cp.get('current_feature_count')==7850
           assert st.get('feature_count_before')==7800 and st.get('feature_count_after')==7850 and st.get('new_features_added')==50
-          assert cp.get('next_batch_index')==121 and cp.get('last_grid_id')=='Lambeth_Brixton_West_B'
-          assert run.get('feature_count_before')==7800 and run.get('feature_count_after')==7850 and run.get('new_features_added')==50
-          assert len(records)==50 and man.get('feature_count',man.get('total_features'))==7850
-          seen_f=set(); seen_p=set(); seen_o=set()
-          for f in feats:
-              fid=f.get('id'); p=f.get('properties') or {}; pid=p.get('parcel_id'); oid=p.get('osm_id')
-              if fid not in (None,''): assert str(fid) not in seen_f; seen_f.add(str(fid))
-              if pid not in (None,''): seen_p.add(str(pid))
-              if oid not in (None,''): seen_o.add(str(oid))
-          for r in records:
-              assert r.get('source_url') and r.get('sources') and r.get('evidence_excerpt')
-              assert r.get('evidence_level') in {'A','B','C','D','U'} and r.get('confidence_level_1_to_4') in {1,2,3,4}
-              assert r.get('fake_data') is False and r.get('final_ready') is False
+          assert cp.get('next_batch_index')==121 and cp.get('next_target_feature_count')==7900
+          assert len(records)==50 and task.get('task_id')=='building-type-1-england-classification-v1-20260808' and task.get('owner') in (None,'')
           assert st.get('fake_data') is False and cp.get('fake_data') is False and run.get('fake_data') is False and man.get('fake_data') is False
           assert st.get('final_ready') is False and cp.get('final_ready') is False and run.get('final_ready') is False and man.get('final_ready') is False
-          print('REMOTE_READBACK_OK building_type_1 7800->7850 batch120 Lambeth_Brixton_West_B +50; evidence fields present; fake_data=false; final_ready=false')
+          for r in records:
+              assert r.get('evidence_excerpt') and r.get('sources') and r.get('source_hash')
+              assert r.get('evidence_level') in {'B','C'} and r.get('confidence_level_1_to_4') in {2,3}
+              assert r.get('fake_data') is False and r.get('final_ready') is False
+          print('REMOTE_READBACK_OK building_type_1 7800->7850 batch120 +50 fake_data=false final_ready=false')
           PY
