@@ -73,8 +73,8 @@ jobs:
           if 'manifest = load(MAN)' not in code:
               raise SystemExit('missing manifest load')
           code=code.replace('manifest = load(MAN)', manifest_guard, 1)
-          needle='''            cls = classify(tags)\n            candidates.append'''
-          replacement='''            cls = classify(tags)\n            if cls[3] not in {"A", "B", "C", "D"}:\n                continue\n            candidates.append'''
+          needle='''    cls = classify(tags)\n    candidates.append'''
+          replacement='''    cls = classify(tags)\n    if cls[3] not in {"A", "B", "C", "D"}:\n        continue\n    candidates.append'''
           if needle not in code:
               raise SystemExit('missing candidate classification hook')
           code=code.replace(needle,replacement,1)
