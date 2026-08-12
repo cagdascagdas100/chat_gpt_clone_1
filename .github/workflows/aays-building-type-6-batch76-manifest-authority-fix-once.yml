@@ -1,0 +1,104 @@
+name: AAYS building_type_6 batch76 manifest authority fix one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-6-batch76-manifest-authority-fix-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-6-batch76-manifest-authority-fix-once
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 20
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            england_map_web/data/building_type/shards/building_type_6_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json
+
+      - name: Fast-forward sparse checkout to latest canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Correct Beeston authority metadata only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          manp = Path('england_map_web/data/building_type/shards/building_type_6_manifest_latest.json')
+          stp = Path('docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json')
+          runp = Path('docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json')
+          man = json.loads(manp.read_text(encoding='utf-8'))
+          st = json.loads(stp.read_text(encoding='utf-8'))
+          run = json.loads(runp.read_text(encoding='utf-8'))
+          assert st.get('total_elements') == 15000 and st.get('feature_count_after') == 15000
+          assert run.get('city') == 'Beeston' and run.get('local_authority') == 'Broxtowe'
+          assert run.get('new_feature_count') == 250
+          assert st.get('fake_data') is False and st.get('final_ready') is False
+          changed = 0
+          for src in man.get('sources') or []:
+              if src.get('source_sha256') == run.get('source_sha256'):
+                  if src.get('name') == 'OpenStreetMap Overpass API - Beeston/East Lindsey':
+                      src['name'] = 'OpenStreetMap Overpass API - Beeston/Broxtowe'
+                      changed += 1
+                  note = src.get('note') or ''
+                  if 'Beeston/East Lindsey bbox.' in note:
+                      src['note'] = note.replace('Beeston/East Lindsey bbox.', 'Beeston/Broxtowe bbox.')
+                      changed += 1
+          assert changed == 2, changed
+          assert man.get('total_features') == 15000
+          assert man.get('fake_data') is False and man.get('final_ready') is False
+          manp.write_text(json.dumps(man, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit and push metadata correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add england_map_web/data/building_type/shards/building_type_6_manifest_latest.json
+          git diff --cached --quiet && { echo "No manifest change"; exit 1; }
+          git commit -m "building_type_6: fix Beeston manifest authority"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+            if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then
+              git merge --abort || true
+              exit 1
+            fi
+          done
+          exit 1
+
+      - name: Remote readback metadata invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+          python - <<'PY'
+          import json, subprocess
+          br='origin/codex/aays-single-runner-v5-20260706'
+          raw=subprocess.check_output(['git','show',f'{br}:england_map_web/data/building_type/shards/building_type_6_manifest_latest.json'])
+          man=json.loads(raw.decode('utf-8'))
+          matches=[s for s in (man.get('sources') or []) if s.get('source_sha256')=='d4cb1e2997e1aef3d0c4d036c677482bc8ceba24aa6ca08b6ca3464077e1684d']
+          assert len(matches)==1
+          assert matches[0].get('name')=='OpenStreetMap Overpass API - Beeston/Broxtowe'
+          assert 'Beeston/Broxtowe bbox.' in (matches[0].get('note') or '')
+          assert man.get('total_features')==15000
+          assert man.get('fake_data') is False and man.get('final_ready') is False
+          print('REMOTE_READBACK_OK manifest Beeston/Broxtowe; total_features=15000; final_ready=false')
+          PY
