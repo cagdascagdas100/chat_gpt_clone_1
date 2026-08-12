@@ -1,0 +1,176 @@
+name: tmp building_type_2 Bexley continuation batch 118
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_2_bexley_batch118_20260812.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-2-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Prepare current head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append exactly 50 new Bexley FHRS continuation features
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show HEAD:.github/workflows/tmp_building_type_2_bexley_batch38_20260810.yml > /tmp/template.yml
+          python3 <<'PY'
+          from pathlib import Path
+          text=Path('/tmp/template.yml').read_text(encoding='utf-8')
+          anchor='      - name: Append exactly 50 new Bexley FHRS continuation features'
+          marker="          python3 <<'PY'\n"
+          a=text.index(anchor)
+          start=text.index(marker,a)+len(marker)
+          end=text.index("\n          PY",start)
+          lines=text[start:end].splitlines()
+          body='\n'.join(line[10:] if line.startswith('          ') else line for line in lines)+'\n'
+          replacements=[
+            ('BEFORE=1850; TARGET=1900; BATCH=38; NEXT_BATCH=39; NEXT_TARGET=1950','BEFORE=5850; TARGET=5900; BATCH=118; NEXT_BATCH=119; NEXT_TARGET=5950'),
+            ('Batch 38 appended from official Bexley FHRS continuation records','Batch 118 appended from official Bexley FHRS continuation records'),
+            ('BATCH_38_APPENDED_50_BEXLEY_FHRS_CONTINUATION_REQUIRED','BATCH_118_APPENDED_50_BEXLEY_FHRS_CONTINUATION_REQUIRED'),
+            ('feature_count 1850 -> 1900','feature_count 5850 -> 5900'),
+            ("Sonraki adim batch 39: mevcut 1900 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 1900 kaydi tekrar isleme.","Sonraki adim batch 119: mevcut 5900 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 5900 kaydi tekrar isleme.")
+          ]
+          for old,new in replacements:
+              if old not in body: raise AssertionError(f'missing replacement token: {old}')
+              body=body.replace(old,new)
+          old='assert int(s.get("features_used",0))==50\n        s.update({"name":SOURCE,"features_used":100'
+          new='assert int(s.get("features_used",0))==200\n        s.update({"name":SOURCE,"features_used":250'
+          if old not in body: raise AssertionError('missing Bexley cumulative source token')
+          body=body.replace(old,new,1)
+          required=['CITY="Bexley"','PREFIX="BEXLEY"','FHRS503en-GB.xml','BEFORE=5850; TARGET=5900; BATCH=118; NEXT_BATCH=119; NEXT_TARGET=5950','features_used":250','evidence_excerpt','source_evidence_excerpt','"evidence_level":"D"','"confidence_level_1_to_4":2','"fake_data":False','"final_ready":False']
+          missing=[x for x in required if x not in body]
+          assert not missing, missing
+          exec(compile(body,'<building_type_2_bexley_continuation_batch118_append>','exec'), {'__name__':'__main__'})
+          PY
+
+      - name: Validate guarded append
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+          URL='https://ratings.food.gov.uk/api/open-data-files/FHRS503en-GB.xml'
+          shard=json.loads(Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson').read_text())
+          manifest=json.loads(Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json').read_text())
+          checkpoint=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json').read_text())
+          status=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json').read_text())
+          runner=json.loads(Path('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json').read_text())
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json').read_text())
+          assert len(shard.get('features') or [])==5900
+          assert manifest.get('feature_count_before')==5850 and manifest.get('feature_count_after')==5900 and manifest.get('added_feature_count')==50
+          assert checkpoint.get('current_feature_count')==5900 and checkpoint.get('next_batch_index')==119 and checkpoint.get('next_target_feature_count')==5950
+          assert status.get('current_feature_count')==5900 and runner.get('feature_count_before')==5850 and runner.get('feature_count_after')==5900 and runner.get('added_feature_count')==50
+          assert task.get('owner') is None and task.get('task_id')=='building-type-2-england-classification-v1-20260808'
+          for o in (manifest,checkpoint,status,runner,task):
+              assert o.get('fake_data') is False and o.get('final_ready') is False
+          assert runner.get('already_processed_ids_policy_applied') is True and runner.get('city')=='Bexley'
+          ids=list(runner.get('new_feature_ids') or [])
+          assert len(ids)==50 and len(set(ids))==50 and all(str(x).startswith('BEXLEY_FHRS_') for x in ids)
+          idset=set(ids); new=[f for f in shard['features'] if f.get('id') in idset]
+          assert len(new)==50 and len(runner.get('records') or [])==50
+          assert len({f.get('id') for f in shard['features']})==5900
+          source_rows=[f for f in shard['features'] if (f.get('properties') or {}).get('source_url')==URL]
+          assert len(source_rows)==250
+          assert len({(f.get('properties') or {}).get('parcel_id') for f in new})==50
+          assert len({str((f.get('properties') or {}).get('fhrs_id')) for f in new})==50
+          for f in new:
+              p=f.get('properties') or {}
+              assert p.get('evidence_excerpt') and p.get('source_evidence_excerpt') and p.get('sources') and p.get('source_hash')
+              assert p.get('source_url')==URL and p.get('evidence_level')=='D' and p.get('confidence_level_1_to_4')==2 and p.get('confidence_score')==0.55
+              assert p.get('needs_manual_review') is True and p.get('fake_data') is False and p.get('final_ready') is False
+              assert 'cadastral parcel identity and building fabric remain unverified' in p.get('limitations','')
+          src=[s for s in manifest.get('sources') or [] if s.get('url')==URL]
+          assert len(src)==1 and src[0].get('features_used')==250
+          print('validated building_type_2 5850->5900 with 50 new Bexley FHRS continuation features')
+          PY
+
+      - name: Commit and push only slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json
+          )
+          git restore -- docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json
+          git add -- "${paths[@]}"
+          test -n "$(git diff --cached --name-only)"
+          while read -r path; do
+            ok=0
+            for expected in "${paths[@]}"; do [[ "$path" == "$expected" ]] && ok=1; done
+            [[ "$ok" == 1 ]] || { echo "unexpected staged path: $path"; exit 1; }
+          done < <(git diff --cached --name-only)
+          git commit -m "data(building_type_2): append Bexley FHRS batch 118 5850->5900"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then git merge --abort || true; exit 1; fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            sleep $((attempt*2))
+          done
+          exit 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json, subprocess
+          ref='origin/codex/aays-single-runner-v5-20260706'
+          URL='https://ratings.food.gov.uk/api/open-data-files/FHRS503en-GB.xml'
+          def load(path): return json.loads(subprocess.check_output(['git','show',f'{ref}:{path}']))
+          shard=load('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          manifest=load('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          runner=load('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          checkpoint=load('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          status=load('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          task=load('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          assert len(shard['features'])==5900
+          assert manifest['feature_count_before']==5850 and manifest['feature_count_after']==5900 and manifest['added_feature_count']==50
+          assert checkpoint['current_feature_count']==5900 and checkpoint['next_batch_index']==119 and checkpoint['next_target_feature_count']==5950
+          assert status['current_feature_count']==5900
+          assert runner['city']=='Bexley' and len(runner['new_feature_ids'])==50 and runner.get('already_processed_ids_policy_applied') is True
+          assert task['owner'] is None and task['task_id']=='building-type-2-england-classification-v1-20260808'
+          for o in (manifest,checkpoint,status,runner,task):
+              assert o.get('fake_data') is False and o.get('final_ready') is False
+          ids=set(runner['new_feature_ids']); batch=[f for f in shard['features'] if f.get('id') in ids]
+          assert len(batch)==50 and all(str(f.get('id') or '').startswith('BEXLEY_FHRS_') for f in batch)
+          assert len({f.get('id') for f in shard['features']})==5900
+          source_rows=[f for f in shard['features'] if (f.get('properties') or {}).get('source_url')==URL]
+          assert len(source_rows)==250
+          assert all((f.get('properties') or {}).get('evidence_excerpt') for f in batch)
+          assert all((f.get('properties') or {}).get('source_evidence_excerpt') for f in batch)
+          assert all((f.get('properties') or {}).get('evidence_level')=='D' for f in batch)
+          assert all((f.get('properties') or {}).get('confidence_level_1_to_4')==2 for f in batch)
+          assert all((f.get('properties') or {}).get('fake_data') is False and (f.get('properties') or {}).get('final_ready') is False for f in batch)
+          src=[s for s in manifest.get('sources') or [] if s.get('url')==URL]
+          assert len(src)==1 and src[0].get('features_used')==250
+          print('remote readback verified building_type_2 5850->5900 batch118 Bexley FHRS final_ready=false')
+          PY
