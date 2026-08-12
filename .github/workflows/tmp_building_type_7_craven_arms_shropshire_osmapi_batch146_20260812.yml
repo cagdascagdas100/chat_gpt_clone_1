@@ -1,0 +1,114 @@
+name: tmp building_type_7 Craven Arms Shropshire OSM API batch 146
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_7_craven_arms_shropshire_osmapi_batch146_20260812.yml]
+permissions:
+  contents: write
+concurrency:
+  group: building-type-7-continuation
+  cancel-in-progress: false
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Prepare current head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "aays-building-type-7-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json').read_text()); st=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json').read_text()); task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json').read_text())
+          assert cp['current_feature_count']==7250 and cp['next_batch_index']==146 and cp['next_target_feature_count']==7300, cp
+          assert st['current_feature_count']==7250 and st['next_batch_index']==146 and st['next_target_feature_count']==7300, st
+          assert task['task_id']=='building-type-7-england-classification-v1-20260808' and task.get('owner') in (None,''), task
+          assert cp.get('fake_data') is False and cp.get('final_ready') is False and st.get('fake_data') is False and st.get('final_ready') is False
+          PY
+      - name: Append exactly 50 unseen Craven Arms OSM API records
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re,json,subprocess
+          src=subprocess.check_output(['git','show','306b1032bab74c2d85055573dedf79b4204a94f1:.github/workflows/tmp_building_type_7_worcester_osmapi_batch107_20260811.yml'],text=True)
+          anchor=src.index('- name: Append exactly 50 unseen Worcester OSM API records'); marker="          python3 <<'PY'\n"; start=src.index(marker,anchor)+len(marker); end=src.index("\n          PY",start)
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in src[start:end].splitlines())
+          for old,new in [("CITY='Worcester'","CITY='Craven Arms'"),("AUTH='Worcestershire'","AUTH='Shropshire'"),('BATCH=107','BATCH=146'),('BEFORE=5300','BEFORE=7250'),('AFTER=5350','AFTER=7300'),('NEXT_BATCH=108','NEXT_BATCH=147'),('NEXT_TARGET=5400','NEXT_TARGET=7350'),('NEXT_CITY_INDEX=18','NEXT_CITY_INDEX=57'),("GRID='52.185,-2.250,52.215,-2.190'","GRID='52.420,-2.855,52.465,-2.785'")]:
+            assert old in code, old
+            code=code.replace(old,new)
+          boxes="BBOXES=[(-2.8550,52.4200,-2.8350,52.4350),(-2.8350,52.4200,-2.8150,52.4350),(-2.8150,52.4200,-2.7950,52.4350),(-2.7950,52.4200,-2.7850,52.4350),(-2.8550,52.4350,-2.8350,52.4500),(-2.8350,52.4350,-2.8150,52.4500),(-2.8150,52.4350,-2.7950,52.4500),(-2.7950,52.4350,-2.7850,52.4500),(-2.8550,52.4500,-2.8350,52.4650),(-2.8350,52.4500,-2.8150,52.4650),(-2.8150,52.4500,-2.7950,52.4650),(-2.7950,52.4500,-2.7850,52.4650)]"
+          code,n=re.subn(r'BBOXES=\[\n.*?\n          \]',boxes,code,count=1,flags=re.S)
+          if n!=1: code,n=re.subn(r'BBOXES=\[\n.*?\n\]',boxes,code,count=1,flags=re.S)
+          assert n==1, 'bbox replacement failed'
+          exec(compile(code,'building_type_7_craven_arms_batch146.py','exec'),{})
+          for p in [Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json'),Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')]:
+            o=json.loads(p.read_text()); o.update({'remote_readback_verified':False,'remote_data_commit':None,'remote_head':None,'fake_data':False,'final_ready':False}); p.write_text(json.dumps(o,ensure_ascii=False,indent=2)+'\n')
+          PY
+          git checkout -- docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json
+      - name: Validate append and evidence contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+          L=lambda p:json.loads(Path(p).read_text()); geo=L('england_map_web/data/building_type/shards/building_type_7_latest.geojson'); man=L('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json'); cp=L('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json'); st=L('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json'); run=L('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json'); task=L('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+          assert len(geo['features'])==7300 and man.get('total_features',man.get('feature_count'))==7300
+          assert cp['current_feature_count']==7300 and cp['next_batch_index']==147 and cp['next_target_feature_count']==7350 and st['current_feature_count']==7300 and st['next_batch_index']==147 and st['next_target_feature_count']==7350
+          assert run['batch_index']==146 and run['feature_count_before']==7250 and run['feature_count_after']==7300 and run.get('progress_counted') is True
+          ids=set(run.get('new_feature_ids') or run.get('selected_feature_ids') or []); assert len(ids)==50; batch=[f for f in geo['features'] if f.get('id') in ids]; assert len(batch)==50
+          processed=set()
+          for f in geo['features'][:7250]:
+            p=f.get('properties') or {}
+            for v in (f.get('id'),p.get('feature_id'),p.get('parcel_id'),p.get('osm_id')):
+              if v is not None: processed.add(str(v))
+          for key,vals in {'feature.id':[str(f['id']) for f in geo['features']],'feature_id':[str((f.get('properties') or {}).get('feature_id')) for f in geo['features'] if (f.get('properties') or {}).get('feature_id')],'parcel_id':[str((f.get('properties') or {}).get('parcel_id')) for f in geo['features'] if (f.get('properties') or {}).get('parcel_id')],'osm_id':[str((f.get('properties') or {}).get('osm_id')) for f in geo['features'] if (f.get('properties') or {}).get('osm_id')]}.items(): assert len(vals)==len(set(vals)),key
+          for f in batch:
+            p=f['properties']; assert p['area']=='Craven Arms' and p['local_authority']=='Shropshire'; assert p['evidence_level'] in ('B','C') and p['confidence_level_1_to_4'] in (2,3); assert p.get('evidence_excerpt') and p.get('source_hash') and p.get('match_method') and p.get('sources') and p['sources'][0].get('evidence_excerpt'); assert p['fake_data'] is False and p['final_ready'] is False
+            for v in (f.get('id'),p.get('feature_id'),p.get('parcel_id'),p.get('osm_id')):
+              if v is not None: assert str(v) not in processed
+          assert run.get('already_processed_ids_policy_applied') is True and run.get('raw_source_stored_in_git',False) is False and task.get('owner') in (None,'') and task.get('fake_data') is False and task.get('final_ready') is False
+          print('VALIDATED Craven Arms batch146 7250->7300 +50')
+          PY
+          git diff --exit-code -- docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json
+      - name: Commit push and remote data readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(england_map_web/data/building_type/shards/building_type_7_latest.geojson england_map_web/data/building_type/shards/building_type_7_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json)
+          git add -- "${paths[@]}"; test -n "$(git diff --cached --name-only)"; git commit -m "data(building_type_7): append Craven Arms Shropshire OSM API batch 146 7250->7300"; echo "DATA_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          for a in 1 2 3 4 5; do git fetch origin codex/aays-single-runner-v5-20260706; git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }; git push origin HEAD:codex/aays-single-runner-v5-20260706 && break; [[ $a -lt 5 ]] || exit 1; sleep $((a*2)); done
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json,subprocess
+          R='origin/codex/aays-single-runner-v5-20260706'; L=lambda p:json.loads(subprocess.check_output(['git','show',f'{R}:{p}'])); geo=L('england_map_web/data/building_type/shards/building_type_7_latest.geojson'); cp=L('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json'); run=L('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json'); assert len(geo['features'])==7300 and cp['current_feature_count']==7300 and run['batch_index']==146 and run['feature_count_before']==7250 and run['feature_count_after']==7300; print('REMOTE_DATA_READBACK_OK Craven Arms')
+          PY
+      - name: Record and verify remote metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json,os
+          from datetime import datetime,timezone
+          from pathlib import Path
+          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'); head=os.environ['DATA_COMMIT']; cp_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json'); st_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json'); cp=json.loads(cp_p.read_text()); st=json.loads(st_p.read_text())
+          cp.update({'remote_head':head,'remote_data_commit':head,'remote_readback_verified':True,'updated_at':now,'first_unverified_step_status':'BATCH_146_REMOTE_READBACK_VERIFIED_CONTINUATION_REQUIRED','fake_data':False,'final_ready':False}); cp['summary']['note']='PROGRESS: feature_count 7250 -> 7300. Batch 146 Craven Arms OSM API remote readback verified; continue at batch 147. final_ready remains false.'; cp['remaining_items']['note']='Next batch 147: treat all 7300 canonical feature.id/feature_id/parcel_id/osm_id values as already_processed_ids and append at least 50 genuinely new West Midlands records; do not replay prior batches.'; st.update({'remote_head':head,'remote_data_commit':head,'remote_readback_verified':True,'updated_at':now,'fake_data':False,'final_ready':False,'note':'Batch 146 Craven Arms OSM API: 50 unique evidence-backed features appended; total 7300. Remote readback verified. Continue batch 147.'}); cp_p.write_text(json.dumps(cp,ensure_ascii=False,indent=2)+'\n'); st_p.write_text(json.dumps(st,ensure_ascii=False,indent=2)+'\n')
+          PY
+          git add docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json; git commit -m "building_type_7: record Craven Arms batch 146 remote readback"
+          for a in 1 2 3 4 5; do git fetch origin codex/aays-single-runner-v5-20260706; git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }; git push origin HEAD:codex/aays-single-runner-v5-20260706 && break; [[ $a -lt 5 ]] || exit 1; sleep $((a*2)); done
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json,subprocess,os
+          R='origin/codex/aays-single-runner-v5-20260706'; L=lambda p:json.loads(subprocess.check_output(['git','show',f'{R}:{p}'])); cp=L('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json'); st=L('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json'); task=L('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json'); head=os.environ['DATA_COMMIT']; assert cp['current_feature_count']==7300 and cp['next_batch_index']==147 and cp['next_target_feature_count']==7350 and st['current_feature_count']==7300 and st['next_batch_index']==147 and st['next_target_feature_count']==7350; assert cp['remote_readback_verified'] is True and st['remote_readback_verified'] is True and cp['remote_data_commit']==head and st['remote_data_commit']==head; assert cp['final_ready'] is False and st['final_ready'] is False and cp['fake_data'] is False and st['fake_data'] is False and task.get('owner') in (None,''); print('FINAL_REMOTE_METADATA_READBACK_OK Craven Arms batch146 7250->7300')
+          PY
