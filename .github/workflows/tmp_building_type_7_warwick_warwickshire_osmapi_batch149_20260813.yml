@@ -1,4 +1,4 @@
-name: tmp building_type_7 Royal Leamington Spa Warwickshire OSM API batch 150
+name: tmp building_type_7 Kenilworth Warwickshire OSM API batch 151
 on:
   push:
     branches: [codex/aays-single-runner-v5-20260706]
@@ -32,8 +32,8 @@ jobs:
           cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json').read_text())
           st=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json').read_text())
           task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json').read_text())
-          assert cp['current_feature_count']==7450 and cp['next_batch_index']==150 and cp['next_target_feature_count']==7500, cp
-          assert st['current_feature_count']==7450 and st['next_batch_index']==150 and st['next_target_feature_count']==7500, st
+          assert cp['current_feature_count']==7500 and cp['next_batch_index']==151 and cp['next_target_feature_count']==7550, cp
+          assert st['current_feature_count']==7500 and st['next_batch_index']==151 and st['next_target_feature_count']==7550, st
           assert task['task_id']=='building-type-7-england-classification-v1-20260808' and task.get('owner') in (None,''), task
           assert st.get('owner') in (None,''), st
           assert cp.get('fake_data') is False and cp.get('final_ready') is False
@@ -41,7 +41,7 @@ jobs:
           assert task.get('fake_data') is False and task.get('final_ready') is False
           PY
 
-      - name: Append exactly 50 unseen Royal Leamington Spa OSM API records
+      - name: Append exactly 50 unseen Kenilworth OSM API records
         shell: bash
         run: |
           set -euo pipefail
@@ -55,22 +55,22 @@ jobs:
           end=src.index("\n          PY",start)
           code='\n'.join(line[10:] if line.startswith('          ') else line for line in src[start:end].splitlines())
           replacements=[
-            ("CITY='Stratford-upon-Avon'","CITY='Royal Leamington Spa'"),
-            ("('BATCH=107','BATCH=148')","('BATCH=107','BATCH=150')"),
-            ("('BEFORE=5300','BEFORE=7350')","('BEFORE=5300','BEFORE=7450')"),
-            ("('AFTER=5350','AFTER=7400')","('AFTER=5350','AFTER=7500')"),
-            ("('NEXT_BATCH=108','NEXT_BATCH=149')","('NEXT_BATCH=108','NEXT_BATCH=151')"),
-            ("('NEXT_TARGET=5400','NEXT_TARGET=7450')","('NEXT_TARGET=5400','NEXT_TARGET=7550')"),
-            ("('NEXT_CITY_INDEX=18','NEXT_CITY_INDEX=59')","('NEXT_CITY_INDEX=18','NEXT_CITY_INDEX=61')"),
-            ("GRID='52.170,-1.750,52.215,-1.660'","GRID='52.275,-1.545,52.320,-1.470'"),
+            ("CITY='Stratford-upon-Avon'","CITY='Kenilworth'"),
+            ("('BATCH=107','BATCH=148')","('BATCH=107','BATCH=151')"),
+            ("('BEFORE=5300','BEFORE=7350')","('BEFORE=5300','BEFORE=7500')"),
+            ("('AFTER=5350','AFTER=7400')","('AFTER=5350','AFTER=7550')"),
+            ("('NEXT_BATCH=108','NEXT_BATCH=149')","('NEXT_BATCH=108','NEXT_BATCH=152')"),
+            ("('NEXT_TARGET=5400','NEXT_TARGET=7450')","('NEXT_TARGET=5400','NEXT_TARGET=7600')"),
+            ("('NEXT_CITY_INDEX=18','NEXT_CITY_INDEX=59')","('NEXT_CITY_INDEX=18','NEXT_CITY_INDEX=62')"),
+            ("GRID='52.170,-1.750,52.215,-1.660'","GRID='52.330,-1.620,52.375,-1.545'"),
           ]
           for old,new in replacements:
             assert old in code, old
             code=code.replace(old,new)
-          boxes='boxes="BBOXES=[(-1.5450,52.2750,-1.5200,52.2900),(-1.5200,52.2750,-1.4950,52.2900),(-1.4950,52.2750,-1.4700,52.2900),(-1.5450,52.2900,-1.5200,52.3050),(-1.5200,52.2900,-1.4950,52.3050),(-1.4950,52.2900,-1.4700,52.3050),(-1.5450,52.3050,-1.5200,52.3200),(-1.5200,52.3050,-1.4950,52.3200),(-1.4950,52.3050,-1.4700,52.3200)]"'
+          boxes='boxes="BBOXES=[(-1.6200,52.3300,-1.5950,52.3450),(-1.5950,52.3300,-1.5700,52.3450),(-1.5700,52.3300,-1.5450,52.3450),(-1.6200,52.3450,-1.5950,52.3600),(-1.5950,52.3450,-1.5700,52.3600),(-1.5700,52.3450,-1.5450,52.3600),(-1.6200,52.3600,-1.5950,52.3750),(-1.5950,52.3600,-1.5700,52.3750),(-1.5700,52.3600,-1.5450,52.3750)]"'
           code,n=re.subn(r'boxes="BBOXES=\[.*?\]"',boxes,code,count=1)
           assert n==1, 'outer bbox replacement failed'
-          exec(compile(code,'building_type_7_royal_leamington_spa_batch150_outer.py','exec'),{})
+          exec(compile(code,'building_type_7_kenilworth_batch151_outer.py','exec'),{})
           PY
           git checkout -- docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json
 
@@ -88,16 +88,16 @@ jobs:
           st=L('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
           run=L('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
           task=L('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
-          assert len(geo['features'])==7500 and man.get('total_features',man.get('feature_count'))==7500
-          assert cp['current_feature_count']==7500 and cp['next_batch_index']==151 and cp['next_target_feature_count']==7550
-          assert st['current_feature_count']==7500 and st['next_batch_index']==151 and st['next_target_feature_count']==7550
-          assert run['batch_index']==150 and run['feature_count_before']==7450 and run['feature_count_after']==7500 and run.get('progress_counted') is True
+          assert len(geo['features'])==7550 and man.get('total_features',man.get('feature_count'))==7550
+          assert cp['current_feature_count']==7550 and cp['next_batch_index']==152 and cp['next_target_feature_count']==7600
+          assert st['current_feature_count']==7550 and st['next_batch_index']==152 and st['next_target_feature_count']==7600
+          assert run['batch_index']==151 and run['feature_count_before']==7500 and run['feature_count_after']==7550 and run.get('progress_counted') is True
           ids=set(run.get('new_feature_ids') or run.get('selected_feature_ids') or [])
           assert len(ids)==50
           batch=[f for f in geo['features'] if f.get('id') in ids]
           assert len(batch)==50
           processed=set()
-          for f in geo['features'][:7450]:
+          for f in geo['features'][:7500]:
             p=f.get('properties') or {}
             for v in (f.get('id'),p.get('feature_id'),p.get('parcel_id'),p.get('osm_id')):
               if v is not None: processed.add(str(v))
@@ -110,7 +110,7 @@ jobs:
             assert len(vals)==len(set(vals)),key
           for f in batch:
             p=f['properties']
-            assert p['area']=='Royal Leamington Spa' and p['local_authority']=='Warwickshire'
+            assert p['area']=='Kenilworth' and p['local_authority']=='Warwickshire'
             assert p['evidence_level'] in ('B','C') and p['confidence_level_1_to_4'] in (2,3)
             assert p.get('evidence_excerpt') and p.get('source_hash') and p.get('match_method')
             assert p.get('sources') and p['sources'][0].get('evidence_excerpt')
@@ -120,7 +120,7 @@ jobs:
           assert run.get('already_processed_ids_policy_applied') is True
           assert run.get('raw_source_stored_in_git',False) is False
           assert task.get('owner') in (None,'') and task.get('fake_data') is False and task.get('final_ready') is False
-          print('VALIDATED Royal Leamington Spa batch150 7450->7500 +50')
+          print('VALIDATED Kenilworth batch151 7500->7550 +50')
           PY
           git diff --exit-code -- docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json
 
@@ -131,7 +131,7 @@ jobs:
           paths=(england_map_web/data/building_type/shards/building_type_7_latest.geojson england_map_web/data/building_type/shards/building_type_7_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json)
           git add -- "${paths[@]}"
           test -n "$(git diff --cached --name-only)"
-          git commit -m "data(building_type_7): append Royal Leamington Spa Warwickshire OSM API batch 150 7450->7500"
+          git commit -m "data(building_type_7): append Kenilworth Warwickshire OSM API batch 151 7500->7550"
           echo "DATA_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           for a in 1 2 3 4 5; do
             git fetch origin codex/aays-single-runner-v5-20260706
@@ -148,10 +148,10 @@ jobs:
           geo=L('england_map_web/data/building_type/shards/building_type_7_latest.geojson')
           cp=L('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
           run=L('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
-          assert len(geo['features'])==7500
-          assert cp['current_feature_count']==7500 and cp['next_batch_index']==151 and cp['next_target_feature_count']==7550
-          assert run['batch_index']==150 and run['feature_count_before']==7450 and run['feature_count_after']==7500
-          print('REMOTE_DATA_READBACK_OK Royal Leamington Spa batch150')
+          assert len(geo['features'])==7550
+          assert cp['current_feature_count']==7550 and cp['next_batch_index']==152 and cp['next_target_feature_count']==7600
+          assert run['batch_index']==151 and run['feature_count_before']==7500 and run['feature_count_after']==7550
+          print('REMOTE_DATA_READBACK_OK Kenilworth batch151')
           PY
 
       - name: Record and verify remote metadata
@@ -167,15 +167,15 @@ jobs:
           cp_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
           st_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
           cp=json.loads(cp_p.read_text()); st=json.loads(st_p.read_text())
-          cp.update({'remote_head':head,'remote_data_commit':head,'remote_readback_verified':True,'updated_at':now,'first_unverified_step_status':'BATCH_150_REMOTE_READBACK_VERIFIED_CONTINUATION_REQUIRED','fake_data':False,'final_ready':False})
-          cp['summary']['note']='PROGRESS: feature_count 7450 -> 7500. Batch 150 Royal Leamington Spa OSM API remote readback verified; continue at batch 151. final_ready remains false.'
-          cp['remaining_items']['note']='Next batch 151: treat all 7500 canonical feature.id/feature_id/parcel_id/osm_id values as already_processed_ids and append at least 50 genuinely new West Midlands records; do not replay prior batches.'
-          st.update({'remote_head':head,'remote_data_commit':head,'remote_readback_verified':True,'updated_at':now,'fake_data':False,'final_ready':False,'note':'Batch 150 Royal Leamington Spa OSM API: 50 unique evidence-backed features appended; total 7500. Remote readback verified. Continue batch 151.'})
+          cp.update({'remote_head':head,'remote_data_commit':head,'remote_readback_verified':True,'updated_at':now,'first_unverified_step_status':'BATCH_151_REMOTE_READBACK_VERIFIED_CONTINUATION_REQUIRED','fake_data':False,'final_ready':False})
+          cp['summary']['note']='PROGRESS: feature_count 7500 -> 7550. Batch 151 Kenilworth OSM API remote readback verified; continue at batch 152. final_ready remains false.'
+          cp['remaining_items']['note']='Next batch 152: treat all 7550 canonical feature.id/feature_id/parcel_id/osm_id values as already_processed_ids and append at least 50 genuinely new West Midlands records; do not replay prior batches.'
+          st.update({'remote_head':head,'remote_data_commit':head,'remote_readback_verified':True,'updated_at':now,'fake_data':False,'final_ready':False,'note':'Batch 151 Kenilworth OSM API: 50 unique evidence-backed features appended; total 7550. Remote readback verified. Continue batch 152.'})
           cp_p.write_text(json.dumps(cp,ensure_ascii=False,indent=2)+'\n')
           st_p.write_text(json.dumps(st,ensure_ascii=False,indent=2)+'\n')
           PY
           git add docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json
-          git commit -m "building_type_7: record Royal Leamington Spa batch 150 remote readback"
+          git commit -m "building_type_7: record Kenilworth batch 151 remote readback"
           for a in 1 2 3 4 5; do
             git fetch origin codex/aays-single-runner-v5-20260706
             git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }
@@ -192,11 +192,11 @@ jobs:
           st=L('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
           task=L('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
           head=os.environ['DATA_COMMIT']
-          assert cp['current_feature_count']==7500 and cp['next_batch_index']==151 and cp['next_target_feature_count']==7550
-          assert st['current_feature_count']==7500 and st['next_batch_index']==151 and st['next_target_feature_count']==7550
+          assert cp['current_feature_count']==7550 and cp['next_batch_index']==152 and cp['next_target_feature_count']==7600
+          assert st['current_feature_count']==7550 and st['next_batch_index']==152 and st['next_target_feature_count']==7600
           assert cp['remote_readback_verified'] is True and st['remote_readback_verified'] is True
           assert cp['remote_data_commit']==head and st['remote_data_commit']==head
           assert cp['final_ready'] is False and st['final_ready'] is False and cp['fake_data'] is False and st['fake_data'] is False
           assert task.get('owner') in (None,'') and task.get('final_ready') is False and task.get('fake_data') is False
-          print('FINAL_REMOTE_METADATA_READBACK_OK Royal Leamington Spa batch150 7450->7500')
+          print('FINAL_REMOTE_METADATA_READBACK_OK Kenilworth batch151 7500->7550')
           PY
