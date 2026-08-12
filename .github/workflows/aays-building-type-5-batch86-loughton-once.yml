@@ -69,6 +69,11 @@ jobs:
                   raise SystemExit(f'missing source token: {old}')
               code=code.replace(old,new,1)
           code=code.replace('building_type_6','building_type_5').replace('Skegness','Loughton').replace('SKEGNESS','LOUGHTON').replace('skegness','loughton')
+          old_cont='if checkpoint.get("continuation_key") != CONT or status.get("continuation_key") != CONT or task.get("continuation_key") != CONT:'
+          new_cont='if (checkpoint.get("continuation_key") or "") != CONT or (status.get("continuation_key") or "") != CONT or (task.get("continuation_key") or "") != CONT:'
+          if old_cont not in code:
+              raise SystemExit('missing continuation guard')
+          code=code.replace(old_cont,new_cont,1)
           manifest_guard='''manifest = load(MAN)\n\nif any(CITY.lower() in __import__("json").dumps(x, ensure_ascii=False).lower() for x in (manifest.get("sources") or [])):\n    raise SystemExit("city already present in manifest; refusing repeated city batch")'''
           if 'manifest = load(MAN)' not in code:
               raise SystemExit('missing manifest load')
