@@ -53,6 +53,9 @@ jobs:
           assert old_counts in body
           body=body.replace(old_counts,'BEFORE=5550; TARGET=5600; BATCH=112; NEXT_BATCH=113; NEXT_TARGET=5650',1)
           body=body.replace('Bexley','Kingston-Upon-Thames').replace('bexley','kingston-upon-thames')
+          old_guard='authority.lower()!="kingston-upon-thames"'
+          assert old_guard in body
+          body=body.replace(old_guard,'" ".join(authority.lower().replace("-"," ").split())!="kingston upon thames"',1)
           body=body.replace('BATCH_38_APPENDED_50_KINGSTON-UPON-THAMES_FHRS_CONTINUATION_REQUIRED','BATCH_112_APPENDED_50_KINGSTON_FHRS_CONTINUATION_REQUIRED')
           body=body.replace('Batch 38','Batch 112')
           body=body.replace('feature_count 1850 -> 1900','feature_count 5550 -> 5600')
@@ -80,7 +83,7 @@ jobs:
           assert body.count(old_used)==1, body.count(old_used)
           body=body.replace(old_used,'"features_used":250',1)
 
-          required=['CITY="Kingston-Upon-Thames"','FHRS521en-GB.xml','BEFORE=5550; TARGET=5600; BATCH=112; NEXT_BATCH=113; NEXT_TARGET=5650','authority.lower()!="kingston-upon-thames"','PREFIX=next(iter(prefixes))','processed_fhrs_ids','features_used":250','evidence_excerpt','source_evidence_excerpt','"evidence_level":"D"','"confidence_level_1_to_4":2','"fake_data":False','"final_ready":False']
+          required=['CITY="Kingston-Upon-Thames"','FHRS521en-GB.xml','BEFORE=5550; TARGET=5600; BATCH=112; NEXT_BATCH=113; NEXT_TARGET=5650','kingston upon thames','PREFIX=next(iter(prefixes))','processed_fhrs_ids','features_used":250','evidence_excerpt','source_evidence_excerpt','"evidence_level":"D"','"confidence_level_1_to_4":2','"fake_data":False','"final_ready":False']
           missing=[x for x in required if x not in body]
           assert not missing, missing
           assert 'Bexley' not in body and 'bexley' not in body and 'BEXLEY' not in body
