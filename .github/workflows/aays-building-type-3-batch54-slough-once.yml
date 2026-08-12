@@ -1,4 +1,4 @@
-name: AAYS building_type_3 batch79 Littlehampton once
+name: AAYS building_type_3 batch80 Herne Bay once
 
 "on":
   push:
@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  append-littlehampton-batch79:
+  append-herne-bay-batch80:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -30,12 +30,12 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git pull --rebase origin codex/aays-single-runner-v5-20260706
 
-      - name: Render and append Littlehampton batch 79
+      - name: Render and append Herne Bay batch 80
         env:
           TASK: building-type-3-england-classification-v1-20260808
           CONT: 03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e
-          BEFORE: "8650"
-          BATCH: "79"
+          BEFORE: "8700"
+          BATCH: "80"
         run: |
           set -euo pipefail
           git show 85afcced674698bd92ca2a670f436c258fac7092:.github/workflows/aays-building-type-3-batch54-slough-once.yml > /tmp/old_bt3.yml
@@ -49,15 +49,15 @@ jobs:
               lines.append(line[10:] if line.startswith('          ') else line)
           script='\n'.join(lines)+'\n'
           repl={
-            'CITY="Deal"; AUTH="Dover"; GRID="Deal 51.1850,1.3650,51.2350,1.4300"':'CITY="Littlehampton"; AUTH="Arun"; GRID="Littlehampton 50.7950,-0.5450,50.8250,-0.4800"',
-            'WEST,SOUTH,EAST,NORTH=1.3650,51.1850,1.4300,51.2350':'WEST,SOUTH,EAST,NORTH=-0.5450,50.7950,-0.4800,50.8250',
-            'AAYS-building-type-3-batch68/1.0':'AAYS-building-type-3-batch79/1.0',
-            'unprocessed Deal building ways':'unprocessed Littlehampton building ways',
-            '50 new Deal OSM building ways':'50 new Littlehampton OSM building ways',
-            'BATCH_{BATCH}_APPENDED_50_DEAL_OSM_CONTINUATION_REQUIRED':'BATCH_{BATCH}_APPENDED_50_LITTLEHAMPTON_OSM_CONTINUATION_REQUIRED',
-            'Batch {BATCH} appended 50 new Deal OSM evidence-backed features':'Batch {BATCH} appended 50 new Littlehampton OSM evidence-backed features',
-            '50 new Deal OSM records appended after processed-ID exclusion':'50 new Littlehampton OSM records appended after processed-ID exclusion',
-            'BATCH68_BUILD_OK':'BATCH79_BUILD_OK'
+            'CITY="Deal"; AUTH="Dover"; GRID="Deal 51.1850,1.3650,51.2350,1.4300"':'CITY="Herne Bay"; AUTH="Canterbury"; GRID="Herne Bay 51.3500,1.0750,51.3900,1.1550"',
+            'WEST,SOUTH,EAST,NORTH=1.3650,51.1850,1.4300,51.2350':'WEST,SOUTH,EAST,NORTH=1.0750,51.3500,1.1550,51.3900',
+            'AAYS-building-type-3-batch68/1.0':'AAYS-building-type-3-batch80/1.0',
+            'unprocessed Deal building ways':'unprocessed Herne Bay building ways',
+            '50 new Deal OSM building ways':'50 new Herne Bay OSM building ways',
+            'BATCH_{BATCH}_APPENDED_50_DEAL_OSM_CONTINUATION_REQUIRED':'BATCH_{BATCH}_APPENDED_50_HERNE_BAY_OSM_CONTINUATION_REQUIRED',
+            'Batch {BATCH} appended 50 new Deal OSM evidence-backed features':'Batch {BATCH} appended 50 new Herne Bay OSM evidence-backed features',
+            '50 new Deal OSM records appended after processed-ID exclusion':'50 new Herne Bay OSM records appended after processed-ID exclusion',
+            'BATCH68_BUILD_OK':'BATCH80_BUILD_OK'
           }
           for old,new in repl.items():
               count=script.count(old)
@@ -68,15 +68,15 @@ jobs:
           for literal in stale:
               if literal in script:
                   raise SystemExit(f'FAIL_CLOSED stale literal remains: {literal}')
-          Path('/tmp/run_bt3_batch79.py').write_text(script,encoding='utf-8')
+          Path('/tmp/run_bt3_batch80.py').write_text(script,encoding='utf-8')
           PY
-          python3 /tmp/run_bt3_batch79.py
+          python3 /tmp/run_bt3_batch80.py
 
       - name: Guard, commit and push six canonical files
         env:
           CONT: 03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e
-          BEFORE: "8650"
-          BATCH: "79"
+          BEFORE: "8700"
+          BATCH: "80"
         run: |
           set -euo pipefail
           BR=codex/aays-single-runner-v5-20260706
@@ -102,7 +102,7 @@ jobs:
           git add "${FILES[@]}"
           test -n "$(git diff --cached --name-only)"
           git diff --cached --check
-          git commit -m "data(building_type_3): append Littlehampton batch 79"
+          git commit -m "data(building_type_3): append Herne Bay batch 80"
           for attempt in 1 2 3; do
             git fetch origin "$BR"
             if git rebase "origin/$BR" && git push origin HEAD:"$BR"; then exit 0; fi
@@ -126,15 +126,15 @@ jobs:
           def read(p): return json.loads(raw(p))
           cp=read(paths['cp']); st=read(paths['status']); tk=read(paths['task']); mf=read(paths['manifest']); cl=read(paths['class']); shard_bytes=raw(paths['shard']); sh=json.loads(shard_bytes); cont=os.environ['CONT']
           assert cp['continuation_key']==st['continuation_key']==tk['continuation_key']==mf['continuation_key']==cl['continuation_key']==cont
-          assert cp['feature_count_before']==8650 and cp['feature_count_after']==8700 and cp['current_feature_count']==8700
-          assert st['feature_count_before']==8650 and st['feature_count_after']==8700 and st['current_feature_count']==8700
-          assert mf['feature_count_before']==8650 and mf['feature_count_after']==8700 and mf['total_features']==8700
-          assert cl['feature_count_before']==8650 and cl['feature_count_after']==8700 and cl['added_feature_count']==50 and len(cl.get('records',[]))==50
-          assert len(sh.get('features',[]))==8700 and cp.get('progress_counted') is True and st.get('progress_counted') is True
+          assert cp['feature_count_before']==8700 and cp['feature_count_after']==8750 and cp['current_feature_count']==8750
+          assert st['feature_count_before']==8700 and st['feature_count_after']==8750 and st['current_feature_count']==8750
+          assert mf['feature_count_before']==8700 and mf['feature_count_after']==8750 and mf['total_features']==8750
+          assert cl['feature_count_before']==8700 and cl['feature_count_after']==8750 and cl['added_feature_count']==50 and len(cl.get('records',[]))==50
+          assert len(sh.get('features',[]))==8750 and cp.get('progress_counted') is True and st.get('progress_counted') is True
           assert st.get('output_sha256')==hashlib.sha256(shard_bytes).hexdigest()
-          assert cp.get('next_batch_index')==80 and cp.get('next_target_feature_count')==9000
-          assert cp.get('last_batch_name')=='Littlehampton' and cl.get('batch_name')=='Littlehampton' and mf.get('last_batch_name')=='Littlehampton'
-          assert tk.get('progress',{}).get('completed_count')==8700 and tk.get('owner') is None
+          assert cp.get('next_batch_index')==81 and cp.get('next_target_feature_count')==9050
+          assert cp.get('last_batch_name')=='Herne Bay' and cl.get('batch_name')=='Herne Bay' and mf.get('last_batch_name')=='Herne Bay'
+          assert tk.get('progress',{}).get('completed_count')==8750 and tk.get('owner') is None
           for obj in (cp,st,tk,mf,cl):
               assert obj.get('fake_data') is False and obj.get('final_ready') is False
           old=sh.get('features',[])[:-50]; processed=set()
@@ -146,12 +146,12 @@ jobs:
           ids=[]; parcels=[]; osms=[]
           for f in sh.get('features',[])[-50:]:
               p=f.get('properties') or {}; ids.append(str(f.get('id'))); parcels.append(str(p.get('parcel_id'))); osms.append(str(p.get('osm_id')))
-              assert p.get('area')=='Littlehampton' and p.get('local_authority')=='Arun'
+              assert p.get('area')=='Herne Bay' and p.get('local_authority')=='Canterbury'
               assert p.get('sources') and p.get('source_url') and p.get('source_hash') and p.get('match_method')
               assert p.get('evidence_excerpt') is not None and p.get('evidence_level') in ('B','C','D','U')
               assert p.get('confidence_level_1_to_4') in (1,2,3,4)
               assert p.get('fake_data') is False and p.get('final_ready') is False
           assert len(set(ids))==len(set(parcels))==len(set(osms))==50
           assert not(set(ids)&processed) and not(set(parcels)&processed) and not(set(osms)&processed)
-          print('REMOTE_READBACK_OK before=8650 after=8700 new=50 batch=79 city=Littlehampton hash_ok=1')
+          print('REMOTE_READBACK_OK before=8700 after=8750 new=50 batch=80 city=Herne_Bay hash_ok=1')
           PY
