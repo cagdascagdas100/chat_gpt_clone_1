@@ -1,0 +1,273 @@
+name: tmp building_type_2 Waltham Forest FHRS continuation batch 121
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_2_waltham_forest_batch121_20260812.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: building-type-2-continuation
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Prepare current head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Append exactly 50 processed-ID-external Waltham Forest FHRS features
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import hashlib, json, subprocess, urllib.request
+          import xml.etree.ElementTree as ET
+          from collections import Counter
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          SLOT='building_type_2'; TASK='building-type-2-england-classification-v1-20260808'
+          CITY='Waltham Forest'; REGION='London Outer'
+          SOURCE='Food Standards Agency FHRS daily open data - Waltham Forest'
+          URL='https://ratings.food.gov.uk/api/open-data-files/FHRS531en-GB.xml'
+          PAGE='https://ratings.food.gov.uk/open-data'
+          BEFORE=6000; TARGET=6050; BATCH=121; NEXT_BATCH=122; NEXT_TARGET=6100
+
+          shard_p=Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          manifest_p=Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          checkpoint_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          status_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          task_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          runner_p=Path('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+
+          shard=json.loads(shard_p.read_text(encoding='utf-8'))
+          manifest=json.loads(manifest_p.read_text(encoding='utf-8'))
+          checkpoint=json.loads(checkpoint_p.read_text(encoding='utf-8'))
+          status=json.loads(status_p.read_text(encoding='utf-8'))
+          task=json.loads(task_p.read_text(encoding='utf-8'))
+          features=shard.get('features') or []
+          before=len(features)
+          assert before==BEFORE, (before,BEFORE)
+          assert task.get('slot_id')==SLOT and task.get('task_id')==TASK and task.get('owner') is None
+          assert str(status.get('state')) not in {'DONE','PUBLISHED'}
+          assert int(manifest.get('total_features',-1))==BEFORE
+          assert int(checkpoint.get('current_feature_count',-1))==BEFORE
+          assert int(checkpoint.get('next_batch_index',-1))==BATCH
+          assert int(checkpoint.get('next_target_feature_count',-1))==TARGET
+          for o in (manifest,checkpoint,status,task):
+              assert o.get('fake_data') is False and o.get('final_ready') is False
+
+          processed=set(); processed_fhrs_ids=set(); prefix=None
+          for f in features:
+              p=f.get('properties') or {}
+              for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id')):
+                  if v is not None and str(v).strip(): processed.add(str(v).strip())
+              if p.get('fhrs_id') is not None and str(p.get('fhrs_id')).strip(): processed_fhrs_ids.add(str(p.get('fhrs_id')).strip())
+              if p.get('source_url')==URL and prefix is None:
+                  fid=str(f.get('id') or '')
+                  if '_FHRS_' in fid: prefix=fid.split('_FHRS_',1)[0]
+          if not prefix: prefix='WALTHAM_FOREST'
+
+          src_manifest=[s for s in manifest.get('sources') or [] if s.get('url')==URL]
+          assert len(src_manifest)==1 and int(src_manifest[0].get('features_used',-1))==200
+
+          req=urllib.request.Request(URL,headers={'User-Agent':'AAYS-building-type/1.0'})
+          with urllib.request.urlopen(req,timeout=90) as r: raw=r.read()
+          assert len(raw)>1000
+          source_sha=hashlib.sha256(raw).hexdigest()
+          root=ET.fromstring(raw)
+          def local(tag): return tag.rsplit('}',1)[-1]
+          def text(e,w):
+              for c in e.iter():
+                  if local(c.tag)==w: return (c.text or '').strip()
+              return ''
+          def classify(bt):
+              b=bt.lower()
+              if any(x in b for x in ('school','college','university')): return 'education','P_EDUCATION','institutional'
+              if any(x in b for x in ('hospital','caring','childcare')): return 'healthcare_care','P_HEALTHCARE','institutional'
+              if any(x in b for x in ('hotel','bed & breakfast','guest house')): return 'hospitality','C_HOTEL','commercial'
+              if any(x in b for x in ('pub','bar','nightclub','restaurant','cafe','canteen')): return 'commercial_hospitality','C_HOSPITALITY','commercial'
+              if any(x in b for x in ('takeaway','sandwich')): return 'commercial_hospitality','C_TAKEAWAY','commercial'
+              if any(x in b for x in ('retailer','supermarket','hypermarket')): return 'commercial_retail','C_RETAIL','commercial'
+              if any(x in b for x in ('distributor','transporter')): return 'warehouse','C_LOGISTICS','commercial'
+              if any(x in b for x in ('manufacturer','packer')): return 'industrial','I_MANUFACTURING','industrial'
+              return 'commercial_other','C_OTHER','commercial'
+
+          candidates=[]
+          for e in root.iter():
+              if local(e.tag)!='EstablishmentDetail': continue
+              fid=text(e,'FHRSID')
+              if not fid: continue
+              feature_id=f'{prefix}_FHRS_{fid}'; parcel_id=f'{prefix}_FHRSID_{fid}'
+              if feature_id in processed or parcel_id in processed or fid in processed or fid in processed_fhrs_ids: continue
+              authority=text(e,'LocalAuthorityName')
+              if authority and 'waltham forest' not in authority.lower(): continue
+              bt=text(e,'BusinessType')
+              if not bt or 'mobile caterer' in bt.lower(): continue
+              try: lat=float(text(e,'Latitude')); lon=float(text(e,'Longitude'))
+              except Exception: continue
+              if not (-8.5<lon<2.5 and 49.0<lat<61.0): continue
+              candidates.append((int(fid) if fid.isdigit() else 10**18,fid,e,lat,lon,bt,authority))
+          candidates.sort(key=lambda x:(x[0],x[1]))
+          assert len(candidates)>=50, len(candidates)
+
+          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          new_ids=[]; new_parcels=[]; new_fhrs=[]; records=[]
+          for _,fid,e,lat,lon,bt,authority in candidates[:50]:
+              feature_id=f'{prefix}_FHRS_{fid}'; parcel_id=f'{prefix}_FHRSID_{fid}'
+              primary,code,category=classify(bt)
+              name=text(e,'BusinessName'); postcode=text(e,'PostCode')
+              excerpt=f'FHRSID {fid} | {name} | BusinessType {bt} | LocalAuthority {authority or CITY} | PostCode {postcode} | coordinates {lat:.6f},{lon:.6f}'
+              src={'source_name':SOURCE,'url':URL,'source_page':PAGE,'sha256':source_sha,'accessed_at':now,'granularity':'geocoded_business_premises_point','fields_used':['FHRSID','BusinessName','BusinessType','LocalAuthorityName','PostCode','Latitude','Longitude'],'supports_field':'building_type_primary (premises-use proxy)','match_method':'fhrs_business_type_premises_proxy','match_score':0.55}
+              limitations='FHRS premises-use proxy only; cadastral parcel identity and building fabric remain unverified.'
+              props={'parcel_id':parcel_id,'osm_id':None,'slot_id':SLOT,'region':REGION,'area':CITY,'local_authority':authority or CITY,'postcode':postcode,'business_name':name,'fhrs_id':fid,'fhrs_business_type':bt,'building_type_primary':primary,'building_type_code':code,'building_category':category,'evidence_level':'D','evidence_score':0.55,'confidence_score':0.55,'confidence':0.55,'confidence_level_1_to_4':2,'source_count':1,'match_method':'fhrs_business_type_premises_proxy','source':SOURCE,'source_url':URL,'source_hash':source_sha,'sources':[src],'evidence_excerpt':excerpt,'source_evidence_excerpt':excerpt,'snapshot_date':now[:10],'geometry_match_method':'source_geocoded_point_only','address_match_method':'source_record_address','limitations':limitations,'needs_manual_review':True,'fake_data':False,'final_ready':False,'updated_at':now}
+              geom={'type':'Point','coordinates':[lon,lat]}
+              features.append({'type':'Feature','id':feature_id,'geometry':geom,'properties':props})
+              records.append({'feature_id':feature_id,'parcel_id':parcel_id,'osm_id':None,'local_authority':authority or CITY,'postcode':postcode,'building_type_primary':primary,'building_type_code':code,'building_category':category,'confidence_score':0.55,'confidence_level_1_to_4':2,'evidence_level':'D','source':SOURCE,'source_url':URL,'source_hash':source_sha,'match_method':'fhrs_business_type_premises_proxy','evidence_excerpt':excerpt,'sources':[src],'limitations':limitations,'needs_manual_review':True,'fake_data':False,'final_ready':False,'geometry':geom})
+              new_ids.append(feature_id); new_parcels.append(parcel_id); new_fhrs.append(fid)
+
+          after=len(features)
+          assert after>before and after==TARGET and after-before==50
+          assert len(set(new_ids))==50 and len(set(new_parcels))==50 and len(set(new_fhrs))==50
+          assert not (set(new_ids)&processed) and not (set(new_parcels)&processed) and not (set(new_fhrs)&processed_fhrs_ids)
+          assert len({f.get('id') for f in features})==after
+
+          shard['features']=features
+          shard_text=json.dumps(shard,ensure_ascii=False,indent=2)+'\n'
+          shard_p.write_text(shard_text,encoding='utf-8')
+          out_sha=hashlib.sha256(shard_text.encode()).hexdigest()
+          classified=sum(1 for f in features if (f.get('properties') or {}).get('building_type_primary') not in (None,'','unknown'))
+          unknown=after-classified
+          ed=Counter((f.get('properties') or {}).get('evidence_level','U') for f in features)
+          td=Counter((f.get('properties') or {}).get('building_type_primary','unknown') for f in features)
+          cd=Counter(str((f.get('properties') or {}).get('confidence_level_1_to_4',1)) for f in features)
+
+          sources=list(manifest.get('sources') or []); found=False
+          for s in sources:
+              if s.get('url')==URL:
+                  assert int(s.get('features_used',0))==200
+                  s.update({'name':SOURCE,'source_page':PAGE,'features_used':250,'accessed_at':now,'source_sha256':source_sha,'source_hash_method':'sha256_raw_source_xml','note':'Premises-use proxy; not cadastral parcel geometry. Aggregated across processed-ID-external continuation batches.','evidence_level':'D','confidence_level_1_to_4':2}); found=True
+          assert found
+          manifest.update({'generated_at':now,'total_features':after,'classified':classified,'unknown':unknown,'evidence_distribution':dict(sorted(ed.items())),'type_distribution':dict(sorted(td.items())),'confidence_level_distribution':dict(sorted(cd.items())),'sources':sources,'fake_data':False,'final_ready':False,'note':'Existing shard preserved; appended 50 Waltham Forest FHRS continuation records outside all prior feature.id, parcel_id and osm_id values.','feature_count':after,'geojson_sha256':out_sha,'geojson_path':str(shard_p),'manifest_updated_at':now,'feature_count_before':before,'feature_count_after':after,'added_feature_count':50,'last_batch_index':BATCH,'last_batch_city':CITY,'last_batch_source':SOURCE,'last_batch_source_sha256':source_sha})
+          manifest_p.write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
+          last_batch={'batch_index':BATCH,'city':CITY,'added_feature_count':50,'source':SOURCE,'source_url':URL,'source_sha256':source_sha,'classification_basis':'fhrs_business_type_premises_proxy','evidence_level_distribution':{'D':50},'confidence_level_distribution':{'2':50}}
+          status.update({'state':'IN_PROGRESS','updated_at':now,'owner':None,'final_ready':False,'fake_data':False,'classified_count':classified,'unknown_count':unknown,'total_elements':after,'total_features':after,'classified':classified,'unknown':unknown,'feature_count_before':before,'feature_count_after':after,'current_feature_count':after,'progress_count_delta':50,'next_batch_index':NEXT_BATCH,'next_target_feature_count':NEXT_TARGET,'confidence_distribution':{str(k):int(v) for k,v in sorted(cd.items())},'confidence_level_distribution':{str(k):int(v) for k,v in sorted(cd.items())},'evidence_distribution':dict(sorted(ed.items())),'output_sha256':out_sha,'candidate_batch':None,'no_progress_reason':None,'new_feature_count':50,'last_batch_index':BATCH,'last_batch_city':CITY,'last_batch_added_feature_count':50,'last_batch_source':SOURCE,'last_batch_evidence_distribution':{'D':50},'last_batch_confidence_distribution':{'2':50},'note':'Batch 121 appended from official Waltham Forest FHRS continuation records outside all prior feature.id, parcel_id and osm_id values; same task retained and owner remains null.','progress_reason':'50 new Waltham Forest FHRS continuation premises-use proxy records appended after feature.id/parcel_id/osm_id exclusion','last_batch':last_batch})
+          status_p.write_text(json.dumps(status,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
+          checkpoint.update({'hydration_state':'REMOTE_HEAD_HYDRATED_FIRST_UNVERIFIED_PRESERVED','remote_head':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'first_unverified_step_status':'BATCH_121_APPENDED_50_WALTHAM_FOREST_FHRS_CONTINUATION_REQUIRED','terminal_status':'IN_PROGRESS','updated_at':now,'final_ready':False,'state':'IN_PROGRESS','feature_count_before':before,'feature_count_after':after,'current_feature_count':after,'next_batch_index':NEXT_BATCH,'next_target_feature_count':NEXT_TARGET,'last_processed_ids_sample':new_ids[-20:],'already_processed_ids_policy':'Treat every existing shard feature.id, properties.parcel_id and properties.osm_id as already_processed_ids; never replay them.','candidate_batch':None,'no_progress_reason':None,'fake_data':False,'next_required_action':'APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES; OPTIONAL OSM/EPC/VOA/HMLR CORROBORATION FOR FHRS PROXY RECORDS','summary':{'osm_pilot_classified':checkpoint.get('summary',{}).get('osm_pilot_classified',0),'new_slot':False,'pipeline_stage':1,'note':'PROGRESS: feature_count 6000 -> 6050. Mevcut sharddaki feature.id, parcel_id ve osm_id degerleri already_processed_ids kabul edildi; Waltham Forest FHRS acik verisinden processed kumesi disinda 50 yeni premises-use proxy feature append edildi.','new_features_appended':50,'current_feature_count':after},'remaining_items':{'osm_building_tag_scan_pending':True,'epc_residential_pending':True,'voa_non_domestic_pending':True,'note':'Sonraki adim batch 122: mevcut 6050 featurein feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 6050 kaydi tekrar isleme.'},'last_batch':{'batch_index':BATCH,'city':CITY,'source':SOURCE,'source_url':URL,'source_sha256':source_sha,'evidence_level':'D','confidence_level_1_to_4':2,'added_feature_count':50,'new_feature_ids':new_ids}})
+          checkpoint_p.write_text(json.dumps(checkpoint,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
+          runner={'slot_id':SLOT,'task_id':TASK,'generated_at':now,'feature_count_before':before,'feature_count_after':after,'added_feature_count':50,'city':CITY,'source':SOURCE,'source_url':URL,'source_page':PAGE,'source_sha256':source_sha,'classification_method':'fhrs_business_type_premises_proxy','confidence_policy':{'fhrs_premises_proxy':{'evidence_level':'D','confidence_level_1_to_4':2}},'already_processed_id_fields':['feature.id','properties.parcel_id','properties.osm_id'],'new_feature_ids':new_ids,'evidence_level':'D','confidence_level_1_to_4':2,'match_method':'fhrs_business_type_premises_proxy','limitations':'Premises-use proxy only; cadastral parcel identity and building fabric remain unverified.','already_processed_ids_policy_applied':True,'fake_data':False,'final_ready':False,'output_sha256':out_sha,'records':records}
+          runner_p.parent.mkdir(parents=True,exist_ok=True)
+          runner_p.write_text(json.dumps(runner,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(f'prepared {before}->{after}; Waltham Forest source {source_sha}; prefix={prefix}; candidates={len(candidates)}')
+          PY
+
+      - name: Validate guarded append
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+          URL='https://ratings.food.gov.uk/api/open-data-files/FHRS531en-GB.xml'
+          def load(p): return json.loads(Path(p).read_text(encoding='utf-8'))
+          shard=load('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          manifest=load('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          checkpoint=load('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          status=load('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          runner=load('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          task=load('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          assert len(shard['features'])==6050
+          assert manifest['feature_count_before']==6000 and manifest['feature_count_after']==6050 and manifest['added_feature_count']==50
+          assert checkpoint['current_feature_count']==6050 and checkpoint['next_batch_index']==122 and checkpoint['next_target_feature_count']==6100
+          assert status['current_feature_count']==6050 and runner['feature_count_before']==6000 and runner['feature_count_after']==6050 and runner['added_feature_count']==50
+          assert task['owner'] is None and task['task_id']=='building-type-2-england-classification-v1-20260808'
+          for o in (manifest,checkpoint,status,runner,task): assert o.get('fake_data') is False and o.get('final_ready') is False
+          assert runner.get('already_processed_ids_policy_applied') is True and runner['city']=='Waltham Forest'
+          ids=list(runner['new_feature_ids']); assert len(ids)==50 and len(set(ids))==50
+          batch=[f for f in shard['features'] if f.get('id') in set(ids)]; assert len(batch)==50 and len(runner['records'])==50
+          assert len({f.get('id') for f in shard['features']})==6050
+          assert len({(f.get('properties') or {}).get('parcel_id') for f in batch})==50
+          assert len({str((f.get('properties') or {}).get('fhrs_id')) for f in batch})==50
+          source_rows=[f for f in shard['features'] if (f.get('properties') or {}).get('source_url')==URL]; assert len(source_rows)==250
+          src=[s for s in manifest.get('sources') or [] if s.get('url')==URL]; assert len(src)==1 and src[0]['features_used']==250
+          for f in batch:
+              p=f.get('properties') or {}
+              assert p.get('source_url')==URL and p.get('source_hash') and p.get('sources')
+              assert p.get('evidence_excerpt') and p.get('source_evidence_excerpt')
+              assert p.get('evidence_level')=='D' and p.get('confidence_level_1_to_4')==2 and p.get('confidence_score')==0.55
+              assert p.get('needs_manual_review') is True and p.get('fake_data') is False and p.get('final_ready') is False
+          print('validated building_type_2 6000->6050 with exactly 50 new Waltham Forest features')
+          PY
+
+      - name: Commit and push only slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json
+          )
+          git restore -- docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json
+          git add -- "${paths[@]}"
+          test -n "$(git diff --cached --name-only)"
+          while read -r p; do ok=0; for e in "${paths[@]}"; do [[ "$p" == "$e" ]] && ok=1; done; [[ "$ok" == 1 ]] || { echo "unexpected staged path: $p"; exit 1; }; done < <(git diff --cached --name-only)
+          git commit -m "data(building_type_2): append Waltham Forest FHRS batch 121 6000->6050"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then git merge --abort || true; exit 1; fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            sleep $((attempt*2))
+          done
+          exit 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json, subprocess
+          ref='origin/codex/aays-single-runner-v5-20260706'; URL='https://ratings.food.gov.uk/api/open-data-files/FHRS531en-GB.xml'
+          def load(p): return json.loads(subprocess.check_output(['git','show',f'{ref}:{p}']))
+          shard=load('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          manifest=load('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          runner=load('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          checkpoint=load('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          status=load('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          task=load('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          assert len(shard['features'])==6050
+          assert manifest['feature_count_before']==6000 and manifest['feature_count_after']==6050 and manifest['added_feature_count']==50
+          assert checkpoint['current_feature_count']==6050 and checkpoint['next_batch_index']==122 and checkpoint['next_target_feature_count']==6100
+          assert status['current_feature_count']==6050 and runner['city']=='Waltham Forest' and len(runner['new_feature_ids'])==50 and runner.get('already_processed_ids_policy_applied') is True
+          assert task['owner'] is None
+          for o in (manifest,checkpoint,status,runner,task): assert o.get('fake_data') is False and o.get('final_ready') is False
+          ids=set(runner['new_feature_ids']); batch=[f for f in shard['features'] if f.get('id') in ids]; assert len(batch)==50
+          assert all((f.get('properties') or {}).get('evidence_excerpt') and (f.get('properties') or {}).get('source_evidence_excerpt') for f in batch)
+          assert all((f.get('properties') or {}).get('evidence_level')=='D' and (f.get('properties') or {}).get('confidence_level_1_to_4')==2 for f in batch)
+          assert all((f.get('properties') or {}).get('fake_data') is False and (f.get('properties') or {}).get('final_ready') is False for f in batch)
+          source_rows=[f for f in shard['features'] if (f.get('properties') or {}).get('source_url')==URL]; assert len(source_rows)==250
+          src=[s for s in manifest.get('sources') or [] if s.get('url')==URL]; assert len(src)==1 and src[0]['features_used']==250
+          print('remote readback verified building_type_2 6000->6050 batch121 Waltham Forest; final_ready=false')
+          PY
