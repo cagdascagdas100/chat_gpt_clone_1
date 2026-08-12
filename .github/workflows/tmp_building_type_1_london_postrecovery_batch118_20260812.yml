@@ -1,4 +1,4 @@
-name: tmp-building-type-1-london-postrecovery-batch118-20260812
+name: tmp-building-type-1-london-postrecovery-batch119-20260812
 on:
   push:
     branches: [codex/aays-single-runner-v5-20260706]
@@ -35,13 +35,13 @@ jobs:
           code=textwrap.dedent(code)
           required=["assert before==3360,before","after==3420","'next_batch_index':47","London_Inner_PostRecovery_46"]
           for marker in required: assert marker in code, marker
-          code=code.replace("assert before==3360,before","assert before==7680,before")
-          code=code.replace("after==3420","after==7740")
-          code=code.replace("'next_batch_index':47","'next_batch_index':119")
-          code=code.replace("London_Inner_PostRecovery_46","London_Inner_PostRecovery_118")
-          code=code.replace("TerraYield-AAYS-building_type_1/38.0","TerraYield-AAYS-building_type_1/110.0")
-          code=re.sub(r"grids=\[.*\]", "grids=[('Tower_Hamlets_North_A',(51.52,-0.02,51.535,0.005),'Tower Hamlets'),('Tower_Hamlets_Central_East_A',(51.505,-0.02,51.52,0.005),'Tower Hamlets'),('Tower_Hamlets_South_East_A',(51.49,-0.02,51.505,0.005),'Tower Hamlets')]", code, count=1)
-          exec(compile(code,'batch118_reused_batch46_logic','exec'),{})
+          code=code.replace("assert before==3360,before","assert before==7740,before")
+          code=code.replace("after==3420","after==7800")
+          code=code.replace("'next_batch_index':47","'next_batch_index':120")
+          code=code.replace("London_Inner_PostRecovery_46","London_Inner_PostRecovery_119")
+          code=code.replace("TerraYield-AAYS-building_type_1/38.0","TerraYield-AAYS-building_type_1/111.0")
+          code=re.sub(r"grids=\[.*\]", "grids=[('Lambeth_Brixton_West_A',(51.455,-0.135,51.47,-0.115),'Lambeth'),('Lambeth_Brixton_East_A',(51.455,-0.115,51.47,-0.095),'Lambeth'),('Lambeth_Stockwell_South_A',(51.46,-0.13,51.475,-0.11),'Lambeth')]", code, count=1)
+          exec(compile(code,'batch119_reused_batch46_logic','exec'),{})
           PY
       - name: Commit push and remote readback
         shell: bash
@@ -62,7 +62,7 @@ jobs:
           git add -- "$SHARD" "$MANIFEST" "$RUNNER" "$STATUS" "$CHECKPOINT" "$TASK"
           git diff --cached --quiet && { echo 'NO_BUSINESS_DIFF'; exit 1; }
           git diff --cached --check
-          git commit -m 'Append building_type_1 London post-recovery batch 118'
+          git commit -m 'Append building_type_1 London post-recovery batch 119'
           pushed=0
           for attempt in 1 2 3 4 5; do
             git fetch origin "$BR"
@@ -80,12 +80,12 @@ jobs:
           git show FETCH_HEAD:"$TASK" > /tmp/remote_task.json
           python - <<'PY'
           import json,hashlib,pathlib
-          fc=json.load(open('/tmp/remote_shard.geojson',encoding='utf-8')); assert len(fc['features'])==7740
+          fc=json.load(open('/tmp/remote_shard.geojson',encoding='utf-8')); assert len(fc['features'])==7800
           cp=json.load(open('/tmp/remote_checkpoint.json')); st=json.load(open('/tmp/remote_status.json')); rn=json.load(open('/tmp/remote_runner.json')); task=json.load(open('/tmp/remote_task.json'))
-          assert cp['feature_count_before']==7680 and cp['feature_count_after']==7740 and cp['last_batch_new_features']==60 and cp['next_batch_index']==119 and cp['fake_data'] is False and cp['final_ready'] is False
-          assert st['feature_count_before']==7680 and st['feature_count_after']==7740 and st['new_features_added']==60 and st['fake_data'] is False and st['final_ready'] is False
-          assert rn['feature_count_before']==7680 and rn['feature_count_after']==7740 and rn['new_features_added']==60 and rn['new_evidence_level']=='B' and rn['new_confidence_level_1_to_4']==3 and rn['fake_data'] is False and rn['final_ready'] is False
-          assert task['progress']['completed_count']==7740 and task['owner'] is None and task['fake_data'] is False and task['final_ready'] is False
+          assert cp['feature_count_before']==7740 and cp['feature_count_after']==7800 and cp['last_batch_new_features']==60 and cp['next_batch_index']==120 and cp['fake_data'] is False and cp['final_ready'] is False
+          assert st['feature_count_before']==7740 and st['feature_count_after']==7800 and st['new_features_added']==60 and st['fake_data'] is False and st['final_ready'] is False
+          assert rn['feature_count_before']==7740 and rn['feature_count_after']==7800 and rn['new_features_added']==60 and rn['new_evidence_level']=='B' and rn['new_confidence_level_1_to_4']==3 and rn['fake_data'] is False and rn['final_ready'] is False
+          assert task['progress']['completed_count']==7800 and task['owner'] is None and task['fake_data'] is False and task['final_ready'] is False
           new=set(rn['new_feature_ids']); assert len(new)==60; got=0
           for f in fc['features']:
               if f.get('id') in new:
@@ -97,5 +97,5 @@ jobs:
           sha=hashlib.sha256(pathlib.Path('/tmp/remote_shard.geojson').read_bytes()).hexdigest(); assert sha==st['output_sha256']==rn['output_sha256']
           forbidden='PUB'+'LISHED'
           for p in ('/tmp/remote_checkpoint.json','/tmp/remote_status.json','/tmp/remote_runner.json','/tmp/remote_task.json'): assert forbidden not in pathlib.Path(p).read_text(encoding='utf-8')
-          print(json.dumps({'remote_count':7740,'remote_new':60,'remote_output_sha256':sha,'remote_readback':True}))
+          print(json.dumps({'remote_count':7800,'remote_new':60,'remote_output_sha256':sha,'remote_readback':True}))
           PY
