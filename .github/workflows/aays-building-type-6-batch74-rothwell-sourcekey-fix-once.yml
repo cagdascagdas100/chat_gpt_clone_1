@@ -1,0 +1,92 @@
+name: AAYS building_type_6 batch74 Rothwell source-key fix one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-6-batch74-rothwell-sourcekey-fix-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-6-batch74-rothwell-sourcekey-fix-once
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 20
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json
+
+      - name: Fast-forward to latest canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Correct Rothwell source evidence key
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json')
+          d = json.loads(p.read_text(encoding='utf-8'))
+          assert d.get('current_feature_count') == 14500, d.get('current_feature_count')
+          assert d.get('next_batch_index') == 75
+          assert d.get('continuation_key') == 'c1418ec751ca09ee40aa5704d014ad3e25ee346e2fc9eec7c32d3c11d565027a'
+          ev = d.get('source_access_evidence') or {}
+          old = 'rothwell_east_lindsey_source_sha256'
+          new = 'rothwell_north_northamptonshire_source_sha256'
+          assert old in ev and new not in ev
+          ev[new] = ev.pop(old)
+          p.write_text(json.dumps(d, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit and push metadata correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json
+          git diff --cached --quiet && { echo "No metadata correction to commit"; exit 1; }
+          git commit -m "building_type_6: correct Rothwell source evidence key"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              exit 0
+            fi
+            git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+            if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then
+              git merge --abort || true
+              echo "merge conflict; refusing to overwrite concurrent slot changes"
+              exit 1
+            fi
+          done
+          exit 1
+
+      - name: Remote readback correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+          python - <<'PY'
+          import json, subprocess
+          raw = subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json'])
+          d = json.loads(raw.decode('utf-8'))
+          ev = d.get('source_access_evidence') or {}
+          assert d.get('current_feature_count') == 14500
+          assert d.get('feature_count_before') == 14250 and d.get('feature_count_after') == 14500
+          assert d.get('next_batch_index') == 75 and d.get('next_target_feature_count') == 14750
+          assert ev.get('rothwell_north_northamptonshire_source_sha256') == '0627f674a6b2e5525203dc6973263cdbcc1b47cd9c22e19db2be9e633412e2dd'
+          assert 'rothwell_east_lindsey_source_sha256' not in ev
+          assert d.get('fake_data') is False and d.get('final_ready') is False
+          print('REMOTE_READBACK_OK Rothwell source evidence key corrected; counts unchanged 14250->14500')
+          PY
