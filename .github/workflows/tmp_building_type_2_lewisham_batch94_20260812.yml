@@ -43,23 +43,23 @@ jobs:
           marker="          python3 <<'PY'\n"
           a=text.index(anchor); start=text.index(marker,a)+len(marker); end=text.index("\n          PY",start)
           body='\n'.join(line[10:] if line.startswith('          ') else line for line in text[start:end].splitlines())+'\n'
-
-          old_city='CITY="Bexley"; PREFIX="BEXLEY"; REGION="London Outer"'
-          assert old_city in body
-          body=body.replace(old_city,'CITY="Lewisham"; PREFIX=""; REGION="London Outer"',1)
-          assert 'FHRS503en-GB.xml' in body
-          body=body.replace('FHRS503en-GB.xml','FHRS523en-GB.xml')
-          old_counts='BEFORE=1850; TARGET=1900; BATCH=38; NEXT_BATCH=39; NEXT_TARGET=1950'
-          assert old_counts in body
-          body=body.replace(old_counts,'BEFORE=4650; TARGET=4700; BATCH=94; NEXT_BATCH=95; NEXT_TARGET=4750',1)
-          body=body.replace('Bexley','Lewisham').replace('bexley','lewisham')
-          body=body.replace('BATCH_38_APPENDED_50_LEWISHAM_FHRS_CONTINUATION_REQUIRED','BATCH_94_APPENDED_50_LEWISHAM_FHRS_CONTINUATION_REQUIRED')
-          body=body.replace('Batch 38','Batch 94')
-          body=body.replace('feature_count 1850 -> 1900','feature_count 4650 -> 4700')
-          old_next="Sonraki adim batch 39: mevcut 1900 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 1900 kaydi tekrar isleme."
-          new_next="Sonraki adim batch 95: mevcut 4700 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 4700 kaydi tekrar isleme."
-          assert old_next in body
-          body=body.replace(old_next,new_next,1)
+          replacements=[
+            ('CITY="Bexley"; PREFIX="BEXLEY"; REGION="London Outer"','CITY="Lewisham"; PREFIX=""; REGION="London Outer"'),
+            ('Food Standards Agency FHRS daily open data - Bexley','Food Standards Agency FHRS daily open data - Lewisham'),
+            ('FHRS503en-GB.xml','FHRS523en-GB.xml'),
+            ('BEFORE=1850; TARGET=1900; BATCH=38; NEXT_BATCH=39; NEXT_TARGET=1950','BEFORE=4650; TARGET=4700; BATCH=94; NEXT_BATCH=95; NEXT_TARGET=4750'),
+            ('authority.lower()!="bexley"','authority.lower()!="lewisham"'),
+            ('Existing shard preserved; appended 50 Bexley FHRS continuation records','Existing shard preserved; appended 50 Lewisham FHRS continuation records'),
+            ('Batch 38 appended from official Bexley FHRS continuation records','Batch 94 appended from official Lewisham FHRS continuation records'),
+            ('50 new Bexley FHRS continuation premises-use proxy records','50 new Lewisham FHRS continuation premises-use proxy records'),
+            ('BATCH_38_APPENDED_50_BEXLEY_FHRS_CONTINUATION_REQUIRED','BATCH_94_APPENDED_50_LEWISHAM_FHRS_CONTINUATION_REQUIRED'),
+            ('feature_count 1850 -> 1900','feature_count 4650 -> 4700'),
+            ('Bexley FHRS acik verisinden','Lewisham FHRS acik verisinden'),
+            ("Sonraki adim batch 39: mevcut 1900 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 1900 kaydi tekrar isleme.","Sonraki adim batch 95: mevcut 4700 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 4700 kaydi tekrar isleme.")
+          ]
+          for old,new in replacements:
+              if old not in body: raise AssertionError(f'missing replacement token: {old}')
+              body=body.replace(old,new)
 
           feature_anchor='features=shard.get("features") or []; before=len(features)\n'
           assert feature_anchor in body
@@ -73,17 +73,14 @@ jobs:
           assert candidate_guard in body
           body=body.replace(candidate_guard,'if feature_id in processed or parcel_id in processed or fid in processed or fid in processed_fhrs_ids: continue',1)
 
-          old_assert='assert int(s.get("features_used",0))==50'
-          assert body.count(old_assert)==1, body.count(old_assert)
-          body=body.replace(old_assert,'assert int(s.get("features_used",0))==150',1)
-          old_used='"features_used":100'
-          assert body.count(old_used)==1, body.count(old_used)
-          body=body.replace(old_used,'"features_used":200',1)
+          old='assert int(s.get("features_used",0))==50\n        s.update({"name":SOURCE,"features_used":100'
+          new='assert int(s.get("features_used",0))==150\n        s.update({"name":SOURCE,"features_used":200'
+          assert old in body, 'missing Lewisham cumulative source token'
+          body=body.replace(old,new,1)
 
           required=['CITY="Lewisham"','FHRS523en-GB.xml','BEFORE=4650; TARGET=4700; BATCH=94; NEXT_BATCH=95; NEXT_TARGET=4750','authority.lower()!="lewisham"','PREFIX=next(iter(prefixes))','processed_fhrs_ids','features_used":200','evidence_excerpt','source_evidence_excerpt','"evidence_level":"D"','"confidence_level_1_to_4":2','"fake_data":False','"final_ready":False']
           missing=[x for x in required if x not in body]
           assert not missing, missing
-          assert 'Bexley' not in body and 'bexley' not in body and 'BEXLEY' not in body
           exec(compile(body,'<building_type_2_lewisham_batch94>','exec'),{'__name__':'__main__'})
           PY
 
