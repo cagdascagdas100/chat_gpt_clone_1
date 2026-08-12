@@ -1,0 +1,202 @@
+name: tmp building_type_7 Warwick Warwickshire OSM API batch 149
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_building_type_7_warwick_warwickshire_osmapi_batch149_20260813.yml]
+permissions:
+  contents: write
+concurrency:
+  group: building-type-7-continuation
+  cancel-in-progress: false
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Prepare current head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "aays-building-type-7-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json').read_text())
+          st=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json').read_text())
+          task=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json').read_text())
+          assert cp['current_feature_count']==7400 and cp['next_batch_index']==149 and cp['next_target_feature_count']==7450, cp
+          assert st['current_feature_count']==7400 and st['next_batch_index']==149 and st['next_target_feature_count']==7450, st
+          assert task['task_id']=='building-type-7-england-classification-v1-20260808' and task.get('owner') in (None,''), task
+          assert st.get('owner') in (None,''), st
+          assert cp.get('fake_data') is False and cp.get('final_ready') is False
+          assert st.get('fake_data') is False and st.get('final_ready') is False
+          assert task.get('fake_data') is False and task.get('final_ready') is False
+          PY
+
+      - name: Append exactly 50 unseen Warwick OSM API records
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+          src=Path('.github/workflows/tmp_building_type_7_stratford_upon_avon_warwickshire_osmapi_batch148_20260812.yml').read_text()
+          anchor=src.index('- name: Append exactly 50 unseen Stratford-upon-Avon OSM API records')
+          marker="          python3 <<'PY'\n"
+          start=src.index(marker,anchor)+len(marker)
+          end=src.index("\n          PY",start)
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in src[start:end].splitlines())
+          replacements=[
+            ("CITY='Stratford-upon-Avon'","CITY='Warwick'"),
+            ("('BATCH=107','BATCH=148')","('BATCH=107','BATCH=149')"),
+            ("('BEFORE=5300','BEFORE=7350')","('BEFORE=5300','BEFORE=7400')"),
+            ("('AFTER=5350','AFTER=7400')","('AFTER=5350','AFTER=7450')"),
+            ("('NEXT_BATCH=108','NEXT_BATCH=149')","('NEXT_BATCH=108','NEXT_BATCH=150')"),
+            ("('NEXT_TARGET=5400','NEXT_TARGET=7450')","('NEXT_TARGET=5400','NEXT_TARGET=7500')"),
+            ("('NEXT_CITY_INDEX=18','NEXT_CITY_INDEX=59')","('NEXT_CITY_INDEX=18','NEXT_CITY_INDEX=60')"),
+            ("GRID='52.170,-1.750,52.215,-1.660'","GRID='52.265,-1.620,52.310,-1.545'"),
+          ]
+          for old,new in replacements:
+            assert old in code, old
+            code=code.replace(old,new)
+          boxes='boxes="BBOXES=[(-1.6200,52.2650,-1.5950,52.2800),(-1.5950,52.2650,-1.5700,52.2800),(-1.5700,52.2650,-1.5450,52.2800),(-1.6200,52.2800,-1.5950,52.2950),(-1.5950,52.2800,-1.5700,52.2950),(-1.5700,52.2800,-1.5450,52.2950),(-1.6200,52.2950,-1.5950,52.3100),(-1.5950,52.2950,-1.5700,52.3100),(-1.5700,52.2950,-1.5450,52.3100)]"'
+          code,n=re.subn(r'boxes="BBOXES=\[.*?\]"',boxes,code,count=1)
+          assert n==1, 'outer bbox replacement failed'
+          exec(compile(code,'building_type_7_warwick_batch149_outer.py','exec'),{})
+          PY
+          git checkout -- docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json
+
+      - name: Validate append and evidence contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+          L=lambda p:json.loads(Path(p).read_text())
+          geo=L('england_map_web/data/building_type/shards/building_type_7_latest.geojson')
+          man=L('england_map_web/data/building_type/shards/building_type_7_manifest_latest.json')
+          cp=L('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          st=L('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          run=L('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
+          task=L('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+          assert len(geo['features'])==7450 and man.get('total_features',man.get('feature_count'))==7450
+          assert cp['current_feature_count']==7450 and cp['next_batch_index']==150 and cp['next_target_feature_count']==7500
+          assert st['current_feature_count']==7450 and st['next_batch_index']==150 and st['next_target_feature_count']==7500
+          assert run['batch_index']==149 and run['feature_count_before']==7400 and run['feature_count_after']==7450 and run.get('progress_counted') is True
+          ids=set(run.get('new_feature_ids') or run.get('selected_feature_ids') or [])
+          assert len(ids)==50
+          batch=[f for f in geo['features'] if f.get('id') in ids]
+          assert len(batch)==50
+          processed=set()
+          for f in geo['features'][:7400]:
+            p=f.get('properties') or {}
+            for v in (f.get('id'),p.get('feature_id'),p.get('parcel_id'),p.get('osm_id')):
+              if v is not None: processed.add(str(v))
+          for key,vals in {
+            'feature.id':[str(f['id']) for f in geo['features']],
+            'feature_id':[str((f.get('properties') or {}).get('feature_id')) for f in geo['features'] if (f.get('properties') or {}).get('feature_id')],
+            'parcel_id':[str((f.get('properties') or {}).get('parcel_id')) for f in geo['features'] if (f.get('properties') or {}).get('parcel_id')],
+            'osm_id':[str((f.get('properties') or {}).get('osm_id')) for f in geo['features'] if (f.get('properties') or {}).get('osm_id')]
+          }.items():
+            assert len(vals)==len(set(vals)),key
+          for f in batch:
+            p=f['properties']
+            assert p['area']=='Warwick' and p['local_authority']=='Warwickshire'
+            assert p['evidence_level'] in ('B','C') and p['confidence_level_1_to_4'] in (2,3)
+            assert p.get('evidence_excerpt') and p.get('source_hash') and p.get('match_method')
+            assert p.get('sources') and p['sources'][0].get('evidence_excerpt')
+            assert p['fake_data'] is False and p['final_ready'] is False
+            for v in (f.get('id'),p.get('feature_id'),p.get('parcel_id'),p.get('osm_id')):
+              if v is not None: assert str(v) not in processed
+          assert run.get('already_processed_ids_policy_applied') is True
+          assert run.get('raw_source_stored_in_git',False) is False
+          assert task.get('owner') in (None,'') and task.get('fake_data') is False and task.get('final_ready') is False
+          print('VALIDATED Warwick batch149 7400->7450 +50')
+          PY
+          git diff --exit-code -- docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json
+
+      - name: Commit push and remote data readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(england_map_web/data/building_type/shards/building_type_7_latest.geojson england_map_web/data/building_type/shards/building_type_7_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json)
+          git add -- "${paths[@]}"
+          test -n "$(git diff --cached --name-only)"
+          git commit -m "data(building_type_7): append Warwick Warwickshire OSM API batch 149 7400->7450"
+          echo "DATA_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          for a in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }
+            git push origin HEAD:codex/aays-single-runner-v5-20260706 && break
+            [[ $a -lt 5 ]] || exit 1
+            sleep $((a*2))
+          done
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json,subprocess
+          R='origin/codex/aays-single-runner-v5-20260706'
+          L=lambda p:json.loads(subprocess.check_output(['git','show',f'{R}:{p}']))
+          geo=L('england_map_web/data/building_type/shards/building_type_7_latest.geojson')
+          cp=L('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          run=L('docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json')
+          assert len(geo['features'])==7450
+          assert cp['current_feature_count']==7450 and cp['next_batch_index']==150 and cp['next_target_feature_count']==7500
+          assert run['batch_index']==149 and run['feature_count_before']==7400 and run['feature_count_after']==7450
+          print('REMOTE_DATA_READBACK_OK Warwick batch149')
+          PY
+
+      - name: Record and verify remote metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json,os
+          from datetime import datetime,timezone
+          from pathlib import Path
+          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          head=os.environ['DATA_COMMIT']
+          cp_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          st_p=Path('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          cp=json.loads(cp_p.read_text()); st=json.loads(st_p.read_text())
+          cp.update({'remote_head':head,'remote_data_commit':head,'remote_readback_verified':True,'updated_at':now,'first_unverified_step_status':'BATCH_149_REMOTE_READBACK_VERIFIED_CONTINUATION_REQUIRED','fake_data':False,'final_ready':False})
+          cp['summary']['note']='PROGRESS: feature_count 7400 -> 7450. Batch 149 Warwick OSM API remote readback verified; continue at batch 150. final_ready remains false.'
+          cp['remaining_items']['note']='Next batch 150: treat all 7450 canonical feature.id/feature_id/parcel_id/osm_id values as already_processed_ids and append at least 50 genuinely new West Midlands records; do not replay prior batches.'
+          st.update({'remote_head':head,'remote_data_commit':head,'remote_readback_verified':True,'updated_at':now,'fake_data':False,'final_ready':False,'note':'Batch 149 Warwick OSM API: 50 unique evidence-backed features appended; total 7450. Remote readback verified. Continue batch 150.'})
+          cp_p.write_text(json.dumps(cp,ensure_ascii=False,indent=2)+'\n')
+          st_p.write_text(json.dumps(st,ensure_ascii=False,indent=2)+'\n')
+          PY
+          git add docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json
+          git commit -m "building_type_7: record Warwick batch 149 remote readback"
+          for a in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }
+            git push origin HEAD:codex/aays-single-runner-v5-20260706 && break
+            [[ $a -lt 5 ]] || exit 1
+            sleep $((a*2))
+          done
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python3 <<'PY'
+          import json,subprocess,os
+          R='origin/codex/aays-single-runner-v5-20260706'
+          L=lambda p:json.loads(subprocess.check_output(['git','show',f'{R}:{p}']))
+          cp=L('docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json')
+          st=L('docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json')
+          task=L('docs/chatgpt_status/_shared/slots_21/building_type_7/current_task_latest.json')
+          head=os.environ['DATA_COMMIT']
+          assert cp['current_feature_count']==7450 and cp['next_batch_index']==150 and cp['next_target_feature_count']==7500
+          assert st['current_feature_count']==7450 and st['next_batch_index']==150 and st['next_target_feature_count']==7500
+          assert cp['remote_readback_verified'] is True and st['remote_readback_verified'] is True
+          assert cp['remote_data_commit']==head and st['remote_data_commit']==head
+          assert cp['final_ready'] is False and st['final_ready'] is False and cp['fake_data'] is False and st['fake_data'] is False
+          assert task.get('owner') in (None,'') and task.get('final_ready') is False and task.get('fake_data') is False
+          print('FINAL_REMOTE_METADATA_READBACK_OK Warwick batch149 7400->7450')
+          PY
