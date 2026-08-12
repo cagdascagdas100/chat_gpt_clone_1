@@ -21,18 +21,21 @@ jobs:
         with:
           ref: codex/aays-single-runner-v5-20260706
           fetch-depth: 80
+
       - name: Fast-forward canonical branch and load guarded template
         shell: bash
         run: |
           set -euo pipefail
           git pull --ff-only origin codex/aays-single-runner-v5-20260706
           git fetch origin 61d873aaecbce4d338e9ff8aaaa60cbd5d1be72c --depth=1
-      - name: Retry batch120 with lighter semantic OSM query
+
+      - name: Retry batch120 with typed-building OSM query
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           import re, subprocess, textwrap
+
           TEMPLATE='61d873aaecbce4d338e9ff8aaaa60cbd5d1be72c'
           WF='.github/workflows/aays-building-type-1-batch120-lambeth-brixton-west-b-once.yml'
           old=subprocess.check_output(['git','show',f'{TEMPLATE}:{WF}'],text=True)
@@ -40,46 +43,35 @@ jobs:
           start=old.index(marker)+len(marker)
           end=old.index("\n          PY",start)
           code=textwrap.dedent(old[start:end])
-          replacement="""query=f'''[out:json][timeout:60];
-(
-  nwr[\"amenity\"]({south},{west},{north},{east});
-  nwr[\"shop\"]({south},{west},{north},{east});
-  nwr[\"office\"]({south},{west},{north},{east});
-  nwr[\"tourism\"~\"^(hotel|hostel|guest_house|motel|apartment)$\"]({south},{west},{north},{east});
-  nwr[\"healthcare\"]({south},{west},{north},{east});
-);
-out body center qt 1800;
-'''"""
-          code,n=re.subn(r"query=f'''[\s\S]*?'''",replacement,code,count=1)
-          if n!=1: raise SystemExit('query patch failed')
-          old_fetch="""payload=urllib.parse.urlencode({'data':query}).encode('utf-8')
-raw=None; errors=[]
-for attempt in range(1,4):
-    try:
-        req=urllib.request.Request(ENDPOINT,data=payload,headers={'User-Agent':'TerraYield-AAYS-building_type_1/1.0','Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},method='POST')
-        with urllib.request.urlopen(req,timeout=120) as resp: raw=resp.read()
-        break
-    except Exception as exc:
-        errors.append(repr(exc))
-        if attempt<3: time.sleep(5*attempt)
-if raw is None: raise SystemExit(f'Overpass failed after 3 attempts: {errors}')"""
-          new_fetch="""payload=urllib.parse.urlencode({'data':query}).encode('utf-8')
-raw=None; errors=[]
-ENDPOINTS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.private.coffee/api/interpreter']
-for attempt,endpoint in enumerate(ENDPOINTS,1):
-    try:
-        req=urllib.request.Request(endpoint,data=payload,headers={'User-Agent':'TerraYield-AAYS-building_type_1/1.0','Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},method='POST')
-        with urllib.request.urlopen(req,timeout=90) as resp: raw=resp.read()
-        ENDPOINT=endpoint
-        break
-    except Exception as exc:
-        errors.append({'endpoint':endpoint,'error':repr(exc)})
-        if attempt<len(ENDPOINTS): time.sleep(3*attempt)
-if raw is None: raise SystemExit(f'Overpass endpoints failed once each: {errors}')"""
-          if old_fetch not in code: raise SystemExit('fetch patch anchor missing')
-          code=code.replace(old_fetch,new_fetch,1)
+
+          replacement_query = "query=f'''[out:json][timeout:45];\\nway[\\\"building\\\"][\\\"building\\\"!~\\\"^(yes|garage|garages|shed|carport|roof|construction|proposed|no)$\\\"]({south},{west},{north},{east});\\nout tags center qt 800;\\n'''"
+          code,n=re.subn(r"query=f'''[\s\S]*?'''", lambda m: replacement_query, code, count=1)
+          if n != 1:
+              raise SystemExit('query patch failed')
+
+          fetch_pattern = r"payload=urllib\.parse\.urlencode\(\{'data':query\}\)\.encode\('utf-8'\)\nraw=None; errors=\[\]\nfor attempt in range\(1,4\):[\s\S]*?if raw is None: raise SystemExit\(f'Overpass failed after 3 attempts: \{errors\}'\)"
+          replacement_fetch = "\n".join([
+              "payload=urllib.parse.urlencode({'data':query}).encode('utf-8')",
+              "raw=None; errors=[]",
+              "ENDPOINTS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.private.coffee/api/interpreter']",
+              "for attempt,endpoint in enumerate(ENDPOINTS,1):",
+              "    try:",
+              "        req=urllib.request.Request(endpoint,data=payload,headers={'User-Agent':'TerraYield-AAYS-building_type_1/1.0','Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},method='POST')",
+              "        with urllib.request.urlopen(req,timeout=90) as resp: raw=resp.read()",
+              "        ENDPOINT=endpoint",
+              "        break",
+              "    except Exception as exc:",
+              "        errors.append({'endpoint':endpoint,'error':repr(exc)})",
+              "        if attempt<len(ENDPOINTS): time.sleep(3*attempt)",
+              "if raw is None: raise SystemExit(f'Overpass endpoints failed once each: {errors}')",
+          ])
+          code,n=re.subn(fetch_pattern, lambda m: replacement_fetch, code, count=1)
+          if n != 1:
+              raise SystemExit('fetch patch failed')
+
           exec(compile(code,'batch120_retry_generator','exec'),{})
           PY
+
       - name: Validate, commit exact slot outputs, remove one-shot transport, and push
         shell: bash
         run: |
@@ -90,39 +82,52 @@ if raw is None: raise SystemExit(f'Overpass endpoints failed once each: {errors}
             'geo':'england_map_web/data/building_type/shards/building_type_1_latest.geojson',
             'run':'docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json',
             'st':'docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json',
-            'cp':'docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json'}
+            'cp':'docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json'
+          }
           d={k:json.load(open(v,encoding='utf-8')) for k,v in paths.items()}
-          feats=d['geo'].get('features') or []; records=d['run'].get('records') or []
-          assert len(feats)==7850 and d['st'].get('feature_count_before')==7800 and d['st'].get('feature_count_after')==7850
+          feats=d['geo'].get('features') or []
+          records=d['run'].get('records') or []
+          assert len(feats)==7850
+          assert d['st'].get('feature_count_before')==7800 and d['st'].get('feature_count_after')==7850
+          assert d['st'].get('new_features_added')==50
           assert d['cp'].get('next_batch_index')==121 and len(records)==50
           for r in records:
-              assert r.get('evidence_excerpt') and r.get('sources') and r.get('source_hash')
-              assert r.get('evidence_level') in {'B','C'} and r.get('confidence_level_1_to_4') in {2,3}
+              assert r.get('source_url') and r.get('source_hash') and r.get('sources') and r.get('evidence_excerpt')
+              assert r.get('evidence_level') in {'B','C'}
+              assert r.get('confidence_level_1_to_4') in {2,3}
               assert r.get('fake_data') is False and r.get('final_ready') is False
           print('LOCAL_VALIDATION_OK 7800->7850 +50')
           PY
+
           git config user.name "aays-building-type-1-bot"
           git config user.email "actions@users.noreply.github.com"
           rm -f .github/workflows/aays-building-type-1-batch120-lambeth-brixton-west-b-once.yml
-          git add -A -- \
-            .github/workflows/aays-building-type-1-batch120-lambeth-brixton-west-b-once.yml \
+          git add -- \
             england_map_web/data/building_type/shards/building_type_1_latest.geojson \
             england_map_web/data/building_type/shards/building_type_1_manifest_latest.json \
             docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json \
             docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json \
-            docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json \
+            .github/workflows/aays-building-type-1-batch120-lambeth-brixton-west-b-once.yml
           git diff --cached --quiet && { echo 'No staged change; refusing false progress'; exit 1; }
           git commit -m "building_type_1: append batch 120 Lambeth_Brixton_West_B +50"
+
           for attempt in 1 2 3 4 5; do
             git fetch origin codex/aays-single-runner-v5-20260706 --depth=80
             remote_count=$(git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json | python -c "import json,sys; print(json.load(sys.stdin).get('current_feature_count'))")
             remote_batch=$(git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json | python -c "import json,sys; print(json.load(sys.stdin).get('next_batch_index'))")
-            if [ "$remote_count" != "7800" ] || [ "$remote_batch" != "120" ]; then echo "building_type_1 moved remotely; abort duplicate publish"; exit 1; fi
-            if git pull --rebase origin codex/aays-single-runner-v5-20260706 && git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            if [ "$remote_count" != "7800" ] || [ "$remote_batch" != "120" ]; then
+              echo "building_type_1 moved remotely; abort duplicate publish"
+              exit 1
+            fi
+            if git pull --rebase origin codex/aays-single-runner-v5-20260706 && git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              exit 0
+            fi
             git rebase --abort || true
             sleep $((attempt*2))
           done
           exit 1
+
       - name: Remote readback invariants
         shell: bash
         run: |
@@ -131,23 +136,42 @@ if raw is None: raise SystemExit(f'Overpass endpoints failed once each: {errors}
           python - <<'PY'
           import json, subprocess
           BR='origin/codex/aays-single-runner-v5-20260706'
-          def rj(p): return json.loads(subprocess.check_output(['git','show',f'{BR}:{p}']).decode())
+          def rj(p):
+              return json.loads(subprocess.check_output(['git','show',f'{BR}:{p}']).decode())
           geo=rj('england_map_web/data/building_type/shards/building_type_1_latest.geojson')
           man=rj('england_map_web/data/building_type/shards/building_type_1_manifest_latest.json')
           run=rj('docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json')
           st=rj('docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json')
           cp=rj('docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json')
           task=rj('docs/chatgpt_status/_shared/slots_21/building_type_1/current_task_latest.json')
-          feats=geo.get('features') or []; records=run.get('records') or []
-          assert len(feats)==7850 and st.get('current_feature_count')==7850 and cp.get('current_feature_count')==7850
-          assert st.get('feature_count_before')==7800 and st.get('feature_count_after')==7850 and st.get('new_features_added')==50
+          feats=geo.get('features') or []
+          records=run.get('records') or []
+
+          assert len(feats)==7850
+          assert st.get('current_feature_count')==7850 and cp.get('current_feature_count')==7850
+          assert st.get('feature_count_before')==7800 and st.get('feature_count_after')==7850
+          assert st.get('new_features_added')==50
           assert cp.get('next_batch_index')==121 and cp.get('next_target_feature_count')==7900
-          assert len(records)==50 and task.get('task_id')=='building-type-1-england-classification-v1-20260808' and task.get('owner') in (None,'')
-          assert st.get('fake_data') is False and cp.get('fake_data') is False and run.get('fake_data') is False and man.get('fake_data') is False
-          assert st.get('final_ready') is False and cp.get('final_ready') is False and run.get('final_ready') is False and man.get('final_ready') is False
+          assert len(records)==50
+          assert task.get('task_id')=='building-type-1-england-classification-v1-20260808'
+          assert task.get('owner') in (None,'')
+
+          feature_ids=set()
+          for f in feats:
+              fid=f.get('id')
+              if fid not in (None,''):
+                  assert str(fid) not in feature_ids
+                  feature_ids.add(str(fid))
+
           for r in records:
-              assert r.get('evidence_excerpt') and r.get('sources') and r.get('source_hash')
-              assert r.get('evidence_level') in {'B','C'} and r.get('confidence_level_1_to_4') in {2,3}
+              assert r.get('source_url') and r.get('source_hash') and r.get('sources') and r.get('evidence_excerpt')
+              assert r.get('evidence_level') in {'B','C'}
+              assert r.get('confidence_level_1_to_4') in {2,3}
               assert r.get('fake_data') is False and r.get('final_ready') is False
+
+          assert st.get('fake_data') is False and cp.get('fake_data') is False
+          assert run.get('fake_data') is False and man.get('fake_data') is False
+          assert st.get('final_ready') is False and cp.get('final_ready') is False
+          assert run.get('final_ready') is False and man.get('final_ready') is False
           print('REMOTE_READBACK_OK building_type_1 7800->7850 batch120 +50 fake_data=false final_ready=false')
           PY
