@@ -1,4 +1,4 @@
-name: tmp building_type_2 Kingston FHRS continuation batch 112
+name: tmp building_type_2 Lewisham FHRS fallback batch 112
 
 on:
   push:
@@ -31,7 +31,7 @@ jobs:
           git fetch origin codex/aays-single-runner-v5-20260706
           git pull --ff-only origin codex/aays-single-runner-v5-20260706
 
-      - name: Append exactly 50 new Kingston-Upon-Thames FHRS features
+      - name: Append exactly 50 new Lewisham FHRS features
         shell: bash
         run: |
           set -euo pipefail
@@ -43,30 +43,27 @@ jobs:
           marker="          python3 <<'PY'\n"
           a=text.index(anchor); start=text.index(marker,a)+len(marker); end=text.index("\n          PY",start)
           body='\n'.join(line[10:] if line.startswith('          ') else line for line in text[start:end].splitlines())+'\n'
-
-          old_city='CITY="Bexley"; PREFIX="BEXLEY"; REGION="London Outer"'
-          assert old_city in body
-          body=body.replace(old_city,'CITY="Kingston-Upon-Thames"; PREFIX=""; REGION="London Outer"',1)
-          assert 'FHRS503en-GB.xml' in body
-          body=body.replace('FHRS503en-GB.xml','FHRS521en-GB.xml')
-          old_counts='BEFORE=1850; TARGET=1900; BATCH=38; NEXT_BATCH=39; NEXT_TARGET=1950'
-          assert old_counts in body
-          body=body.replace(old_counts,'BEFORE=5550; TARGET=5600; BATCH=112; NEXT_BATCH=113; NEXT_TARGET=5650',1)
-          body=body.replace('Bexley','Kingston-Upon-Thames').replace('bexley','kingston-upon-thames')
-          old_guard='authority.lower()!="kingston-upon-thames"'
-          assert old_guard in body
-          body=body.replace(old_guard,'" ".join(authority.lower().replace("-"," ").split())!="kingston upon thames"',1)
-          body=body.replace('BATCH_38_APPENDED_50_KINGSTON-UPON-THAMES_FHRS_CONTINUATION_REQUIRED','BATCH_112_APPENDED_50_KINGSTON_FHRS_CONTINUATION_REQUIRED')
-          body=body.replace('Batch 38','Batch 112')
-          body=body.replace('feature_count 1850 -> 1900','feature_count 5550 -> 5600')
-          old_next="Sonraki adim batch 39: mevcut 1900 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 1900 kaydi tekrar isleme."
-          new_next="Sonraki adim batch 113: mevcut 5600 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 5600 kaydi tekrar isleme."
-          assert old_next in body
-          body=body.replace(old_next,new_next,1)
+          replacements=[
+            ('CITY="Bexley"; PREFIX="BEXLEY"; REGION="London Outer"','CITY="Lewisham"; PREFIX=""; REGION="London Outer"'),
+            ('Food Standards Agency FHRS daily open data - Bexley','Food Standards Agency FHRS daily open data - Lewisham'),
+            ('FHRS503en-GB.xml','FHRS523en-GB.xml'),
+            ('BEFORE=1850; TARGET=1900; BATCH=38; NEXT_BATCH=39; NEXT_TARGET=1950','BEFORE=5550; TARGET=5600; BATCH=112; NEXT_BATCH=113; NEXT_TARGET=5650'),
+            ('authority.lower()!="bexley"','authority.lower()!="lewisham"'),
+            ('Existing shard preserved; appended 50 Bexley FHRS continuation records','Existing shard preserved; appended 50 Lewisham FHRS continuation records'),
+            ('Batch 38 appended from official Bexley FHRS continuation records','Batch 112 appended from official Lewisham FHRS continuation records'),
+            ('50 new Bexley FHRS continuation premises-use proxy records','50 new Lewisham FHRS continuation premises-use proxy records'),
+            ('BATCH_38_APPENDED_50_BEXLEY_FHRS_CONTINUATION_REQUIRED','BATCH_112_APPENDED_50_LEWISHAM_FHRS_CONTINUATION_REQUIRED'),
+            ('feature_count 1850 -> 1900','feature_count 5550 -> 5600'),
+            ('Bexley FHRS acik verisinden','Lewisham FHRS acik verisinden'),
+            ("Sonraki adim batch 39: mevcut 1900 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 1900 kaydi tekrar isleme.","Sonraki adim batch 113: mevcut 5600 feature'in feature.id/parcel_id/osm_id degerlerini already_processed_ids kabul ederek London Outer icinde processed kumesi disindan en az 50 append-only feature ekle; onceki 5600 kaydi tekrar isleme.")
+          ]
+          for old,new in replacements:
+              if old not in body: raise AssertionError(f'missing replacement token: {old}')
+              body=body.replace(old,new)
 
           feature_anchor='features=shard.get("features") or []; before=len(features)\n'
           assert feature_anchor in body
-          dynamic_prefix='''features=shard.get("features") or []; before=len(features)\nkingston_existing=[f for f in features if (f.get("properties") or {}).get("source_url")=="https://ratings.food.gov.uk/api/open-data-files/FHRS521en-GB.xml" and "_FHRS_" in str(f.get("id") or "")]\nassert kingston_existing, "existing Kingston-Upon-Thames FHRS seed records not found"\nprefixes={str(f.get("id")).rsplit("_FHRS_",1)[0] for f in kingston_existing}\nassert len(prefixes)==1, prefixes\nPREFIX=next(iter(prefixes))\n'''
+          dynamic_prefix='''features=shard.get("features") or []; before=len(features)\nlewisham_existing=[f for f in features if (f.get("properties") or {}).get("source_url")=="https://ratings.food.gov.uk/api/open-data-files/FHRS523en-GB.xml" and "_FHRS_" in str(f.get("id") or "")]\nassert lewisham_existing, "existing Lewisham FHRS seed records not found"\nprefixes={str(f.get("id")).rsplit("_FHRS_",1)[0] for f in lewisham_existing}\nassert len(prefixes)==1, prefixes\nPREFIX=next(iter(prefixes))\n'''
           body=body.replace(feature_anchor,dynamic_prefix,1)
 
           processed_anchor='processed=set()\n'
@@ -76,18 +73,15 @@ jobs:
           assert candidate_guard in body
           body=body.replace(candidate_guard,'if feature_id in processed or parcel_id in processed or fid in processed or fid in processed_fhrs_ids: continue',1)
 
-          old_assert='assert int(s.get("features_used",0))==50'
-          assert body.count(old_assert)==1, body.count(old_assert)
-          body=body.replace(old_assert,'assert int(s.get("features_used",0))==200',1)
-          old_used='"features_used":100'
-          assert body.count(old_used)==1, body.count(old_used)
-          body=body.replace(old_used,'"features_used":250',1)
+          old='assert int(s.get("features_used",0))==50\n        s.update({"name":SOURCE,"features_used":100'
+          new='assert int(s.get("features_used",0))==200\n        s.update({"name":SOURCE,"features_used":250'
+          assert old in body, 'missing Lewisham cumulative source token'
+          body=body.replace(old,new,1)
 
-          required=['CITY="Kingston-Upon-Thames"','FHRS521en-GB.xml','BEFORE=5550; TARGET=5600; BATCH=112; NEXT_BATCH=113; NEXT_TARGET=5650','kingston upon thames','PREFIX=next(iter(prefixes))','processed_fhrs_ids','features_used":250','evidence_excerpt','source_evidence_excerpt','"evidence_level":"D"','"confidence_level_1_to_4":2','"fake_data":False','"final_ready":False']
+          required=['CITY="Lewisham"','FHRS523en-GB.xml','BEFORE=5550; TARGET=5600; BATCH=112; NEXT_BATCH=113; NEXT_TARGET=5650','authority.lower()!="lewisham"','PREFIX=next(iter(prefixes))','processed_fhrs_ids','features_used":250','evidence_excerpt','source_evidence_excerpt','"evidence_level":"D"','"confidence_level_1_to_4":2','"fake_data":False','"final_ready":False']
           missing=[x for x in required if x not in body]
           assert not missing, missing
-          assert 'Bexley' not in body and 'bexley' not in body and 'BEXLEY' not in body
-          exec(compile(body,'<building_type_2_kingston_batch112>','exec'),{'__name__':'__main__'})
+          exec(compile(body,'<building_type_2_lewisham_batch112>','exec'),{'__name__':'__main__'})
           PY
 
       - name: Validate guarded append
@@ -97,7 +91,7 @@ jobs:
           python3 <<'PY'
           import json
           from pathlib import Path
-          URL='https://ratings.food.gov.uk/api/open-data-files/FHRS521en-GB.xml'
+          URL='https://ratings.food.gov.uk/api/open-data-files/FHRS523en-GB.xml'
           shard=json.loads(Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson').read_text())
           manifest=json.loads(Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json').read_text())
           checkpoint=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json').read_text())
@@ -110,7 +104,7 @@ jobs:
           assert status.get('current_feature_count')==5600 and runner.get('feature_count_before')==5550 and runner.get('feature_count_after')==5600 and runner.get('added_feature_count')==50
           assert task.get('owner') is None and task.get('task_id')=='building-type-2-england-classification-v1-20260808'
           for o in (manifest,checkpoint,status,runner,task): assert o.get('fake_data') is False and o.get('final_ready') is False
-          assert runner.get('already_processed_ids_policy_applied') is True and runner.get('city')=='Kingston-Upon-Thames'
+          assert runner.get('already_processed_ids_policy_applied') is True and runner.get('city')=='Lewisham'
           ids=list(runner.get('new_feature_ids') or []); assert len(ids)==50 and len(set(ids))==50
           new=[f for f in shard['features'] if f.get('id') in set(ids)]; assert len(new)==50 and len(runner.get('records') or [])==50
           assert len({f.get('id') for f in shard['features']})==len(shard['features'])
@@ -127,7 +121,7 @@ jobs:
               assert p.get('needs_manual_review') is True and p.get('fake_data') is False and p.get('final_ready') is False
           src=[s for s in manifest.get('sources') or [] if s.get('url')==URL]
           assert len(src)==1 and src[0].get('features_used')==250
-          print('validated building_type_2 5550->5600 with 50 new Kingston-Upon-Thames FHRS continuation features')
+          print('validated building_type_2 5550->5600 with 50 new Lewisham FHRS continuation features')
           PY
 
       - name: Commit and push only slot outputs
@@ -145,7 +139,7 @@ jobs:
           git add -- "${paths[@]}"
           test -n "$(git diff --cached --name-only)"
           while read -r path; do ok=0; for expected in "${paths[@]}"; do [[ "$path" == "$expected" ]] && ok=1; done; [[ "$ok" == 1 ]] || { echo "unexpected staged path: $path"; exit 1; }; done < <(git diff --cached --name-only)
-          git commit -m "data(building_type_2): append Kingston FHRS batch 112 5550->5600"
+          git commit -m "data(building_type_2): append Lewisham FHRS batch 112 5550->5600"
           for attempt in 1 2 3 4 5; do
             git fetch origin codex/aays-single-runner-v5-20260706
             if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then git merge --abort || true; exit 1; fi
@@ -161,7 +155,7 @@ jobs:
           git fetch origin codex/aays-single-runner-v5-20260706
           python3 <<'PY'
           import json, subprocess
-          ref='origin/codex/aays-single-runner-v5-20260706'; URL='https://ratings.food.gov.uk/api/open-data-files/FHRS521en-GB.xml'
+          ref='origin/codex/aays-single-runner-v5-20260706'; URL='https://ratings.food.gov.uk/api/open-data-files/FHRS523en-GB.xml'
           def load(p): return json.loads(subprocess.check_output(['git','show',f'{ref}:{p}']))
           shard=load('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
           manifest=load('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
@@ -171,7 +165,7 @@ jobs:
           task=load('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
           assert len(shard['features'])==5600 and manifest['feature_count_before']==5550 and manifest['feature_count_after']==5600 and manifest['added_feature_count']==50
           assert checkpoint['current_feature_count']==5600 and checkpoint['next_batch_index']==113 and checkpoint['next_target_feature_count']==5650 and status['current_feature_count']==5600
-          assert runner['city']=='Kingston-Upon-Thames' and len(runner['new_feature_ids'])==50 and runner.get('already_processed_ids_policy_applied') is True and task['owner'] is None
+          assert runner['city']=='Lewisham' and len(runner['new_feature_ids'])==50 and runner.get('already_processed_ids_policy_applied') is True and task['owner'] is None
           for o in (manifest,checkpoint,status,runner,task): assert o.get('fake_data') is False and o.get('final_ready') is False
           ids=set(runner['new_feature_ids']); batch=[f for f in shard['features'] if f.get('id') in ids]
           assert len(batch)==50 and all((f.get('properties') or {}).get('evidence_excerpt') for f in batch)
@@ -183,5 +177,5 @@ jobs:
           assert len(source_rows)==250
           src=[s for s in manifest.get('sources') or [] if s.get('url')==URL]
           assert len(src)==1 and src[0].get('features_used')==250
-          print('remote readback verified building_type_2 5550->5600 batch112 Kingston-Upon-Thames FHRS final_ready=false')
+          print('remote readback verified building_type_2 5550->5600 batch112 Lewisham FHRS final_ready=false')
           PY
