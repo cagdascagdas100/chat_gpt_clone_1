@@ -1,0 +1,556 @@
+name: AAYS building_type_3 batch54 Slough once
+
+"on":
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - .github/workflows/aays-building-type-3-batch54-slough-once.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-3-canonical-writer
+  cancel-in-progress: false
+
+jobs:
+  append-slough-batch54:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+
+      - name: Rebase onto fresh branch head
+        run: |
+          git config user.name "aays-building-type-3-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+
+      - name: Fetch live OSM evidence and append exactly 50 new features
+        env:
+          EXPECTED_TASK: building-type-3-england-classification-v1-20260808
+          EXPECTED_CONTINUATION: 03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e
+          EXPECTED_COUNT: "7400"
+          EXPECTED_BATCH: "54"
+        run: |
+          python3 - <<'PY'
+          import collections
+          import datetime as dt
+          import hashlib
+          import json
+          import os
+          import time
+          import urllib.parse
+          import urllib.request
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          SLOT = "building_type_3"
+          TASK = os.environ["EXPECTED_TASK"]
+          CONT = os.environ["EXPECTED_CONTINUATION"]
+          BEFORE = int(os.environ["EXPECTED_COUNT"])
+          BATCH = int(os.environ["EXPECTED_BATCH"])
+          CITY = "Slough"
+          GRID = "Slough 51.4800,-0.6600,51.5500,-0.5000"
+          ENDPOINT = "https://api.openstreetmap.org/api/0.6/map"
+          NOW = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+          shard_p = Path("england_map_web/data/building_type/shards/building_type_3_latest.geojson")
+          manifest_p = Path("england_map_web/data/building_type/shards/building_type_3_manifest_latest.json")
+          class_p = Path("docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json")
+          status_p = Path("docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json")
+          checkpoint_p = Path("docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json")
+          task_p = Path("docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json")
+
+          def load(p):
+              with p.open("r", encoding="utf-8") as f:
+                  return json.load(f)
+
+          def dump(p, obj):
+              with p.open("w", encoding="utf-8") as f:
+                  json.dump(obj, f, ensure_ascii=False, indent=2)
+                  f.write("\n")
+
+          shard = load(shard_p)
+          manifest = load(manifest_p)
+          status = load(status_p)
+          checkpoint = load(checkpoint_p)
+          task = load(task_p)
+
+          # Same task/checkpoint only. Do not create/claim an owner.
+          assert checkpoint.get("slot_id") == SLOT, checkpoint.get("slot_id")
+          assert checkpoint.get("continuation_key") == CONT, checkpoint.get("continuation_key")
+          assert checkpoint.get("current_feature_count") == BEFORE, checkpoint.get("current_feature_count")
+          assert checkpoint.get("next_batch_index") == BATCH, checkpoint.get("next_batch_index")
+          assert checkpoint.get("owner") in (None, "") if "owner" in checkpoint else True
+          assert task.get("task_id") == TASK, task.get("task_id")
+          assert task.get("continuation_key") == CONT, task.get("continuation_key")
+          assert task.get("owner") is None, task.get("owner")
+          assert status.get("owner") is None, status.get("owner")
+          assert status.get("current_feature_count") == BEFORE, status.get("current_feature_count")
+          assert len(shard.get("features", [])) == BEFORE, len(shard.get("features", []))
+
+          # Every existing feature.id, parcel_id and osm_id is already processed.
+          processed = set()
+          for f in shard["features"]:
+              if f.get("id") is not None:
+                  processed.add(str(f["id"]))
+              p = f.get("properties") or {}
+              if p.get("parcel_id") is not None:
+                  processed.add(str(p["parcel_id"]))
+              if p.get("osm_id") is not None:
+                  processed.add(str(p["osm_id"]))
+
+          recognized = {
+              "detached": ("residential_detached", "R_DET", "residential"),
+              "semidetached_house": ("residential_semi_detached", "R_SEMI", "residential"),
+              "semi": ("residential_semi_detached", "R_SEMI", "residential"),
+              "house": ("residential_house", "R_HOUSE", "residential"),
+              "bungalow": ("residential_bungalow", "R_BUNGALOW", "residential"),
+              "apartments": ("flat_or_apartment", "R_FLAT", "residential"),
+              "residential": ("residential", "R_RES", "residential"),
+              "terrace": ("residential_terrace", "R_TERRACE", "residential"),
+              "retail": ("commercial_retail", "C_RETAIL", "commercial"),
+              "commercial": ("commercial_other", "C_OTHER", "commercial"),
+              "office": ("commercial_office", "C_OFFICE", "commercial"),
+              "industrial": ("industrial", "I_IND", "industrial"),
+              "warehouse": ("warehouse", "I_WARE", "industrial"),
+              "garage": ("workshop_or_garage", "I_GARAGE", "industrial"),
+              "garages": ("workshop_or_garage", "I_GARAGE", "industrial"),
+              "school": ("education", "P_EDU", "public"),
+              "college": ("education", "P_EDU", "public"),
+              "university": ("education", "P_EDU", "public"),
+              "church": ("religious_or_community", "P_RELIG", "public"),
+              "chapel": ("religious_or_community", "P_RELIG", "public"),
+              "cathedral": ("religious_or_community", "P_RELIG", "public"),
+              "hospital": ("hospital_or_healthcare", "P_HEALTH", "public"),
+              "hotel": ("hotel_or_hospitality", "C_HOSPITALITY", "commercial"),
+              "barn": ("agricultural", "A_AGRI", "agricultural"),
+              "farm_auxiliary": ("agricultural", "A_AGRI", "agricultural"),
+              "cowshed": ("agricultural", "A_AGRI", "agricultural"),
+              "stable": ("agricultural", "A_AGRI", "agricultural"),
+              "greenhouse": ("agricultural", "A_AGRI", "agricultural"),
+          }
+
+          def classify(tags):
+              b = (tags.get("building") or "").strip().lower()
+              if b in recognized:
+                  t, code, cat = recognized[b]
+                  return t, code, cat, 0.86, 3, "B", f"building={b}"
+              if b == "yes":
+                  if tags.get("shop"):
+                      return "commercial_retail", "C_RETAIL", "commercial", 0.72, 2, "C", f"building=yes; shop={tags['shop']}"
+                  if tags.get("office"):
+                      return "commercial_office", "C_OFFICE", "commercial", 0.72, 2, "C", f"building=yes; office={tags['office']}"
+                  if tags.get("tourism") in ("hotel", "guest_house", "hostel", "motel"):
+                      return "hotel_or_hospitality", "C_HOSPITALITY", "commercial", 0.72, 2, "C", f"building=yes; tourism={tags['tourism']}"
+                  if tags.get("amenity") in ("hospital", "clinic", "doctors", "dentist", "pharmacy"):
+                      return "hospital_or_healthcare", "P_HEALTH", "public", 0.72, 2, "C", f"building=yes; amenity={tags['amenity']}"
+                  if tags.get("amenity") in ("school", "college", "university", "kindergarten"):
+                      return "education", "P_EDU", "public", 0.72, 2, "C", f"building=yes; amenity={tags['amenity']}"
+                  if tags.get("industrial"):
+                      return "industrial", "I_IND", "industrial", 0.72, 2, "C", f"building=yes; industrial={tags['industrial']}"
+                  return "other_building", "X_OTHER", "other", 0.60, 2, "C", "building=yes"
+              # The building tag itself proves a building exists but an unmapped subtype is lower-confidence.
+              return "other_building", "X_OTHER", "other", 0.60, 2, "C", f"building={b or 'unknown'}"
+
+          def fetch_tile(w, s, e, n):
+              bbox = f"{w:.4f},{s:.4f},{e:.4f},{n:.4f}"
+              url = ENDPOINT + "?" + urllib.parse.urlencode({"bbox": bbox})
+              req = urllib.request.Request(url, headers={"User-Agent": "AAYS-building-type-3-batch54/1.0"})
+              last = None
+              for attempt in range(4):
+                  try:
+                      with urllib.request.urlopen(req, timeout=90) as r:
+                          body = r.read()
+                      if not body:
+                          raise RuntimeError("empty OSM response")
+                      return url, body
+                  except Exception as exc:
+                      last = exc
+                      time.sleep(3 * (attempt + 1))
+              raise RuntimeError(f"OSM fetch failed for {url}: {last}")
+
+          candidates = []
+          seen_way = set()
+          fetched_urls = []
+          aggregate_hash = hashlib.sha256()
+
+          # Small official-API tiles across Slough; raw XML remains runtime-only.
+          south, north = 51.4800, 51.5500
+          west, east = -0.6600, -0.5000
+          lat_step, lon_step = 0.0100, 0.0200
+          s = south
+          while s < north - 1e-9 and len(candidates) < 140:
+              w = west
+              n = min(s + lat_step, north)
+              while w < east - 1e-9 and len(candidates) < 140:
+                  e = min(w + lon_step, east)
+                  url, body = fetch_tile(w, s, e, n)
+                  fetched_urls.append(url)
+                  aggregate_hash.update(body)
+                  tile_sha = hashlib.sha256(body).hexdigest()
+                  root = ET.fromstring(body)
+                  nodes = {el.attrib["id"]: (float(el.attrib["lon"]), float(el.attrib["lat"])) for el in root.findall("node")}
+                  for way in root.findall("way"):
+                      wid = way.attrib.get("id")
+                      if not wid or wid in seen_way:
+                          continue
+                      tags = {t.attrib.get("k", ""): t.attrib.get("v", "") for t in way.findall("tag")}
+                      if not tags.get("building"):
+                          continue
+                      fid = f"ENG_OSM_way_{wid}"
+                      osm_id = f"way/{wid}"
+                      if fid in processed or osm_id in processed:
+                          continue
+                      refs = [nd.attrib.get("ref") for nd in way.findall("nd")]
+                      coords = [nodes[r] for r in refs if r in nodes]
+                      if not coords:
+                          continue
+                      lon = sum(x for x, _ in coords) / len(coords)
+                      lat = sum(y for _, y in coords) / len(coords)
+                      seen_way.add(wid)
+                      candidates.append({
+                          "wid": wid,
+                          "fid": fid,
+                          "osm_id": osm_id,
+                          "tags": tags,
+                          "geometry": {"type": "Point", "coordinates": [lon, lat]},
+                          "tile_url": url,
+                          "tile_sha": tile_sha,
+                      })
+                  w = round(e, 4)
+              s = round(n, 4)
+
+          if len(candidates) < 50:
+              raise SystemExit(f"NO_PROGRESS: only {len(candidates)} unprocessed Slough building ways found; canonical files unchanged")
+
+          # Prefer directly mapped explicit building tags; fallback remains evidence-backed C/2.
+          def priority(c):
+              b = (c["tags"].get("building") or "").lower()
+              return (0 if b in recognized else 1, int(c["wid"]))
+          selected = sorted(candidates, key=priority)[:50]
+
+          new_records = []
+          new_features = []
+          ev = collections.Counter()
+          conf = collections.Counter()
+          types = collections.Counter()
+          new_ids = []
+          for c in selected:
+              tags = c["tags"]
+              typ, code, cat, score, conf_level, evidence, match = classify(tags)
+              fields = [k for k in ("building", "shop", "office", "tourism", "amenity", "industrial", "name", "addr:street", "addr:postcode", "addr:city") if tags.get(k)]
+              excerpt = " | ".join(f"{k}={tags[k]}" for k in fields)[:600]
+              if not excerpt:
+                  excerpt = match
+              source_url = f"https://www.openstreetmap.org/way/{c['wid']}"
+              source = {
+                  "source_name": "OpenStreetMap API 0.6 map",
+                  "url_or_local_path": c["tile_url"],
+                  "element_url": source_url,
+                  "accessed_at": NOW,
+                  "sha256": c["tile_sha"],
+                  "licence": "ODbL 1.0",
+                  "granularity": "building_way_centroid",
+                  "fields_used": fields or ["building"],
+                  "supports_field": "building_type_primary",
+                  "match_method": match,
+                  "match_score": score,
+              }
+              record = {
+                  "feature_id": c["fid"],
+                  "parcel_id": c["fid"],
+                  "osm_id": c["osm_id"],
+                  "building_type_primary": typ,
+                  "building_type_code": code,
+                  "building_category": cat,
+                  "confidence_score": score,
+                  "confidence_level_1_to_4": conf_level,
+                  "evidence_level": evidence,
+                  "source_url": source_url,
+                  "source_hash": c["tile_sha"],
+                  "evidence_excerpt": excerpt,
+                  "sources": [source],
+                  "fake_data": False,
+                  "geometry": c["geometry"],
+              }
+              new_records.append(record)
+              props = {k: v for k, v in record.items() if k != "geometry"}
+              new_features.append({"type": "Feature", "id": c["fid"], "properties": props, "geometry": c["geometry"]})
+              ev[evidence] += 1
+              conf[str(conf_level)] += 1
+              types[typ] += 1
+              new_ids.append(c["fid"])
+
+          assert len(new_ids) == 50 and len(set(new_ids)) == 50
+          assert not any(x in processed for x in new_ids)
+          assert not any(r["osm_id"] in processed for r in new_records)
+
+          shard["features"].extend(new_features)
+          AFTER = len(shard["features"])
+          assert AFTER == BEFORE + 50, (BEFORE, AFTER)
+          shard["updated_at"] = NOW
+          shard["latest_batch"] = CITY
+          shard["last_batch_index"] = BATCH
+
+          source_sha = aggregate_hash.hexdigest()
+          batch_meta = {
+              "batch_index": BATCH,
+              "batch_name": CITY,
+              "city": CITY,
+              "grid_bbox": GRID,
+              "source": "OpenStreetMap API 0.6 map",
+              "endpoint": ENDPOINT,
+              "source_url": ENDPOINT,
+              "source_sha256": source_sha,
+              "features_used": 50,
+              "added_feature_count": 50,
+              "accessed_at": NOW,
+              "evidence_level_distribution": dict(ev),
+              "confidence_level_distribution": dict(conf),
+              "building_type_distribution": dict(types),
+              "new_feature_ids": new_ids,
+              "fetched_urls": fetched_urls,
+              "raw_source_stored_in_git": False,
+          }
+
+          # Manifest: preserve history, increment only from actual appended rows.
+          manifest["generated_at"] = NOW
+          manifest["total_features"] = AFTER
+          manifest["feature_count"] = AFTER
+          manifest["feature_count_before"] = BEFORE
+          manifest["feature_count_after"] = AFTER
+          manifest["added_feature_count"] = 50
+          manifest["classified"] = int(manifest.get("classified", 0)) + 50
+          manifest["unknown"] = int(manifest.get("unknown", 0))
+          for k, v in ev.items():
+              manifest.setdefault("evidence_distribution", {})[k] = int(manifest.setdefault("evidence_distribution", {}).get(k, 0)) + v
+          for k, v in conf.items():
+              manifest.setdefault("confidence_level_distribution", {})[k] = int(manifest.setdefault("confidence_level_distribution", {}).get(k, 0)) + v
+          for k, v in types.items():
+              manifest.setdefault("type_distribution", {})[k] = int(manifest.setdefault("type_distribution", {}).get(k, 0)) + v
+          manifest.setdefault("sources", []).append({
+              "name": f"OpenStreetMap API 0.6 map - {CITY} batch {BATCH}",
+              "url": ENDPOINT,
+              "features_used": 50,
+              "accessed_at": NOW,
+              "source_sha256": source_sha,
+              "source_hash_method": "sha256_concatenated_raw_osm_xml_tiles",
+              "license": "ODbL 1.0",
+              "evidence_level_distribution": dict(ev),
+              "confidence_level_distribution": dict(conf),
+              "grid_bbox": GRID,
+              "raw_source_stored_in_git": False,
+              "note": "50 new OSM building ways after feature.id/parcel_id/osm_id exclusion; raw XML runtime-only."
+          })
+          manifest["last_batch_index"] = BATCH
+          manifest["last_batch_name"] = CITY
+          manifest["last_batch"] = batch_meta
+
+          classification = {
+              "schema_version": 3,
+              "slot_id": SLOT,
+              "task_id": TASK,
+              "continuation_key": CONT,
+              "generated_at": NOW,
+              "state": "IN_PROGRESS",
+              "batch_index": BATCH,
+              "batch_name": CITY,
+              "feature_count_before": BEFORE,
+              "feature_count_after": AFTER,
+              "added_feature_count": 50,
+              "classified_count_after": manifest["classified"],
+              "unknown_count_after": manifest["unknown"],
+              "source": "OpenStreetMap API 0.6 map",
+              "endpoint": ENDPOINT,
+              "source_sha256": source_sha,
+              "evidence_level_distribution": dict(ev),
+              "confidence_level_distribution": dict(conf),
+              "building_type_distribution": dict(types),
+              "records": new_records,
+              "fake_data": False,
+          }
+
+          # Checkpoint keeps same continuation and same task lineage.
+          checkpoint["first_unverified_step_status"] = f"BATCH_{BATCH}_APPENDED_50_{CITY.upper()}_OSM_CONTINUATION_REQUIRED"
+          checkpoint["updated_at"] = NOW
+          checkpoint["final_ready"] = False
+          checkpoint["state"] = "IN_PROGRESS"
+          checkpoint["terminal_status"] = "IN_PROGRESS"
+          checkpoint.setdefault("summary", {})["current_feature_count"] = AFTER
+          checkpoint["summary"]["new_features_added_this_attempt"] = 50
+          checkpoint["summary"]["progress_counted"] = True
+          checkpoint["feature_count_before"] = BEFORE
+          checkpoint["feature_count_after"] = AFTER
+          checkpoint["current_feature_count"] = AFTER
+          checkpoint["next_batch_index"] = BATCH + 1
+          checkpoint["next_target_feature_count"] = AFTER + 300
+          checkpoint["last_processed_ids_sample"] = new_ids[-20:]
+          checkpoint["attempted_new_city_batch"] = CITY
+          checkpoint["source_access_evidence"] = {"osm_api": "Live OSM API 0.6 map tiles succeeded", "endpoint": ENDPOINT, "source_sha256": source_sha, "raw_source_stored_in_git": False}
+          checkpoint["blocker"] = None
+          checkpoint["blocker_reason"] = ""
+          checkpoint["next_required_action"] = f"APPEND_ONLY_BATCH_{BATCH+1}_NEW_SOUTH_EAST_CITY_GRID_DO_NOT_REPROCESS_EXISTING_IDS"
+          checkpoint["fake_data"] = False
+          checkpoint["last_batch_name"] = CITY
+          checkpoint["last_batch_new_features"] = 50
+          checkpoint["last_batch_evidence"] = batch_meta
+          checkpoint["candidate_batch"] = None
+          checkpoint["no_progress_reason"] = None
+          checkpoint["new_features_added_this_attempt"] = 50
+          checkpoint["progress_counted"] = True
+          if CITY not in checkpoint.setdefault("attempted_cities", []):
+              checkpoint["attempted_cities"].append(CITY)
+
+          # Status mirrors the verified increment; do not claim owner/final state.
+          status["state"] = "IN_PROGRESS"
+          status["status"] = "in_progress"
+          status["panel_status"] = "DEVAM"
+          status["updated_at"] = NOW
+          status["owner"] = None
+          status["final_ready"] = False
+          status["fake_data"] = False
+          status["classified_count"] = manifest["classified"]
+          status["classified"] = manifest["classified"]
+          status["unknown_count"] = manifest["unknown"]
+          status["unknown"] = manifest["unknown"]
+          status["total_elements"] = AFTER
+          status["total_features"] = AFTER
+          status["current_feature_count"] = AFTER
+          status["feature_count_before"] = BEFORE
+          status["feature_count_after"] = AFTER
+          status["new_features_added"] = 50
+          status["new_feature_count"] = 50
+          status["progress_count_delta"] = 50
+          status["progress_counted"] = True
+          status["next_batch_index"] = BATCH + 1
+          status["next_target_feature_count"] = AFTER + 300
+          status["confidence_distribution"] = dict(manifest["confidence_level_distribution"])
+          status["confidence_level_distribution"] = dict(manifest["confidence_level_distribution"])
+          status["evidence_distribution"] = dict(manifest["evidence_distribution"])
+          status["blocker"] = None
+          status["blocker_reason"] = ""
+          status["note"] = f"Batch {BATCH} appended 50 new {CITY} OSM evidence-backed features outside all prior feature.id/parcel_id/osm_id values; same task/continuation retained."
+          status["last_batch_city"] = CITY
+          status["last_batch_added_feature_count"] = 50
+          status["last_batch_source"] = "OpenStreetMap API 0.6 map"
+          status["last_batch_evidence_distribution"] = dict(ev)
+          status["last_batch_confidence_distribution"] = dict(conf)
+          status["last_batch_index"] = BATCH
+          status["last_batch_name"] = CITY
+          status["last_batch_new_features"] = 50
+          status["last_batch"] = batch_meta
+          status["last_batch_evidence"] = batch_meta
+          status["candidate_batch"] = None
+          status["no_progress_reason"] = None
+          status["progress_reason"] = f"50 new {CITY} OSM records appended after processed-ID exclusion"
+          status.setdefault("summary", {})["current_feature_count"] = AFTER
+          status["summary"]["new_features_added_this_attempt"] = 50
+          status["summary"]["progress_counted"] = True
+
+          # Same task; only its progress checkpoint moves.
+          task["updated_at"] = NOW
+          task["owner"] = None
+          task["final_ready"] = False
+          task["fake_data"] = False
+          task.setdefault("progress", {})["completed_count"] = AFTER
+          task["progress"]["target_count"] = AFTER + 300
+          task["last_batch_index"] = BATCH
+          task["last_batch_name"] = CITY
+          task["last_batch_added_feature_count"] = 50
+          task["next_batch_index"] = BATCH + 1
+          task["next_target_feature_count"] = AFTER + 300
+
+          # Write shard first, then hash exactly what will be committed.
+          dump(shard_p, shard)
+          shard_sha = hashlib.sha256(shard_p.read_bytes()).hexdigest()
+          manifest["output_sha256"] = shard_sha
+          status["output_sha256"] = shard_sha
+          dump(manifest_p, manifest)
+          dump(class_p, classification)
+          dump(status_p, status)
+          dump(checkpoint_p, checkpoint)
+          dump(task_p, task)
+
+          # Final local invariants.
+          reloaded = load(shard_p)
+          assert len(reloaded["features"]) == AFTER == 7450
+          assert load(checkpoint_p)["feature_count_after"] > load(checkpoint_p)["feature_count_before"]
+          assert load(checkpoint_p)["fake_data"] is False and load(checkpoint_p)["final_ready"] is False
+          assert all(r["fake_data"] is False for r in classification["records"])
+          assert all(r["evidence_excerpt"] and r["evidence_level"] in ("B", "C") and r["confidence_level_1_to_4"] in (1,2,3,4) for r in classification["records"])
+          print(json.dumps({"before": BEFORE, "after": AFTER, "added": 50, "city": CITY, "evidence": dict(ev), "confidence": dict(conf), "types": dict(types), "source_sha256": source_sha, "fetched_tiles": len(fetched_urls)}, sort_keys=True))
+          PY
+
+      - name: Guard remote checkpoint then commit and push canonical six files
+        run: |
+          set -euo pipefail
+          BRANCH=codex/aays-single-runner-v5-20260706
+          CP=docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            python3 - <<'PY'
+          import json, subprocess
+          p='docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json'
+          raw=subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:'+p], text=True)
+          cp=json.loads(raw)
+          if cp.get('current_feature_count') != 7400 or cp.get('next_batch_index') != 54 or cp.get('continuation_key') != '03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e':
+              raise SystemExit('REMOTE_GUARD_ABORT: building_type_3 moved; do not overwrite')
+          PY
+            git add \
+              england_map_web/data/building_type/shards/building_type_3_latest.geojson \
+              england_map_web/data/building_type/shards/building_type_3_manifest_latest.json \
+              docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json \
+              docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json \
+              docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json \
+              docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json
+            if ! git diff --cached --quiet; then
+              git commit -m "data(building_type_3): append Slough batch 54"
+            fi
+            git rebase "origin/$BRANCH"
+            if git push origin "HEAD:$BRANCH"; then
+              exit 0
+            fi
+            sleep $((attempt * 3))
+          done
+          echo "Push failed after retries" >&2
+          exit 1
+
+      - name: Remote readback gate
+        run: |
+          set -euo pipefail
+          BRANCH=codex/aays-single-runner-v5-20260706
+          git fetch origin "$BRANCH"
+          python3 - <<'PY'
+          import json, subprocess
+          base='origin/codex/aays-single-runner-v5-20260706:'
+          def read(path):
+              return json.loads(subprocess.check_output(['git','show',base+path], text=True))
+          cp=read('docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json')
+          st=read('docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json')
+          mf=read('england_map_web/data/building_type/shards/building_type_3_manifest_latest.json')
+          cl=read('docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json')
+          sh=read('england_map_web/data/building_type/shards/building_type_3_latest.geojson')
+          assert cp['feature_count_before']==7400 and cp['feature_count_after']==7450 and cp['progress_counted'] is True
+          assert cp['last_batch_name']=='Slough' and cp['fake_data'] is False and cp['final_ready'] is False
+          assert st['current_feature_count']==7450 and st['last_batch_name']=='Slough'
+          assert mf['total_features']==7450 and mf['feature_count_after']==7450
+          assert cl['added_feature_count']==50 and len(cl['records'])==50 and cl['batch_name']=='Slough'
+          assert len(sh['features'])==7450 and sh.get('latest_batch')=='Slough'
+          ids=[]; parcels=[]; osms=[]
+          for f in sh['features']:
+              ids.append(str(f.get('id')))
+              p=f.get('properties') or {}
+              parcels.append(str(p.get('parcel_id')))
+              osms.append(str(p.get('osm_id')))
+          assert len(ids)==len(set(ids))
+          assert len(parcels)==len(set(parcels))
+          assert len(osms)==len(set(osms))
+          print(json.dumps({'remote_readback':'OK','feature_count_before':7400,'feature_count_after':7450,'added':50,'batch':'Slough','next_batch':cp['next_batch_index']}, sort_keys=True))
+          PY
