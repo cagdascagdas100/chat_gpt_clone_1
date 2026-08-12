@@ -1,0 +1,99 @@
+name: AAYS building_type_1 batch124 Brixton West F one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-1-batch124-brixton-west-f-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-1-batch124-brixton-west-f-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 20
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-6-batch26-skegness-once.yml
+            england_map_web/data/building_type/shards/building_type_1_latest.geojson
+            england_map_web/data/building_type/shards/building_type_1_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_1
+            docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs
+      - name: Fast-forward to canonical head
+        run: git pull --ff-only origin codex/aays-single-runner-v5-20260706
+      - name: Execute guarded batch124
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('.github/workflows/aays-building-type-6-batch26-skegness-once.yml').read_text()
+          marker="          python - <<'PY'\n"; start=src.index(marker)+len(marker); end=src.index("\n          PY",start)
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in src[start:end].splitlines())+'\n'
+          repl={
+          'SLOT = "building_type_6"':'SLOT = "building_type_1"',
+          'TASK = "building-type-6-england-classification-v1-20260808"':'TASK = "building-type-1-england-classification-v1-20260808"',
+          'CONT = "c1418ec751ca09ee40aa5704d014ad3e25ee346e2fc9eec7c32d3c11d565027a"':'CONT = ""',
+          'CITY = "Skegness"':'CITY = "Lambeth_Brixton_West_F"',
+          'LOCAL_AUTHORITY = "East Lindsey"':'LOCAL_AUTHORITY = "Lambeth"',
+          'REGION = "East Midlands"':'REGION = "London Inner"',
+          'BATCH_INDEX = 26':'BATCH_INDEX = 124',
+          'EXPECTED_BEFORE = 2250':'EXPECTED_BEFORE = 8000',
+          'ADD_COUNT = 250':'ADD_COUNT = 50',
+          'TARGET_AFTER = 2500':'TARGET_AFTER = 8050',
+          'NEXT_TARGET = 2750':'NEXT_TARGET = 8100',
+          'BBOX = [0.20, 53.08, 0.48, 53.21]':'BBOX = [-0.155, 51.455, -0.135, 51.470]',
+          'england_map_web/data/building_type/shards/building_type_6_latest.geojson':'england_map_web/data/building_type/shards/building_type_1_latest.geojson',
+          'england_map_web/data/building_type/shards/building_type_6_manifest_latest.json':'england_map_web/data/building_type/shards/building_type_1_manifest_latest.json',
+          'docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json':'docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json',
+          'docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json':'docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json',
+          'docs/chatgpt_status/_shared/slots_21/building_type_6/current_task_latest.json':'docs/chatgpt_status/_shared/slots_21/building_type_1/current_task_latest.json',
+          'docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json':'docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json'}
+          for old,new in repl.items():
+              if old not in code: raise SystemExit(f'missing token {old}')
+              code=code.replace(old,new,1)
+          code=code.replace('building_type_6','building_type_1').replace('Skegness','Lambeth_Brixton_West_F').replace('SKEGNESS','LAMBETH_BRIXTON_WEST_F').replace('skegness','lambeth_brixton_west_f')
+          old='if checkpoint.get("continuation_key") != CONT or status.get("continuation_key") != CONT or task.get("continuation_key") != CONT:'
+          new='if (checkpoint.get("continuation_key") or "") != CONT or (status.get("continuation_key") or "") != CONT or (task.get("continuation_key") or "") != CONT:'
+          if old not in code: raise SystemExit('missing continuation guard')
+          Path('/tmp/bt1_b124.py').write_text(code.replace(old,new,1))
+          PY
+          python /tmp/bt1_b124.py
+      - name: Commit and push exact slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add england_map_web/data/building_type/shards/building_type_1_latest.geojson england_map_web/data/building_type/shards/building_type_1_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_1/current_task_latest.json
+          git diff --cached --quiet && { echo 'No progress'; exit 1; }
+          git commit -m 'data(building_type_1): append Brixton West F OSM batch 124 8000->8050'
+          for a in 1 2 3 4 5; do git push origin HEAD:codex/aays-single-runner-v5-20260706 && exit 0; git fetch origin codex/aays-single-runner-v5-20260706 --depth=20; git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }; done; exit 1
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+          python - <<'PY'
+          import json,subprocess
+          def j(p): return json.loads(subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:'+p]))
+          g=j('england_map_web/data/building_type/shards/building_type_1_latest.geojson'); c=j('docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json'); s=j('docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json'); r=j('docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json'); t=j('docs/chatgpt_status/_shared/slots_21/building_type_1/current_task_latest.json')
+          assert len(g['features'])==8050 and c['feature_count_before']==8000 and c['feature_count_after']==8050 and c['next_batch_index']==125
+          assert s['total_elements']==8050 and r['city']=='Lambeth_Brixton_West_F' and r['new_feature_count']==50 and r['local_authority']=='Lambeth'
+          assert t['owner'] is None and (t.get('continuation_key') or '')==''
+          assert all(x.get('fake_data') is False and x.get('final_ready') is False for x in (c,s,r,t))
+          rec=r.get('records') or []; assert len(rec)==50
+          for x in rec: assert x.get('evidence_excerpt') and x.get('evidence_level') in {'A','B','C','D','U'} and x.get('confidence_level_1_to_4') in {1,2,3,4} and x.get('source_url') and x.get('sources')
+          seen=set()
+          for f in g['features']:
+              p=f.get('properties') or {}; vals={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id')) if v not in (None,'')}
+              assert not (seen & vals); seen.update(vals)
+          print('REMOTE_READBACK_OK building_type_1 8000->8050 batch124 Lambeth_Brixton_West_F final_ready=false')
+          PY
