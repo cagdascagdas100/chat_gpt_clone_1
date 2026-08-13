@@ -1,0 +1,66 @@
+name: AAYS building_type_1 batch161 manifest normalize one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-1-batch161-manifest-normalize-once.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 20
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            england_map_web/data/building_type/shards/building_type_1_latest.geojson
+            england_map_web/data/building_type/shards/building_type_1_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json
+      - name: Fast-forward
+        run: git pull --ff-only origin codex/aays-single-runner-v5-20260706
+      - name: Normalize manifest summaries from canonical shard/status
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from collections import Counter
+          from pathlib import Path
+          gp=Path('england_map_web/data/building_type/shards/building_type_1_latest.geojson')
+          mp=Path('england_map_web/data/building_type/shards/building_type_1_manifest_latest.json')
+          sp=Path('docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json')
+          g=json.loads(gp.read_text()); m=json.loads(mp.read_text()); s=json.loads(sp.read_text())
+          assert len(g.get('features') or [])==9900
+          assert s.get('current_feature_count')==9900 and s.get('feature_count_after')==9900
+          c=s.get('confidence_distribution') or {}
+          m['confidence_distribution']={'level_1':c.get('1',0),'level_2':c.get('2',0),'level_3':c.get('3',0),'level_4':c.get('4',0)}
+          m['evidence_distribution']=s.get('evidence_distribution') or m.get('evidence_distribution')
+          counts=Counter()
+          for f in g.get('features') or []:
+            p=f.get('properties') or {}
+            counts[str(p.get('building_type_primary') or 'unknown')]+=1
+          m['building_type_distribution']=dict(sorted(counts.items()))
+          m['total_features']=9900; m['feature_count']=9900; m['current_feature_count']=9900
+          mp.write_text(json.dumps(m,ensure_ascii=False,indent=2)+'\n')
+          PY
+      - name: Commit manifest only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add england_map_web/data/building_type/shards/building_type_1_manifest_latest.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'data(building_type_1): normalize batch161 manifest summary'
+          for a in 1 2 3 4 5; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+            git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }
+          done
+          exit 1
