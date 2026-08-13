@@ -1,4 +1,4 @@
-name: AAYS building_type_3 batch88 Gerrards Cross once
+name: AAYS building_type_3 batch89 Chesham once
 on:
   push:
     branches:
@@ -8,7 +8,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: aays-building-type-3-batch88-gerrards-cross
+  group: aays-building-type-3-batch89-chesham
   cancel-in-progress: false
 jobs:
   classify:
@@ -28,7 +28,7 @@ jobs:
           branch='codex/aays-single-runner-v5-20260706'
           git fetch origin "$branch"
           git pull --rebase origin "$branch"
-      - name: Run preserved classifier for Batch 88 Gerrards Cross
+      - name: Run preserved classifier for Batch 89 Chesham
         shell: bash
         run: |
           set -euo pipefail
@@ -47,37 +47,37 @@ jobs:
           for line in body.splitlines():
               out.append(line[10:] if line.startswith('          ') else line)
           code='\n'.join(out)+'\n'
-          code=code.replace("BATCH=86", "BATCH=88")
-          code=code.replace("CITY='Marlow'", "CITY='Gerrards Cross'")
-          code=code.replace("GRID='uk-grid-marlow-central-001'", "GRID='uk-grid-gerrards-cross-central-001'")
-          code=code.replace("if before != 9000", "if before != 9100")
-          code=code.replace("building_type_3 batch86 Marlow", "building_type_3 batch88 Gerrards Cross")
-          code=code.replace("Marlow central tiled grid -0.7900,51.5500,-0.7420,51.5900", "Gerrards Cross central tiled grid -0.5900,51.5700,-0.5200,51.6100")
-          code=code.replace("OpenStreetMap API 0.6 map - Marlow Batch 86", "OpenStreetMap API 0.6 map - Gerrards Cross Batch 88")
+          code=code.replace("BATCH=86", "BATCH=89")
+          code=code.replace("CITY='Marlow'", "CITY='Chesham'")
+          code=code.replace("GRID='uk-grid-marlow-central-001'", "GRID='uk-grid-chesham-central-001'")
+          code=code.replace("if before != 9000", "if before != 9150")
+          code=code.replace("building_type_3 batch86 Marlow", "building_type_3 batch89 Chesham")
+          code=code.replace("Marlow central tiled grid -0.7900,51.5500,-0.7420,51.5900", "Chesham central tiled grid -0.6400,51.6900,-0.5800,51.7300")
+          code=code.replace("OpenStreetMap API 0.6 map - Marlow Batch 86", "OpenStreetMap API 0.6 map - Chesham Batch 89")
           tiles="""tiles=[
-              (-0.5900,51.5700,-0.5725,51.5800),
-              (-0.5725,51.5700,-0.5550,51.5800),
-              (-0.5550,51.5700,-0.5375,51.5800),
-              (-0.5375,51.5700,-0.5200,51.5800),
-              (-0.5900,51.5800,-0.5725,51.5900),
-              (-0.5725,51.5800,-0.5550,51.5900),
-              (-0.5550,51.5800,-0.5375,51.5900),
-              (-0.5375,51.5800,-0.5200,51.5900),
-              (-0.5900,51.5900,-0.5725,51.6000),
-              (-0.5725,51.5900,-0.5550,51.6000),
-              (-0.5550,51.5900,-0.5375,51.6000),
-              (-0.5375,51.5900,-0.5200,51.6000),
-              (-0.5900,51.6000,-0.5725,51.6100),
-              (-0.5725,51.6000,-0.5550,51.6100),
-              (-0.5550,51.6000,-0.5375,51.6100),
-              (-0.5375,51.6000,-0.5200,51.6100),
+              (-0.6400,51.6900,-0.6250,51.7000),
+              (-0.6250,51.6900,-0.6100,51.7000),
+              (-0.6100,51.6900,-0.5950,51.7000),
+              (-0.5950,51.6900,-0.5800,51.7000),
+              (-0.6400,51.7000,-0.6250,51.7100),
+              (-0.6250,51.7000,-0.6100,51.7100),
+              (-0.6100,51.7000,-0.5950,51.7100),
+              (-0.5950,51.7000,-0.5800,51.7100),
+              (-0.6400,51.7100,-0.6250,51.7200),
+              (-0.6250,51.7100,-0.6100,51.7200),
+              (-0.6100,51.7100,-0.5950,51.7200),
+              (-0.5950,51.7100,-0.5800,51.7200),
+              (-0.6400,51.7200,-0.6250,51.7300),
+              (-0.6250,51.7200,-0.6100,51.7300),
+              (-0.6100,51.7200,-0.5950,51.7300),
+              (-0.5950,51.7200,-0.5800,51.7300),
           ]"""
           code=re.sub(r"tiles=\[.*?\n\]", tiles, code, count=1, flags=re.S)
           code=code.replace("'source_path':e['tile_url'],'source_hash':source_sha", "'source_path':e['tile_url'],'accessed_at':now,'fields_used':used,'source_hash':source_sha")
-          Path('/tmp/aays_bt3_batch88.py').write_text(code, encoding='utf-8')
+          Path('/tmp/aays_bt3_batch89.py').write_text(code, encoding='utf-8')
           PY
-          python /tmp/aays_bt3_batch88.py
-      - name: Enforce exact batch88 contract and remote stale guard
+          python /tmp/aays_bt3_batch89.py
+      - name: Enforce exact batch89 contract and remote stale guard
         shell: bash
         run: |
           set -euo pipefail
@@ -97,18 +97,18 @@ jobs:
               with open(p,encoding='utf-8') as f: return json.load(f)
           s,m,r,cp,st,t=[load(p) for p in (shard,manifest,report,checkpoint,status,task)]
           feats=s.get('features') or []
-          assert len(feats)==9150, len(feats)
-          assert r.get('feature_count_before')==9100
+          assert len(feats)==9200, len(feats)
+          assert r.get('feature_count_before')==9150
           assert r.get('attempted_parcels')==50
           assert r.get('added_feature_count')==50
-          assert r.get('feature_count_after')==9150
-          assert r.get('city')=='Gerrards Cross'
-          assert r.get('grid_id')=='uk-grid-gerrards-cross-central-001'
-          assert m.get('feature_count')==9150
+          assert r.get('feature_count_after')==9200
+          assert r.get('city')=='Chesham'
+          assert r.get('grid_id')=='uk-grid-chesham-central-001'
+          assert m.get('feature_count')==9200
           assert cp.get('continuation_key')==CONT and st.get('continuation_key')==CONT and t.get('continuation_key')==CONT
           assert st.get('task_id')==TASK and t.get('task_id')==TASK
           assert st.get('owner') in (None,'') and t.get('owner') in (None,'')
-          assert cp.get('next_batch_index')==89 and st.get('next_batch_index')==89 and t.get('next_batch_index')==89
+          assert cp.get('next_batch_index')==90 and st.get('next_batch_index')==90 and t.get('next_batch_index')==90
           assert r.get('fake_data') is False and r.get('final_ready') is False
           records=r.get('records') or []
           assert len(records)==50
@@ -117,7 +117,7 @@ jobs:
               for key in required:
                   assert rec.get(key) not in (None,''), (rec.get('parcel_id'),key)
               assert rec.get('fake_data') is False
-          old=feats[:9100]; new=feats[9100:]
+          old=feats[:9150]; new=feats[9150:]
           def props(f): return f.get('properties') or {}
           old_fids={str(f.get('id') or props(f).get('feature_id')) for f in old}
           old_osm={str(props(f).get('osm_id')) for f in old if props(f).get('osm_id')}
@@ -131,9 +131,9 @@ jobs:
           raw=subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:'+checkpoint],text=True)
           remote_cp=json.loads(raw)
           assert remote_cp.get('continuation_key')==CONT
-          assert remote_cp.get('current_feature_count')==9100
-          assert remote_cp.get('next_batch_index')==88
-          print(json.dumps({'feature_count_before':9100,'attempted_parcels':50,'newly_added':50,'feature_count_after':9150,'evidence_distribution':r.get('evidence_level_distribution'),'confidence_distribution':r.get('confidence_level_distribution'),'city':r.get('city'),'grid_id':r.get('grid_id'),'no_evidence_this_batch':r.get('no_evidence_this_batch'),'fake_data':False,'final_ready':False},ensure_ascii=False))
+          assert remote_cp.get('current_feature_count')==9150
+          assert remote_cp.get('next_batch_index')==89
+          print(json.dumps({'feature_count_before':9150,'attempted_parcels':50,'newly_added':50,'feature_count_after':9200,'evidence_distribution':r.get('evidence_level_distribution'),'confidence_distribution':r.get('confidence_level_distribution'),'city':r.get('city'),'grid_id':r.get('grid_id'),'no_evidence_this_batch':r.get('no_evidence_this_batch'),'fake_data':False,'final_ready':False},ensure_ascii=False))
           PY
       - name: Commit only explicit building_type_3 outputs and push normally
         shell: bash
@@ -150,7 +150,7 @@ jobs:
           )
           git add -- "${files[@]}"
           git diff --cached --quiet && { echo 'NO_EVIDENCE_THIS_BATCH: no output changes'; exit 1; }
-          git commit -m 'data(aays): building_type_3 batch88 Gerrards Cross'
+          git commit -m 'data(aays): building_type_3 batch89 Chesham'
           for attempt in 1 2 3 4 5; do
             git fetch origin "$branch"
             if git rebase "origin/$branch" && git push origin "HEAD:$branch"; then
