@@ -1,0 +1,155 @@
+name: AAYS building_type_1 batch137 Westminster Mayfair South A one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-1-batch137-westminster-mayfair-south-a-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-1-batch137-westminster-mayfair-south-a-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 20
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-1-batch136-hammersmith-west-kensington-h-once.yml
+            .github/workflows/aays-building-type-1-batch135-hammersmith-west-kensington-g-once.yml
+            .github/workflows/aays-building-type-6-batch26-skegness-once.yml
+            england_map_web/data/building_type/shards/building_type_1_latest.geojson
+            england_map_web/data/building_type/shards/building_type_1_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_1
+            docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs
+      - name: Fast-forward to canonical head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+      - name: Execute guarded batch137
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('.github/workflows/aays-building-type-1-batch136-hammersmith-west-kensington-h-once.yml').read_text(encoding='utf-8')
+          section=src.split('      - name: Execute guarded batch136',1)[1].split('      - name: Normalize batch136 metadata',1)[0]
+          marker="          python - <<'PY'\n"
+          start=section.index(marker)+len(marker)
+          end=section.index("\n          PY",start)
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in section[start:end].splitlines())+'\n'
+          replacements={
+            'Hammersmith_West_Kensington_H':'Westminster_Mayfair_South_A',
+            'HAMMERSMITH_WEST_KENSINGTON_H':'WESTMINSTER_MAYFAIR_SOUTH_A',
+            'hammersmith_west_kensington_h':'westminster_mayfair_south_a',
+            'BATCH_INDEX = 136':'BATCH_INDEX = 137',
+            'EXPECTED_BEFORE = 8600':'EXPECTED_BEFORE = 8650',
+            'TARGET_AFTER = 8650':'TARGET_AFTER = 8700',
+            'NEXT_TARGET = 8700':'NEXT_TARGET = 8750',
+            'BBOX = [-0.135, 51.490, -0.105, 51.505]':'BBOX = [-0.145, 51.505, -0.125, 51.520]',
+            '/tmp/bt1_b136.py':'/tmp/bt1_b137.py'
+          }
+          for old,new in replacements.items():
+              if old not in code:
+                  raise SystemExit(f'missing generator token {old}')
+              code=code.replace(old,new)
+          exec(compile(code,'batch137-generator','exec'),{})
+          PY
+          python /tmp/bt1_b137.py
+      - name: Normalize batch137 metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('.github/workflows/aays-building-type-1-batch136-hammersmith-west-kensington-h-once.yml').read_text(encoding='utf-8')
+          section=src.split('      - name: Normalize batch136 metadata',1)[1].split('      - name: Commit and push exact slot outputs',1)[0]
+          marker="          python - <<'PY'\n"
+          start=section.index(marker)+len(marker)
+          end=section.index("\n          PY",start)
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in section[start:end].splitlines())+'\n'
+          replacements={
+            'Hammersmith_West_Kensington_H':'Westminster_Mayfair_South_A',
+            "BBOX=[-0.135,51.490,-0.105,51.505]":"BBOX=[-0.145,51.505,-0.125,51.520]",
+            'BATCH=136':'BATCH=137',
+            'BEFORE=8600':'BEFORE=8650',
+            'AFTER=8650':'AFTER=8700',
+            'NEXT=8700':'NEXT=8750',
+            "'next_batch_index':137":"'next_batch_index':138",
+            "'next_grid_hint':'Westminster_Belgravia_East_A'":"'next_grid_hint':'Westminster_Mayfair_South_B'"
+          }
+          for old,new in replacements.items():
+              if old not in code:
+                  raise SystemExit(f'missing normalize token {old}')
+              code=code.replace(old,new)
+          exec(compile(code,'batch137-normalize','exec'),{})
+          PY
+      - name: Commit and push exact slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            england_map_web/data/building_type/shards/building_type_1_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_1_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_1/current_task_latest.json
+          git diff --cached --quiet && { echo 'No progress'; exit 1; }
+          git commit -m 'data(building_type_1): append Westminster Mayfair South A OSM batch 137 8650->8700'
+          for a in 1 2 3 4 5; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+            if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then git merge --abort || true; exit 1; fi
+          done
+          exit 1
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+          python - <<'PY'
+          import json,subprocess
+          def j(p): return json.loads(subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:'+p]))
+          g=j('england_map_web/data/building_type/shards/building_type_1_latest.geojson')
+          m=j('england_map_web/data/building_type/shards/building_type_1_manifest_latest.json')
+          c=j('docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json')
+          s=j('docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json')
+          r=j('docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json')
+          t=j('docs/chatgpt_status/_shared/slots_21/building_type_1/current_task_latest.json')
+          assert len(g.get('features') or [])==8700
+          assert c.get('feature_count_before')==8650 and c.get('feature_count_after')==8700 and c.get('current_feature_count')==8700 and c.get('next_batch_index')==138
+          assert s.get('feature_count_before')==8650 and s.get('feature_count_after')==8700 and s.get('current_feature_count')==8700 and s.get('total_elements')==8700 and s.get('new_features_added')==50
+          assert r.get('city')=='Westminster_Mayfair_South_A' and r.get('attempted_parcels')==50 and r.get('new_feature_count')==50 and r.get('feature_count_before')==8650 and r.get('feature_count_after')==8700
+          assert t.get('owner') is None and (t.get('continuation_key') or '')==''
+          assert m.get('total_features')==8700 and m.get('current_feature_count')==8700
+          assert all(x.get('fake_data') is False for x in (c,s,r,t,m))
+          assert all(x.get('final_ready') is False for x in (c,s,r,t,m))
+          rec=r.get('records') or []
+          assert len(rec)==50
+          for x in rec:
+              assert x.get('building_type_primary') not in (None,'','unknown')
+              assert x.get('evidence_excerpt') and x.get('evidence_level') != 'U'
+              assert x.get('confidence_level_1_to_4') in {1,2,3,4}
+              assert x.get('source_ref') and x.get('source_url') and x.get('source_path') and x.get('source_hash') and x.get('sources')
+              assert x['sources'][0].get('accessed_at') and x['sources'][0].get('fields_used') and x['sources'][0].get('match_method')
+              assert x.get('fake_data') is False and x.get('final_ready') is False
+          seen=set()
+          for f in g.get('features') or []:
+              p=f.get('properties') or {}
+              vals={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')) if v not in (None,'')}
+              assert not (seen & vals)
+              seen.update(vals)
+          print('REMOTE_READBACK_OK building_type_1 8650->8700 batch137 Westminster_Mayfair_South_A attempted=50 final_ready=false')
+          PY
