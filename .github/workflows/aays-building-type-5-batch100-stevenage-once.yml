@@ -36,10 +36,10 @@ jobs:
           from pathlib import Path
           import re, subprocess
 
+          branch = 'codex/aays-single-runner-v5-20260706'
+          subprocess.run(['git', 'pull', '--ff-only', 'origin', branch], check=True)
           src = Path('.github/workflows/aays-building-type-5-batch99-canvey-island-once.yml').read_text()
 
-          # Transform only the prior verified one-shot into this batch. Use placeholders
-          # so batch/count increments cannot cascade into one another.
           src = src.replace('batch99', 'batch100').replace('bt5_b99', 'bt5_b100')
           src = src.replace('Canvey Island', 'Stevenage').replace('CANVEY_ISLAND', 'STEVENAGE').replace('canvey_island', 'stevenage')
           src = src.replace('Castle Point', 'Stevenage').replace('castle_point', 'stevenage')
@@ -61,8 +61,8 @@ jobs:
                     .replace('@@AFTER@@', '5000')
                     .replace('@@NEXTTARGET@@', '5050'))
 
-          # Extract the five verified shell run blocks from the transformed prior workflow:
-          # fast-forward, guarded execution, state sync, exact commit/push, remote readback.
+          # Previous workflow has one inline fast-forward run plus four multiline
+          # verified run blocks: guarded execution, state sync, commit/push, readback.
           lines = src.splitlines()
           blocks = []
           i = 0
@@ -77,15 +77,14 @@ jobs:
                       indent = len(ln) - len(ln.lstrip())
                       if ln.strip() and indent <= base:
                           break
-                      cut = min(len(ln), base + 2)
-                      block.append(ln[cut:] if len(ln) >= base + 2 else '')
+                      block.append(ln[base + 2:] if len(ln) >= base + 2 else '')
                       i += 1
                   blocks.append('\n'.join(block) + '\n')
                   continue
               i += 1
 
-          if len(blocks) != 5:
-              raise SystemExit(f'expected 5 verified run blocks, found {len(blocks)}')
+          if len(blocks) != 4:
+              raise SystemExit(f'expected 4 verified multiline run blocks, found {len(blocks)}')
 
           for idx, block in enumerate(blocks, 1):
               print(f'RUN_TRANSFORMED_BLOCK_{idx}')
