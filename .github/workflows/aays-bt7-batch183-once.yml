@@ -14,7 +14,7 @@ jobs:
           ref: codex/aays-single-runner-v5-20260706
           fetch-depth: 40
           clean: false
-      - name: Adapt verified batch 182 runner and execute batch 183
+      - name: Adapt verified batch 182 runner and execute batch 183 with safe push retry
         shell: bash
         run: |
           set -euo pipefail
@@ -43,6 +43,48 @@ jobs:
                   i += 1
           if len(runs) != 3:
               raise SystemExit(f'EXPECTED_3_RUN_BLOCKS_GOT_{len(runs)}')
+          old_tail='git pull --rebase origin "$BRANCH"\ngit push origin HEAD:"$BRANCH"'
+          new_tail='''for attempt in 1 2 3 4 5; do
+  git fetch origin "$BRANCH"
+  python - <<'PYR'
+import json, subprocess
+cp=json.loads(subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json']))
+if cp.get('current_feature_count')!=9063 or int(cp.get('next_batch_index',-1))!=183:
+    raise SystemExit(f'REMOTE_SLOT_ADVANCED_DURING_RETRY current={cp.get("current_feature_count")} next={cp.get("next_batch_index")}')
+PYR
+  git rebase "origin/$BRANCH"
+  if git push origin HEAD:"$BRANCH"; then
+    break
+  fi
+  if [ "$attempt" -eq 5 ]; then
+    echo 'DATA_PUSH_RETRY_EXHAUSTED' >&2
+    exit 1
+  fi
+done'''
+          if old_tail not in runs[1]:
+              raise SystemExit('DATA_PUSH_TAIL_NOT_FOUND')
+          runs[1]=runs[1].replace(old_tail,new_tail)
+          verify_old='git pull --rebase origin codex/aays-single-runner-v5-20260706\ngit push origin HEAD:codex/aays-single-runner-v5-20260706'
+          verify_new='''for attempt in 1 2 3 4 5; do
+  git fetch origin codex/aays-single-runner-v5-20260706
+  python - <<'PYV'
+import json, subprocess
+cp=json.loads(subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json']))
+if cp.get('current_feature_count')!=9113 or int(cp.get('next_batch_index',-1))!=184:
+    raise SystemExit(f'REMOTE_SLOT_ADVANCED_BEFORE_VERIFY_PUSH current={cp.get("current_feature_count")} next={cp.get("next_batch_index")}')
+PYV
+  git rebase origin/codex/aays-single-runner-v5-20260706
+  if git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+    break
+  fi
+  if [ "$attempt" -eq 5 ]; then
+    echo 'VERIFY_PUSH_RETRY_EXHAUSTED' >&2
+    exit 1
+  fi
+done'''
+          if verify_old not in runs[2]:
+              raise SystemExit('VERIFY_PUSH_TAIL_NOT_FOUND')
+          runs[2]=runs[2].replace(verify_old,verify_new)
           for idx,block in enumerate(runs,1):
               print(f'=== EXECUTING_ADAPTED_RUN_BLOCK_{idx} ===', flush=True)
               subprocess.run(['bash','-lc',block],check=True)
