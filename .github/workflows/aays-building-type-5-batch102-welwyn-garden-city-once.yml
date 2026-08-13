@@ -1,0 +1,92 @@
+name: AAYS building_type_5 batch102 Welwyn Garden City one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-5-batch102-welwyn-garden-city-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-5-batch102-welwyn-garden-city-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 20
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-5-batch101-hertford-once.yml
+            .github/workflows/aays-building-type-6-batch26-skegness-once.yml
+            england_map_web/data/building_type/shards/building_type_5_latest.geojson
+            england_map_web/data/building_type/shards/building_type_5_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5
+            docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs
+      - name: Replay transformed guarded batch102
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re, subprocess
+
+          branch = 'codex/aays-single-runner-v5-20260706'
+          subprocess.run(['git', 'pull', '--ff-only', 'origin', branch], check=True)
+          src = Path('.github/workflows/aays-building-type-5-batch101-hertford-once.yml').read_text()
+
+          src = src.replace('batch101', 'batch102').replace('bt5_b101', 'bt5_b102')
+          src = src.replace('East Hertfordshire', 'Welwyn Hatfield').replace('east_hertfordshire', 'welwyn_hatfield')
+          src = src.replace('Hertford', 'Welwyn Garden City').replace('HERTFORD', 'WELWYN_GARDEN_CITY').replace('hertford', 'welwyn_garden_city')
+          src = src.replace('uk-grid-welwyn-garden-city-001', 'uk-grid-welwyn-garden-city-001')
+          src = src.replace('uk-grid-welwyn_garden_city-001', 'uk-grid-welwyn-garden-city-001')
+          src = src.replace('[-0.14, 51.75, -0.02, 51.84]', '[-0.27, 51.76, -0.14, 51.85]')
+
+          tokens = [
+              (r'\b101\b', '@@BATCH@@'),
+              (r'\b102\b', '@@NEXTBATCH@@'),
+              (r'\b5000\b', '@@BEFORE@@'),
+              (r'\b5050\b', '@@AFTER@@'),
+              (r'\b5100\b', '@@NEXTTARGET@@'),
+          ]
+          for pattern, placeholder in tokens:
+              src = re.sub(pattern, placeholder, src)
+          src = (src.replace('@@BATCH@@', '102')
+                    .replace('@@NEXTBATCH@@', '103')
+                    .replace('@@BEFORE@@', '5050')
+                    .replace('@@AFTER@@', '5100')
+                    .replace('@@NEXTTARGET@@', '5150'))
+
+          lines = src.splitlines()
+          blocks = []
+          i = 0
+          while i < len(lines):
+              line = lines[i]
+              if line.strip() == 'run: |':
+                  base = len(line) - len(line.lstrip())
+                  i += 1
+                  block = []
+                  while i < len(lines):
+                      ln = lines[i]
+                      indent = len(ln) - len(ln.lstrip())
+                      if ln.strip() and indent <= base:
+                          break
+                      block.append(ln[base + 2:] if len(ln) >= base + 2 else '')
+                      i += 1
+                  blocks.append('\n'.join(block) + '\n')
+                  continue
+              i += 1
+
+          if len(blocks) != 4:
+              raise SystemExit(f'expected 4 verified multiline run blocks, found {len(blocks)}')
+
+          for idx, block in enumerate(blocks, 1):
+              print(f'RUN_TRANSFORMED_BLOCK_{idx}')
+              subprocess.run(['bash', '-c', block], check=True)
+          PY
