@@ -1,0 +1,59 @@
+name: AAYS building_type_3 batch84 once v2
+on:
+  push:
+    paths:
+      - '.github/workflows/aays-bt3-batch84-once-v2.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-building-type-3-batch84-v2
+  cancel-in-progress: false
+jobs:
+  classify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 10
+          clean: false
+      - name: Run embedded Batch 84 classifier from preserved one-shot source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('.github/workflows/aays-bt3-batch84-once.yml').read_text(encoding='utf-8')
+          start="          python - <<'PY'\n"
+          end="\n          PY\n"
+          i=src.index(start)+len(start)
+          j=src.index(end,i)
+          block=src[i:j]
+          out=[]
+          for line in block.splitlines():
+              out.append(line[10:] if line.startswith('          ') else line)
+          Path('/tmp/aays_bt3_batch84.py').write_text('\n'.join(out)+'\n',encoding='utf-8')
+          PY
+          python /tmp/aays_bt3_batch84.py
+      - name: Commit only explicit building_type_3 outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          shard='england_map_web/data/building_type/shards/building_type_3_latest.geojson'
+          manifest='england_map_web/data/building_type/shards/building_type_3_manifest_latest.json'
+          classout='docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json'
+          checkpoint='docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json'
+          status='docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json'
+          task='docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json'
+          git add -- "$shard" "$manifest" "$classout" "$checkpoint" "$status" "$task"
+          if git diff --cached --quiet; then
+            echo 'NO_EVIDENCE_THIS_BATCH: no output changes'
+            exit 0
+          fi
+          git commit -m 'data(aays): building_type_3 batch84 Buckingham'
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
