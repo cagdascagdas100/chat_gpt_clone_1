@@ -1,0 +1,138 @@
+name: AAYS building_type_9 Killingworth batch129 autorun
+
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - '.github/workflows/tmp_bt9_batch129_killingworth_autorun_20260813.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-9-serial
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+      - name: Render fail-closed Killingworth batch 129 runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 2dd1104bc682198b075fa9283d98f1c2e039102e:.github/tmp_bt9_batch46_ripon_v3.py > .github/tmp_bt9_batch129_killingworth_20260813.py
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('.github/tmp_bt9_batch129_killingworth_20260813.py')
+          text=path.read_text(encoding='utf-8')
+          replacements=[
+            ('CITY = "Ripon"','CITY = "Killingworth"'),
+            ('GRID = "RIPON_CENTRAL_02"','GRID = "KILLINGWORTH_NORTH_TYNESIDE_01"'),
+            ('LOCAL_AUTHORITY = "North Yorkshire"','LOCAL_AUTHORITY = "North Tyneside"'),
+            ('BATCH = 46','BATCH = 129'),
+            ('EXPECTED_BEFORE = 2250','EXPECTED_BEFORE = 6400'),
+            ('TARGET_AFTER = 2300','TARGET_AFTER = 6450'),
+            ('NEXT_TARGET = 2350','NEXT_TARGET = 6500'),
+            ('xs = [-1.5650, -1.5350, -1.5050, -1.4750]','xs = [-1.6000, -1.5800, -1.5600, -1.5400, -1.5200]'),
+            ('ys = [54.1100, 54.1320, 54.1540, 54.1760]','ys = [55.0100, 55.0250, 55.0400, 55.0550, 55.0700]'),
+            ('(+evidence batch 46)','(+evidence batch 129)'),
+            ('OpenStreetMap API 0.6 - Ripon batch 46','OpenStreetMap API 0.6 - Killingworth batch 129'),
+            ('appended 50 Ripon OSM API records','appended 50 Killingworth OSM API records'),
+            ('Batch 46 appended 50 new Ripon OSM API evidence-backed building features','Batch 129 appended 50 new Killingworth OSM API evidence-backed building features'),
+            ('BATCH_046_APPENDED_50_RIPON_OSM_FEATURES_CONTINUATION_REQUIRED','BATCH_129_APPENDED_50_KILLINGWORTH_OSM_FEATURES_CONTINUATION_REQUIRED'),
+            ('APPEND_NEW_BATCH_047_AFTER_FEATURE_2300','APPEND_NEW_BATCH_130_AFTER_FEATURE_6450'),
+            ('for attempt in range(4):','for attempt in range(3):')]
+          for old,new in replacements:
+            if text.count(old)!=1: raise SystemExit(f'FAIL_CLOSED replacement target count {text.count(old)} for: {old}')
+            text=text.replace(old,new)
+          patches=[
+            ('for v in (ft.get("id"), p.get("parcel_id"), p.get("osm_id")):', 'for v in (ft.get("id"), p.get("parcel_id"), p.get("osm_id"), p.get("source_ref")):'),
+            ('"already_processed_id_basis": ["feature.id", "properties.parcel_id", "properties.osm_id"],','"already_processed_id_basis": ["feature.id", "properties.parcel_id", "properties.osm_id", "properties.source_ref"],'),
+            ('"processed_id_basis": ["feature.id", "properties.parcel_id", "properties.osm_id"],','"processed_id_basis": ["feature.id", "properties.parcel_id", "properties.osm_id", "properties.source_ref"],'),
+            ('seen_osm = set()\nfor ft in geo["features"]:', 'seen_osm = set()\nseen_source_ref = set()\nfor ft in geo["features"]:'),
+            ('        ("osm_id", str(p.get("osm_id") or ""), seen_osm),\n    ]','        ("osm_id", str(p.get("osm_id") or ""), seen_osm),\n        ("source_ref", str(p.get("source_ref") or ""), seen_source_ref),\n    ]')]
+          for old,new in patches:
+            if text.count(old)!=1: raise SystemExit('FAIL_CLOSED patch target mismatch')
+            text=text.replace(old,new)
+          old='        "source_url": "https://www.openstreetmap.org/way/" + wid,\n        "source_hash": source_sha,'
+          new='        "source_url": "https://www.openstreetmap.org/way/" + wid,\n        "source_ref": "https://www.openstreetmap.org/way/" + wid,\n        "source_hash": source_sha,'
+          if text.count(old)!=2: raise SystemExit('FAIL_CLOSED source_ref insertion mismatch')
+          text=text.replace(old,new)
+          old='        "evidence_level": "B",\n        "confidence_level_1_to_4": 3,\n        "match_method": method,\n    })'
+          new='        "evidence_level": "B",\n        "confidence_score": 0.85,\n        "confidence_level_1_to_4": 3,\n        "match_method": method,\n        "fake_data": False,\n    })'
+          if text.count(old)!=1: raise SystemExit('FAIL_CLOSED record fields mismatch')
+          text=text.replace(old,new)
+          path.write_text(text,encoding='utf-8')
+          PY
+      - name: Run fail-closed Killingworth batch 129
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .github/tmp_bt9_batch129_killingworth_20260813.py
+      - name: Remote checkpoint guard then commit and push only building_type_9 outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin "$BRANCH"
+          python - <<'PY'
+          import json,subprocess
+          base='origin/codex/aays-single-runner-v5-20260706:'
+          cp=json.loads(subprocess.check_output(['git','show',base+'docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json'],text=True))
+          task=json.loads(subprocess.check_output(['git','show',base+'docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json'],text=True))
+          expected='d350a5a37a836c7a2d36fc243b0692c1cffa5b3d65f7e01ff1108c4215340512'
+          if cp.get('current_feature_count')!=6400 or cp.get('next_batch_index')!=129: raise SystemExit('REMOTE_GUARD_ABORT checkpoint moved')
+          if task.get('task_id')!='building-type-9-england-classification-v1-20260808' or task.get('continuation_key')!=expected: raise SystemExit('REMOTE_GUARD_ABORT task moved')
+          if task.get('owner') is not None or task.get('blocker') is not None: raise SystemExit('REMOTE_GUARD_ABORT owner/blocker changed')
+          PY
+          git rm -f --ignore-unmatch -- .github/tmp_bt9_batch129_killingworth_20260813.py .github/workflows/tmp_bt9_batch129_killingworth_20260813.yml .github/workflows/tmp_bt9_batch129_killingworth_autorun_20260813.yml
+          git add -- england_map_web/data/building_type/shards/building_type_9_latest.geojson england_map_web/data/building_type/shards/building_type_9_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json
+          git diff --cached --check
+          git commit -m 'data: append building_type_9 Killingworth batch 129'
+          for attempt in 1 2 3 4 5; do git fetch origin "$BRANCH"; if git rebase "origin/$BRANCH" && git push origin "HEAD:$BRANCH"; then exit 0; fi; git rebase --abort || true; sleep $((attempt*2)); done
+          exit 1
+      - name: Remote readback acceptance gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          git fetch origin "$BRANCH"
+          python - <<'PY'
+          import json,subprocess
+          base='origin/codex/aays-single-runner-v5-20260706:'
+          def read(p): return json.loads(subprocess.check_output(['git','show',base+p],text=True))
+          cp=read('docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json'); st=read('docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json'); mf=read('england_map_web/data/building_type/shards/building_type_9_manifest_latest.json'); cl=read('docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json'); sh=read('england_map_web/data/building_type/shards/building_type_9_latest.geojson'); task=read('docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json')
+          expected='d350a5a37a836c7a2d36fc243b0692c1cffa5b3d65f7e01ff1108c4215340512'
+          assert cp['feature_count_before']==6400 and cp['feature_count_after']==6450 and cp['current_feature_count']==6450 and cp['next_batch_index']==130 and cp['last_batch']['city']=='Killingworth'
+          assert st['feature_count_before']==6400 and st['feature_count_after']==6450 and st['current_feature_count']==6450 and st['last_batch_city']=='Killingworth'
+          assert mf['total_features']==6450 and mf['last_batch_city']=='Killingworth'
+          assert cl['added_feature_count']==50 and cl['progress'] is True and cl['city']=='Killingworth' and cl['batch_index']==129 and cl['continuation_key']==expected and len(cl['records'])==50
+          assert task['continuation_key']==expected and task['owner'] is None and task['blocker'] is None and task['first_unverified_step']=='APPEND_NEW_BATCH_130_AFTER_FEATURE_6450'
+          assert len(sh['features'])==6450
+          prior=sh['features'][:6400]; new=sh['features'][6400:]
+          def vals(fs,key,top=False):
+            out=[]
+            for f in fs:
+              v=f.get('id') if top else (f.get('properties') or {}).get(key)
+              if v is not None: out.append(str(v))
+            return out
+          for key,top in [('id',True),('parcel_id',False),('osm_id',False),('source_ref',False)]:
+            a=set(vals(prior,key,top)); b=vals(new,key,top); assert len(b)==50 and len(set(b))==50 and not(a&set(b))
+          assert all((f.get('properties') or {}).get('fake_data') is False and (f.get('properties') or {}).get('final_ready') is False for f in new)
+          assert all(r.get('source_url') and r.get('source_ref') and r.get('sources') and r.get('evidence_excerpt') and r.get('evidence_level') in ('B','C','D','U') and r.get('confidence_score') is not None and r.get('confidence_level_1_to_4') in (1,2,3,4) and r.get('fake_data') is False for r in cl['records'])
+          print({'remote_readback':'OK','feature_count_before':6400,'feature_count_after':6450,'added':50,'batch':129,'city':'Killingworth','evidence':cl['evidence_level_new_features'],'confidence':cl['confidence_level_new_features'],'next_batch':cp['next_batch_index']})
+          PY
