@@ -1,0 +1,103 @@
+name: AAYS building_type_3 batch85 Amersham once
+on:
+  push:
+    paths:
+      - '.github/workflows/aays-bt3-batch85-amersham-once.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-building-type-3-batch85
+  cancel-in-progress: false
+jobs:
+  classify:
+    if: github.event.head_commit.message == 'chore(aays): run building_type_3 batch85 Amersham one-off'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 50
+          clean: false
+      - name: Sync branch without destructive cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+      - name: Run Batch 85 from proven Batch 84 classifier template
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re, textwrap
+          src=Path('.github/workflows/aays-bt3-batch84-once.yml').read_text(encoding='utf-8')
+          marker="          python - <<'PY'\n"
+          start=src.index(marker)+len(marker)
+          end=src.index("\n          PY\n      - name: Commit only explicit building_type_3 outputs", start)
+          script=textwrap.dedent(src[start:end])
+          script=script.replace("BATCH=84", "BATCH=85")
+          script=script.replace("CITY='Buckingham'", "CITY='Amersham'")
+          script=script.replace("GRID='uk-grid-buckingham-central-001'", "GRID='uk-grid-amersham-central-001'")
+          script=script.replace("if before != 8900 or int(cp.get('next_batch_index',-1)) != BATCH:", "if before != 8950 or int(cp.get('next_batch_index',-1)) != BATCH:")
+          script=script.replace("TerraYield-AAYS/1.0 (building_type_3 batch84)", "TerraYield-AAYS/1.0 (building_type_3 batch85)")
+          script=script.replace("'Buckingham central tiled grid -1.0180,51.9820,-0.9790,52.0120'", "'Amersham central tiled grid -0.6320,51.6600,-0.5840,51.6900'")
+          script=script.replace("'OpenStreetMap API 0.6 map - Buckingham Batch 84'", "'OpenStreetMap API 0.6 map - Amersham Batch 85'")
+          tiles="""tiles=[
+              (-0.6320,51.6600,-0.6200,51.6700),
+              (-0.6200,51.6600,-0.6080,51.6700),
+              (-0.6080,51.6600,-0.5960,51.6700),
+              (-0.5960,51.6600,-0.5840,51.6700),
+              (-0.6320,51.6700,-0.6200,51.6800),
+              (-0.6200,51.6700,-0.6080,51.6800),
+              (-0.6080,51.6700,-0.5960,51.6800),
+              (-0.5960,51.6700,-0.5840,51.6800),
+              (-0.6320,51.6800,-0.6200,51.6900),
+              (-0.6200,51.6800,-0.6080,51.6900),
+              (-0.6080,51.6800,-0.5960,51.6900),
+              (-0.5960,51.6800,-0.5840,51.6900),
+          ]"""
+          script,n=re.subn(r"tiles=\[\n(?:\s+\([^\n]+\),\n)+\s+\]",tiles,script,count=1)
+          if n != 1:
+              raise SystemExit('BATCH85_TEMPLATE_TILE_REPLACEMENT_FAILED')
+          if "BATCH=85" not in script or "CITY='Amersham'" not in script or "before != 8950" not in script:
+              raise SystemExit('BATCH85_TEMPLATE_REPLACEMENT_FAILED')
+          exec(compile(script,'batch85_amersham_runtime.py','exec'),{'__name__':'__main__'})
+          PY
+      - name: Commit explicit outputs and remove one-off workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          shard='england_map_web/data/building_type/shards/building_type_3_latest.geojson'
+          manifest='england_map_web/data/building_type/shards/building_type_3_manifest_latest.json'
+          classout='docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json'
+          checkpoint='docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json'
+          status='docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json'
+          task='docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json'
+          self='.github/workflows/aays-bt3-batch85-amersham-once.yml'
+          git rm -- "$self"
+          git add -- "$shard" "$manifest" "$classout" "$checkpoint" "$status" "$task"
+          if git diff --cached --quiet; then
+            echo 'NO_EVIDENCE_THIS_BATCH: no output changes'
+            exit 0
+          fi
+          git commit -m 'data(aays): building_type_3 batch85 Amersham'
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
+      - name: Remote readback check
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json > /tmp/cp.json
+          python - <<'PY'
+          import json
+          cp=json.load(open('/tmp/cp.json'))
+          assert cp.get('continuation_key')=='03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e'
+          assert cp.get('current_feature_count',0) >= 8950
+          assert cp.get('fake_data') is False
+          assert cp.get('final_ready') is False
+          print(json.dumps({'remote_feature_count':cp.get('current_feature_count'),'next_batch_index':cp.get('next_batch_index'),'blocker':cp.get('blocker'),'final_ready':cp.get('final_ready')},ensure_ascii=False))
+          PY
