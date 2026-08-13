@@ -42,32 +42,19 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           text=Path('/tmp/old_bt3.yml').read_text(encoding='utf-8')
-          start=text.index("          python3 - <<'PY'\n")+len("          python3 - <<'PY'\n")
+          marker="          python3 - <<'PY'\n"
+          start=text.index(marker)+len(marker)
           end=text.index("\n          PY\n\n      - name: Guard", start)
-          lines=[]
-          for line in text[start:end].splitlines():
-              lines.append(line[10:] if line.startswith('          ') else line)
-          script='\n'.join(lines)+'\n'
-          repl={
-            'CITY="Deal"; AUTH="Dover"; GRID="Deal 51.1850,1.3650,51.2350,1.4300"':'CITY="Pulborough"; AUTH="Horsham"; GRID="Pulborough 50.9400,-0.5350,50.9800,-0.4750"',
-            'WEST,SOUTH,EAST,NORTH=1.3650,51.1850,1.4300,51.2350':'WEST,SOUTH,EAST,NORTH=-0.5350,50.9400,-0.4750,50.9800',
-            'AAYS-building-type-3-batch68/1.0':'AAYS-building-type-3-batch83/1.0',
-            'unprocessed Deal building ways':'unprocessed Pulborough building ways',
-            '50 new Deal OSM building ways':'50 new Pulborough OSM building ways',
-            'BATCH_{BATCH}_APPENDED_50_DEAL_OSM_CONTINUATION_REQUIRED':'BATCH_{BATCH}_APPENDED_50_PULBOROUGH_OSM_CONTINUATION_REQUIRED',
-            'Batch {BATCH} appended 50 new Deal OSM evidence-backed features':'Batch {BATCH} appended 50 new Pulborough OSM evidence-backed features',
-            '50 new Deal OSM records appended after processed-ID exclusion':'50 new Pulborough OSM records appended after processed-ID exclusion',
-            'BATCH68_BUILD_OK':'BATCH83_BUILD_OK'
-          }
-          for old,new in repl.items():
-              count=script.count(old)
-              if count < 1:
-                  raise SystemExit(f'FAIL_CLOSED replacement missing: {old}')
-              script=script.replace(old,new)
-          stale=['CITY="Deal"','Deal 51.1850,1.3650,51.2350,1.4300','BATCH68_BUILD_OK']
-          for literal in stale:
-              if literal in script:
-                  raise SystemExit(f'FAIL_CLOSED stale literal remains: {literal}')
+          script='\n'.join(line[10:] if line.startswith('          ') else line for line in text[start:end].splitlines())+'\n'
+          script=script.replace('CITY="Deal"; AUTH="Dover"; GRID="Deal 51.1850,1.3650,51.2350,1.4300"','CITY="Pulborough"; AUTH="Horsham"; GRID="Pulborough 50.9400,-0.5350,50.9800,-0.4750"')
+          script=script.replace('WEST,SOUTH,EAST,NORTH=1.3650,51.1850,1.4300,51.2350','WEST,SOUTH,EAST,NORTH=-0.5350,50.9400,-0.4750,50.9800')
+          script=script.replace('AAYS-building-type-3-batch68/1.0','AAYS-building-type-3-batch83/1.0')
+          script=script.replace('Deal','Pulborough').replace('Dover','Horsham').replace('BATCH68','BATCH83').replace('_DEAL_','_PULBOROUGH_')
+          required=['CITY="Pulborough"','AUTH="Horsham"','Pulborough 50.9400,-0.5350,50.9800,-0.4750','WEST,SOUTH,EAST,NORTH=-0.5350,50.9400,-0.4750,50.9800','AAYS-building-type-3-batch83/1.0']
+          for literal in required:
+              if literal not in script: raise SystemExit(f'FAIL_CLOSED required literal missing: {literal}')
+          for literal in ['CITY="Deal"','AUTH="Dover"','AAYS-building-type-3-batch68/1.0']:
+              if literal in script: raise SystemExit(f'FAIL_CLOSED stale literal remains: {literal}')
           Path('/tmp/run_bt3_batch83.py').write_text(script,encoding='utf-8')
           PY
           python3 /tmp/run_bt3_batch83.py
