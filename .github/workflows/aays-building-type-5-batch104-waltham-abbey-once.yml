@@ -1,0 +1,101 @@
+name: AAYS building_type_5 batch104 Waltham Abbey one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-5-batch104-waltham-abbey-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-5-batch104-waltham-abbey-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 20
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-5-batch101-hertford-once.yml
+            .github/workflows/aays-building-type-6-batch26-skegness-once.yml
+            england_map_web/data/building_type/shards/building_type_5_latest.geojson
+            england_map_web/data/building_type/shards/building_type_5_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5
+            docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs
+      - name: Replay transformed guarded batch104
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json, re, subprocess
+
+          branch='codex/aays-single-runner-v5-20260706'
+          subprocess.run(['git','pull','--ff-only','origin',branch],check=True)
+          src=Path('.github/workflows/aays-building-type-5-batch101-hertford-once.yml').read_text()
+
+          src=src.replace('hertford_east_hertfordshire_source_sha256','waltham_abbey_epping_forest_source_sha256')
+          src=src.replace('East Hertfordshire','Epping Forest')
+          src=src.replace('Hertford','Waltham Abbey').replace('HERTFORD','WALTHAM_ABBEY').replace('hertford','waltham_abbey')
+          src=src.replace('uk-grid-waltham_abbey-001','uk-grid-waltham-abbey-001')
+          src=src.replace('[-0.14, 51.75, -0.02, 51.84]','[-0.07, 51.64, 0.08, 51.73]')
+          src=src.replace('bt5_b101','bt5_b104')
+
+          tokens=[
+            (r'\b101\b','@@BATCH@@'),
+            (r'\b102\b','@@NEXTBATCH@@'),
+            (r'\b5000\b','@@BEFORE@@'),
+            (r'\b5050\b','@@AFTER@@'),
+            (r'\b5100\b','@@NEXTTARGET@@'),
+          ]
+          for pattern,placeholder in tokens:
+              src=re.sub(pattern,placeholder,src)
+          src=(src.replace('@@BATCH@@','104')
+                  .replace('@@NEXTBATCH@@','105')
+                  .replace('@@BEFORE@@','5150')
+                  .replace('@@AFTER@@','5200')
+                  .replace('@@NEXTTARGET@@','5250'))
+
+          lines=src.splitlines(); blocks=[]; i=0
+          while i < len(lines):
+              line=lines[i]
+              if line.strip()=='run: |':
+                  base=len(line)-len(line.lstrip()); i+=1; block=[]
+                  while i < len(lines):
+                      ln=lines[i]; indent=len(ln)-len(ln.lstrip())
+                      if ln.strip() and indent <= base: break
+                      block.append(ln[base+2:] if len(ln)>=base+2 else '')
+                      i+=1
+                  blocks.append('\n'.join(block)+'\n'); continue
+              i+=1
+          if len(blocks)!=4:
+              raise SystemExit(f'expected 4 verified multiline run blocks, found {len(blocks)}')
+
+          for idx,block in enumerate(blocks,1):
+              print(f'RUN_TRANSFORMED_BLOCK_{idx}')
+              subprocess.run(['bash','-c',block],check=True)
+              if idx==2:
+                  grid='uk-grid-waltham-abbey-001'
+                  paths={
+                    'r':Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json'),
+                    'c':Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json'),
+                    's':Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json'),
+                    't':Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json')}
+                  data={k:json.loads(p.read_text()) for k,p in paths.items()}
+                  data['r']['grid_id']=grid
+                  data['c']['last_grid_id']=grid
+                  data['c']['last_batch']['grid_id']=grid
+                  data['c']['first_unverified_step']='APPEND_NEW_BATCH_105_AFTER_FEATURE_5200'
+                  data['c']['next_required_action']='CONTINUE_BATCH_105_FROM_5200_USING_ALREADY_PROCESSED_IDS_DO_NOT_REPROCESS_EXISTING_FEATURES'
+                  data['s']['last_grid_id']=grid
+                  data['t']['first_unverified_step']='APPEND_NEW_BATCH_105_AFTER_FEATURE_5200'
+                  data['t']['last_progress']['grid_id']=grid
+                  for k,p in paths.items(): p.write_text(json.dumps(data[k],ensure_ascii=False,indent=2)+'\n')
+          PY
