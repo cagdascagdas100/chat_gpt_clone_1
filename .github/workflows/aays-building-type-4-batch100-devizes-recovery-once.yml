@@ -1,0 +1,136 @@
+name: AAYS building_type_4 batch100 Devizes recovery one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-4-batch100-devizes-recovery-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-4-batch100-devizes-recovery-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 20
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-6-batch26-skegness-once.yml
+            .github/workflows/aays-building-type-4-batch100-devizes-once.yml
+            england_map_web/data/building_type/shards/building_type_4_latest.geojson
+            england_map_web/data/building_type/shards/building_type_4_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_4
+            docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs
+      - name: Fast-forward to canonical head
+        run: git pull --ff-only origin codex/aays-single-runner-v5-20260706
+      - name: Execute recovered guarded batch100
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+          wf=Path('.github/workflows/aays-building-type-4-batch100-devizes-once.yml').read_text()
+          anchor=wf.index('      - name: Execute guarded batch100')
+          marker="          python - <<'PY'\n"
+          start=wf.index(marker,anchor)+len(marker)
+          end=wf.index("\n          PY",start)
+          builder='\n'.join(line[10:] if line.startswith('          ') else line for line in wf[start:end].splitlines())+'\n'
+          Path('/tmp/b100_builder.py').write_text(builder)
+          subprocess.run(['python','/tmp/b100_builder.py'],check=True)
+          p=Path('/tmp/bt4_b100.py')
+          code=p.read_text()
+          old='"city": CITY,\n        "local_authority": LOCAL_AUTHORITY,'
+          new='"city": CITY,\n        "grid_id": "uk-grid-devizes-001",\n        "local_authority": LOCAL_AUTHORITY,'
+          if old not in code:
+              raise SystemExit('missing Devizes feature city/local_authority token')
+          code=code.replace(old,new,1)
+          p.write_text(code)
+          PY
+          python /tmp/bt4_b100.py
+      - name: Validate recovered exact batch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          def j(p): return json.load(open(p,encoding='utf-8'))
+          g=j('england_map_web/data/building_type/shards/building_type_4_latest.geojson')
+          c=j('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json')
+          s=j('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
+          r=j('docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json')
+          t=j('docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json')
+          assert len(g['features'])==5000
+          assert c['feature_count_before']==4950 and c['feature_count_after']==5000 and c['next_batch_index']==101
+          assert s['total_elements']==5000 and r['batch_index']==100 and r['city']=='Devizes' and r['new_feature_count']==50
+          assert r['grid_id']=='uk-grid-devizes-001' and r['local_authority']=='Wiltshire'
+          assert t['owner'] in (None,'') and (t.get('continuation_key') or '')==''
+          assert all(x.get('fake_data') is False and x.get('final_ready') is False for x in (c,s,r,t))
+          new=g['features'][-50:]
+          assert len(new)==50
+          for f in new:
+              p=f.get('properties') or {}
+              assert f.get('id') and p.get('parcel_id') and p.get('osm_id') and p.get('source_ref')
+              assert p.get('city')=='Devizes' and p.get('grid_id')=='uk-grid-devizes-001'
+              assert p.get('building_type_primary') and p.get('source_url') and p.get('evidence_level')
+              assert p.get('confidence_level_1_to_4') in {1,2,3,4} and p.get('confidence_score') is not None
+              assert p.get('fake_data') is False and p.get('final_ready') is False
+              srcs=p.get('sources') or []
+              assert any((q.get('url_or_local_path') or q.get('url')) and q.get('accessed_at') and q.get('fields_used') and q.get('match_method') for q in srcs)
+          seen=set()
+          for f in g['features']:
+              p=f.get('properties') or {}
+              vals={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')) if v not in (None,'')}
+              assert not (seen & vals); seen.update(vals)
+          ap=c.get('already_processed_ids') or {}
+          assert ap.get('strategy')=='derived_from_latest_shard_feature.id_plus_parcel_id_plus_osm_id_plus_source_ref'
+          assert ap.get('unique_key_count')==len(seen)
+          print('LOCAL_RECOVERY_VALIDATION_OK building_type_4 4950->5000 batch100 Devizes')
+          PY
+      - name: Commit and push exact slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add england_map_web/data/building_type/shards/building_type_4_latest.geojson england_map_web/data/building_type/shards/building_type_4_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json
+          git diff --cached --quiet && { echo 'No progress'; exit 1; }
+          git commit -m 'data(building_type_4): append Devizes OSM batch 100 4950->5000'
+          for a in 1 2 3 4 5; do git push origin HEAD:codex/aays-single-runner-v5-20260706 && exit 0; git fetch origin codex/aays-single-runner-v5-20260706 --depth=20; git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }; done; exit 1
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+          python - <<'PY'
+          import json,subprocess
+          def j(p): return json.loads(subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:'+p]))
+          g=j('england_map_web/data/building_type/shards/building_type_4_latest.geojson')
+          c=j('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json')
+          s=j('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
+          r=j('docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json')
+          t=j('docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json')
+          assert len(g['features'])==5000 and c['feature_count_before']==4950 and c['feature_count_after']==5000 and c['next_batch_index']==101
+          assert s['total_elements']==5000 and r['batch_index']==100 and r['city']=='Devizes' and r['new_feature_count']==50
+          assert t['owner'] in (None,'') and (t.get('continuation_key') or '')==''
+          assert all(x.get('fake_data') is False and x.get('final_ready') is False for x in (c,s,r,t))
+          new=g['features'][-50:]
+          seen=set()
+          for f in g['features']:
+              p=f.get('properties') or {}; vals={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')) if v not in (None,'')}
+              assert not (seen & vals); seen.update(vals)
+          for f in new:
+              p=f.get('properties') or {}
+              assert p.get('city')=='Devizes' and p.get('grid_id')=='uk-grid-devizes-001' and p.get('source_ref')
+              assert p.get('building_type_primary') and p.get('evidence_level') and p.get('confidence_level_1_to_4') in {1,2,3,4}
+              assert p.get('fake_data') is False and p.get('final_ready') is False
+          ap=c.get('already_processed_ids') or {}
+          assert ap.get('strategy')=='derived_from_latest_shard_feature.id_plus_parcel_id_plus_osm_id_plus_source_ref' and ap.get('unique_key_count')==len(seen)
+          print('REMOTE_READBACK_OK building_type_4 4950->5000 batch100 Devizes final_ready=false')
+          PY
