@@ -1,0 +1,29 @@
+name: AAYS fix building_type_3 batch84 workflow
+on:
+  push:
+    paths:
+      - '.github/workflows/aays-bt3-batch84-fix.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 20
+          clean: false
+      - name: Remove invalid YAML guard and push exact file only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+          sed -i "/^    if: github.event.head_commit.message ==/d" .github/workflows/aays-bt3-batch84-once.yml
+          git add -- .github/workflows/aays-bt3-batch84-once.yml
+          git commit -m 'chore(aays): validate building_type_3 batch84 one-off workflow'
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
