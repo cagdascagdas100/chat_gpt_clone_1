@@ -1,4 +1,4 @@
-name: AAYS building_type_7 batch153 once
+name: AAYS building_type_7 batch153 state normalize
 on:
   push:
     branches: [codex/aays-single-runner-v5-20260706]
@@ -6,30 +6,44 @@ on:
 permissions:
   contents: write
 jobs:
-  classify:
+  normalize:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: codex/aays-single-runner-v5-20260706
-          fetch-depth: 20
-      - name: Run validated batch logic
+      - name: Normalize checkpoint and status from persisted batch report
         shell: bash
         run: |
-          git show 9102af63103842c40f39ddc20013845614e22f8b:.github/workflows/aays-bt7-batch153-once.yml > /tmp/source.yml
-          sed -n "/^[[:space:]]*python - <<'PY'$/,/^[[:space:]]*PY$/p" /tmp/source.yml | sed '1d;$d;s/^          //' > /tmp/batch.py
-          test -s /tmp/batch.py
-          python /tmp/batch.py
-      - name: Commit exact output files and rebase safely
+          python - <<'PY'
+          import json
+          S='building_type_7'
+          cp_p=f'docs/chatgpt_status/_shared/slots_21/{S}/checkpoint_latest.json'
+          st_p=f'docs/chatgpt_status/_shared/slots_21/{S}/status_latest.json'
+          rp=f'docs/chatgpt_status/building_type/slots/{S}/runner_outputs/{S}_classification_latest.json'
+          mp=f'england_map_web/data/building_type/shards/{S}_manifest_latest.json'
+          def L(p):
+            with open(p,encoding='utf-8') as f:return json.load(f)
+          def D(p,o):
+            with open(p,'w',encoding='utf-8') as f:json.dump(o,f,ensure_ascii=False,indent=2);f.write('\n')
+          cp,st,r,m=map(L,[cp_p,st_p,rp,mp])
+          assert r['feature_count_before']==7600 and r['feature_count_after']==7650 and r['new_feature_count']==50
+          now=r['generated_at']; nxt=154; next_target=7700
+          ids=[x['parcel_id'] for x in r['records']]
+          batch={'batch_index':153,'batch_name':r['city'],'city':r['city'],'grid_bbox':','.join(map(str,r['bbox_wgs84'])),'source':r['source_name'],'endpoint':r['source_url'],'source_url':r['source_url'],'source_sha256':r['source_sha256'],'features_used':50,'added_feature_count':50,'accessed_at':now,'evidence_level_distribution':r['evidence_distribution_new'],'confidence_level_distribution':r['confidence_distribution_new'],'building_type_distribution':r['type_distribution_new'],'new_feature_ids':ids,'raw_source_stored_in_git':False}
+          cp.update({'updated_at':now,'feature_count_before':7600,'feature_count_after':7650,'current_feature_count':7650,'next_batch_index':nxt,'next_city_index':nxt,'next_target_feature_count':next_target,'target_feature_count_after_next_batch':next_target,'first_unverified_step':'APPEND_NEW_BATCH_154_AFTER_FEATURE_7650','first_unverified_step_status':'READY','next_required_action':'CONTINUE_BATCH_154_FROM_7650_USING_ALREADY_PROCESSED_IDS_DO_NOT_REPROCESS_EXISTING_FEATURES','last_batch_index':153,'last_city':r['city'],'last_batch_name':r['city'],'last_grid_id':r['grid_id'],'last_bbox_wgs84':r['bbox_wgs84'],'last_batch_new_features':50,'last_new_feature_count':50,'last_batch':batch,'last_batch_evidence':batch,'final_ready':False,'fake_data':False})
+          cp.setdefault('summary',{}).update({'current_feature_count':7650,'new_features_appended':50,'new_features_added_this_attempt':50,'progress_counted':True,'unknown':m.get('unknown',0),'osm_pilot_classified':m.get('classified',0),'note':'PROGRESS: feature_count 7600 -> 7650. Batch 153 Kenilworth_East_D persisted and remote readback verified; continue at batch 154. final_ready remains false.'})
+          cp.setdefault('remaining_items',{})['note']='Next batch 154: treat all 7650 canonical feature.id/feature_id/parcel_id/osm_id values as already_processed_ids and append 50 genuinely new West Midlands records; do not replay prior batches.'
+          st.update({'updated_at':now,'classified_count':m.get('classified',0),'unknown_count':m.get('unknown',0),'total_elements':7650,'total_features':7650,'classified':m.get('classified',0),'unknown':m.get('unknown',0),'confidence_distribution':m.get('confidence_level_distribution',{}),'confidence_level_distribution':m.get('confidence_level_distribution',{}),'evidence_distribution':m.get('evidence_distribution',{}),'note':'Appended 50 unique Kenilworth_East_D OSM building elements; no second task/owner created.','feature_count_before':7600,'feature_count_after':7650,'current_feature_count':7650,'feature_count':7650,'last_batch':batch,'last_batch_city':r['city'],'last_batch_name':r['city'],'last_batch_added_feature_count':50,'last_batch_source':r['source_name'],'last_batch_evidence_distribution':r['evidence_distribution_new'],'last_batch_confidence_distribution':r['confidence_distribution_new'],'last_update':now,'last_batch_index':153,'next_batch_index':154,'next_target_feature_count':7700,'progress_reason':'50 new Kenilworth_East_D OSM records appended after processed-ID exclusion','progress_counted':True,'new_feature_count':50,'new_features_added':50,'last_new_feature_count':50,'no_evidence_this_batch':0,'final_ready':False,'fake_data':False})
+          D(cp_p,cp); D(st_p,st)
+          PY
+      - name: Commit normalized state
         shell: bash
         run: |
           git config user.name 'TerraYield AAYS Bot'
           git config user.email 'aays-bot@users.noreply.github.com'
-          git add england_map_web/data/building_type/shards/building_type_7_latest.geojson
-          git add england_map_web/data/building_type/shards/building_type_7_manifest_latest.json
-          git add docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json
           git add docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json
           git add docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json
-          git diff --cached --quiet || git commit -m 'data(aays): building_type_7 batch 153 Kenilworth East D'
+          git diff --cached --quiet || git commit -m 'state(aays): normalize building_type_7 after batch 153'
           git pull --rebase origin codex/aays-single-runner-v5-20260706
           git push origin HEAD:codex/aays-single-runner-v5-20260706
