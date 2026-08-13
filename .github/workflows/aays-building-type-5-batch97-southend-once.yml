@@ -1,0 +1,170 @@
+name: AAYS building_type_5 batch97 Southend one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-5-batch97-southend-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-5-batch97-southend-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 20
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-6-batch26-skegness-once.yml
+            england_map_web/data/building_type/shards/building_type_5_latest.geojson
+            england_map_web/data/building_type/shards/building_type_5_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5
+            docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs
+      - name: Fast-forward to canonical head
+        run: git pull --ff-only origin codex/aays-single-runner-v5-20260706
+      - name: Execute guarded batch97
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('.github/workflows/aays-building-type-6-batch26-skegness-once.yml').read_text()
+          marker="          python - <<'PY'\n"; start=src.index(marker)+len(marker); end=src.index("\n          PY",start)
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in src[start:end].splitlines())+'\n'
+          repl={
+          'SLOT = "building_type_6"':'SLOT = "building_type_5"',
+          'TASK = "building-type-6-england-classification-v1-20260808"':'TASK = "building-type-5-england-classification-v1-20260808"',
+          'CONT = "c1418ec751ca09ee40aa5704d014ad3e25ee346e2fc9eec7c32d3c11d565027a"':'CONT = ""',
+          'CITY = "Skegness"':'CITY = "Southend"',
+          'LOCAL_AUTHORITY = "East Lindsey"':'LOCAL_AUTHORITY = "Southend-on-Sea"',
+          'REGION = "East Midlands"':'REGION = "East of England"',
+          'BATCH_INDEX = 26':'BATCH_INDEX = 97',
+          'EXPECTED_BEFORE = 2250':'EXPECTED_BEFORE = 4800',
+          'ADD_COUNT = 250':'ADD_COUNT = 50',
+          'TARGET_AFTER = 2500':'TARGET_AFTER = 4850',
+          'NEXT_TARGET = 2750':'NEXT_TARGET = 4900',
+          'BBOX = [0.20, 53.08, 0.48, 53.21]':'BBOX = [0.64, 51.51, 0.82, 51.59]',
+          'england_map_web/data/building_type/shards/building_type_6_latest.geojson':'england_map_web/data/building_type/shards/building_type_5_latest.geojson',
+          'england_map_web/data/building_type/shards/building_type_6_manifest_latest.json':'england_map_web/data/building_type/shards/building_type_5_manifest_latest.json',
+          'docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json':'docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json',
+          'docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json':'docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json',
+          'docs/chatgpt_status/_shared/slots_21/building_type_6/current_task_latest.json':'docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json',
+          'docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json':'docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json'}
+          for old,new in repl.items():
+              if old not in code: raise SystemExit(f'missing token {old}')
+              code=code.replace(old,new,1)
+          code=code.replace('building_type_6','building_type_5').replace('Skegness','Southend').replace('SKEGNESS','SOUTHEND').replace('skegness','southend').replace('East Lindsey','Southend-on-Sea').replace('East Midlands','East of England')
+          code=code.replace('southend_east_lindsey_source_sha256','southend_southend_on_sea_source_sha256')
+          old='if checkpoint.get("continuation_key") != CONT or status.get("continuation_key") != CONT or task.get("continuation_key") != CONT:'
+          new='if (checkpoint.get("continuation_key") or "") != CONT or (status.get("continuation_key") or "") != CONT or (task.get("continuation_key") or "") != CONT:'
+          if old not in code: raise SystemExit('missing continuation guard')
+          code=code.replace(old,new,1)
+          old='for key in ("parcel_id", "osm_id"):'
+          new='for key in ("parcel_id", "osm_id", "source_ref"):'
+          if old not in code: raise SystemExit('missing already-processed key loop')
+          code=code.replace(old,new,1)
+          old='chosen = candidates[:ADD_COUNT]'
+          new='chosen = [row for row in candidates if row[0]][:ADD_COUNT]'
+          if old not in code: raise SystemExit('missing candidate selection')
+          code=code.replace(old,new,1)
+          old='raise SystemExit(f"only {len(chosen)} new geometry-bearing candidates; need >= {ADD_COUNT}")'
+          new='raise SystemExit(f"NO_EVIDENCE_THIS_BATCH: only {len(chosen)} evidence-backed new geometry-bearing candidates; need >= {ADD_COUNT}")'
+          if old not in code: raise SystemExit('missing insufficient-candidate guard')
+          code=code.replace(old,new,1)
+          Path('/tmp/bt5_b97.py').write_text(code)
+          PY
+          python /tmp/bt5_b97.py
+      - name: Synchronize slot state fields
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, pathlib
+          sta=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json')
+          cp=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json')
+          ct=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json')
+          run=pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json')
+          def load(p): return json.loads(p.read_text())
+          def dump(p,x): p.write_text(json.dumps(x,ensure_ascii=False,indent=2)+'\n')
+          s,c,t,r=map(load,(sta,cp,ct,run))
+          assert r['batch_index']==97 and r['feature_count_before']==4800 and r['feature_count_after']==4850 and r['new_feature_count']==50
+          new_ids=[x['feature_id'] for x in r['records']]
+          known=sum(1 for x in r['records'] if x.get('building_type_primary')!='unknown')
+          unknown=50-known
+          assert known==50 and unknown==0
+          for x in r['records']:
+              assert x.get('building_type_primary') not in (None,'','unknown')
+              assert x.get('evidence_level') in {'A','B','C'}
+              assert x.get('confidence_level_1_to_4') in {2,3,4}
+              assert x.get('confidence_score') is not None
+              assert x.get('source_url')
+              assert x.get('match_method')
+              assert x.get('fake_data') is False and x.get('final_ready') is False
+              srcs=x.get('sources') or []
+              assert srcs and srcs[0].get('url_or_local_path') and srcs[0].get('accessed_at') and srcs[0].get('fields_used') and srcs[0].get('match_method')
+          s.update({
+            'feature_count_before':4800,'feature_count_after':4850,'total_elements':4850,'current_feature_count':4850,
+            'progress_count_delta':50,'new_feature_count':50,'new_features_appended':50,'new_features_added':50,'progress_counted':True,
+            'last_batch_index':97,'last_batch_city':'Southend','last_batch_source':'OpenStreetMap Overpass API',
+            'last_city':'Southend','last_grid_id':'uk-grid-southend-001','last_source':'OpenStreetMap Overpass API',
+            'last_source_url':r['source_url'],'last_source_sha256':r['source_sha256'],
+            'progress_reason':'50 new evidence-backed Southend OSM building features appended after full feature.id/parcel_id/osm_id/source_ref exclusion; remote readback required before reporting success.',
+            'note':'Appended 50 unique evidence-backed Southend OSM building elements; no second task/owner created.',
+            'next_batch_index':98,'next_target_feature_count':4900,'fake_data':False,'final_ready':False,'owner':None,'blocker':None
+          })
+          c['last_batch']={
+            'batch_index':97,'city':'Southend','grid_id':'uk-grid-southend-001','source':'OpenStreetMap Overpass API',
+            'source_url':r['source_url'],'source_sha256':r['source_sha256'],'evidence_distribution':r['evidence_distribution_new'],
+            'confidence_distribution':r['confidence_distribution_new'],'known_type_count':known,'unknown_type_count':unknown,
+            'added_feature_count':50,'new_feature_ids':new_ids
+          }
+          c['fake_data']=False; c['final_ready']=False
+          t['last_progress']={
+            'batch_index':97,'city':'Southend','grid_id':'uk-grid-southend-001','feature_count_before':4800,
+            'feature_count_after':4850,'new_features_appended':50,'known_type_count':known,'unknown_type_count':unknown,
+            'source_sha256':r['source_sha256'],'source_url':r['source_url']
+          }
+          t['fake_data']=False; t['final_ready']=False; t['owner']=None; t['blocker']=None
+          dump(sta,s); dump(cp,c); dump(ct,t)
+          PY
+      - name: Commit and push exact slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add england_map_web/data/building_type/shards/building_type_5_latest.geojson england_map_web/data/building_type/shards/building_type_5_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json
+          git diff --cached --quiet && { echo 'No progress'; exit 1; }
+          git commit -m "data(building_type_5): append Southend OSM batch 97 4800->4850"
+          for a in 1 2 3 4 5; do git push origin HEAD:codex/aays-single-runner-v5-20260706 && exit 0; git fetch origin codex/aays-single-runner-v5-20260706 --depth=20; git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }; done; exit 1
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+          python - <<'PY'
+          import json,subprocess
+          def j(p): return json.loads(subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:'+p]))
+          g=j('england_map_web/data/building_type/shards/building_type_5_latest.geojson'); c=j('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json'); s=j('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json'); r=j('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json'); t=j('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json')
+          assert len(g['features'])==4850 and c['feature_count_before']==4800 and c['feature_count_after']==4850 and c['next_batch_index']==98 and c['last_batch']['batch_index']==97
+          assert s['total_elements']==4850 and s['current_feature_count']==4850 and s['last_batch_index']==97 and s['last_city']=='Southend'
+          assert r['city']=='Southend' and r['new_feature_count']==50 and r['local_authority']=='Southend-on-Sea'
+          assert t['owner'] is None and (t.get('continuation_key') or '')=='' and t['last_progress']['batch_index']==97
+          assert all(x.get('fake_data') is False and x.get('final_ready') is False for x in (c,s,r,t))
+          rec=r.get('records') or []; assert len(rec)==50
+          for x in rec:
+              assert x.get('building_type_primary') not in (None,'','unknown') and x.get('evidence_excerpt') and x.get('evidence_level') in {'A','B','C'} and x.get('confidence_level_1_to_4') in {2,3,4} and x.get('confidence_score') is not None and x.get('source_url') and x.get('sources') and x.get('match_method') and x.get('fake_data') is False
+              z=x['sources'][0]; assert z.get('url_or_local_path') and z.get('accessed_at') and z.get('fields_used') and z.get('match_method')
+          seen=set()
+          for f in g['features']:
+              p=f.get('properties') or {}; vals={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')) if v not in (None,'')}
+              assert not (seen & vals); seen.update(vals)
+          assert len(seen)>=4850
+          print('REMOTE_READBACK_OK building_type_5 4800->4850 batch97 Southend final_ready=false')
+          PY
