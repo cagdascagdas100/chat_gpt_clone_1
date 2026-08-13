@@ -1,0 +1,149 @@
+name: AAYS building_type_4 batch109 Malmesbury one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-4-batch109-malmesbury-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-4-batch109-malmesbury-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 20
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-6-batch26-skegness-once.yml
+            .github/workflows/aays-building-type-4-batch101-calne-once.yml
+            england_map_web/data/building_type/shards/building_type_4_latest.geojson
+            england_map_web/data/building_type/shards/building_type_4_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_4
+            docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs
+      - name: Fast-forward to canonical head
+        run: git pull --ff-only origin codex/aays-single-runner-v5-20260706
+      - name: Execute guarded batch109
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          cp=json.load(open('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json',encoding='utf-8'))
+          st=json.load(open('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json',encoding='utf-8'))
+          task=json.load(open('docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json',encoding='utf-8'))
+          geo=json.load(open('england_map_web/data/building_type/shards/building_type_4_latest.geojson',encoding='utf-8'))
+          assert task.get('task_id')=='building-type-4-england-classification-v1-20260808'
+          assert task.get('owner') in (None,'') and (task.get('continuation_key') or '')==''
+          assert (cp.get('continuation_key') or '')=='' and (st.get('continuation_key') or '')==''
+          assert cp.get('current_feature_count')==5400 and cp.get('next_batch_index')==109 and cp.get('next_target_feature_count')==5450
+          assert st.get('total_elements')==5400 and len(geo.get('features') or [])==5400
+          assert 'Malmesbury' not in (cp.get('attempted_cities') or [])
+          wf=Path('.github/workflows/aays-building-type-4-batch101-calne-once.yml').read_text()
+          anchor=wf.index('      - name: Execute guarded batch101')
+          marker="          python - <<'PY'\n"
+          start=wf.index(marker,anchor)+len(marker); end=wf.index("\n          PY",start)
+          builder='\n'.join(line[10:] if line.startswith('          ') else line for line in wf[start:end].splitlines())+'\n'
+          Path('/tmp/b101_builder.py').write_text(builder)
+          subprocess.run(['python','/tmp/b101_builder.py'],check=True)
+          p=Path('/tmp/bt4_b101.py'); code=p.read_text()
+          replacements=[
+            ('CITY = "Calne"','CITY = "Malmesbury"'),
+            ('BATCH_INDEX = 101','BATCH_INDEX = 109'),
+            ('EXPECTED_BEFORE = 5000','EXPECTED_BEFORE = 5400'),
+            ('TARGET_AFTER = 5050','TARGET_AFTER = 5450'),
+            ('NEXT_TARGET = 5100','NEXT_TARGET = 5500'),
+            ('BBOX = [-2.05, 51.40, -1.95, 51.47]','BBOX = [-2.16, 51.64, -2.04, 51.71]'),
+            ('uk-grid-calne-001','uk-grid-malmesbury-001'),
+            ('Calne','Malmesbury'),('CALNE','MALMESBURY'),('calne','malmesbury')]
+          for old,new in replacements:
+              if old not in code: raise SystemExit(f'missing batch109 replacement token: {old}')
+              code=code.replace(old,new)
+          Path('/tmp/bt4_b109.py').write_text(code)
+          PY
+          python /tmp/bt4_b109.py
+      - name: Validate exact batch before commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          def j(p): return json.load(open(p,encoding='utf-8'))
+          g=j('england_map_web/data/building_type/shards/building_type_4_latest.geojson')
+          c=j('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json')
+          s=j('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
+          r=j('docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json')
+          t=j('docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json')
+          assert len(g['features'])==5450
+          assert c['feature_count_before']==5400 and c['feature_count_after']==5450 and c['next_batch_index']==110 and c['next_target_feature_count']==5500
+          assert s['total_elements']==5450 and r['batch_index']==109 and r['city']=='Malmesbury' and r['new_feature_count']==50 and r['local_authority']=='Wiltshire'
+          assert r['grid_id']=='uk-grid-malmesbury-001'
+          assert t['owner'] in (None,'') and (t.get('continuation_key') or '')==''
+          assert all(x.get('fake_data') is False and x.get('final_ready') is False for x in (c,s,r,t))
+          new=g['features'][-50:]; assert len(new)==50
+          for f in new:
+              p=f.get('properties') or {}
+              assert f.get('id') and p.get('parcel_id') and p.get('osm_id') and p.get('source_ref')
+              assert p.get('city')=='Malmesbury' and p.get('grid_id')=='uk-grid-malmesbury-001'
+              assert p.get('building_type_primary') and p.get('source_url') and p.get('evidence_level')
+              assert p.get('confidence_level_1_to_4') in {1,2,3,4} and isinstance(p.get('confidence_score'),(int,float))
+              assert p.get('fake_data') is False and p.get('final_ready') is False
+              assert any((q.get('url_or_local_path') or q.get('url')) and q.get('accessed_at') and q.get('fields_used') and q.get('match_method') for q in (p.get('sources') or []))
+          seen=set()
+          for f in g['features']:
+              p=f.get('properties') or {}; vals={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')) if v not in (None,'')}
+              assert not (seen & vals); seen.update(vals)
+          ap=c.get('already_processed_ids') or {}
+          assert ap.get('strategy')=='derived_from_latest_shard_feature.id_plus_parcel_id_plus_osm_id_plus_source_ref' and ap.get('unique_key_count')==len(seen)
+          print('LOCAL_VALIDATION_OK building_type_4 5400->5450 batch109 Malmesbury fake_data=false final_ready=false')
+          PY
+      - name: Commit and push exact slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add england_map_web/data/building_type/shards/building_type_4_latest.geojson england_map_web/data/building_type/shards/building_type_4_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json
+          git diff --cached --quiet && { echo 'No progress'; exit 1; }
+          git commit -m 'data(building_type_4): append Malmesbury OSM batch 109 5400->5450'
+          for a in 1 2 3 4 5; do git push origin HEAD:codex/aays-single-runner-v5-20260706 && exit 0; git fetch origin codex/aays-single-runner-v5-20260706 --depth=20; git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }; done; exit 1
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+          python - <<'PY'
+          import json,subprocess
+          def j(p): return json.loads(subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:'+p]))
+          g=j('england_map_web/data/building_type/shards/building_type_4_latest.geojson')
+          c=j('docs/chatgpt_status/_shared/slots_21/building_type_4/checkpoint_latest.json')
+          s=j('docs/chatgpt_status/_shared/slots_21/building_type_4/status_latest.json')
+          r=j('docs/chatgpt_status/building_type/slots/building_type_4/runner_outputs/building_type_4_classification_latest.json')
+          t=j('docs/chatgpt_status/_shared/slots_21/building_type_4/current_task_latest.json')
+          assert len(g['features'])==5450 and c['feature_count_before']==5400 and c['feature_count_after']==5450 and c['next_batch_index']==110 and c['next_target_feature_count']==5500
+          assert s['total_elements']==5450 and r['batch_index']==109 and r['city']=='Malmesbury' and r['new_feature_count']==50 and r['local_authority']=='Wiltshire'
+          assert r['grid_id']=='uk-grid-malmesbury-001'
+          assert t['owner'] in (None,'') and (t.get('continuation_key') or '')==''
+          assert all(x.get('fake_data') is False and x.get('final_ready') is False for x in (c,s,r,t))
+          rec=r.get('records') or []; assert len(rec)==50
+          for x in rec:
+              assert x.get('source_url') and x.get('source_ref') and x.get('evidence_level') in {'A','B','C','D','U'}
+              assert x.get('confidence_level_1_to_4') in {1,2,3,4} and x.get('confidence_score') is not None
+              assert x.get('fake_data') is False and x.get('final_ready') is False
+              assert any((q.get('url_or_local_path') or q.get('url')) and q.get('accessed_at') and q.get('fields_used') and q.get('match_method') for q in (x.get('sources') or []))
+          seen=set()
+          for f in g['features']:
+              p=f.get('properties') or {}; vals={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')) if v not in (None,'')}
+              assert not (seen & vals); seen.update(vals)
+          ap=c.get('already_processed_ids') or {}
+          assert ap.get('strategy')=='derived_from_latest_shard_feature.id_plus_parcel_id_plus_osm_id_plus_source_ref' and ap.get('unique_key_count')==len(seen)
+          print('REMOTE_READBACK_OK building_type_4 5400->5450 batch109 Malmesbury final_ready=false')
+          PY
