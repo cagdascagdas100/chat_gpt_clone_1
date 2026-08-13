@@ -12,15 +12,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: codex/aays-single-runner-v5-20260706
-          fetch-depth: 2
-      - name: Run validated batch logic from previous workflow revision
+          fetch-depth: 20
+      - name: Run validated batch logic
         shell: bash
         run: |
-          git show HEAD^:.github/workflows/aays-bt7-batch153-once.yml > /tmp/prev.yml
-          sed -n "/^[[:space:]]*python - <<'PY'$/,/^[[:space:]]*PY$/p" /tmp/prev.yml | sed '1d;$d;s/^          //' > /tmp/batch.py
+          git show 9102af63103842c40f39ddc20013845614e22f8b:.github/workflows/aays-bt7-batch153-once.yml > /tmp/source.yml
+          sed -n "/^[[:space:]]*python - <<'PY'$/,/^[[:space:]]*PY$/p" /tmp/source.yml | sed '1d;$d;s/^          //' > /tmp/batch.py
           test -s /tmp/batch.py
           python /tmp/batch.py
-      - name: Commit exact output files
+      - name: Commit exact output files and rebase safely
         shell: bash
         run: |
           git config user.name 'TerraYield AAYS Bot'
@@ -31,4 +31,5 @@ jobs:
           git add docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json
           git add docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json
           git diff --cached --quiet || git commit -m 'data(aays): building_type_7 batch 153 Kenilworth East D'
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
           git push origin HEAD:codex/aays-single-runner-v5-20260706
