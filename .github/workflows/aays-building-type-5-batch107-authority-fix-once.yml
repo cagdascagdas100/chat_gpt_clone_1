@@ -1,0 +1,145 @@
+name: AAYS building_type_5 batch107 authority correction one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-5-batch107-authority-fix-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-5-batch107-authority-fix-once
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 20
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            england_map_web/data/building_type/shards/building_type_5_latest.geojson
+            england_map_web/data/building_type/shards/building_type_5_manifest_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json
+      - name: Correct North Hertfordshire metadata and verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch='codex/aays-single-runner-v5-20260706'
+          git pull --ff-only origin "$branch"
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+
+          shard=Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson')
+          manifest=Path('england_map_web/data/building_type/shards/building_type_5_manifest_latest.json')
+          runner=Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json')
+          status=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json')
+          checkpoint=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json')
+          task=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json')
+          paths=[shard,manifest,runner,status,checkpoint,task]
+
+          s=json.loads(status.read_text()); c=json.loads(checkpoint.read_text()); t=json.loads(task.read_text()); r=json.loads(runner.read_text())
+          if not (
+              s.get('current_feature_count')==5350 and s.get('next_batch_index')==108 and s.get('owner') is None and (s.get('continuation_key') or '')=='' and
+              c.get('last_batch',{}).get('batch_index')==107 and c.get('last_batch',{}).get('city')=='Letchworth Garden City' and (c.get('continuation_key') or '')=='' and
+              t.get('last_progress',{}).get('batch_index')==107 and t.get('owner') is None and (t.get('continuation_key') or '')=='' and
+              r.get('batch_index')==107 and r.get('city')=='Letchworth Garden City'
+          ):
+              raise SystemExit('STATE_MOVED_SKIP_AUTHORITY_FIX')
+
+          wrong_auth='North Letchworth Garden Cityshire'
+          right_auth='North Hertfordshire'
+          wrong_key='letchworth_garden_city_north_letchworth_garden_cityshire_source_sha256'
+          right_key='letchworth_garden_city_north_hertfordshire_source_sha256'
+          for p in paths:
+              txt=p.read_text()
+              txt=txt.replace(wrong_auth,right_auth).replace(wrong_key,right_key)
+              p.write_text(txt)
+
+          sh=json.loads(shard.read_text()); r=json.loads(runner.read_text()); c=json.loads(checkpoint.read_text()); t=json.loads(task.read_text()); m=json.loads(manifest.read_text()); s=json.loads(status.read_text())
+          assert len(sh.get('features',[]))==5350
+          assert m.get('total_features')==5350 and m.get('classified')==5166 and m.get('unknown')==184
+          assert r['feature_count_before']==5300 and r['feature_count_after']==5350 and r['new_feature_count']==50
+          assert r['local_authority']==right_auth and r['grid_id']=='uk-grid-letchworth-garden-city-001'
+          assert len(r.get('records',[]))==50
+          for rec in r['records']:
+              assert rec.get('local_authority')==right_auth
+              assert rec.get('building_type_primary')
+              assert rec.get('confidence_level_1_to_4') in (1,2,3,4)
+              assert rec.get('evidence_level')
+              assert isinstance(rec.get('confidence_score'),(int,float))
+              assert rec.get('source_url')
+              assert rec.get('fake_data') is False and rec.get('final_ready') is False
+              srcs=rec.get('sources') or []
+              assert srcs and srcs[0].get('url_or_local_path') and srcs[0].get('accessed_at') and srcs[0].get('fields_used')
+              assert rec.get('match_method')
+          city_features=[]; seen={}
+          for idx,f in enumerate(sh['features']):
+              p=f.get('properties') or {}
+              if p.get('area')=='Letchworth Garden City':
+                  city_features.append(f)
+              vals={v for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')) if v}
+              for v in vals:
+                  if v in seen and seen[v]!=idx:
+                      raise AssertionError(f'duplicate key across features: {v}')
+                  seen[v]=idx
+          assert len(city_features)==50
+          assert all((f.get('properties') or {}).get('local_authority')==right_auth for f in city_features)
+          assert c['already_processed_ids']['unique_key_count']==len(seen)==10400
+          assert right_key in c.get('source_access_evidence',{}) and wrong_key not in c.get('source_access_evidence',{})
+          assert c['first_unverified_step']=='APPEND_NEW_BATCH_108_AFTER_FEATURE_5350'
+          assert c['next_required_action']=='CONTINUE_BATCH_108_FROM_5350_USING_ALREADY_PROCESSED_IDS_DO_NOT_REPROCESS_EXISTING_FEATURES'
+          assert t['first_unverified_step']=='APPEND_NEW_BATCH_108_AFTER_FEATURE_5350'
+          assert s['current_feature_count']==5350 and s['next_batch_index']==108 and s['fake_data'] is False and s['final_ready'] is False
+
+          s['output_sha256']=hashlib.sha256(shard.read_bytes()).hexdigest()
+          status.write_text(json.dumps(s,ensure_ascii=False,indent=2)+'\n')
+          print('LOCAL_AUTHORITY_FIX_OK',s['output_sha256'])
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            england_map_web/data/building_type/shards/building_type_5_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_5_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json
+          git diff --cached --quiet && { echo 'AUTHORITY_METADATA_ALREADY_CORRECT'; exit 0; }
+          git commit -m "fix(building_type_5): correct batch107 North Hertfordshire authority metadata"
+          git push origin HEAD:"$branch"
+          git fetch origin "$branch" --depth=20
+
+          python - <<'PY'
+          import hashlib, json, subprocess
+          branch='origin/codex/aays-single-runner-v5-20260706'
+          def raw(p): return subprocess.check_output(['git','show',f'{branch}:{p}'])
+          def j(p): return json.loads(raw(p))
+          shardp='england_map_web/data/building_type/shards/building_type_5_latest.geojson'
+          runnerp='docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json'
+          statusp='docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json'
+          cpp='docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json'
+          taskp='docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json'
+          sh=j(shardp); r=j(runnerp); s=j(statusp); c=j(cpp); t=j(taskp)
+          assert len(sh['features'])==5350 and r['new_feature_count']==50
+          assert r['local_authority']=='North Hertfordshire'
+          assert len(r['records'])==50 and all(x['local_authority']=='North Hertfordshire' for x in r['records'])
+          assert s['current_feature_count']==5350 and s['next_batch_index']==108
+          assert s['output_sha256']==hashlib.sha256(raw(shardp)).hexdigest()
+          assert c['first_unverified_step']=='APPEND_NEW_BATCH_108_AFTER_FEATURE_5350'
+          assert c['next_required_action']=='CONTINUE_BATCH_108_FROM_5350_USING_ALREADY_PROCESSED_IDS_DO_NOT_REPROCESS_EXISTING_FEATURES'
+          assert 'letchworth_garden_city_north_hertfordshire_source_sha256' in c['source_access_evidence']
+          assert 'letchworth_garden_city_north_letchworth_garden_cityshire_source_sha256' not in c['source_access_evidence']
+          assert t['owner'] is None and (t.get('continuation_key') or '')=='' and t['fake_data'] is False and t['final_ready'] is False
+          print('REMOTE_AUTHORITY_FIX_OK building_type_5 batch107 5300->5350')
+          PY
