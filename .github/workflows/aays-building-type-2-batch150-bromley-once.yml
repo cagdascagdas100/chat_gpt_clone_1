@@ -1,0 +1,190 @@
+name: AAYS building_type_2 batch150 Bromley one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-batch150-bromley-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-2-batch150-bromley-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 70
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-6-batch26-skegness-once.yml
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Execute guarded batch150
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess
+          from pathlib import Path
+          prev=subprocess.check_output(['git','show','d0eb7c8f3bec7f5084282840c5fa87611c12f5a2:.github/workflows/aays-building-type-2-batch149-walthamstow-once.yml'],text=True)
+          anchor='      - name: Execute guarded batch149\n'
+          part=prev.split(anchor,1)[1]
+          marker="          python - <<'PY'\n"
+          body=part.split(marker,1)[1].split("\n          PY",1)[0]
+          script='\n'.join(line[10:] if line.startswith('          ') else line for line in body.splitlines())+'\n'
+          replacements=[
+            ('Waltham Forest','Bromley'),
+            ('Walthamstow','Bromley'),('WALTHAMSTOW','BROMLEY'),('walthamstow','bromley'),
+            ('BATCH_INDEX = 149','BATCH_INDEX = 150'),
+            ('EXPECTED_BEFORE = 7400','EXPECTED_BEFORE = 7450'),
+            ('TARGET_AFTER = 7450','TARGET_AFTER = 7500'),
+            ('NEXT_TARGET = 7500','NEXT_TARGET = 7550'),
+            ('BBOX = [-0.045, 51.56, 0.015, 51.61]','BBOX = [0.00, 51.38, 0.08, 51.42]'),
+            ('uk-grid-walthamstow-001','uk-grid-bromley-001'),
+            ('bt2_b149.py','bt2_b150.py')]
+          for old,new in replacements:
+              if old not in script:
+                  raise SystemExit(f'missing previous-batch token: {old}')
+              script=script.replace(old,new)
+          exec(compile(script,'batch150_transform','exec'),{})
+          PY
+          python /tmp/bt2_b150.py
+
+      - name: Normalize metadata and validate exact batch150
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, pathlib
+          G=pathlib.Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          M=pathlib.Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          C=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          S=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          R=pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          T=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          def load(p): return json.load(open(p,encoding='utf-8'))
+          def dump(p,x): p.write_text(json.dumps(x,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          g,m,c,s,r,t=map(load,(G,M,C,S,R,T))
+          assert len(g['features'])==7500
+          assert c['feature_count_before']==7450 and c['feature_count_after']==7500 and c['next_batch_index']==151
+          assert s['total_elements']==7500
+          assert r.get('city')=='Bromley' and (r.get('new_feature_count')==50 or r.get('added_feature_count')==50)
+          assert t['task_id']=='building-type-2-england-classification-v1-20260808'
+          assert t.get('owner') in (None,'') and (t.get('continuation_key') or '')==''
+          rec=r.get('records') or []; assert len(rec)==50
+          assert all(x.get('fake_data') is False and x.get('final_ready') is False for x in (c,s,r,t))
+          for z in rec:
+              assert z.get('parcel_id') and z.get('osm_id') and z.get('building_type_primary')
+              assert z.get('confidence_level_1_to_4') in {1,2,3,4}
+              assert z.get('confidence_score') is not None and z.get('evidence_level')
+              assert z.get('source_url') and z.get('sources')
+              assert z.get('city')=='Bromley' and z.get('grid_id')=='uk-grid-bromley-001'
+              assert z.get('fake_data') is False and z.get('final_ready') is False
+              for src in z['sources']:
+                  assert (src.get('url') or src.get('url_or_local_path'))
+                  assert src.get('accessed_at') and src.get('fields_used') and src.get('match_method')
+          seen=set()
+          for f in g['features']:
+              p=f.get('properties') or {}
+              vals={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')) if v not in (None,'')}
+              assert not (seen & vals); seen.update(vals)
+          assert m.get('total_features')==7500
+          new_ids=[z.get('feature_id') for z in rec]
+          last={
+            'batch_index':150,'city':'Bromley','local_authority':'Bromley','grid_id':'uk-grid-bromley-001',
+            'bbox_wgs84':[0.00,51.38,0.08,51.42],'added_feature_count':50,
+            'source':'OpenStreetMap Overpass API','source_url':r.get('source_url'),
+            'source_sha256':r.get('source_sha256'),'classification_basis':'deterministic_osm_building_use_tag_rules_v1',
+            'evidence_level_distribution':r.get('evidence_distribution_new') or {},
+            'confidence_level_distribution':r.get('confidence_distribution_new') or {},
+            'new_feature_ids':new_ids,
+            'evidence_level':'B' if (r.get('evidence_distribution_new') or {})=={'B':50} else 'mixed'}
+          c['last_batch']=last
+          c['summary']['note']='PROGRESS: feature_count 7450 -> 7500; 50 unique Bromley OSM building elements appended after feature.id/parcel_id/osm_id/source_ref exclusion.'
+          c['summary']['current_feature_count']=7500
+          c['remaining_items']['note']='Next step batch 151: treat all 7500 feature.id/parcel_id/osm_id/source_ref values as already_processed_ids and append exactly 50 new London Outer features; do not replay prior records.'
+          c['last_city']='Bromley'; c['last_batch_index']=150; c['last_grid_id']='uk-grid-bromley-001'; c['last_bbox_wgs84']=[0.00,51.38,0.08,51.42]; c['next_city_index']=151
+          c['already_processed_ids_policy']='Treat every existing shard feature.id, properties.parcel_id, properties.osm_id and properties.source_ref as already_processed_ids; never replay them.'
+          attempted=list(c.get('attempted_cities') or [])
+          if 'Bromley' not in attempted: attempted.append('Bromley')
+          c['attempted_cities']=attempted
+          keys=sorted(seen)
+          c['already_processed_ids']={'strategy':'derived_from_latest_shard_feature.id_plus_parcel_id_plus_osm_id_plus_source_ref','unique_key_count':len(keys),'sha256_sorted_newline_keys':hashlib.sha256(('\n'.join(keys)+'\n').encode()).hexdigest(),'sample':new_ids[:20]}
+          sae=dict(c.get('source_access_evidence') or {})
+          sae.pop('bromley_east_lindsey_source_sha256',None)
+          sae['bromley_bromley_source_sha256']=r.get('source_sha256')
+          c['source_access_evidence']=sae
+          s['last_batch']=last; s['current_feature_count']=7500; s['total_features']=7500
+          s['classified']=s.get('classified_count'); s['unknown']=s.get('unknown_count'); s['confidence_level_distribution']=s.get('confidence_distribution')
+          s['last_batch_index']=150; s['last_batch_city']='Bromley'; s['last_batch_added_feature_count']=50; s['last_batch_source']='OpenStreetMap Overpass API'
+          s['last_batch_evidence_distribution']=r.get('evidence_distribution_new') or {}; s['last_batch_confidence_distribution']=r.get('confidence_distribution_new') or {}
+          s['progress_reason']='50 new Bromley OSM building elements appended after feature.id/parcel_id/osm_id/source_ref exclusion'; s['note']='Appended 50 unique Bromley OSM building elements; no second task/owner created.'
+          r['grid_id']='uk-grid-bromley-001'; r['local_authority']='Bromley'; r['region']='London Outer'
+          dump(C,c); dump(S,s); dump(R,r)
+          print('LOCAL_VALIDATION_OK building_type_2 7450->7500 batch150 Bromley')
+          PY
+
+      - name: Commit and push exact slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json
+          git diff --cached --quiet && { echo 'No progress'; exit 1; }
+          git commit -m 'data(building_type_2): append Bromley OSM batch 150 7450->7500'
+          for a in 1 2 3 4 5; do
+            git push origin HEAD:codex/aays-single-runner-v5-20260706 && exit 0
+            git fetch origin codex/aays-single-runner-v5-20260706 --depth=70
+            git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }
+          done
+          exit 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=70
+          python - <<'PY'
+          import json,subprocess
+          def j(p): return json.loads(subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:'+p]))
+          g=j('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          m=j('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          c=j('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          s=j('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          r=j('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          t=j('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          assert len(g['features'])==7500 and m.get('total_features')==7500
+          assert c['feature_count_before']==7450 and c['feature_count_after']==7500 and c['next_batch_index']==151
+          assert c.get('last_city')=='Bromley' and c.get('last_grid_id')=='uk-grid-bromley-001'
+          assert s['total_elements']==7500 and s['current_feature_count']==7500 and s['last_batch_index']==150
+          assert r.get('city')=='Bromley' and r.get('grid_id')=='uk-grid-bromley-001' and len(r.get('records') or [])==50
+          assert t.get('owner') in (None,'') and (t.get('continuation_key') or '')==''
+          seen=set()
+          for f in g['features']:
+              p=f.get('properties') or {}
+              vals={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')) if v not in (None,'')}
+              assert not (seen & vals); seen.update(vals)
+          assert all(x.get('fake_data') is False and x.get('final_ready') is False for x in (c,s,r,t))
+          print('REMOTE_READBACK_OK building_type_2 7450->7500 batch150 Bromley duplicate_free final_ready=false')
+          PY
