@@ -1,0 +1,74 @@
+name: AAYS verify building_type_3 batch84 state
+on:
+  push:
+    paths:
+      - '.github/workflows/aays-bt3-batch84-verify.yml'
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 10
+          clean: false
+      - name: Normalize verified Batch 84 state aliases
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json,datetime,os
+          SLOT='building_type_3'
+          DATA='5487f0741980795caf616ea1cc5ce5c7303b8935'
+          CONT='03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e'
+          cp_path=f'docs/chatgpt_status/_shared/slots_21/{SLOT}/checkpoint_latest.json'
+          st_path=f'docs/chatgpt_status/_shared/slots_21/{SLOT}/status_latest.json'
+          task_path=f'docs/chatgpt_status/_shared/slots_21/{SLOT}/current_task_latest.json'
+          manifest_path=f'england_map_web/data/building_type/shards/{SLOT}_manifest_latest.json'
+          report_path=f'docs/chatgpt_status/building_type/slots/{SLOT}/runner_outputs/{SLOT}_classification_latest.json'
+          def load(p):
+              with open(p,encoding='utf-8') as f:return json.load(f)
+          def dump(p,o):
+              with open(p,'w',encoding='utf-8') as f:json.dump(o,f,ensure_ascii=False,indent=2);f.write('\n')
+          cp=load(cp_path); st=load(st_path); task=load(task_path); manifest=load(manifest_path); report=load(report_path)
+          if cp.get('continuation_key')!=CONT or int(cp.get('current_feature_count',-1))!=8950 or int(cp.get('next_batch_index',-1))!=85:
+              raise SystemExit('REMOTE_READBACK_STATE_MISMATCH')
+          if int(report.get('feature_count_before',-1))!=8900 or int(report.get('feature_count_after',-1))!=8950 or int(report.get('added_feature_count',-1))!=50:
+              raise SystemExit('REMOTE_REPORT_MISMATCH')
+          b=cp.get('last_batch_evidence') or {}
+          if int(b.get('batch_index',-1))!=84 or b.get('city')!='Buckingham': raise SystemExit('LAST_BATCH_MISMATCH')
+          now=datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          classified=int(st.get('classified_count',8628)); unknown=int(st.get('unknown_count',322)); total=int(st.get('current_feature_count',8950))
+          st.update({
+              'updated_at':now,'classified':classified,'unknown':unknown,'total_features':total,'total_elements':total,
+              'feature_count_after':total,'current_feature_count':total,'last_batch_index':84,'last_batch_name':'Buckingham',
+              'last_batch_city':'Buckingham','last_batch_added_feature_count':50,'last_batch_new_features':50,
+              'last_batch_source':'OpenStreetMap API 0.6 map','last_batch_evidence_distribution':b.get('evidence_level_distribution',{}),
+              'last_batch_confidence_distribution':b.get('confidence_level_distribution',{}),'last_batch':b,
+              'progress_reason':'50 new Buckingham OSM building records appended after exact processed-ID exclusion',
+              'remote_head':DATA,'remote_data_commit':DATA,'remote_readback_verified':True,'blocker':None,'blocker_reason':'',
+              'fake_data':False,'final_ready':False
+          })
+          cp.update({
+              'updated_at':now,'remote_head':DATA,'remote_data_commit':DATA,'remote_readback_verified':True,
+              'hydration_state':'REMOTE_HEAD_HYDRATED_CONTINUATION_ADVANCED','first_unverified_step':'APPEND_NEW_BATCH_85_AFTER_FEATURE_8950',
+              'first_unverified_step_status':'READY','blocker':None,'blocker_reason':'','candidate_batch':None,'no_progress_reason':None,
+              'source_access_evidence':{'osm_api':'Live OSM API 0.6 map tiles succeeded','endpoint':'https://api.openstreetmap.org/api/0.6/map','source_sha256':b.get('source_sha256'),'raw_source_stored_in_git':False},
+              'fake_data':False,'final_ready':False
+          })
+          task.update({'updated_at':now,'owner':None,'continuation_key':CONT,'last_batch_index':84,'last_batch_name':'Buckingham','last_batch_added_feature_count':50,'next_batch_index':85,'final_ready':False,'fake_data':False})
+          task.setdefault('progress',{})['completed_count']=8950
+          manifest.update({'generated_at':manifest.get('generated_at'),'remote_data_commit':DATA,'remote_readback_verified':True,'final_ready':False,'fake_data':False})
+          dump(cp_path,cp); dump(st_path,st); dump(task_path,task); dump(manifest_path,manifest)
+          print(json.dumps({'remote_readback_verified':True,'feature_count':8950,'next_batch_index':85,'data_commit':DATA,'fake_data':False,'final_ready':False}))
+          PY
+          git add -- docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json england_map_web/data/building_type/shards/building_type_3_manifest_latest.json
+          git commit -m 'chore(aays): verify building_type_3 batch84 state'
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
