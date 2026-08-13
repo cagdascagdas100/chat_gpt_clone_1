@@ -1,0 +1,93 @@
+name: AAYS building_type_5 batch100 Stevenage one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-5-batch100-stevenage-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-5-batch100-stevenage-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 20
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-5-batch99-canvey-island-once.yml
+            .github/workflows/aays-building-type-6-batch26-skegness-once.yml
+            england_map_web/data/building_type/shards/building_type_5_latest.geojson
+            england_map_web/data/building_type/shards/building_type_5_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_5
+            docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs
+      - name: Replay transformed guarded batch100
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re, subprocess
+
+          src = Path('.github/workflows/aays-building-type-5-batch99-canvey-island-once.yml').read_text()
+
+          # Transform only the prior verified one-shot into this batch. Use placeholders
+          # so batch/count increments cannot cascade into one another.
+          src = src.replace('batch99', 'batch100').replace('bt5_b99', 'bt5_b100')
+          src = src.replace('Canvey Island', 'Stevenage').replace('CANVEY_ISLAND', 'STEVENAGE').replace('canvey_island', 'stevenage')
+          src = src.replace('Castle Point', 'Stevenage').replace('castle_point', 'stevenage')
+          src = src.replace('uk-grid-canvey-island-001', 'uk-grid-stevenage-001')
+          src = src.replace('[0.52, 51.49, 0.65, 51.56]', '[-0.26, 51.86, -0.14, 51.95]')
+
+          tokens = [
+              (r'\b99\b', '@@BATCH@@'),
+              (r'\b100\b', '@@NEXTBATCH@@'),
+              (r'\b4900\b', '@@BEFORE@@'),
+              (r'\b4950\b', '@@AFTER@@'),
+              (r'\b5000\b', '@@NEXTTARGET@@'),
+          ]
+          for pattern, placeholder in tokens:
+              src = re.sub(pattern, placeholder, src)
+          src = (src.replace('@@BATCH@@', '100')
+                    .replace('@@NEXTBATCH@@', '101')
+                    .replace('@@BEFORE@@', '4950')
+                    .replace('@@AFTER@@', '5000')
+                    .replace('@@NEXTTARGET@@', '5050'))
+
+          # Extract the five verified shell run blocks from the transformed prior workflow:
+          # fast-forward, guarded execution, state sync, exact commit/push, remote readback.
+          lines = src.splitlines()
+          blocks = []
+          i = 0
+          while i < len(lines):
+              line = lines[i]
+              if line.strip() == 'run: |':
+                  base = len(line) - len(line.lstrip())
+                  i += 1
+                  block = []
+                  while i < len(lines):
+                      ln = lines[i]
+                      indent = len(ln) - len(ln.lstrip())
+                      if ln.strip() and indent <= base:
+                          break
+                      cut = min(len(ln), base + 2)
+                      block.append(ln[cut:] if len(ln) >= base + 2 else '')
+                      i += 1
+                  blocks.append('\n'.join(block) + '\n')
+                  continue
+              i += 1
+
+          if len(blocks) != 5:
+              raise SystemExit(f'expected 5 verified run blocks, found {len(blocks)}')
+
+          for idx, block in enumerate(blocks, 1):
+              print(f'RUN_TRANSFORMED_BLOCK_{idx}')
+              subprocess.run(['bash', '-c', block], check=True)
+          PY
