@@ -23,8 +23,6 @@ jobs:
           clean: false
           sparse-checkout-cone-mode: false
           sparse-checkout: |
-            .github/workflows/aays-building-type-1-batch143-camden-kentish-town-south-a-once.yml
-            .github/workflows/aays-building-type-1-batch142-camden-bloomsbury-north-b-once.yml
             .github/workflows/aays-building-type-1-batch135-hammersmith-west-kensington-g-once.yml
             .github/workflows/aays-building-type-6-batch26-skegness-once.yml
             england_map_web/data/building_type/shards/building_type_1_latest.geojson
@@ -42,30 +40,30 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          src=Path('.github/workflows/aays-building-type-1-batch143-camden-kentish-town-south-a-once.yml').read_text(encoding='utf-8')
-          section=src.split('      - name: Execute guarded batch143',1)[1].split('      - name: Normalize batch143 metadata',1)[0]
+          src=Path('.github/workflows/aays-building-type-1-batch135-hammersmith-west-kensington-g-once.yml').read_text(encoding='utf-8')
+          section=src.split('      - name: Execute guarded batch135',1)[1].split('      - name: Normalize batch135 metadata',1)[0]
           marker="          python - <<'PY'\n"
           start=section.index(marker)+len(marker)
           end=section.index("\n          PY",start)
           code='\n'.join(line[10:] if line.startswith('          ') else line for line in section[start:end].splitlines())+'\n'
           replacements={
-            'Camden_Kentish_Town_South_A':'Camden_Kentish_Town_South_B',
-            'CAMDEN_KENTISH_TOWN_SOUTH_A':'CAMDEN_KENTISH_TOWN_SOUTH_B',
-            'camden_kentish_town_south_a':'camden_kentish_town_south_b',
-            "'BATCH_INDEX = 135':'BATCH_INDEX = 143'":"'BATCH_INDEX = 135':'BATCH_INDEX = 144'",
-            "'EXPECTED_BEFORE = 8550':'EXPECTED_BEFORE = 8950'":"'EXPECTED_BEFORE = 8550':'EXPECTED_BEFORE = 9000'",
-            "'TARGET_AFTER = 8600':'TARGET_AFTER = 9000'":"'TARGET_AFTER = 8600':'TARGET_AFTER = 9050'",
-            "'NEXT_TARGET = 8650':'NEXT_TARGET = 9050'":"'NEXT_TARGET = 8650':'NEXT_TARGET = 9100'",
-            "'BBOX = [-0.165, 51.490, -0.135, 51.505]':'BBOX = [-0.145, 51.550, -0.125, 51.565]'":"'BBOX = [-0.165, 51.490, -0.135, 51.505]':'BBOX = [-0.165, 51.550, -0.145, 51.565]'",
-            '/tmp/bt1_b143.py':'/tmp/bt1_b144.py',
-            "'batch143-generator'":"'batch144-generator'",
-            "'batch143-wrapper'":"'batch144-wrapper'"
+            'Hammersmith_West_Kensington_G':'Camden_Kentish_Town_South_B',
+            'HAMMERSMITH_WEST_KENSINGTON_G':'CAMDEN_KENTISH_TOWN_SOUTH_B',
+            'hammersmith_west_kensington_g':'camden_kentish_town_south_b',
+            'Kensington & Chelsea':'Camden',
+            'kensington_chelsea':'camden',
+            'BATCH_INDEX = 135':'BATCH_INDEX = 144',
+            'EXPECTED_BEFORE = 8550':'EXPECTED_BEFORE = 9000',
+            'TARGET_AFTER = 8600':'TARGET_AFTER = 9050',
+            'NEXT_TARGET = 8650':'NEXT_TARGET = 9100',
+            'BBOX = [-0.165, 51.490, -0.135, 51.505]':'BBOX = [-0.165, 51.550, -0.145, 51.565]',
+            '/tmp/bt1_b135.py':'/tmp/bt1_b144.py'
           }
           for old,new in replacements.items():
               if old not in code:
-                  raise SystemExit(f'missing batch143 generator token {old}')
+                  raise SystemExit(f'missing generator token {old}')
               code=code.replace(old,new)
-          exec(compile(code,'batch144-wrapper','exec'),{})
+          exec(compile(code,'batch144-generator','exec'),{})
           PY
           python /tmp/bt1_b144.py
       - name: Normalize batch144 metadata
@@ -73,27 +71,53 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
+          import json
           from pathlib import Path
-          src=Path('.github/workflows/aays-building-type-1-batch143-camden-kentish-town-south-a-once.yml').read_text(encoding='utf-8')
-          section=src.split('      - name: Normalize batch143 metadata',1)[1].split('      - name: Commit and push exact slot outputs',1)[0]
-          marker="          python - <<'PY'\n"
-          start=section.index(marker)+len(marker)
-          end=section.index("\n          PY",start)
-          code='\n'.join(line[10:] if line.startswith('          ') else line for line in section[start:end].splitlines())+'\n'
-          replacements={
-            "CITY='Camden_Bloomsbury_North_B'":"CITY='Camden_Kentish_Town_South_B'",
-            "BBOX=[-0.125,51.550,-0.115,51.565]":"BBOX=[-0.165,51.550,-0.145,51.565]",
-            'BEFORE=8900':'BEFORE=9000',
-            'AFTER=8950':'AFTER=9050',
-            'NEXT=9000':'NEXT=9100',
-            "'next_batch_index':143":"'next_batch_index':145",
-            "'next_grid_hint':'Camden_Kentish_Town_South_A'":"'next_grid_hint':'Camden_Kentish_Town_North_A'"
-          }
-          for old,new in replacements.items():
-              if old not in code:
-                  raise SystemExit(f'missing batch143 normalize token {old}')
-              code=code.replace(old,new)
-          exec(compile(code,'batch144-normalize','exec'),{})
+          CITY='Camden_Kentish_Town_South_B'
+          AUTHORITY='Camden'
+          BBOX=[-0.165,51.550,-0.145,51.565]
+          BEFORE=9000
+          AFTER=9050
+          NEXT=9100
+          ENDPOINT='https://overpass-api.de/api/interpreter'
+          paths={
+            'geo':Path('england_map_web/data/building_type/shards/building_type_1_latest.geojson'),
+            'man':Path('england_map_web/data/building_type/shards/building_type_1_manifest_latest.json'),
+            'sta':Path('docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json'),
+            'cp':Path('docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json'),
+            'ct':Path('docs/chatgpt_status/_shared/slots_21/building_type_1/current_task_latest.json'),
+            'run':Path('docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json')}
+          def load(k): return json.loads(paths[k].read_text(encoding='utf-8'))
+          def dump(k,obj,compact=False): paths[k].write_text(json.dumps(obj,ensure_ascii=False,separators=(',',':') if compact else None,indent=None if compact else 2)+'\n',encoding='utf-8')
+          geo,man,sta,cp,ct,run=[load(k) for k in ('geo','man','sta','cp','ct','run')]
+          now=run['generated_at']; sha=run['source_sha256']; rec=run.get('records') or []
+          if len(rec)!=50: raise SystemExit('runner record count must be exactly 50')
+          for r in rec:
+            if r.get('local_authority') != AUTHORITY:
+              raise SystemExit(f'authority mismatch {r.get("local_authority")}')
+            if not r.get('source_ref') or not r.get('source_url') or not r.get('source_path'):
+              raise SystemExit('missing source_ref/source_url/source_path')
+            if not r.get('evidence_excerpt') or r.get('building_type_primary') in (None,'','unknown'):
+              raise SystemExit('non-evidence record selected')
+            if r.get('confidence_level_1_to_4') not in (1,2,3,4) or r.get('evidence_level')=='U':
+              raise SystemExit('invalid confidence/evidence')
+            srcs=r.get('sources') or []
+            if not srcs or not srcs[0].get('accessed_at') or not srcs[0].get('fields_used') or not srcs[0].get('match_method'):
+              raise SystemExit('missing nested source metadata')
+            if r.get('fake_data') is not False or r.get('final_ready') is not False:
+              raise SystemExit('safety flag violation')
+          batch_ev={'batch_name':CITY,'bbox':BBOX,'local_authority':AUTHORITY,'overpass_endpoint':ENDPOINT,'response_sha256':sha,'new_feature_count':50,'attempted_parcels':50,'no_evidence_this_batch':False,'accessed_at':now}
+          sta.update({'updated_at':now,'feature_count_before':BEFORE,'feature_count_after':AFTER,'current_feature_count':AFTER,'total_elements':AFTER,'new_features_added':50,'result':{'state':'BATCH_APPENDED','note':f'Appended exactly 50 new {CITY} evidence-backed OSM features; feature.id/parcel_id/osm_id/source_ref deduped.'},'last_batch':[batch_ev],'next_batch_index':145,'next_target_feature_count':NEXT,'blocker':None,'fake_data':False,'final_ready':False,'progress_counted':True,'note':f'Appended exactly 50 unique {CITY} OSM evidence-backed building elements in {AUTHORITY}; no second task/owner created.'})
+          cp.update({'last_batch_name':CITY,'last_batch_new_features':50,'last_batch_evidence':[batch_ev],'next_grid_hint':'Camden_Kentish_Town_North_A','read_fallback_used':False,'fake_data':False,'final_ready':False})
+          if isinstance(cp.get('already_processed_ids'),dict):
+            cp['already_processed_ids']['strategy']='derived_from_latest_shard_feature.id_plus_parcel_id_plus_osm_id_plus_source_ref'
+          man.update({'updated_at':now,'feature_count_before':BEFORE,'feature_count_after':AFTER,'new_features_added':50,'current_feature_count':AFTER,'feature_count':AFTER,'total_features':AFTER,'next_batch_index':145,'next_target_feature_count':NEXT,'continuation_key':'','fake_data':False,'final_ready':False})
+          if isinstance(man.get('confidence_distribution'),dict):
+            sc=sta.get('confidence_distribution') or {}
+            man['confidence_distribution']={'level_1':sc.get('1',0),'level_2':sc.get('2',0),'level_3':sc.get('3',0),'level_4':sc.get('4',0)}
+          run.update({'attempted_parcels':50,'source_path':ENDPOINT,'no_evidence_this_batch':False,'fake_data':False,'final_ready':False,'local_authority':AUTHORITY})
+          ct.update({'fake_data':False,'final_ready':False,'owner':None,'continuation_key':''})
+          dump('geo',geo,compact=True); dump('man',man); dump('sta',sta); dump('cp',cp); dump('ct',ct); dump('run',run)
           PY
       - name: Commit and push exact slot outputs
         shell: bash
