@@ -1,0 +1,129 @@
+name: AAYS building_type_8 batch147 Barnton one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-8-batch147-barnton-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-8-batch147-barnton-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-8-batch65-rawtenstall-once.yml
+            england_map_web/data/building_type/shards/building_type_8_latest.geojson
+            england_map_web/data/building_type/shards/building_type_8_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_8
+            docs/chatgpt_status/building_type/slots/building_type_8/runner_outputs
+
+      - name: Fast-forward sparse checkout to latest canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+
+      - name: Execute guarded batch147 Barnton continuation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          src = Path('.github/workflows/aays-building-type-8-batch65-rawtenstall-once.yml').read_text(encoding='utf-8')
+          marker = "          python - <<'PY'\n"
+          start = src.index(marker) + len(marker)
+          end = src.index("\n          PY", start)
+          block = src[start:end]
+          lines = [line[10:] if line.startswith('          ') else line for line in block.splitlines()]
+          code = '\n'.join(lines) + '\n'
+
+          replacements = {
+              'CITY = "Rawtenstall"': 'CITY = "Barnton"',
+              'LOCAL_AUTHORITY = "Rossendale"': 'LOCAL_AUTHORITY = "Cheshire West and Chester"',
+              'BATCH_INDEX = 65': 'BATCH_INDEX = 147',
+              'EXPECTED_BEFORE = 3700': 'EXPECTED_BEFORE = 7800',
+              'TARGET_AFTER = 3750': 'TARGET_AFTER = 7850',
+              'LAT = 53.7005': 'LAT = 53.270494',
+              'LON = -2.2847': 'LON = -2.549296',
+          }
+          for old, new in replacements.items():
+              if old not in code:
+                  raise SystemExit(f'missing canonical replacement token: {old}')
+              code = code.replace(old, new, 1)
+
+          duplicate_token = 'for key in ("parcel_id", "osm_id"):'
+          if duplicate_token not in code:
+              raise SystemExit('missing duplicate-key token')
+          code = code.replace(duplicate_token, 'for key in ("parcel_id", "osm_id", "source_ref"):', 1)
+
+          rewritten = []
+          source_meta_injected = False
+          exact50_guard_injected = False
+          for line in code.splitlines():
+              rewritten.append(line)
+              if '"source_url": object_url,' in line and not source_meta_injected:
+                  indent = line[:len(line) - len(line.lstrip())]
+                  rewritten.extend([
+                      indent + '"source_path": ENDPOINT,',
+                      indent + '"source_ref": osmid,',
+                      indent + '"accessed_at": NOW,',
+                      indent + '"fields_used": list(excerpt.keys()),',
+                  ])
+                  source_meta_injected = True
+              if line.strip() == 'chosen = candidates[:50]' and not exact50_guard_injected:
+                  indent = line[:len(line) - len(line.lstrip())]
+                  rewritten.extend([
+                      indent + 'if len(chosen) == 50 and any(not row[0] for row in chosen):',
+                      indent + '    raise SystemExit("NO_EVIDENCE_THIS_BATCH: one or more of the exact 50 selected candidates lacks affirmative building-type evidence")',
+                  ])
+                  exact50_guard_injected = True
+          if not source_meta_injected:
+              raise SystemExit('source metadata injection point missing')
+          if not exact50_guard_injected:
+              raise SystemExit('exact-50 guard injection point missing')
+          code = '\n'.join(rewritten) + '\n'
+
+          Path('/tmp/building_type_8_batch147_barnton.py').write_text(code, encoding='utf-8')
+          PY
+          python /tmp/building_type_8_batch147_barnton.py
+
+      - name: Commit and push batch 147
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            england_map_web/data/building_type/shards/building_type_8_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_8_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_8/runner_outputs/building_type_8_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_8/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_8/checkpoint_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_8/current_task_latest.json
+          git diff --cached --quiet && { echo "No slot changes to commit"; exit 1; }
+          git commit -m "building_type_8: append batch 147 Barnton +50"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then
+              exit 0
+            fi
+            git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+            if ! git merge --no-edit origin/codex/aays-single-runner-v5-20260706; then
+              git merge --abort || true
+              echo "merge conflict; refusing to overwrite concurrent slot changes"
+              exit 1
+            fi
+          done
+          echo "push failed after 5 attempts"
+          exit 1
