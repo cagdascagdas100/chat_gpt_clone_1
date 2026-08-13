@@ -1,4 +1,4 @@
-name: AAYS building_type_3 batch86 Marlow once
+name: AAYS building_type_3 batch86 Marlow evidence-only once
 on:
   push:
     branches:
@@ -17,9 +17,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: codex/aays-single-runner-v5-20260706
-          fetch-depth: 50
+          fetch-depth: 100
           clean: false
-      - name: Run preserved batch86 classifier
+      - name: Run preserved batch86 classifier with evidence-only patch
         shell: bash
         run: |
           set -euo pipefail
@@ -28,12 +28,11 @@ jobs:
           git fetch origin codex/aays-single-runner-v5-20260706
           git pull --rebase origin codex/aays-single-runner-v5-20260706
           workflow='.github/workflows/aays-building-type-3-batch86-marlow-once.yml'
-          prev_commit="$(git log -2 --format=%H -- "$workflow" | tail -1)"
-          test -n "$prev_commit"
-          git show "$prev_commit:$workflow" > /tmp/aays_bt3_batch86_prev.yml
+          source_commit='7245d6028af2f14fc6b77dbded2c8ea5f8ef845d'
+          git show "$source_commit:$workflow" > /tmp/aays_bt3_batch86_source.yml
           python - <<'PY'
           from pathlib import Path
-          src=Path('/tmp/aays_bt3_batch86_prev.yml').read_text(encoding='utf-8')
+          src=Path('/tmp/aays_bt3_batch86_source.yml').read_text(encoding='utf-8')
           marker="          python - <<'PY'\n"
           start=src.index(marker)+len(marker)
           end=src.index("\n          PY\n", start)
@@ -41,7 +40,11 @@ jobs:
           out=[]
           for line in body.splitlines():
               out.append(line[10:] if line.startswith('          ') else line)
-          Path('/tmp/aays_bt3_batch86.py').write_text('\n'.join(out)+'\n', encoding='utf-8')
+          code='\n'.join(out)+'\n'
+          code=code.replace("            if len(elements)>=150:\n                break\n", "            if False:\n                break\n")
+          code=code.replace("selected=candidates[:TARGET]", "selected=[x for x in candidates if x[6][5] in {'B','C'}][:TARGET]\nif len(selected) < TARGET:\n    raise SystemExit(f'NO_EVIDENCE_THIS_BATCH evidence_candidates={len(selected)} target={TARGET}')")
+          code=code.replace("'source_path':e['tile_url'],'source_hash':source_sha", "'source_path':e['tile_url'],'accessed_at':now,'fields_used':used,'source_hash':source_sha")
+          Path('/tmp/aays_bt3_batch86.py').write_text(code, encoding='utf-8')
           PY
           python /tmp/aays_bt3_batch86.py
       - name: Enforce exact batch contract
@@ -59,35 +62,40 @@ jobs:
           status='docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json'
           task='docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json'
           def load(p):
-              with open(p, encoding='utf-8') as f: return json.load(f)
+              with open(p,encoding='utf-8') as f: return json.load(f)
           s=load(shard); m=load(manifest); r=load(report); cp=load(checkpoint); st=load(status); t=load(task)
-          after=len(s.get('features', []))
-          assert r.get('feature_count_before') == 9000, r.get('feature_count_before')
-          assert r.get('attempted_parcels') == 50, r.get('attempted_parcels')
-          assert r.get('added_feature_count') == 50, r.get('added_feature_count')
-          assert r.get('feature_count_after') == 9050, r.get('feature_count_after')
-          assert after == 9050, after
-          assert m.get('feature_count') == 9050, m.get('feature_count')
-          assert cp.get('continuation_key') == CONT
-          assert st.get('continuation_key') == CONT
-          assert t.get('continuation_key') == CONT
-          assert st.get('task_id') == TASK
-          assert t.get('task_id') == TASK
-          assert st.get('owner') in (None, '')
-          assert t.get('owner') in (None, '')
-          assert r.get('fake_data') is False
-          assert r.get('final_ready') is False
+          feats=s.get('features') or []
+          assert len(feats)==9050, len(feats)
+          assert r.get('feature_count_before')==9000
+          assert r.get('attempted_parcels')==50
+          assert r.get('added_feature_count')==50
+          assert r.get('feature_count_after')==9050
+          assert m.get('feature_count')==9050
+          assert cp.get('continuation_key')==CONT and st.get('continuation_key')==CONT and t.get('continuation_key')==CONT
+          assert st.get('task_id')==TASK and t.get('task_id')==TASK
+          assert st.get('owner') in (None,'') and t.get('owner') in (None,'')
+          assert cp.get('next_batch_index')==87 and st.get('next_batch_index')==87 and t.get('next_batch_index')==87
+          assert r.get('fake_data') is False and r.get('final_ready') is False
           records=r.get('records') or []
-          assert len(records) == 50, len(records)
+          assert len(records)==50
+          assert all(rec.get('evidence_level') in ('B','C') for rec in records)
+          assert all(rec.get('building_type_primary') not in (None,'','unknown') for rec in records)
+          required=('source_url','source_path','accessed_at','fields_used','match_method','evidence_level','confidence_score','confidence_level_1_to_4')
           for rec in records:
-              for key in ('building_type_primary','source_url','source_path','accessed_at','fields_used','match_method','evidence_level','confidence_score','confidence_level_1_to_4'):
-                  assert rec.get(key) not in (None, ''), (rec.get('parcel_id'), key)
+              for key in required:
+                  assert rec.get(key) not in (None,''), (rec.get('parcel_id'),key)
               assert rec.get('fake_data') is False
-          ids=[]
-          for rec in records:
-              ids.extend([str(rec.get('parcel_id')), str(rec.get('osm_id')), str(rec.get('source_ref'))])
-          assert len(ids) == len(set(ids)), 'duplicate ids inside batch86'
-          print({'feature_count_before':9000,'attempted_parcels':50,'newly_added':50,'feature_count_after':9050,'records':len(records)})
+          old=feats[:9000]; new=feats[9000:]
+          def props(f): return f.get('properties') or {}
+          old_fids={str(f.get('id') or props(f).get('feature_id')) for f in old}
+          old_osm={str(props(f).get('osm_id')) for f in old if props(f).get('osm_id')}
+          new_fids=[str(f.get('id') or props(f).get('feature_id')) for f in new]
+          new_osm=[str(props(f).get('osm_id')) for f in new]
+          assert len(new_fids)==len(set(new_fids))==50
+          assert len(new_osm)==len(set(new_osm))==50
+          assert not (set(new_fids)&old_fids)
+          assert not (set(new_osm)&old_osm)
+          print(json.dumps({'feature_count_before':9000,'attempted_parcels':50,'newly_added':50,'feature_count_after':9050,'evidence_distribution':r.get('evidence_level_distribution'),'confidence_distribution':r.get('confidence_level_distribution'),'city':r.get('city'),'grid_id':r.get('grid_id'),'fake_data':False,'final_ready':False},ensure_ascii=False))
           PY
       - name: Commit only explicit building_type_3 outputs
         shell: bash
@@ -100,10 +108,7 @@ jobs:
           status='docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json'
           task='docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json'
           git add -- "$shard" "$manifest" "$classout" "$checkpoint" "$status" "$task"
-          if git diff --cached --quiet; then
-            echo 'NO_EVIDENCE_THIS_BATCH: no output changes'
-            exit 1
-          fi
-          git commit -m 'data(aays): building_type_3 batch86 Marlow'
+          git diff --cached --quiet && { echo 'NO_EVIDENCE_THIS_BATCH: no output changes'; exit 1; }
+          git commit -m 'data(aays): building_type_3 batch86 Marlow evidence-only'
           git pull --rebase origin codex/aays-single-runner-v5-20260706
           git push origin HEAD:codex/aays-single-runner-v5-20260706
