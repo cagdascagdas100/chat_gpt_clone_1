@@ -1,0 +1,186 @@
+name: tmp-bt8-burgh-by-sands-20260813
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/tmp_bt8_burgh_by_sands_20260813.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  classify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Query OSM, append exactly up to 50 evidence-backed new features, update state
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, hashlib, urllib.parse, urllib.request, time
+          from pathlib import Path
+          from datetime import datetime, timezone
+          from collections import Counter
+
+          SLOT='building_type_8'
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          CONT='1438e38f53702e97217fea2475381d3b31b74de11677358f98513a9e45d43d47'
+          EXPECT=7700
+          TARGET=50
+          CITY='Burgh-by-Sands'
+          RADIUS=3500
+          shard=Path('england_map_web/data/building_type/shards/building_type_8_latest.geojson')
+          manifest=Path('england_map_web/data/building_type/shards/building_type_8_manifest_latest.json')
+          cls=Path('docs/chatgpt_status/building_type/slots/building_type_8/runner_outputs/building_type_8_classification_latest.json')
+          checkpoint=Path('docs/chatgpt_status/_shared/slots_21/building_type_8/checkpoint_latest.json')
+          status=Path('docs/chatgpt_status/_shared/slots_21/building_type_8/status_latest.json')
+
+          def load(p): return json.loads(p.read_text(encoding='utf-8'))
+          gj=load(shard); man=load(manifest); cp=load(checkpoint); st=load(status)
+          feats=gj.get('features',[])
+          assert len(feats)==EXPECT, (len(feats), EXPECT)
+          assert int(man.get('feature_count',man.get('total_features',-1)))==EXPECT
+          assert int(cp.get('current_feature_count',-1))==EXPECT
+          assert int(st.get('feature_count_after',-1))==EXPECT
+          assert cp.get('continuation_key')==CONT and st.get('continuation_key')==CONT
+
+          processed=set()
+          for f in feats:
+            p=f.get('properties') or {}
+            for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')):
+              if v is not None: processed.add(str(v))
+
+          # Resolve the selected new city at runtime from a real public geocoder.
+          q=urllib.parse.urlencode({'q':f'{CITY}, Cumbria, England','format':'jsonv2','limit':1})
+          req=urllib.request.Request('https://nominatim.openstreetmap.org/search?'+q,headers={'User-Agent':'TerraYield-AAYS-building-type/1.0'})
+          with urllib.request.urlopen(req,timeout=30) as r: loc=json.loads(r.read().decode())
+          if not loc: raise RuntimeError('Nominatim could not resolve selected batch city')
+          lat=float(loc[0]['lat']); lon=float(loc[0]['lon'])
+
+          overpass='https://overpass-api.de/api/interpreter'
+          query=f'[out:json][timeout:60];way["building"](around:{RADIUS},{lat},{lon});out tags center geom qt;'
+          data=urllib.parse.urlencode({'data':query}).encode()
+          req=urllib.request.Request(overpass,data=data,headers={'User-Agent':'TerraYield-AAYS-building-type/1.0'})
+          with urllib.request.urlopen(req,timeout=100) as r: raw=r.read()
+          source_hash=hashlib.sha256(raw).hexdigest(); payload=json.loads(raw)
+          elements=payload.get('elements',[])
+
+          specific_res={'house':'residential_house','detached':'residential_detached','semidetached_house':'residential_semidetached','terrace':'residential_terrace','apartments':'residential_apartments','bungalow':'residential_bungalow','residential':'residential'}
+          direct={'retail':'commercial_retail','commercial':'commercial','office':'office','industrial':'industrial','warehouse':'warehouse','school':'education','college':'education','university':'education','hospital':'healthcare','church':'religious_or_community','chapel':'religious_or_community','civic':'public_civic','public':'public_civic','hotel':'hotel_or_hospitality','farm':'agricultural','barn':'agricultural_outbuilding','farm_auxiliary':'agricultural_outbuilding','stable':'agricultural_outbuilding','shed':'auxiliary_outbuilding','greenhouse':'agricultural_outbuilding','garage':'auxiliary_outbuilding','garages':'auxiliary_outbuilding','train_station':'transport_station'}
+          def classify(tags):
+            b=str(tags.get('building','')).lower()
+            if b in specific_res: return specific_res[b],'residential',3,0.82,'B',False
+            if b in direct:
+              t=direct[b]
+              cat=('commercial' if t in {'commercial_retail','commercial','office'} else 'industrial' if t in {'industrial','warehouse'} else 'institutional' if t in {'education','healthcare','religious_or_community','public_civic'} else 'agricultural' if t in {'agricultural','agricultural_outbuilding'} else 'hospitality' if t=='hotel_or_hospitality' else 'transport' if t=='transport_station' else 'outbuilding')
+              return t,cat,3,0.80,'B',False
+            if b and b not in {'yes','building'}: return 'other_specific_building','other',3,0.72,'B',True
+            # generic building footprint is real evidence but type is unknown
+            return 'unknown','unknown',2,0.48,'C',True
+
+          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          new=[]
+          for e in elements:
+            if len(new)>=TARGET: break
+            if e.get('type')!='way': continue
+            oid=str(e.get('id')); parcel=f'ENG_OSM_way_{oid}'; sr=f'osm:way:{oid}'
+            if oid in processed or parcel in processed or sr in processed: continue
+            geom=e.get('geometry') or []
+            coords=[[float(x['lon']),float(x['lat'])] for x in geom if 'lon' in x and 'lat' in x]
+            if len(coords)<4: continue
+            if coords[0]!=coords[-1]: coords.append(coords[0])
+            tags=e.get('tags') or {}
+            primary,category,lev,score,ev,review=classify(tags)
+            url=f'https://www.openstreetmap.org/way/{oid}'
+            p={
+              'parcel_id':parcel,'slot_id':SLOT,'region':'North West','local_authority':None,'postcode':tags.get('addr:postcode'),
+              'building_type_primary':primary,'building_category':category,'confidence_level_1_to_4':lev,'confidence_score':score,
+              'evidence_level':ev,'source_count':1,
+              'sources':[{'source_name':'OpenStreetMap Overpass API','url_or_path':url,'accessed_at':now,'sha256':source_hash,'licence':'ODbL 1.0','fields_used':['building','addr:*','geometry'],'match_method':'osm_building_geometry_and_tags'}],
+              'limitations':'OSM building tag classification; no EPC/VOA/UPRN confirmation in this batch.' if lev==3 else 'Generic OSM building footprint does not identify a reliable subtype.',
+              'needs_manual_review':review,'fake_data':False,'updated_at':now,
+              'osm_id':oid,'source_ref':sr,'osm_building':tags.get('building'),'city_batch':CITY
+            }
+            new.append({'type':'Feature','id':parcel,'geometry':{'type':'Polygon','coordinates':[coords]},'properties':p})
+            processed.update({oid,parcel,sr})
+
+          appended=len(new); no_evidence=TARGET-appended
+          gj['features'].extend(new)
+          after=len(gj['features'])
+          assert after==EXPECT+appended
+          assert appended<=TARGET
+          # Recompute distributions from full shard so state cannot drift.
+          type_dist=Counter(); conf_dist=Counter(); ev_dist=Counter(); unknown=0
+          for f in gj['features']:
+            p=f.get('properties') or {}
+            bt=p.get('building_type_primary',p.get('building_type','unknown')) or 'unknown'
+            type_dist[str(bt)]+=1
+            if str(bt)=='unknown': unknown+=1
+            c=p.get('confidence_level_1_to_4',p.get('confidence_level'))
+            if c is not None: conf_dist[str(c)]+=1
+            ev=p.get('evidence_level')
+            if ev is not None: ev_dist[str(ev)]+=1
+          classified=after-unknown
+          shard.write_text(json.dumps(gj,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
+          out_hash=hashlib.sha256(shard.read_bytes()).hexdigest()
+          batch_ev=Counter(str((f['properties'] or {}).get('evidence_level')) for f in new)
+          batch_conf=Counter(str((f['properties'] or {}).get('confidence_level_1_to_4')) for f in new)
+
+          man.update({'generated_at':now,'total_features':after,'classified':classified,'unknown':unknown,'type_distribution':dict(type_dist),'confidence_level_distribution':dict(conf_dist),'evidence_distribution':dict(ev_dist),'fake_data':False,'final_ready':False,'feature_count':after,'geojson_sha256':out_hash,'manifest_updated_at':now})
+          man['last_batch']={'batch_index':145,'city':CITY,'attempted_feature_count':TARGET,'added_feature_count':appended,'no_evidence_this_batch':no_evidence,'source':'OpenStreetMap Overpass API','source_url':overpass,'source_sha256':source_hash,'source_element_count':len(elements),'evidence_level_distribution':dict(batch_ev),'confidence_level_distribution':dict(batch_conf)}
+          if man.get('sources'):
+            man['sources'][0].update({'features_used':after,'accessed_at':now,'response_sha256_last_batch':source_hash})
+          manifest.write_text(json.dumps(man,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
+          cl={'slot_id':SLOT,'task_id':st.get('task_id'),'continuation_key':CONT,'updated_at':now,'state':'IN_PROGRESS','batch_index':145,'city':CITY,'feature_count_before':EXPECT,'feature_count_after':after,'attempted_new_parcels':TARGET,'new_features_added':appended,'no_evidence_this_batch':no_evidence,'progress_counted':after>EXPECT,'already_processed_ids_excluded':True,'source':'OpenStreetMap Overpass API','source_url':overpass,'source_sha256':source_hash,'source_element_count':len(elements),'evidence_level_distribution':dict(batch_ev),'confidence_level_distribution':dict(batch_conf),'fake_data':False,'final_ready':False,'raw_source_committed':False,'output_sha256':out_hash}
+          cls.parent.mkdir(parents=True,exist_ok=True); cls.write_text(json.dumps(cl,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
+          cities=list(cp.get('attempted_cities') or [])
+          if CITY not in cities: cities.append(CITY)
+          cp.update({'updated_at':now,'final_ready':False,'state':'IN_PROGRESS','feature_count_before':EXPECT,'feature_count_after':after,'current_feature_count':after,'next_batch_index':146,'next_target_feature_count':after+50,'attempted_cities':cities,'attempted_new_city_batch':f'{CITY} center radius {RADIUS}m OSM building query','blocker':None,'blocker_reason':'','next_required_action':'CONTINUE_BATCH_146_WITH_ALREADY_PROCESSED_IDS_EXCLUDED','fake_data':False})
+          cp.setdefault('summary',{}).update({'current_feature_count':after,'new_features_added_this_attempt':appended,'progress_counted':after>EXPECT,'classified':classified,'unknown':unknown})
+          cp['source_access_evidence']={'overpass_api':f'SUCCESS {len(elements)} elements returned; response_sha256={source_hash}','selected_new_features':appended,'attempted_new_parcels':TARGET,'no_evidence_this_batch':no_evidence,'city':CITY,'query':f'way[building] around {RADIUS}m {CITY}; out tags center geom qt','raw_source_storage':'runtime memory only; not committed'}
+          cp['last_processed_ids_sample']=[f['id'] for f in new[:20]]
+          checkpoint.write_text(json.dumps(cp,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
+          st.update({'updated_at':now,'owner':None,'continuation_key':CONT,'final_ready':False,'classified_count':classified,'unknown_count':unknown,'total_elements':after,'feature_count_before':EXPECT,'feature_count_after':after,'new_features_added':appended,'progress_counted':after>EXPECT,'next_batch_index':146,'next_target_feature_count':after+50,'confidence_distribution':dict(conf_dist),'evidence_distribution':dict(ev_dist),'output_sha256':out_hash,'attempted_new_city_batch':f'{CITY} center radius {RADIUS}m OSM building query','blocker':None,'blocker_reason':'','note':f'Attempted exactly {TARGET} new {CITY} OSM building parcels; appended {appended}; NO_EVIDENCE_THIS_BATCH={no_evidence}. No fake rows; final_ready remains false.','fake_data':False})
+          status.write_text(json.dumps(st,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps({'before':EXPECT,'attempted':TARGET,'appended':appended,'no_evidence':no_evidence,'after':after,'source_elements':len(elements),'source_sha256':source_hash},indent=2))
+          PY
+      - name: Commit only slot outputs
+        shell: bash
+        run: |
+          git config user.name 'TerraYield AAYS Runner'
+          git config user.email 'aays-runner@users.noreply.github.com'
+          git add england_map_web/data/building_type/shards/building_type_8_latest.geojson
+          git add england_map_web/data/building_type/shards/building_type_8_manifest_latest.json
+          git add docs/chatgpt_status/building_type/slots/building_type_8/runner_outputs/building_type_8_classification_latest.json
+          git add docs/chatgpt_status/_shared/slots_21/building_type_8/checkpoint_latest.json
+          git add docs/chatgpt_status/_shared/slots_21/building_type_8/status_latest.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'data(bt8): append Burgh-by-Sands evidence batch'
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
+      - name: Readback gate
+        shell: bash
+        run: |
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          cp=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_8/checkpoint_latest.json').read_text())
+          st=json.loads(Path('docs/chatgpt_status/_shared/slots_21/building_type_8/status_latest.json').read_text())
+          m=json.loads(Path('england_map_web/data/building_type/shards/building_type_8_manifest_latest.json').read_text())
+          c=json.loads(Path('docs/chatgpt_status/building_type/slots/building_type_8/runner_outputs/building_type_8_classification_latest.json').read_text())
+          assert cp['current_feature_count']==st['feature_count_after']==m['feature_count']==c['feature_count_after']
+          assert c['attempted_new_parcels']==50 and c['new_features_added']+c['no_evidence_this_batch']==50
+          assert st['final_ready'] is False and st['fake_data'] is False
+          print({'readback_after':c['feature_count_after'],'appended':c['new_features_added'],'no_evidence':c['no_evidence_this_batch']})
+          PY
