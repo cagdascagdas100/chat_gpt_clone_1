@@ -1,0 +1,96 @@
+name: AAYS building_type_9 Ryton batch135 autorun
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: ['.github/workflows/tmp_bt9_batch135_ryton_autorun_20260813.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-9-serial
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+      - name: Fast-forward and run fail-closed driver
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python .github/tmp_bt9_batch135_ryton_driver_20260813.py
+      - name: Guard commit and push only slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          B=codex/aays-single-runner-v5-20260706
+          guard() {
+            git fetch origin "$B"
+            python - <<'PY'
+          import json, subprocess
+          base='origin/codex/aays-single-runner-v5-20260706:'
+          cp=json.loads(subprocess.check_output(['git','show',base+'docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json'],text=True))
+          task=json.loads(subprocess.check_output(['git','show',base+'docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json'],text=True))
+          assert cp.get('current_feature_count')==6700 and cp.get('next_batch_index')==135, 'REMOTE_GUARD_ABORT checkpoint moved'
+          assert task.get('task_id')=='building-type-9-england-classification-v1-20260808'
+          assert task.get('continuation_key')=='d350a5a37a836c7a2d36fc243b0692c1cffa5b3d65f7e01ff1108c4215340512'
+          assert task.get('owner') is None and task.get('blocker') is None
+          PY
+          }
+          guard
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -f --ignore-unmatch -- .github/tmp_bt9_batch135_ryton_driver_20260813.py .github/tmp_bt9_batch135_ryton_20260813.py .github/workflows/tmp_bt9_batch135_ryton_autorun_20260813.yml
+          git add -- england_map_web/data/building_type/shards/building_type_9_latest.geojson england_map_web/data/building_type/shards/building_type_9_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json
+          git diff --cached --check
+          git commit -m 'data: append building_type_9 Ryton batch 135'
+          git pull --rebase origin "$B"
+          guard
+          git push origin "HEAD:$B"
+      - name: Remote readback acceptance gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json, subprocess
+          base='origin/codex/aays-single-runner-v5-20260706:'
+          def read(p): return json.loads(subprocess.check_output(['git','show',base+p],text=True))
+          cp=read('docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json')
+          st=read('docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json')
+          mf=read('england_map_web/data/building_type/shards/building_type_9_manifest_latest.json')
+          cl=read('docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json')
+          sh=read('england_map_web/data/building_type/shards/building_type_9_latest.geojson')
+          task=read('docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json')
+          key='d350a5a37a836c7a2d36fc243b0692c1cffa5b3d65f7e01ff1108c4215340512'
+          assert cp['feature_count_before']==6700 and cp['feature_count_after']==6750 and cp['current_feature_count']==6750 and cp['next_batch_index']==136
+          assert cp['last_batch']['batch_index']==135 and cp['last_batch']['city']=='Ryton' and cp['fake_data'] is False and cp['final_ready'] is False
+          assert st['feature_count_before']==6700 and st['feature_count_after']==6750 and st['current_feature_count']==6750 and st['fake_data'] is False and st['final_ready'] is False
+          assert mf['total_features']==6750 and mf['feature_count_after']==6750 and mf['last_batch_city']=='Ryton'
+          assert cl['feature_count_before']==6700 and cl['feature_count_after']==6750 and cl['added_feature_count']==50 and cl['progress'] is True and len(cl['records'])==50
+          assert cl['batch_index']==135 and cl['city']=='Ryton' and cl['continuation_key']==key and cl['fake_data'] is False and cl['final_ready'] is False
+          assert task['continuation_key']==key and task['owner'] is None and task['blocker'] is None and task['first_unverified_step']=='APPEND_NEW_BATCH_136_AFTER_FEATURE_6750'
+          assert len(sh['features'])==6750
+          prior,new=sh['features'][:6700],sh['features'][6700:]
+          def vals(fs,k):
+              out=[]
+              for f in fs:
+                  p=f.get('properties') or {}
+                  v=f.get('id') if k=='id' else p.get(k)
+                  if v is not None: out.append(str(v))
+              return out
+          for k in ('id','parcel_id','osm_id','source_ref'):
+              a,b=set(vals(prior,k)),vals(new,k)
+              assert len(b)==50 and len(set(b))==50 and not (a & set(b)), k
+          assert all(r.get('building_type_primary') and r.get('source_url') and r.get('source_ref') and r.get('sources') and r.get('evidence_excerpt') and r.get('evidence_level') in ('B','C','D','U') and r.get('confidence_score') is not None and r.get('confidence_level_1_to_4') in (1,2,3,4) and r.get('fake_data') is False for r in cl['records'])
+          assert all((f.get('properties') or {}).get('fake_data') is False and (f.get('properties') or {}).get('final_ready') is False for f in new)
+          print({'remote_readback':'OK','before':6700,'after':6750,'added':50,'batch':135,'city':'Ryton','next_batch':136})
+          PY
