@@ -1,0 +1,158 @@
+name: AAYS building_type_1 batch143 Camden Kentish Town South A one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-1-batch143-camden-kentish-town-south-a-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-1-batch143-camden-kentish-town-south-a-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 20
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-1-batch142-camden-bloomsbury-north-b-once.yml
+            .github/workflows/aays-building-type-1-batch135-hammersmith-west-kensington-g-once.yml
+            .github/workflows/aays-building-type-6-batch26-skegness-once.yml
+            england_map_web/data/building_type/shards/building_type_1_latest.geojson
+            england_map_web/data/building_type/shards/building_type_1_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_1
+            docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs
+      - name: Fast-forward to canonical head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+      - name: Execute guarded batch143
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('.github/workflows/aays-building-type-1-batch142-camden-bloomsbury-north-b-once.yml').read_text(encoding='utf-8')
+          section=src.split('      - name: Execute guarded batch142',1)[1].split('      - name: Normalize batch142 metadata',1)[0]
+          marker="          python - <<'PY'\n"
+          start=section.index(marker)+len(marker)
+          end=section.index("\n          PY",start)
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in section[start:end].splitlines())+'\n'
+          replacements={
+            'Camden_Bloomsbury_North_B':'Camden_Kentish_Town_South_A',
+            'CAMDEN_BLOOMSBURY_NORTH_B':'CAMDEN_KENTISH_TOWN_SOUTH_A',
+            'camden_bloomsbury_north_b':'camden_kentish_town_south_a',
+            "'BATCH_INDEX = 135':'BATCH_INDEX = 142'":"'BATCH_INDEX = 135':'BATCH_INDEX = 143'",
+            "'EXPECTED_BEFORE = 8550':'EXPECTED_BEFORE = 8900'":"'EXPECTED_BEFORE = 8550':'EXPECTED_BEFORE = 8950'",
+            "'TARGET_AFTER = 8600':'TARGET_AFTER = 8950'":"'TARGET_AFTER = 8600':'TARGET_AFTER = 9000'",
+            "'NEXT_TARGET = 8650':'NEXT_TARGET = 9000'":"'NEXT_TARGET = 8650':'NEXT_TARGET = 9050'",
+            "'BBOX = [-0.165, 51.490, -0.135, 51.505]':'BBOX = [-0.125, 51.550, -0.115, 51.565]'":"'BBOX = [-0.165, 51.490, -0.135, 51.505]':'BBOX = [-0.145, 51.550, -0.125, 51.565]'",
+            '/tmp/bt1_b142.py':'/tmp/bt1_b143.py',
+            "'batch142-generator'":"'batch143-generator'"
+          }
+          for old,new in replacements.items():
+              if old not in code:
+                  raise SystemExit(f'missing batch142 generator token {old}')
+              code=code.replace(old,new)
+          exec(compile(code,'batch143-wrapper','exec'),{})
+          PY
+          python /tmp/bt1_b143.py
+      - name: Normalize batch143 metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('.github/workflows/aays-building-type-1-batch142-camden-bloomsbury-north-b-once.yml').read_text(encoding='utf-8')
+          section=src.split('      - name: Normalize batch142 metadata',1)[1].split('      - name: Commit and push exact slot outputs',1)[0]
+          marker="          python - <<'PY'\n"
+          start=section.index(marker)+len(marker)
+          end=section.index("\n          PY",start)
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in section[start:end].splitlines())+'\n'
+          replacements={
+            "CITY='Camden_Bloomsbury_North_B'":"CITY='Camden_Kentish_Town_South_A'",
+            "BBOX=[-0.125,51.550,-0.115,51.565]":"BBOX=[-0.145,51.550,-0.125,51.565]",
+            'BEFORE=8900':'BEFORE=8950',
+            'AFTER=8950':'AFTER=9000',
+            'NEXT=9000':'NEXT=9050',
+            "'next_batch_index':143":"'next_batch_index':144",
+            "'next_grid_hint':'Camden_Kentish_Town_South_A'":"'next_grid_hint':'Camden_Kentish_Town_South_B'",
+            "'next_batch_index':143,'next_target_feature_count'":"'next_batch_index':144,'next_target_feature_count'"
+          }
+          for old,new in replacements.items():
+              if old not in code:
+                  raise SystemExit(f'missing batch142 normalize token {old}')
+              code=code.replace(old,new)
+          exec(compile(code,'batch143-normalize','exec'),{})
+          PY
+      - name: Commit and push exact slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            england_map_web/data/building_type/shards/building_type_1_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_1_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_1/current_task_latest.json
+          git diff --cached --quiet && { echo 'No progress'; exit 1; }
+          git commit -m 'data(building_type_1): append Camden Kentish Town South A OSM batch 143 8950->9000'
+          for a in 1 2 3 4 5; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+            if ! git rebase origin/codex/aays-single-runner-v5-20260706; then git rebase --abort || true; exit 1; fi
+          done
+          exit 1
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=20
+          python - <<'PY'
+          import json,subprocess
+          def j(p): return json.loads(subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:'+p]))
+          g=j('england_map_web/data/building_type/shards/building_type_1_latest.geojson')
+          m=j('england_map_web/data/building_type/shards/building_type_1_manifest_latest.json')
+          c=j('docs/chatgpt_status/_shared/slots_21/building_type_1/checkpoint_latest.json')
+          s=j('docs/chatgpt_status/_shared/slots_21/building_type_1/status_latest.json')
+          r=j('docs/chatgpt_status/building_type/slots/building_type_1/runner_outputs/building_type_1_classification_latest.json')
+          t=j('docs/chatgpt_status/_shared/slots_21/building_type_1/current_task_latest.json')
+          assert len(g.get('features') or [])==9000
+          assert c.get('feature_count_before')==8950 and c.get('feature_count_after')==9000 and c.get('current_feature_count')==9000 and c.get('next_batch_index')==144
+          assert s.get('feature_count_before')==8950 and s.get('feature_count_after')==9000 and s.get('current_feature_count')==9000 and s.get('total_elements')==9000 and s.get('new_features_added')==50
+          assert r.get('city')=='Camden_Kentish_Town_South_A' and r.get('local_authority')=='Camden' and r.get('attempted_parcels')==50 and r.get('new_feature_count')==50 and r.get('feature_count_before')==8950 and r.get('feature_count_after')==9000
+          assert t.get('owner') is None and (t.get('continuation_key') or '')==''
+          assert m.get('total_features')==9000 and m.get('current_feature_count')==9000
+          assert all(x.get('fake_data') is False for x in (c,s,r,t,m))
+          assert all(x.get('final_ready') is False for x in (c,s,r,t,m))
+          rec=r.get('records') or []
+          assert len(rec)==50
+          for x in rec:
+              assert x.get('local_authority')=='Camden'
+              assert x.get('building_type_primary') not in (None,'','unknown')
+              assert x.get('evidence_excerpt') and x.get('evidence_level') != 'U'
+              assert x.get('confidence_level_1_to_4') in {1,2,3,4}
+              assert x.get('source_ref') and x.get('source_url') and x.get('source_path') and x.get('source_hash') and x.get('sources')
+              assert x['sources'][0].get('accessed_at') and x['sources'][0].get('fields_used') and x['sources'][0].get('match_method')
+              assert x.get('fake_data') is False and x.get('final_ready') is False
+          assert (c.get('already_processed_ids') or {}).get('strategy')=='derived_from_latest_shard_feature.id_plus_parcel_id_plus_osm_id_plus_source_ref'
+          seen=set()
+          for f in g.get('features') or []:
+              p=f.get('properties') or {}
+              vals={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')) if v not in (None,'')}
+              assert not (seen & vals)
+              seen.update(vals)
+          print('REMOTE_READBACK_OK building_type_1 8950->9000 batch143 Camden_Kentish_Town_South_A authority=Camden attempted=50 final_ready=false')
+          PY
