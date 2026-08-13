@@ -1,0 +1,150 @@
+name: AAYS building_type_7 batch153 once
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: ['.github/workflows/aays-bt7-batch153-once.yml']
+permissions:
+  contents: write
+jobs:
+  classify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+      - name: Fetch, dedupe, classify and persist exactly up to 50 real OSM elements
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, hashlib, urllib.parse, urllib.request, datetime, collections, os
+          SLOT='building_type_7'; TASK='building-type-7-england-classification-v1-20260808'
+          BATCH=153; CITY='Kenilworth_East_D'; GRID='uk-grid-kenilworth_east_d-001'
+          BBOX=[-1.545,52.330,-1.520,52.345]
+          TARGET=50
+          shard_path=f'england_map_web/data/building_type/shards/{SLOT}_latest.geojson'
+          manifest_path=f'england_map_web/data/building_type/shards/{SLOT}_manifest_latest.json'
+          class_path=f'docs/chatgpt_status/building_type/slots/{SLOT}/runner_outputs/{SLOT}_classification_latest.json'
+          cp_path=f'docs/chatgpt_status/_shared/slots_21/{SLOT}/checkpoint_latest.json'
+          status_path=f'docs/chatgpt_status/_shared/slots_21/{SLOT}/status_latest.json'
+          def load(p):
+              with open(p,encoding='utf-8') as f:return json.load(f)
+          def dump(p,o):
+              os.makedirs(os.path.dirname(p),exist_ok=True)
+              with open(p,'w',encoding='utf-8') as f: json.dump(o,f,ensure_ascii=False,indent=2); f.write('\n')
+          shard=load(shard_path); manifest=load(manifest_path); cp=load(cp_path); status=load(status_path)
+          features=shard.get('features',[]); before=len(features)
+          if before!=7600:
+              raise SystemExit(f'STALE_STATE expected 7600 got {before}')
+          processed=set()
+          for f in features:
+              p=f.get('properties',{})
+              for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')):
+                  if v is not None: processed.add(str(v))
+          south,west,north,east=BBOX[1],BBOX[0],BBOX[3],BBOX[2]
+          q=f'[out:json][timeout:60];way["building"]({south},{west},{north},{east});out center tags;'
+          raw=None; last=None
+          for endpoint in ['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']:
+              try:
+                  req=urllib.request.Request(endpoint,data=urllib.parse.urlencode({'data':q}).encode(),headers={'User-Agent':'TerraYield-AAYS/1.0'})
+                  with urllib.request.urlopen(req,timeout=90) as r: raw=r.read()
+                  if raw: break
+              except Exception as e: last=e
+          if not raw: raise SystemExit(f'OVERPASS_UNAVAILABLE {last}')
+          source_sha=hashlib.sha256(raw).hexdigest(); data=json.loads(raw)
+          now=datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          def classify(tags):
+              b=(tags.get('building') or '').lower()
+              exact={
+                'house':('residential_house','R_HOUSE','residential',0.85),
+                'detached':('residential_house','R_HOUSE','residential',0.85),
+                'semidetached_house':('residential_house','R_HOUSE','residential',0.85),
+                'terrace':('residential','R_RES','residential',0.82),
+                'residential':('residential','R_RES','residential',0.82),
+                'apartments':('residential','R_APT','residential',0.85),
+                'commercial':('commercial_other','C_OTHER','commercial',0.80),
+                'retail':('commercial_retail','C_RETAIL','commercial',0.85),
+                'office':('commercial_office','C_OFFICE','commercial',0.85),
+                'industrial':('industrial','I_IND','industrial',0.85),
+                'warehouse':('warehouse','I_WARE','industrial',0.85),
+                'school':('education','P_EDU','public',0.85),
+                'hospital':('healthcare_care','P_HEALTH','public',0.85),
+                'church':('religious','P_REL','public',0.85),
+                'hotel':('hotel_or_hospitality','C_HOTEL','commercial',0.85),
+                'farm_auxiliary':('agricultural_outbuilding','A_OUT','agricultural',0.82),
+                'barn':('agricultural_outbuilding','A_OUT','agricultural',0.82),
+                'shed':('ancillary_or_storage','A_STORE','ancillary',0.78),
+                'garage':('ancillary_or_storage','A_STORE','ancillary',0.78),
+                'garages':('ancillary_or_storage','A_STORE','ancillary',0.78)
+              }
+              if b in exact: return (*exact[b],3,'B',False)
+              # named POI tags can strengthen use classification but remain level 2
+              if tags.get('shop'): return ('commercial_retail','C_RETAIL','commercial',0.65,2,'C',True)
+              if tags.get('office'): return ('commercial_office','C_OFFICE','commercial',0.65,2,'C',True)
+              if tags.get('amenity') in {'school','college','university','kindergarten'}: return ('education','P_EDU','public',0.65,2,'C',True)
+              if tags.get('amenity') in {'hospital','clinic','doctors','dentist','care_home'}: return ('healthcare_care','P_HEALTH','public',0.65,2,'C',True)
+              return ('unknown','UNKNOWN','unknown',0.35,1,'U',True)
+          candidates=[]
+          for e in data.get('elements',[]):
+              if e.get('type')!='way' or not e.get('tags',{}).get('building'): continue
+              osm=f"way/{e['id']}"; fid=f"KENILWORTH_EAST_D_OSM_way_{e['id']}"
+              if osm in processed or fid in processed or str(e['id']) in processed: continue
+              c=e.get('center') or {}; lon=c.get('lon'); lat=c.get('lat')
+              if lon is None or lat is None: continue
+              candidates.append((e,osm,fid,lon,lat))
+          # deterministic: strongest explicit building tags first, then OSM id
+          candidates.sort(key=lambda x: ((x[0].get('tags',{}).get('building','') in ('yes','')), x[0]['id']))
+          selected=candidates[:TARGET]
+          new_records=[]; new_features=[]
+          for e,osm,fid,lon,lat in selected:
+              tags=e.get('tags',{}); primary,code,cat,score,level,evid,review=classify(tags)
+              used=[k for k in ('building','amenity','shop','office','tourism','landuse','addr:housenumber','addr:street','addr:city','addr:postcode') if tags.get(k)]
+              summary={k:tags[k] for k in used}
+              excerpt=f"OSM {osm} | "+'; '.join(f'{k}={tags[k]}' for k in used)
+              rec={
+                'feature_id':fid,'geometry':{'type':'Point','coordinates':[lon,lat]},'parcel_id':fid,
+                'parcel_id_semantics':'stable OSM element-derived slot identifier; not a cadastral parcel ID','osm_id':osm,
+                'slot_id':SLOT,'region':'West Midlands','area':CITY,'local_authority':'Warwickshire','postcode':tags.get('addr:postcode',''),
+                'building_type_primary':primary,'building_type_code':code,'building_category':cat,'building_type_confidence':level,
+                'confidence_score':score,'confidence_level_1_to_4':level,'evidence_level':evid,'source_count':1,
+                'source':'OpenStreetMap via Overpass API','source_url':f"https://www.openstreetmap.org/way/{e['id']}",
+                'source_hash':source_sha,'source_hash_method':'sha256_raw_overpass_response','match_method':f"building={tags.get('building')}",
+                'classification_method':'deterministic_osm_building_use_tag_rules_v1','evidence_excerpt':excerpt,
+                'evidence_excerpt_sha256':hashlib.sha256(excerpt.encode()).hexdigest(),'osm_tags_summary':summary,'source_evidence_excerpt':summary,
+                'sources':[{'source_name':'OpenStreetMap Overpass API','url_or_path':'https://overpass-api.de/api/interpreter','url_or_local_path':'https://overpass-api.de/api/interpreter','object_url':f"https://www.openstreetmap.org/way/{e['id']}",'accessed_at':now,'sha256':source_sha,'sha256_scope':'raw_overpass_response','licence':'ODbL 1.0','granularity':'building_element','fields_used':used,'supports_field':'building_type_primary','match_method':f"building={tags.get('building')}",'match_score':score}],
+                'geometry_match_method':'osm_element_point_or_center','address_match_method':'osm_tags_when_present',
+                'limitations':'OSM building/use-tag evidence only; OSM element is a building proxy, not a cadastral parcel; no EPC/VOA corroboration in this batch.',
+                'needs_manual_review':review,'fake_data':False,'final_ready':False,'updated_at':now}
+              new_records.append(rec)
+              props={k:v for k,v in rec.items() if k!='geometry'}
+              new_features.append({'type':'Feature','id':fid,'geometry':rec['geometry'],'properties':props})
+          features.extend(new_features); shard['features']=features
+          after=len(features); added=after-before
+          # summary distributions from complete shard
+          ev=collections.Counter(); td=collections.Counter(); cd=collections.Counter(); classified=0; unknown=0
+          for f in features:
+              p=f.get('properties',{})
+              ev[str(p.get('evidence_level','U'))]+=1; td[str(p.get('building_type_primary','unknown'))]+=1; cd[str(p.get('confidence_level_1_to_4',1))]+=1
+              if p.get('building_type_primary')=='unknown': unknown+=1
+              else: classified+=1
+          manifest['generated_at']=now; manifest['total_features']=after; manifest['classified']=classified; manifest['unknown']=unknown
+          manifest['evidence_distribution']=dict(ev); manifest['type_distribution']=dict(td); manifest['confidence_level_distribution']=dict(cd)
+          manifest['final_ready']=False; manifest['fake_data']=False
+          manifest.setdefault('sources',[]).append({'name':'OpenStreetMap Overpass API - Kenilworth_East_D','url':'https://overpass-api.de/api/interpreter','license':'ODbL 1.0','features_used':added,'accessed_at':now,'source_sha256':source_sha,'source_hash_method':'sha256_raw_overpass_response','note':'OSM building footprint/use tag; building proxy, not cadastral parcel.'})
+          report={'slot_id':SLOT,'task_id':TASK,'continuation_key':TASK,'generated_at':now,'batch_index':BATCH,'city':CITY,'local_authority':'Warwickshire','region':'West Midlands','grid_id':GRID,'bbox_wgs84':BBOX,'feature_count_before':before,'feature_count_after':after,'new_feature_count':added,'target_new_feature_count':TARGET,'no_evidence_this_batch':TARGET-added,'source_name':'OpenStreetMap Overpass API','source_url':'https://overpass-api.de/api/interpreter','source_sha256':source_sha,'source_hash_method':'sha256_raw_overpass_response','raw_source_committed':False,'fake_data':False,'final_ready':False,'evidence_distribution_new':dict(collections.Counter(r['evidence_level'] for r in new_records)),'confidence_distribution_new':dict(collections.Counter(str(r['confidence_level_1_to_4']) for r in new_records)),'type_distribution_new':dict(collections.Counter(r['building_type_primary'] for r in new_records)),'records':new_records}
+          cp.update({'slot_id':SLOT,'task_id':TASK,'continuation_key':TASK,'updated_at':now,'phase':'APPEND_NEW_BATCH_TO_LATEST_SHARD','current_feature_count':after,'next_batch_index':BATCH+1 if added else BATCH,'target_feature_count_after_next_batch':after+TARGET,'last_batch_name':CITY if added else cp.get('last_batch_name'),'last_bbox_wgs84':BBOX if added else cp.get('last_bbox_wgs84'),'last_new_feature_count':added,'final_ready':False,'fake_data':False})
+          status.update({'slot_id':SLOT,'task_id':TASK,'continuation_key':TASK,'updated_at':now,'feature_count':after,'current_feature_count':after,'last_batch_index':BATCH if added else status.get('last_batch_index'),'last_batch_name':CITY if added else status.get('last_batch_name'),'last_new_feature_count':added,'no_evidence_this_batch':TARGET-added,'final_ready':False,'fake_data':False})
+          dump(shard_path,shard); dump(manifest_path,manifest); dump(class_path,report); dump(cp_path,cp); dump(status_path,status)
+          print(json.dumps({'before':before,'after':after,'added':added,'candidates':len(candidates),'no_evidence':TARGET-added,'sha256':source_sha}))
+          PY
+      - name: Commit exact output files
+        shell: bash
+        run: |
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          git add england_map_web/data/building_type/shards/building_type_7_latest.geojson
+          git add england_map_web/data/building_type/shards/building_type_7_manifest_latest.json
+          git add docs/chatgpt_status/building_type/slots/building_type_7/runner_outputs/building_type_7_classification_latest.json
+          git add docs/chatgpt_status/_shared/slots_21/building_type_7/checkpoint_latest.json
+          git add docs/chatgpt_status/_shared/slots_21/building_type_7/status_latest.json
+          git diff --cached --quiet || git commit -m 'data(aays): building_type_7 batch 153 Kenilworth East D'
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
