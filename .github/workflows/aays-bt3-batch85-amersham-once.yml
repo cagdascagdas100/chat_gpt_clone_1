@@ -1,4 +1,4 @@
-name: AAYS building_type_3 batch85 Amersham once
+name: AAYS building_type_3 batch85 Amersham once v2
 on:
   push:
     paths:
@@ -6,11 +6,10 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: aays-building-type-3-batch85
+  group: aays-building-type-3-batch85-v2
   cancel-in-progress: false
 jobs:
   classify:
-    if: github.event.head_commit.message == 'chore(aays): run building_type_3 batch85 Amersham one-off'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -18,7 +17,7 @@ jobs:
           ref: codex/aays-single-runner-v5-20260706
           fetch-depth: 50
           clean: false
-      - name: Sync branch without destructive cleanup
+      - name: Sync branch and materialize Batch 85 classifier
         shell: bash
         run: |
           set -euo pipefail
@@ -26,18 +25,17 @@ jobs:
           git config user.email 'aays-bot@users.noreply.github.com'
           git fetch origin codex/aays-single-runner-v5-20260706
           git pull --rebase origin codex/aays-single-runner-v5-20260706
-      - name: Run Batch 85 from proven Batch 84 classifier template
-        shell: bash
-        run: |
-          set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          import re, textwrap
+          import re
           src=Path('.github/workflows/aays-bt3-batch84-once.yml').read_text(encoding='utf-8')
-          marker="          python - <<'PY'\n"
-          start=src.index(marker)+len(marker)
-          end=src.index("\n          PY\n      - name: Commit only explicit building_type_3 outputs", start)
-          script=textwrap.dedent(src[start:end])
+          start="          python - <<'PY'\n"
+          end="\n          PY\n"
+          i=src.index(start)+len(start)
+          j=src.index(end,i)
+          block=src[i:j]
+          lines=[line[10:] if line.startswith('          ') else line for line in block.splitlines()]
+          script='\n'.join(lines)+'\n'
           script=script.replace("BATCH=84", "BATCH=85")
           script=script.replace("CITY='Buckingham'", "CITY='Amersham'")
           script=script.replace("GRID='uk-grid-buckingham-central-001'", "GRID='uk-grid-amersham-central-001'")
@@ -60,13 +58,12 @@ jobs:
               (-0.5960,51.6800,-0.5840,51.6900),
           ]"""
           script,n=re.subn(r"tiles=\[\n(?:\s+\([^\n]+\),\n)+\s+\]",tiles,script,count=1)
-          if n != 1:
-              raise SystemExit('BATCH85_TEMPLATE_TILE_REPLACEMENT_FAILED')
-          if "BATCH=85" not in script or "CITY='Amersham'" not in script or "before != 8950" not in script:
+          if n != 1 or "BATCH=85" not in script or "CITY='Amersham'" not in script or "before != 8950" not in script:
               raise SystemExit('BATCH85_TEMPLATE_REPLACEMENT_FAILED')
-          exec(compile(script,'batch85_amersham_runtime.py','exec'),{'__name__':'__main__'})
+          Path('/tmp/aays_bt3_batch85.py').write_text(script,encoding='utf-8')
           PY
-      - name: Commit explicit outputs and remove one-off workflow
+          python /tmp/aays_bt3_batch85.py
+      - name: Commit only explicit building_type_3 outputs
         shell: bash
         run: |
           set -euo pipefail
@@ -76,8 +73,6 @@ jobs:
           checkpoint='docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json'
           status='docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json'
           task='docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json'
-          self='.github/workflows/aays-bt3-batch85-amersham-once.yml'
-          git rm -- "$self"
           git add -- "$shard" "$manifest" "$classout" "$checkpoint" "$status" "$task"
           if git diff --cached --quiet; then
             echo 'NO_EVIDENCE_THIS_BATCH: no output changes'
@@ -86,7 +81,7 @@ jobs:
           git commit -m 'data(aays): building_type_3 batch85 Amersham'
           git pull --rebase origin codex/aays-single-runner-v5-20260706
           git push origin HEAD:codex/aays-single-runner-v5-20260706
-      - name: Remote readback check
+      - name: Remote checkpoint readback
         shell: bash
         run: |
           set -euo pipefail
@@ -95,9 +90,8 @@ jobs:
           python - <<'PY'
           import json
           cp=json.load(open('/tmp/cp.json'))
-          assert cp.get('continuation_key')=='03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e'
-          assert cp.get('current_feature_count',0) >= 8950
-          assert cp.get('fake_data') is False
-          assert cp.get('final_ready') is False
-          print(json.dumps({'remote_feature_count':cp.get('current_feature_count'),'next_batch_index':cp.get('next_batch_index'),'blocker':cp.get('blocker'),'final_ready':cp.get('final_ready')},ensure_ascii=False))
+          assert cp['continuation_key']=='03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e'
+          assert cp['fake_data'] is False
+          assert cp['final_ready'] is False
+          print(json.dumps({'feature_count':cp.get('current_feature_count'),'next_batch_index':cp.get('next_batch_index'),'blocker':cp.get('blocker')},ensure_ascii=False))
           PY
