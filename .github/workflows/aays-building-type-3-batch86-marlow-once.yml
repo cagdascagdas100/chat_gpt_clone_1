@@ -1,4 +1,4 @@
-name: AAYS building_type_3 batch87 publish verified blobs
+name: AAYS building_type_3 batch88 Gerrards Cross once
 on:
   push:
     branches:
@@ -8,21 +8,19 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: aays-building-type-3-batch87-publish
+  group: aays-building-type-3-batch88-gerrards-cross
   cancel-in-progress: false
 jobs:
-  publish:
+  classify:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
           ref: codex/aays-single-runner-v5-20260706
-          fetch-depth: 100
+          fetch-depth: 0
           clean: false
-      - name: Restore only six verified batch87 blobs
+      - name: Sync shared branch safely
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           git config user.name 'TerraYield AAYS Bot'
@@ -30,71 +28,114 @@ jobs:
           branch='codex/aays-single-runner-v5-20260706'
           git fetch origin "$branch"
           git pull --rebase origin "$branch"
-          python - <<'PY'
-          import base64, json, os, pathlib, urllib.request
-          repo='cagdascagdas100/chat_gpt_clone_1'
-          blobs={
-            'england_map_web/data/building_type/shards/building_type_3_latest.geojson':'b3c3e25d20f25e002be771c2ae0a0317d52533f1',
-            'england_map_web/data/building_type/shards/building_type_3_manifest_latest.json':'5670ffa9be38852d4dabf5f7d52c5fa66eac7bc4',
-            'docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json':'2beab234c33337320781bfc3ebe0db1908f88613',
-            'docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json':'97b13b74eb91c4093063feee2e39c037b7dfeceb',
-            'docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json':'889f4486ad5ae144b87edf2ebf4307ec3b8ff4be',
-            'docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json':'674f140c09e6c5ea53979c251cbc79320844d6d0',
-          }
-          token=os.environ['GH_TOKEN']
-          for path,sha in blobs.items():
-              url=f'https://api.github.com/repos/{repo}/git/blobs/{sha}'
-              req=urllib.request.Request(url,headers={'Authorization':f'Bearer {token}','Accept':'application/vnd.github+json','User-Agent':'TerraYield-AAYS/1.0'})
-              with urllib.request.urlopen(req,timeout=120) as r:
-                  obj=json.load(r)
-              data=base64.b64decode(obj['content'])
-              p=pathlib.Path(path); p.parent.mkdir(parents=True,exist_ok=True); p.write_bytes(data)
-          PY
-      - name: Verify batch87 exact contract before publish
+      - name: Run preserved classifier for Batch 88 Gerrards Cross
         shell: bash
         run: |
           set -euo pipefail
+          workflow='.github/workflows/aays-building-type-3-batch86-marlow-once.yml'
+          source_commit='7245d6028af2f14fc6b77dbded2c8ea5f8ef845d'
+          git show "$source_commit:$workflow" > /tmp/aays_bt3_source.yml
           python - <<'PY'
-          import json
+          from pathlib import Path
+          import re
+          src=Path('/tmp/aays_bt3_source.yml').read_text(encoding='utf-8')
+          marker="          python - <<'PY'\n"
+          start=src.index(marker)+len(marker)
+          end=src.index("\n          PY\n", start)
+          body=src[start:end]
+          out=[]
+          for line in body.splitlines():
+              out.append(line[10:] if line.startswith('          ') else line)
+          code='\n'.join(out)+'\n'
+          code=code.replace("BATCH=86", "BATCH=88")
+          code=code.replace("CITY='Marlow'", "CITY='Gerrards Cross'")
+          code=code.replace("GRID='uk-grid-marlow-central-001'", "GRID='uk-grid-gerrards-cross-central-001'")
+          code=code.replace("if before != 9000", "if before != 9100")
+          code=code.replace("building_type_3 batch86 Marlow", "building_type_3 batch88 Gerrards Cross")
+          code=code.replace("Marlow central tiled grid -0.7900,51.5500,-0.7420,51.5900", "Gerrards Cross central tiled grid -0.5900,51.5700,-0.5200,51.6100")
+          code=code.replace("OpenStreetMap API 0.6 map - Marlow Batch 86", "OpenStreetMap API 0.6 map - Gerrards Cross Batch 88")
+          tiles="""tiles=[
+              (-0.5900,51.5700,-0.5725,51.5800),
+              (-0.5725,51.5700,-0.5550,51.5800),
+              (-0.5550,51.5700,-0.5375,51.5800),
+              (-0.5375,51.5700,-0.5200,51.5800),
+              (-0.5900,51.5800,-0.5725,51.5900),
+              (-0.5725,51.5800,-0.5550,51.5900),
+              (-0.5550,51.5800,-0.5375,51.5900),
+              (-0.5375,51.5800,-0.5200,51.5900),
+              (-0.5900,51.5900,-0.5725,51.6000),
+              (-0.5725,51.5900,-0.5550,51.6000),
+              (-0.5550,51.5900,-0.5375,51.6000),
+              (-0.5375,51.5900,-0.5200,51.6000),
+              (-0.5900,51.6000,-0.5725,51.6100),
+              (-0.5725,51.6000,-0.5550,51.6100),
+              (-0.5550,51.6000,-0.5375,51.6100),
+              (-0.5375,51.6000,-0.5200,51.6100),
+          ]"""
+          code=re.sub(r"tiles=\[.*?\n\]", tiles, code, count=1, flags=re.S)
+          code=code.replace("'source_path':e['tile_url'],'source_hash':source_sha", "'source_path':e['tile_url'],'accessed_at':now,'fields_used':used,'source_hash':source_sha")
+          Path('/tmp/aays_bt3_batch88.py').write_text(code, encoding='utf-8')
+          PY
+          python /tmp/aays_bt3_batch88.py
+      - name: Enforce exact batch88 contract and remote stale guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch='codex/aays-single-runner-v5-20260706'
+          git fetch origin "$branch"
+          python - <<'PY'
+          import json, subprocess
           CONT='03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e'
-          paths={
-            'shard':'england_map_web/data/building_type/shards/building_type_3_latest.geojson',
-            'manifest':'england_map_web/data/building_type/shards/building_type_3_manifest_latest.json',
-            'report':'docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json',
-            'checkpoint':'docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json',
-            'status':'docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json',
-            'task':'docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json',
-          }
-          def load(k):
-              with open(paths[k],encoding='utf-8') as f:return json.load(f)
-          s,m,r,cp,st,t=[load(k) for k in ('shard','manifest','report','checkpoint','status','task')]
+          TASK='building-type-3-england-classification-v1-20260808'
+          shard='england_map_web/data/building_type/shards/building_type_3_latest.geojson'
+          manifest='england_map_web/data/building_type/shards/building_type_3_manifest_latest.json'
+          report='docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json'
+          checkpoint='docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json'
+          status='docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json'
+          task='docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json'
+          def load(p):
+              with open(p,encoding='utf-8') as f: return json.load(f)
+          s,m,r,cp,st,t=[load(p) for p in (shard,manifest,report,checkpoint,status,task)]
           feats=s.get('features') or []
-          assert len(feats)==9100
-          assert m.get('feature_count')==9100
-          assert r.get('feature_count_before')==9050 and r.get('feature_count_after')==9100
-          assert r.get('attempted_parcels')==50 and r.get('added_feature_count')==50
-          assert r.get('city')=='Beaconsfield' and r.get('grid_id')=='uk-grid-beaconsfield-central-001'
-          assert r.get('fake_data') is False and r.get('final_ready') is False
+          assert len(feats)==9150, len(feats)
+          assert r.get('feature_count_before')==9100
+          assert r.get('attempted_parcels')==50
+          assert r.get('added_feature_count')==50
+          assert r.get('feature_count_after')==9150
+          assert r.get('city')=='Gerrards Cross'
+          assert r.get('grid_id')=='uk-grid-gerrards-cross-central-001'
+          assert m.get('feature_count')==9150
           assert cp.get('continuation_key')==CONT and st.get('continuation_key')==CONT and t.get('continuation_key')==CONT
-          assert cp.get('next_batch_index')==88 and st.get('next_batch_index')==88 and t.get('next_batch_index')==88
-          old=feats[:9050]; new=feats[9050:]
-          def p(f): return f.get('properties') or {}
-          old_f={str(f.get('id') or p(f).get('feature_id')) for f in old}
-          old_o={str(p(f).get('osm_id')) for f in old if p(f).get('osm_id')}
-          old_r={str(p(f).get('source_ref')) for f in old if p(f).get('source_ref')}
-          nf=[str(f.get('id') or p(f).get('feature_id')) for f in new]
-          no=[str(p(f).get('osm_id')) for f in new]
-          nr=[str(p(f).get('source_ref')) for f in new]
-          assert len(nf)==len(set(nf))==50 and not(set(nf)&old_f)
-          assert len(no)==len(set(no))==50 and not(set(no)&old_o)
-          assert len(nr)==len(set(nr))==50 and not(set(nr)&old_r)
+          assert st.get('task_id')==TASK and t.get('task_id')==TASK
+          assert st.get('owner') in (None,'') and t.get('owner') in (None,'')
+          assert cp.get('next_batch_index')==89 and st.get('next_batch_index')==89 and t.get('next_batch_index')==89
+          assert r.get('fake_data') is False and r.get('final_ready') is False
           records=r.get('records') or []
           assert len(records)==50
           required=('source_url','source_path','accessed_at','fields_used','match_method','evidence_level','confidence_score','confidence_level_1_to_4')
-          assert all(rec.get('fake_data') is False and all(rec.get(k) not in (None,'') for k in required) for rec in records)
-          print(json.dumps({'before':9050,'attempted':50,'added':50,'after':9100,'confidence':r.get('confidence_level_distribution'),'evidence':r.get('evidence_level_distribution'),'no_evidence':r.get('no_evidence_this_batch'),'final_ready':False},ensure_ascii=False))
+          for rec in records:
+              for key in required:
+                  assert rec.get(key) not in (None,''), (rec.get('parcel_id'),key)
+              assert rec.get('fake_data') is False
+          old=feats[:9100]; new=feats[9100:]
+          def props(f): return f.get('properties') or {}
+          old_fids={str(f.get('id') or props(f).get('feature_id')) for f in old}
+          old_osm={str(props(f).get('osm_id')) for f in old if props(f).get('osm_id')}
+          old_refs={str(props(f).get('source_ref')) for f in old if props(f).get('source_ref')}
+          new_fids=[str(f.get('id') or props(f).get('feature_id')) for f in new]
+          new_osm=[str(props(f).get('osm_id')) for f in new]
+          new_refs=[str(props(f).get('source_ref')) for f in new]
+          assert len(new_fids)==len(set(new_fids))==50 and not(set(new_fids)&old_fids)
+          assert len(new_osm)==len(set(new_osm))==50 and not(set(new_osm)&old_osm)
+          assert len(new_refs)==len(set(new_refs))==50 and not(set(new_refs)&old_refs)
+          raw=subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:'+checkpoint],text=True)
+          remote_cp=json.loads(raw)
+          assert remote_cp.get('continuation_key')==CONT
+          assert remote_cp.get('current_feature_count')==9100
+          assert remote_cp.get('next_batch_index')==88
+          print(json.dumps({'feature_count_before':9100,'attempted_parcels':50,'newly_added':50,'feature_count_after':9150,'evidence_distribution':r.get('evidence_level_distribution'),'confidence_distribution':r.get('confidence_level_distribution'),'city':r.get('city'),'grid_id':r.get('grid_id'),'no_evidence_this_batch':r.get('no_evidence_this_batch'),'fake_data':False,'final_ready':False},ensure_ascii=False))
           PY
-      - name: Commit explicit outputs and push with bounded retry
+      - name: Commit only explicit building_type_3 outputs and push normally
         shell: bash
         run: |
           set -euo pipefail
@@ -108,15 +149,15 @@ jobs:
             'docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json'
           )
           git add -- "${files[@]}"
-          git diff --cached --quiet && { echo 'NO_EVIDENCE_THIS_BATCH: verified blobs already present'; exit 0; }
-          git commit -m 'data(aays): building_type_3 batch87 Beaconsfield'
+          git diff --cached --quiet && { echo 'NO_EVIDENCE_THIS_BATCH: no output changes'; exit 1; }
+          git commit -m 'data(aays): building_type_3 batch88 Gerrards Cross'
           for attempt in 1 2 3 4 5; do
             git fetch origin "$branch"
-            git rebase "origin/$branch"
-            if git push origin "HEAD:$branch"; then
+            if git rebase "origin/$branch" && git push origin "HEAD:$branch"; then
               echo "PUSH_OK attempt=$attempt"
               exit 0
             fi
+            git rebase --abort 2>/dev/null || true
           done
           echo 'PUBLISH_PENDING: bounded push retries exhausted'
           exit 1
