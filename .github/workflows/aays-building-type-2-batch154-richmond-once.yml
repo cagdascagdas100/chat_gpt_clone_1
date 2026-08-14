@@ -77,8 +77,8 @@ jobs:
           new='if {fid, pid, osmid, engfid, str(oid), f"{typ}_{oid}", f"https://www.openstreetmap.org/{typ}/{oid}"} & already:'
           if old not in code: raise SystemExit('missing candidate dedupe token')
           code=code.replace(old,new,1)
-          old='"source_url": object_url,\n              "source_hash": source_sha,'
-          new='"source_url": object_url,\n              "source_ref": object_url,\n              "source_hash": source_sha,'
+          old='"source_url": object_url,'
+          new='"source_url": object_url,\n                  "source_ref": object_url,'
           if old not in code: raise SystemExit('missing source_ref insertion token')
           code=code.replace(old,new,1)
           p.write_text(code)
