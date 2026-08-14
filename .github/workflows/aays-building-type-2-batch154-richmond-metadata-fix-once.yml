@@ -1,0 +1,102 @@
+name: AAYS building_type_2 batch154 Richmond metadata fix one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-batch154-richmond-metadata-fix-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-2-batch154-richmond-metadata-fix-once
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 40
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json
+      - name: Verify and normalize batch154 metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json, pathlib
+          M=pathlib.Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          C=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          S=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          R=pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          T=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          def load(p): return json.load(open(p,encoding='utf-8'))
+          def dump(p,x): p.write_text(json.dumps(x,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          m,c,s,r,t=map(load,(M,C,S,R,T))
+          sha='822ff0560f8797cbe7cb7e86a95b5542bd9e3d8b8c608a55b18dfa9b50d1f172'
+          assert m.get('total_features')==7700 and s.get('total_elements')==7700
+          assert c.get('last_batch_index')==154 and c.get('last_city')=='Richmond'
+          assert r.get('batch_index')==154 and r.get('new_feature_count')==50 and r.get('source_sha256')==sha
+          assert t.get('task_id')=='building-type-2-england-classification-v1-20260808' and (t.get('continuation_key') or '')=='' and t.get('owner') in (None,'')
+          matched=0
+          for src in m.get('sources') or []:
+              if src.get('source_sha256')==sha:
+                  src['name']='OpenStreetMap Overpass API - Richmond/Richmond upon Thames'
+                  src['note']='Runtime-only Overpass response; raw source not committed. building=* evidence from Richmond/Richmond upon Thames bbox.'
+                  matched+=1
+          assert matched==1
+          m.update({
+              'feature_count_before':7650,'feature_count_after':7700,'added_feature_count':50,
+              'last_batch_city':'Richmond','last_batch_source':'OpenStreetMap Overpass API',
+              'last_batch_source_sha256':sha,'last_batch_index':154,
+              'last_batch_grid_id':'uk-grid-richmond-001','last_batch_bbox_wgs84':[-0.32,51.43,-0.27,51.48],
+              'fake_data':False,'final_ready':False
+          })
+          sae=c.setdefault('source_access_evidence',{})
+          sae.pop('richmond_east_lindsey_source_sha256',None)
+          sae['richmond_richmond_upon_thames_source_sha256']=sha
+          c['fake_data']=False; c['final_ready']=False
+          dump(M,m); dump(C,c)
+          print('METADATA_NORMALIZED building_type_2 batch154 Richmond')
+          PY
+      - name: Commit metadata only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add england_map_web/data/building_type/shards/building_type_2_manifest_latest.json docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json
+          git diff --cached --quiet && { echo 'No metadata diff'; exit 0; }
+          git commit -m 'meta(building_type_2): normalize Richmond batch154 evidence labels'
+          for a in 1 2 3 4 5; do
+            git push origin HEAD:codex/aays-single-runner-v5-20260706 && exit 0
+            git fetch origin codex/aays-single-runner-v5-20260706 --depth=40
+            git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }
+          done
+          exit 1
+      - name: Remote metadata readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=40
+          python - <<'PY'
+          import json,subprocess
+          def j(p): return json.loads(subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:'+p]))
+          m=j('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          c=j('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          assert m.get('feature_count_before')==7650 and m.get('feature_count_after')==7700 and m.get('last_batch_index')==154
+          assert m.get('last_batch_city')=='Richmond' and m.get('last_batch_source')=='OpenStreetMap Overpass API'
+          assert c.get('current_feature_count')==7700 and c.get('next_batch_index')==155 and c.get('final_ready') is False
+          assert 'richmond_east_lindsey_source_sha256' not in (c.get('source_access_evidence') or {})
+          print('REMOTE_METADATA_OK building_type_2 batch154 Richmond 7650->7700')
+          PY
