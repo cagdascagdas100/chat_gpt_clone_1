@@ -5,7 +5,7 @@
   "slot_id": "planned_buildings_2",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_2_open_source_v2_20260813",
-  "updated_at": "2026-08-14T14:36:00Z",
+  "updated_at": "2026-08-14T15:01:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
@@ -16,8 +16,20 @@
   "next_source_index": 0,
   "next_batch_index": 0,
   "blocker": {
-    "code": "STALE_CHECKPOINT",
-    "unknown_reason": "GitHub slot state is dated 2026-08-13 and does not prove which source index is safe to run without duplication."
+    "code": "STALE_CHECKPOINT_STATE_MISMATCH",
+    "unknown_reason": "Checkpoint is in resume-wait state, while status_latest.json and current_task_latest.json remain dated 2026-08-13 and do not identify a reconciled first unprocessed source index. recovery_latest.json is absent. Running source index 0 would risk repeating an already processed batch."
   },
-  "next_action": "Resume the same continuation_key only after state/manifest reconciliation identifies the first unprocessed source index."
+  "control_check": {
+    "checked_at": "2026-08-14T15:01:00Z",
+    "github_state_access": "OK",
+    "continuation_key_match": true,
+    "duplicate_owner_task_evidence": "NONE_IN_ALLOWED_STATE_FILES",
+    "stale_checkpoint_or_state": true,
+    "source_manifest_reconciled": false,
+    "score_written": false,
+    "confidence_written": false,
+    "web_source_attempted": false,
+    "publish_state_consistent": false
+  },
+  "next_action": "Wait for state/manifest/web-integration reconciliation to identify the first unprocessed source index. Do not retry or process any source until that reconciliation is reflected in the allowed GitHub state files."
 }
