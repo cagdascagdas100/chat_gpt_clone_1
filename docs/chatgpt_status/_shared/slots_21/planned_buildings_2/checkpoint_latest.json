@@ -5,7 +5,7 @@
   "slot_id": "planned_buildings_2",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_2_open_source_v2_20260813",
-  "updated_at": "2026-08-14T21:02:00Z",
+  "updated_at": "2026-08-14T21:28:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
@@ -17,10 +17,10 @@
   "next_batch_index": 0,
   "blocker": {
     "code": "STALE_CHECKPOINT_STATE_MISMATCH",
-    "unknown_reason": "Allowed GitHub state files do not identify a reconciled first unprocessed source index; status_latest.json and current_task_latest.json remain dated 2026-08-13 and recovery_latest.json is absent."
+    "unknown_reason": "recovery_latest.json now exists and matches the continuation_key, but it only mirrors the canonical checkpoint and states that no source work or feature state changed. status_latest.json and current_task_latest.json remain dated 2026-08-13, source_manifest_reconciled remains false, and the allowed state files still do not prove source index 0 is the first unprocessed source."
   },
   "control_check": {
-    "checked_at": "2026-08-14T21:02:00Z",
+    "checked_at": "2026-08-14T21:28:00Z",
     "github_state_access": "OK",
     "continuation_key_match": true,
     "duplicate_owner_task_evidence": "NONE_IN_ALLOWED_STATE_FILES",
@@ -31,5 +31,5 @@
     "web_source_attempted": false,
     "publish_state_consistent": false
   },
-  "next_action": "Wait for state/manifest/web-integration reconciliation before processing any source."
+  "next_action": "Wait for state/manifest/web-integration reconciliation that explicitly proves the first unprocessed source index before processing any source."
 }
