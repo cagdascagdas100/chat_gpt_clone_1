@@ -5,7 +5,7 @@
   "slot_id": "planned_buildings_5",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_5_open_source_v2_20260813",
-  "updated_at": "2026-08-14T21:06:00Z",
+  "updated_at": "2026-08-14T21:57:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
@@ -16,9 +16,10 @@
   "next_source_index": 0,
   "next_batch_index": 0,
   "control_check": {
-    "checked_at": "2026-08-14T21:06:00Z",
+    "checked_at": "2026-08-14T21:57:00Z",
     "source_attempted_this_turn": false,
-    "recovery_latest_present": false,
+    "recovery_latest_present": true,
+    "recovery_updated_at": "2026-08-14T17:51:48Z",
     "continuation_key_consistent": true,
     "duplicate_task_created": false,
     "duplicate_owner_created": false,
@@ -26,14 +27,14 @@
     "stale_state_detected": true,
     "status_updated_at": "2026-08-13T13:58:23Z",
     "current_task_updated_at": "2026-08-13T13:58:23Z",
-    "reason": "status_latest.json and current_task_latest.json remain stale relative to checkpoint; current_task write_outputs reference state/slots/planned_buildings_5 rather than the canonical docs/chatgpt_status/_shared/slots_21/planned_buildings_5 continuation path; recovery_latest.json is absent. Per Codex control protocol, do not retry a prior source batch or advance source processing until state/manifest/web integration is reconciled."
+    "reason": "status_latest.json and current_task_latest.json remain stale relative to checkpoint; current_task write_outputs reference state/slots/planned_buildings_5 rather than the canonical docs/chatgpt_status/_shared/slots_21/planned_buildings_5 continuation path. recovery_latest.json now exists with the same continuation_key, but it only records creation of a missing recovery record and explicitly states that no source work or feature state changed; it does not confirm canonical write-path or state/manifest/web integration repair. Per Codex control protocol, do not retry a prior source batch or advance source processing until integration is reconciled."
   },
   "codex_control": {
-    "problem": "publish/state mismatch and stale state; current_task write paths are noncanonical and no recovery evidence confirms integration repair",
+    "problem": "publish/state mismatch and stale state; recovery exists but does not confirm canonical write-path or state/manifest/web integration repair",
     "evidence_path": "docs/chatgpt_status/_shared/slots_21/planned_buildings_5/current_task_latest.json",
     "safe_requested_fix": "state_manifest_web_integration_only",
     "do_not_change_prompts": true,
     "do_not_create_fake_data": true
   },
-  "next_action": "Wait for Codex state/manifest/web integration control on branch codex/aays-single-runner-v5-20260706. Do not retry any prior source batch and do not advance source processing until canonical write paths and recovery/readback state are reconciled; keep the same continuation_key."
+  "next_action": "Wait for Codex state/manifest/web integration control on branch codex/aays-single-runner-v5-20260706. Do not retry any prior source batch and do not advance source processing until canonical write paths and integration state are reconciled; keep the same continuation_key."
 }
