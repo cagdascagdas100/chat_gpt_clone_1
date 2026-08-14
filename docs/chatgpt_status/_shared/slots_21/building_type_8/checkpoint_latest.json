@@ -1,16 +1,10 @@
 {
   "schema_version": 3,
-  "architecture_version": 3,
-  "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
   "slot_id": "building_type_8",
-  "base_slot_id": "building_type",
-  "shard_index": 8,
-  "region": "North West",
-  "region_code": "NW",
   "task_id": "building-type-8-england-classification-v1-20260808",
   "owner": null,
   "continuation_key": "building-type-8-england-classification-v1-20260808",
-  "updated_at": "2026-08-14T14:58:00Z",
+  "updated_at": "2026-08-14T15:24:00Z",
   "state": "NEW_PAGE_RESUME_READY",
   "terminal_status": "CONTROL_REQUEST_PARKED",
   "final_ready": false,
@@ -23,14 +17,8 @@
   "next_batch_index": 3,
   "next_target_feature_count": 850,
   "blocker": "PUBLISH_STATE_COHERENCE_MISMATCH",
-  "blocker_reason": "checkpoint_latest.json reports current_feature_count=800 with continuation_key building-type-8-england-classification-v1-20260808; status_latest.json reports total_elements=100 and owner=codex-deepseek-batch-session; current_task_latest.json has the same continuation_key but owner=null; recovery_latest.json remains stale with old hash continuation_key and feature_count=8000. Per Codex control protocol no evidence source or endpoint was processed this turn.",
-  "control_evidence_paths": [
-    "docs/chatgpt_status/_shared/slots_21/building_type_8/checkpoint_latest.json",
-    "docs/chatgpt_status/_shared/slots_21/building_type_8/status_latest.json",
-    "docs/chatgpt_status/_shared/slots_21/building_type_8/current_task_latest.json",
-    "docs/chatgpt_status/_shared/slots_21/building_type_8/recovery_latest.json"
-  ],
-  "next_required_action": "CODEX_CONTROL_RECONCILE_STATE_COUNTS_CONTINUATION_AND_OWNER_BEFORE_SOURCE_PROCESSING",
+  "blocker_reason": "status count and owner do not match checkpoint/current task; recovery has a different continuation key and stale count. No evidence source was processed.",
+  "next_required_action": "RECONCILE_STATE_COUNTS_CONTINUATION_AND_OWNER_BEFORE_SOURCE_PROCESSING",
   "fake_data": false,
   "production_merge": false
 }
