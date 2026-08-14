@@ -1,44 +1,24 @@
 {
-  "schema_version": 3,
+  "state": "RECOVERY_REQUESTED",
+  "schema_version": 2,
   "slot_id": "building_type_6",
-  "state": "RECOVERY_READY",
-  "created_at": "2026-08-10T16:35:00Z",
-  "reason": "Slot status file is stale at 100 elements, while the actual shard has 950 total / 930 classified. Continue prompt must not change; this recovery file tells the agent to trust the shard and expand East Midlands to a larger target.",
+  "recovery_type": "NEW_PAGE_RESUME",
+  "requested_at": "2026-08-13T00:46:14.116939+00:00",
+  "reason": "ChatGPT page reached maximum message limit or stalled; new page must continue from canonical checkpoint/shard.",
   "ignore_stale_owner": true,
-  "preserve_existing_features": true,
-  "do_not_change_user_continue_prompt": true,
-  "source_of_truth_for_current_count": "england_map_web/data/building_type/shards/building_type_6_latest.geojson",
-  "feature_count_before": 950,
-  "classified_count_before": 930,
-  "unknown_count_before": 20,
-  "required_min_new_features": 250,
-  "preferred_new_features_per_continue": 250,
-  "next_target_feature_count": 1500,
-  "target_strategy": "Append-only expansion until this slot reaches at least 1500 total real OSM/POI/EPC/VOA/HMLR-supported features, or until a real source blocker is proven.",
-  "recovery_action": "Read existing shard first and do not trust stale total_elements=100 in status_latest. Build already_processed_ids, then append only new East Midlands features. Prefer Derby, Lincoln, Nottingham outskirts, Northampton, Mansfield and Chesterfield.",
-  "direct_batches": [
-    {
-      "batch_name": "Derby_Nottingham_Outskirts",
-      "bbox_south_west_north_east": "52.8500,-1.6500,53.0500,-1.0500",
-      "source": "OSM Overpass or existing local OSM cache building/amenity/shop/office/tourism/landuse"
-    },
-    {
-      "batch_name": "Lincoln_Newark",
-      "bbox_south_west_north_east": "53.0500,-0.9500,53.3000,-0.3500",
-      "source": "OSM Overpass or existing local OSM cache building/amenity/shop/office/tourism/landuse"
-    },
-    {
-      "batch_name": "Northampton_Kettering",
-      "bbox_south_west_north_east": "52.1800,-1.0500,52.5200,-0.5500",
-      "source": "OSM Overpass or existing local OSM cache building/amenity/shop/office/tourism/landuse"
-    }
+  "reuse_continuation_key": true,
+  "continuation_key": "building-type-6-england-classification-v1-20260808",
+  "do_not_create_new_task": true,
+  "do_not_reprocess_existing_features": true,
+  "required_resume_inputs": [
+    "docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json",
+    "docs/chatgpt_status/_shared/slots_21/building_type_6/current_task_latest.json",
+    "england_map_web/data/building_type/shards/building_type_6_latest.geojson",
+    "england_map_web/data/building_type/shards/building_type_6_manifest_latest.json"
   ],
-  "acceptance": [
-    "feature_count_after must be greater than 950",
-    "add at least 250 new unique feature.id/parcel_id/osm_id values when sources allow",
-    "do not replace the shard with a smaller file",
-    "fake_data remains false",
-    "final_ready remains false unless commit push and remote readback are complete",
-    "report feature_count_before, feature_count_after, classified_count_after, unknown_count_after and yeni_eklenen"
-  ]
+  "success_condition": "feature_count_after > feature_count_before",
+  "minimum_target_new_features_per_continue": 50,
+  "final_ready": false,
+  "fake_data_allowed": false
 }
