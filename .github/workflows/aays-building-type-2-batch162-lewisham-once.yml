@@ -1,0 +1,106 @@
+name: AAYS building_type_2 batch162 Lewisham one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-batch162-lewisham-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-2-batch162-lewisham-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 90
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-6-batch26-skegness-once.yml
+            .github/workflows/aays-building-type-2-batch153-barking-once.yml
+            .github/workflows/aays-building-type-2-batch157-tottenham-once.yml
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
+
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          sha256sum docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json > /tmp/current_task.before.sha256
+
+      - name: Execute inherited guarded batch162 pipeline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          src = Path('.github/workflows/aays-building-type-2-batch157-tottenham-once.yml').read_text(encoding='utf-8')
+
+          def extract_run(step_name):
+              marker = f'      - name: {step_name}\n'
+              if marker not in src:
+                  raise SystemExit(f'missing inherited step: {step_name}')
+              part = src.split(marker, 1)[1]
+              part = part.split('\n      - name:', 1)[0]
+              run_marker = '        run: |\n'
+              if run_marker not in part:
+                  raise SystemExit(f'missing run block: {step_name}')
+              block = part.split(run_marker, 1)[1]
+              lines = []
+              for line in block.splitlines():
+                  if line.startswith('          '):
+                      lines.append(line[10:])
+                  elif not line.strip():
+                      lines.append('')
+                  else:
+                      break
+              return '\n'.join(lines) + '\n'
+
+          def transform(s):
+              pairs = [
+                  ('7800', '__COUNT_BEFORE__'),
+                  ('7850', '__COUNT_AFTER__'),
+                  ('7900', '__COUNT_NEXT__'),
+                  ('157', '__BATCH_CUR__'),
+                  ('158', '__BATCH_NEXT__'),
+              ]
+              for a,b in pairs:
+                  s=s.replace(a,b)
+              s=s.replace('[-0.09, 51.57, -0.03, 51.62]', '[-0.08, 51.42, 0.03, 51.49]')
+              s=s.replace('[-0.09,51.57,-0.03,51.62]', '[-0.08,51.42,0.03,51.49]')
+              s=s.replace('Tottenham','Lewisham').replace('TOTTENHAM','LEWISHAM').replace('tottenham','lewisham')
+              s=s.replace('Haringey','Lewisham').replace('HARINGEY','LEWISHAM').replace('haringey','lewisham')
+              for a,b in [
+                  ('__COUNT_BEFORE__','8050'),
+                  ('__COUNT_AFTER__','8100'),
+                  ('__COUNT_NEXT__','8150'),
+                  ('__BATCH_CUR__','162'),
+                  ('__BATCH_NEXT__','163'),
+              ]:
+                  s=s.replace(a,b)
+              return s
+
+          steps = [
+              'Execute guarded batch157',
+              'Normalize metadata and validate exact batch157',
+              'Commit and push exact slot outputs',
+              'Remote readback',
+          ]
+          for i, name in enumerate(steps, 1):
+              script = transform(extract_run(name))
+              p = Path(f'/tmp/bt2_batch162_step{i}.sh')
+              p.write_text(script, encoding='utf-8')
+              subprocess.run(['bash', str(p)], check=True)
+          PY
