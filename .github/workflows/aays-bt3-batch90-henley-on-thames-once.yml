@@ -1,0 +1,158 @@
+name: AAYS building_type_3 batch90 Henley-on-Thames once
+on:
+  push:
+    paths:
+      - '.github/workflows/aays-bt3-batch90-henley-on-thames-once.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-building-type-3-batch90-henley-on-thames
+  cancel-in-progress: false
+jobs:
+  classify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 50
+          clean: false
+      - name: Sync branch without reset clean or force
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+      - name: Reuse proven batch runner for Batch 90 Henley-on-Thames
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, re, textwrap
+          base_path='.github/workflows/aays-bt3-batch85-amersham-once.yml'
+          text=open(base_path,encoding='utf-8').read()
+          m=re.search(r"python - <<'PY'\n(.*?)\n          PY",text,re.S)
+          if not m:
+              raise SystemExit('BASE_RUNNER_BLOCK_NOT_FOUND')
+          src=textwrap.dedent(m.group(1))
+          replacements={
+              "BATCH=85":"BATCH=90",
+              "CITY='Amersham'":"CITY='Henley-on-Thames'",
+              "GRID='uk-grid-amersham-central-001'":"GRID='uk-grid-henley-on-thames-central-001'",
+              "LOCAL_AUTHORITY='Buckinghamshire'":"LOCAL_AUTHORITY='Oxfordshire'",
+              "EXPECTED_BEFORE=8950":"EXPECTED_BEFORE=9200",
+              "building_type_3 batch85":"building_type_3 batch90",
+              "Amersham central tiled grid -0.6320,51.6600,-0.5840,51.6900":"Henley-on-Thames central tiled grid -0.9300,51.5200,-0.8800,51.5600",
+              "OpenStreetMap API 0.6 map - Amersham Batch 85":"OpenStreetMap API 0.6 map - Henley-on-Thames Batch 90",
+          }
+          for old,new in replacements.items():
+              if old not in src:
+                  raise SystemExit('PATCH_TOKEN_MISSING '+old)
+              src=src.replace(old,new)
+          new_tiles="""tiles=[
+              (-0.9300,51.5200,-0.9200,51.5300),
+              (-0.9200,51.5200,-0.9100,51.5300),
+              (-0.9100,51.5200,-0.9000,51.5300),
+              (-0.9000,51.5200,-0.8900,51.5300),
+              (-0.8900,51.5200,-0.8800,51.5300),
+              (-0.9300,51.5300,-0.9200,51.5400),
+              (-0.9200,51.5300,-0.9100,51.5400),
+              (-0.9100,51.5300,-0.9000,51.5400),
+              (-0.9000,51.5300,-0.8900,51.5400),
+              (-0.8900,51.5300,-0.8800,51.5400),
+              (-0.9300,51.5400,-0.9200,51.5500),
+              (-0.9200,51.5400,-0.9100,51.5500),
+              (-0.9100,51.5400,-0.9000,51.5500),
+              (-0.9000,51.5400,-0.8900,51.5500),
+              (-0.8900,51.5400,-0.8800,51.5500),
+              (-0.9300,51.5500,-0.9200,51.5600),
+              (-0.9200,51.5500,-0.9100,51.5600),
+              (-0.9100,51.5500,-0.9000,51.5600),
+              (-0.9000,51.5500,-0.8900,51.5600),
+              (-0.8900,51.5500,-0.8800,51.5600),
+          ]"""
+          src,n=re.subn(r"tiles=\[\n.*?\n\]\n\nshard_path=",new_tiles+"\n\nshard_path=",src,count=1,flags=re.S)
+          if n!=1:
+              raise SystemExit('TILE_PATCH_FAILED')
+          needle="'source_hash_method':'sha256_concatenated_osm_api_tiles',\n              'match_method':"
+          repl="'source_hash_method':'sha256_concatenated_osm_api_tiles',\n              'accessed_at':now,\n              'fields_used':fields_used,\n              'match_method':"
+          if needle not in src:
+              raise SystemExit('RECORD_FIELD_PATCH_FAILED')
+          src=src.replace(needle,repl,1)
+          ns={}
+          exec(compile(src,'batch90_reused_runner.py','exec'),ns,ns)
+
+          report_path='docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json'
+          cp_path='docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json'
+          status_path='docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json'
+          task_path='docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json'
+          manifest_path='england_map_web/data/building_type/shards/building_type_3_manifest_latest.json'
+          def load(p):
+              return json.load(open(p,encoding='utf-8'))
+          def dump(p,o):
+              with open(p,'w',encoding='utf-8') as f:
+                  json.dump(o,f,ensure_ascii=False,indent=2); f.write('\n')
+          report=load(report_path)
+          no_evidence=bool(report.get('no_evidence_this_batch',0))
+          report['NO_EVIDENCE_THIS_BATCH']=no_evidence
+          report['fields_used']=['building','amenity','shop','office','tourism','landuse','address tags']
+          report['match_method']='closed OSM building way + direct element ID/centroid; exact processed-ID exclusion'
+          report['fake_data']=False
+          report['final_ready']=False
+          dump(report_path,report)
+          for p in (cp_path,status_path):
+              o=load(p); o['NO_EVIDENCE_THIS_BATCH']=no_evidence; o['READ_FALLBACK_USED']=False
+              o['next_city']='Thame'; o['next_grid_id']='uk-grid-thame-central-001'; o['fake_data']=False; o['final_ready']=False
+              dump(p,o)
+          task=load(task_path); task['next_city']='Thame'; task['next_grid_id']='uk-grid-thame-central-001'; task['owner']=None; task['fake_data']=False; task['final_ready']=False; dump(task_path,task)
+          manifest=load(manifest_path); manifest['fake_data']=False; manifest['final_ready']=False; dump(manifest_path,manifest)
+          print('BATCH90_POSTPATCH',json.dumps({'before':report.get('feature_count_before'),'attempted':report.get('attempted_parcels'),'added':report.get('added_feature_count'),'after':report.get('feature_count_after'),'NO_EVIDENCE_THIS_BATCH':no_evidence,'next_city':'Thame'},ensure_ascii=False))
+          PY
+      - name: Guard remote state then commit explicit outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json > /tmp/remote_cp.json
+          python - <<'PY'
+          import json
+          cp=json.load(open('/tmp/remote_cp.json'))
+          assert cp.get('continuation_key')=='03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e'
+          assert cp.get('current_feature_count')==9200, cp.get('current_feature_count')
+          assert cp.get('next_batch_index')==90, cp.get('next_batch_index')
+          assert cp.get('fake_data') is False
+          assert cp.get('final_ready') is False
+          PY
+          shard='england_map_web/data/building_type/shards/building_type_3_latest.geojson'
+          manifest='england_map_web/data/building_type/shards/building_type_3_manifest_latest.json'
+          classout='docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json'
+          checkpoint='docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json'
+          status='docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json'
+          task='docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json'
+          git add -- "$shard" "$manifest" "$classout" "$checkpoint" "$status" "$task"
+          if git diff --cached --quiet; then
+            echo 'NO_EVIDENCE_THIS_BATCH: no output changes'
+            exit 0
+          fi
+          git commit -m 'data(aays): building_type_3 batch90 Henley-on-Thames'
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json > /tmp/readback_cp.json
+          git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json > /tmp/readback_report.json
+          python - <<'PY'
+          import json
+          cp=json.load(open('/tmp/readback_cp.json'))
+          r=json.load(open('/tmp/readback_report.json'))
+          assert cp.get('continuation_key')=='03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e'
+          assert r.get('batch_index')==90
+          assert r.get('attempted_parcels')==50
+          assert r.get('fake_data') is False and r.get('final_ready') is False
+          print('REMOTE_READBACK',json.dumps({'before':r.get('feature_count_before'),'attempted':r.get('attempted_parcels'),'added':r.get('added_feature_count'),'after':r.get('feature_count_after'),'confidence':r.get('confidence_level_distribution'),'evidence':r.get('evidence_level_distribution'),'no_evidence':r.get('NO_EVIDENCE_THIS_BATCH'),'next_batch':cp.get('next_batch_index'),'next_city':cp.get('next_city'),'next_grid':cp.get('next_grid_id')},ensure_ascii=False))
+          PY
