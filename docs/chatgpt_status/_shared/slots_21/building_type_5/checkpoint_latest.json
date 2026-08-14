@@ -7,26 +7,29 @@
   "shard_index": 5,
   "region": "East of England",
   "region_code": "EE",
-  "sequence": 0,
-  "hydration_state": "REMOTE_HEAD_HYDRATED_FIRST_UNVERIFIED_PRESERVED",
+  "sequence": 1,
+  "hydration_state": "BLOCKED_PUBLISH_STATE_MISMATCH_AFTER_REPAIR",
   "remote_head": "7135c4a197ad75bad2d8de9aae0869cd66496636",
   "first_unverified_step": "AŞAMA_1_OSM_GENISLETME_APPEND_NEW_BATCH_THEN_OPTIONAL_EPC_VOA_HMLR_UPGRADE",
-  "first_unverified_step_status": "AWAITING_FIRST_RUN_UNDER_9_SLOT_SYSTEM",
+  "first_unverified_step_status": "BLOCKED_BY_STATE_COUNT_OWNER_MISMATCH",
   "terminal_no_replay": [],
-  "terminal_status": "FRESH_SLOT_READY_FOR_V1",
-  "updated_at": "2026-08-14T13:54:50Z",
+  "terminal_status": "NEW_PAGE_RESUME_READY",
+  "updated_at": "2026-08-14T14:03:00Z",
   "final_ready": false,
   "summary": {
     "osm_pilot_classified": 0,
     "new_slot": true,
-    "pipeline_stage": 1
+    "pipeline_stage": 1,
+    "progress_count_delta": 0,
+    "new_features_appended": 0
   },
   "remaining_items": {
     "osm_building_tag_scan_pending": true,
     "epc_residential_pending": true
   },
-  "state": "CHECKPOINT_READY",
-  "feature_count_before": 300,
+  "state": "NEW_PAGE_RESUME_READY",
+  "status": "NEW_PAGE_RESUME_READY",
+  "feature_count_before": 1500,
   "feature_count_after": 1500,
   "current_feature_count": 1500,
   "next_batch_index": 7,
@@ -53,10 +56,39 @@
     "ENG_OSM_node_1995652117",
     "ENG_OSM_node_1995652139"
   ],
-  "next_required_action": "APPEND_ONLY_NEW_BATCH_DO_NOT_REPROCESS_EXISTING_FEATURES",
+  "already_processed_ids_policy": "Treat prior processed identifiers as terminal; never replay them.",
+  "next_required_action": "CODEX_RECONCILE_BUILDING_TYPE_5_CHECKPOINT_STATUS_CURRENT_TASK_COUNTS_AND_OWNER_THEN_RESUME_BATCH_7_WITH_SAME_CONTINUATION_KEY",
   "fake_data": false,
   "continuation_key": "building-type-5-england-classification-v1-20260808",
+  "task_id": "building-type-5-england-classification-v1-20260808",
   "production_merge": false,
   "resume_metadata_repaired_at": "2026-08-14T13:54:50Z",
-  "resume_metadata_repair_reason": "restored_existing_recovery_continuation_key_without_replaying_features"
+  "resume_metadata_repair_reason": "restored_existing_recovery_continuation_key_without_replaying_features",
+  "progress_counted": false,
+  "state_readback": {
+    "checkpoint_current_feature_count": 1500,
+    "checkpoint_next_batch_index": 7,
+    "status_total_elements": 300,
+    "status_owner": "codex-deepseek-batch-session",
+    "current_task_completed_count": 0,
+    "current_task_owner": null,
+    "continuation_key_consistent": true,
+    "task_id_consistent": true,
+    "recovery_result": "NOT_FOUND_404",
+    "source_processing_attempted": false,
+    "endpoint_retry_count": 0
+  },
+  "blocker": {
+    "code": "BLOCKED_PUBLISH_STATE_MISMATCH",
+    "detail": "Post-repair state is internally inconsistent: checkpoint current_feature_count=1500, status total_elements=300, current_task completed_count=0; status owner is codex-deepseek-batch-session while current_task owner is null. Per control protocol no source endpoint was queried and no shard/manifest was changed.",
+    "evidence_url_or_path": "docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json",
+    "next_index": 7
+  },
+  "control_request": {
+    "problem": "publish_state_count_owner_mismatch_after_reconciliation",
+    "safe_requested_fix": "state_manifest_web_integration_only",
+    "do_not_change_prompts": true,
+    "do_not_create_fake_data": true
+  },
+  "new_page_resume_ready": true
 }
