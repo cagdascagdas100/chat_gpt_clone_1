@@ -1,0 +1,105 @@
+name: AAYS building_type_3 batch95 Chalfont St Giles once
+on:
+  push:
+    paths:
+      - '.github/workflows/aays-bt3-batch95-chalfont-st-giles-once.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-building-type-3-batch95-chalfont-st-giles
+  cancel-in-progress: false
+jobs:
+  classify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 50
+          clean: false
+      - name: Sync branch without reset clean or force
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+      - name: Batch 95 classify and append exactly 50 attempts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, re, textwrap
+          base_path='.github/workflows/aays-bt3-batch90-henley-on-thames-retry1.yml'
+          text=open(base_path,encoding='utf-8').read()
+          m=re.search(r"python - <<'PY'\n(.*?)\n          PY",text,re.S)
+          if not m:
+              raise SystemExit('BASE_RUNNER_BLOCK_NOT_FOUND')
+          src=textwrap.dedent(m.group(1))
+          old_tiles="tiles=[(-0.9300,51.5200,-0.9200,51.5300),(-0.9200,51.5200,-0.9100,51.5300),(-0.9100,51.5200,-0.9000,51.5300),(-0.9000,51.5200,-0.8900,51.5300),(-0.8900,51.5200,-0.8800,51.5300),(-0.9300,51.5300,-0.9200,51.5400),(-0.9200,51.5300,-0.9100,51.5400),(-0.9100,51.5300,-0.9000,51.5400),(-0.9000,51.5300,-0.8900,51.5400),(-0.8900,51.5300,-0.8800,51.5400),(-0.9300,51.5400,-0.9200,51.5500),(-0.9200,51.5400,-0.9100,51.5500),(-0.9100,51.5400,-0.9000,51.5500),(-0.9000,51.5400,-0.8900,51.5500),(-0.8900,51.5400,-0.8800,51.5500),(-0.9300,51.5500,-0.9200,51.5600),(-0.9200,51.5500,-0.9100,51.5600),(-0.9100,51.5500,-0.9000,51.5600),(-0.9000,51.5500,-0.8900,51.5600),(-0.8900,51.5500,-0.8800,51.5600)]"
+          new_tiles="tiles=[(-0.6200,51.6000,-0.6100,51.6100),(-0.6100,51.6000,-0.6000,51.6100),(-0.6000,51.6000,-0.5900,51.6100),(-0.5900,51.6000,-0.5800,51.6100),(-0.5800,51.6000,-0.5700,51.6100),(-0.5700,51.6000,-0.5600,51.6100),(-0.5600,51.6000,-0.5500,51.6100),(-0.5500,51.6000,-0.5400,51.6100),(-0.5400,51.6000,-0.5300,51.6100),(-0.6200,51.6100,-0.6100,51.6200),(-0.6100,51.6100,-0.6000,51.6200),(-0.6000,51.6100,-0.5900,51.6200),(-0.5900,51.6100,-0.5800,51.6200),(-0.5800,51.6100,-0.5700,51.6200),(-0.5700,51.6100,-0.5600,51.6200),(-0.5600,51.6100,-0.5500,51.6200),(-0.5500,51.6100,-0.5400,51.6200),(-0.5400,51.6100,-0.5300,51.6200),(-0.6200,51.6200,-0.6100,51.6300),(-0.6100,51.6200,-0.6000,51.6300),(-0.6000,51.6200,-0.5900,51.6300),(-0.5900,51.6200,-0.5800,51.6300),(-0.5800,51.6200,-0.5700,51.6300),(-0.5700,51.6200,-0.5600,51.6300),(-0.5600,51.6200,-0.5500,51.6300),(-0.5500,51.6200,-0.5400,51.6300),(-0.5400,51.6200,-0.5300,51.6300),(-0.6200,51.6300,-0.6100,51.6400),(-0.6100,51.6300,-0.6000,51.6400),(-0.6000,51.6300,-0.5900,51.6400),(-0.5900,51.6300,-0.5800,51.6400),(-0.5800,51.6300,-0.5700,51.6400),(-0.5700,51.6300,-0.5600,51.6400),(-0.5600,51.6300,-0.5500,51.6400),(-0.5500,51.6300,-0.5400,51.6400),(-0.5400,51.6300,-0.5300,51.6400),(-0.6200,51.6400,-0.6100,51.6500),(-0.6100,51.6400,-0.6000,51.6500),(-0.6000,51.6400,-0.5900,51.6500),(-0.5900,51.6400,-0.5800,51.6500),(-0.5800,51.6400,-0.5700,51.6500),(-0.5700,51.6400,-0.5600,51.6500),(-0.5600,51.6400,-0.5500,51.6500),(-0.5500,51.6400,-0.5400,51.6500),(-0.5400,51.6400,-0.5300,51.6500),(-0.6200,51.6500,-0.6100,51.6600),(-0.6100,51.6500,-0.6000,51.6600),(-0.6000,51.6500,-0.5900,51.6600),(-0.5900,51.6500,-0.5800,51.6600),(-0.5800,51.6500,-0.5700,51.6600),(-0.5700,51.6500,-0.5600,51.6600),(-0.5600,51.6500,-0.5500,51.6600),(-0.5500,51.6500,-0.5400,51.6600),(-0.5400,51.6500,-0.5300,51.6600)]"
+          replacements={
+              "BATCH=90; CITY='Henley-on-Thames'; GRID='uk-grid-henley-on-thames-central-001'; REGION='South East'; LOCAL_AUTHORITY='Oxfordshire'; TARGET=50; EXPECTED_BEFORE=9200":"BATCH=95; CITY='Chalfont St Giles'; GRID='uk-grid-chalfont-st-giles-central-001'; REGION='South East'; LOCAL_AUTHORITY='Buckinghamshire'; TARGET=50; EXPECTED_BEFORE=9450",
+              old_tiles:new_tiles,
+              "building_type_3 batch90":"building_type_3 batch95",
+              "Henley-on-Thames central tiled grid -0.9300,51.5200,-0.8800,51.5600":"Chalfont St Giles central tiled grid -0.6200,51.6000,-0.5300,51.6600",
+              "OpenStreetMap API 0.6 map - Henley-on-Thames Batch 90":"OpenStreetMap API 0.6 map - Chalfont St Giles Batch 95",
+              "'next_city':'Thame','next_grid_id':'uk-grid-thame-central-001'":"'next_city':'Chalfont St Peter','next_grid_id':'uk-grid-chalfont-st-peter-central-001'",
+              "BATCH90_RESULT":"BATCH95_RESULT",
+          }
+          for old,new in replacements.items():
+              if old not in src:
+                  raise SystemExit('PATCH_TOKEN_MISSING '+old[:120])
+              src=src.replace(old,new)
+          ns={}
+          exec(compile(src,'batch95_chalfont_st_giles_runner.py','exec'),ns,ns)
+          fallback_reason='GitHub connector omitted the large shard body; Actions runner read the full checked-out shard and built exact processed-ID exclusions.'
+          paths=[
+              'docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json',
+              'docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json',
+              'docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json',
+          ]
+          for p in paths:
+              obj=json.load(open(p,encoding='utf-8'))
+              obj['READ_FALLBACK_USED']=True
+              obj['read_fallback_reason']=fallback_reason
+              with open(p,'w',encoding='utf-8') as f:
+                  json.dump(obj,f,ensure_ascii=False,indent=2); f.write('\n')
+          PY
+      - name: Guard remote state commit and push explicit slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json > /tmp/remote_cp.json
+          python - <<'PY'
+          import json
+          cp=json.load(open('/tmp/remote_cp.json'))
+          assert cp.get('continuation_key')=='03d44e69b0c48954f68ecf6b86773a0e24affd56956a1cdfee6ccd900658161e'
+          assert cp.get('current_feature_count')==9450, cp.get('current_feature_count')
+          assert cp.get('next_batch_index')==95, cp.get('next_batch_index')
+          assert cp.get('fake_data') is False
+          assert cp.get('final_ready') is False
+          PY
+          git add -- england_map_web/data/building_type/shards/building_type_3_latest.geojson england_map_web/data/building_type/shards/building_type_3_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_3/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_3/current_task_latest.json
+          if git diff --cached --quiet; then echo 'NO_EVIDENCE_THIS_BATCH: no output changes'; exit 0; fi
+          git commit -m 'data(aays): building_type_3 batch95 Chalfont St Giles'
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/_shared/slots_21/building_type_3/checkpoint_latest.json > /tmp/cp.json
+          git show origin/codex/aays-single-runner-v5-20260706:docs/chatgpt_status/building_type/slots/building_type_3/runner_outputs/building_type_3_classification_latest.json > /tmp/r.json
+          python - <<'PY'
+          import json
+          cp=json.load(open('/tmp/cp.json')); r=json.load(open('/tmp/r.json'))
+          assert r.get('batch_index')==95
+          assert r.get('attempted_parcels')==50
+          assert r.get('fake_data') is False and r.get('final_ready') is False
+          assert r.get('READ_FALLBACK_USED') is True
+          print('REMOTE_READBACK',json.dumps({'before':r.get('feature_count_before'),'attempted':r.get('attempted_parcels'),'added':r.get('added_feature_count'),'after':r.get('feature_count_after'),'confidence':r.get('confidence_level_distribution'),'evidence':r.get('evidence_level_distribution'),'NO_EVIDENCE_THIS_BATCH':r.get('NO_EVIDENCE_THIS_BATCH'),'READ_FALLBACK_USED':r.get('READ_FALLBACK_USED'),'next_batch':cp.get('next_batch_index'),'next_city':cp.get('next_city'),'next_grid':cp.get('next_grid_id')},ensure_ascii=False))
+          PY
