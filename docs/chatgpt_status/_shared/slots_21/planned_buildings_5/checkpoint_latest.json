@@ -5,15 +5,33 @@
   "slot_id": "planned_buildings_5",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_5_open_source_v2_20260813",
-  "updated_at": "2026-08-13T14:00:46Z",
+  "updated_at": "2026-08-14T14:39:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
-  "state": "CHECKPOINT_READY",
+  "state": "NEW_PAGE_RESUME_READY",
   "feature_count_before": 0,
   "feature_count_after": 0,
   "already_processed_ids": [],
   "next_source_index": 0,
   "next_batch_index": 0,
-  "next_action": "Read contract, registry, current shard/evidence if present; process first open official/free source batch without duplicates."
+  "control_check": {
+    "checked_at": "2026-08-14T14:39:00Z",
+    "source_attempted_this_turn": false,
+    "recovery_latest_present": false,
+    "continuation_key_consistent": true,
+    "duplicate_task_created": false,
+    "duplicate_owner_created": false,
+    "publish_state_mismatch": true,
+    "stale_state_detected": true,
+    "reason": "On branch codex/aays-single-runner-v5-20260706 the checkpoint/status/current_task remain at the 2026-08-13 state; current_task write_outputs reference state/slots/planned_buildings_5 rather than the canonical docs/chatgpt_status/_shared/slots_21/planned_buildings_5 continuation path, and recovery_latest.json is absent. Do not retry source index 0 or advance until Codex reconciles state/manifest/web integration."
+  },
+  "codex_control": {
+    "problem": "publish/state mismatch and stale canonical branch state; current_task write paths are noncanonical and no recovery evidence confirms integration repair",
+    "evidence_path": "docs/chatgpt_status/_shared/slots_21/planned_buildings_5/current_task_latest.json",
+    "safe_requested_fix": "state_manifest_web_integration_only",
+    "do_not_change_prompts": true,
+    "do_not_create_fake_data": true
+  },
+  "next_action": "Wait for Codex state/manifest/web integration control on the canonical branch. Do not retry source_index=0 and do not advance next_source_index until the canonical write paths and recovery/readback state are reconciled; keep the same continuation_key."
 }
