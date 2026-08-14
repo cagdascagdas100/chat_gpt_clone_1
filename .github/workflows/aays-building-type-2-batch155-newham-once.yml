@@ -1,4 +1,5 @@
 name: AAYS building_type_2 batch155 Newham one-shot
+# trigger-after-workflow-index
 
 on:
   push:
@@ -163,7 +164,6 @@ jobs:
           s['read_fallback_status']='READ_FALLBACK_USED'; s['read_fallback_reason']='recovery_latest.json was not found during preflight; readable checkpoint/status/shard/manifest were used.'
           r['grid_id']='uk-grid-newham-001'; r['local_authority']='Newham'; r['region']='London Outer'
           r['read_fallback_status']='READ_FALLBACK_USED'; r['read_fallback_reason']='recovery_latest.json was not found during preflight; readable checkpoint/status/shard/manifest were used.'
-          # Normalize manifest batch metadata and source label without writing raw source.
           for src in reversed(m.get('sources') or []):
               if src.get('source_sha256')==r.get('source_sha256') and src.get('features_used')==50:
                   src['name']='OpenStreetMap Overpass API - Newham/Newham'
