@@ -1,0 +1,190 @@
+name: AAYS building_type_2 batch156 Greenwich one-shot
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-batch156-greenwich-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-2-batch156-greenwich-once
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 90
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-6-batch26-skegness-once.yml
+            .github/workflows/aays-building-type-2-batch153-barking-once.yml
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
+
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          sha256sum docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json > /tmp/current_task.before.sha256
+
+      - name: Execute guarded batch156
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('.github/workflows/aays-building-type-2-batch153-barking-once.yml').read_text()
+          anchor='      - name: Execute guarded batch153\n'
+          part=src[src.index(anchor):]
+          marker="          python - <<'PY'\n"
+          start=part.index(marker)+len(marker)
+          end=part.index("\n          PY",start)
+          outer='\n'.join(line[10:] if line.startswith('          ') else line for line in part[start:end].splitlines())+'\n'
+          replacements={
+            "'CITY = \"Skegness\"':'CITY = \"Barking\"'":"'CITY = \"Skegness\"':'CITY = \"Greenwich\"'",
+            "'LOCAL_AUTHORITY = \"East Lindsey\"':'LOCAL_AUTHORITY = \"Barking and Dagenham\"'":"'LOCAL_AUTHORITY = \"East Lindsey\"':'LOCAL_AUTHORITY = \"Greenwich\"'",
+            "'BATCH_INDEX = 26':'BATCH_INDEX = 153'":"'BATCH_INDEX = 26':'BATCH_INDEX = 156'",
+            "'EXPECTED_BEFORE = 2250':'EXPECTED_BEFORE = 7600'":"'EXPECTED_BEFORE = 2250':'EXPECTED_BEFORE = 7750'",
+            "'TARGET_AFTER = 2500':'TARGET_AFTER = 7650'":"'TARGET_AFTER = 2500':'TARGET_AFTER = 7800'",
+            "'NEXT_TARGET = 2750':'NEXT_TARGET = 7700'":"'NEXT_TARGET = 2750':'NEXT_TARGET = 7850'",
+            "'BBOX = [0.20, 53.08, 0.48, 53.21]':'BBOX = [0.04, 51.50, 0.20, 51.59]'":"'BBOX = [0.20, 53.08, 0.48, 53.21]':'BBOX = [0.00, 51.46, 0.08, 51.51]'",
+            ".replace('Skegness','Barking').replace('SKEGNESS','BARKING').replace('skegness','barking')":".replace('Skegness','Greenwich').replace('SKEGNESS','GREENWICH').replace('skegness','greenwich')",
+            "\"grid_id\": \"uk-grid-barking-001\"":"\"grid_id\": \"uk-grid-greenwich-001\"",
+            "/tmp/bt2_b153.py":"/tmp/bt2_b156.py"
+          }
+          for old,new in replacements.items():
+              if old not in outer:
+                  raise SystemExit(f'missing batch153 outer token: {old}')
+              outer=outer.replace(old,new)
+          exec(compile(outer,'<batch156-generator>','exec'),{})
+          p=Path('/tmp/bt2_b156.py')
+          code=p.read_text()
+          old='candidates.sort(key=lambda row: (not row[0], not row[1], row[2]))\nchosen = candidates[:ADD_COUNT]\nif len(chosen) < ADD_COUNT:\n    raise SystemExit(f"only {len(chosen)} new geometry-bearing candidates; need >= {ADD_COUNT}")'
+          new='candidates.sort(key=lambda row: (not row[0], not row[1], row[2]))\nevidence_candidates = [row for row in candidates if row[0] and row[1]]\nchosen = evidence_candidates[:ADD_COUNT]\nif len(chosen) < ADD_COUNT:\n    raise SystemExit(f"NO_EVIDENCE_THIS_BATCH: only {len(evidence_candidates)} new evidence-backed candidates; need >= {ADD_COUNT}; no fake data written")'
+          if old not in code: raise SystemExit('missing candidate selection token')
+          code=code.replace(old,new,1)
+          old='if {fid, pid, osmid, engfid, str(oid), f"{typ}_{oid}"} & already:'
+          new='if {fid, pid, osmid, engfid, str(oid), f"{typ}_{oid}", f"https://www.openstreetmap.org/{typ}/{oid}"} & already:'
+          if old not in code: raise SystemExit('missing candidate dedupe token')
+          code=code.replace(old,new,1)
+          old='"source_url": object_url,'
+          new='"source_url": object_url,\n                  "source_ref": object_url,'
+          if old not in code: raise SystemExit('missing source_ref insertion token')
+          code=code.replace(old,new,1)
+          code=code.replace('Greenwich/East Lindsey','Greenwich/Greenwich')
+          code=code.replace('greenwich_east_lindsey_source_sha256','greenwich_greenwich_source_sha256')
+          p.write_text(code)
+          PY
+          python /tmp/bt2_b156.py
+          sha256sum -c /tmp/current_task.before.sha256
+
+      - name: Normalize metadata and validate exact batch156
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,pathlib
+          G=pathlib.Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          M=pathlib.Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          C=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          S=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          R=pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          T=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          def load(p): return json.load(open(p,encoding='utf-8'))
+          def dump(p,x): p.write_text(json.dumps(x,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          g,m,c,s,r,t=map(load,(G,M,C,S,R,T))
+          assert len(g['features'])==7800 and m.get('total_features')==7800
+          assert c['feature_count_before']==7750 and c['feature_count_after']==7800 and c['next_batch_index']==157
+          assert s['total_elements']==7800
+          assert r.get('city')=='Greenwich' and len(r.get('records') or [])==50
+          assert t['task_id']=='building-type-2-england-classification-v1-20260808'
+          assert t.get('owner') in (None,'') and (t.get('continuation_key') or '')==''
+          rec=r['records']
+          for z in rec:
+              assert z.get('parcel_id') and z.get('osm_id') and z.get('source_ref') and z.get('building_type_primary')
+              assert z.get('confidence_level_1_to_4')==3 and z.get('confidence_score') is not None and z.get('evidence_level')=='B'
+              assert z.get('source_url') and z.get('sources') and z.get('fake_data') is False and z.get('final_ready') is False
+              assert z.get('city')=='Greenwich' and z.get('grid_id')=='uk-grid-greenwich-001'
+              for src in z['sources']:
+                  assert (src.get('url') or src.get('url_or_local_path')) and src.get('accessed_at') and src.get('fields_used') and src.get('match_method')
+          seen=set()
+          for f in g['features']:
+              p=f.get('properties') or {}
+              vals={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')) if v not in (None,'')}
+              assert not (seen & vals); seen.update(vals)
+          keys=sorted(seen); digest=hashlib.sha256(('\n'.join(keys)+'\n').encode()).hexdigest()
+          new_ids=[z.get('feature_id') for z in rec]
+          last={'batch_index':156,'city':'Greenwich','local_authority':'Greenwich','grid_id':'uk-grid-greenwich-001','bbox_wgs84':[0.00,51.46,0.08,51.51],'added_feature_count':50,'source':'OpenStreetMap Overpass API','source_url':r.get('source_url'),'source_sha256':r.get('source_sha256'),'classification_basis':'deterministic_osm_building_use_tag_rules_v1','evidence_level_distribution':r.get('evidence_distribution_new') or {},'confidence_level_distribution':r.get('confidence_distribution_new') or {},'new_feature_ids':new_ids,'evidence_level':'B'}
+          c['last_batch']=last; c['summary']['note']='PROGRESS: feature_count 7750 -> 7800; 50 unique Greenwich OSM building elements appended after feature.id/parcel_id/osm_id/source_ref exclusion.'; c['summary']['current_feature_count']=7800
+          c['remaining_items']['note']='Next step batch 157: treat all 7800 feature.id/parcel_id/osm_id/source_ref values as already_processed_ids and append exactly 50 new London Outer features; do not replay prior records.'
+          c['last_city']='Greenwich'; c['last_batch_index']=156; c['last_grid_id']='uk-grid-greenwich-001'; c['last_bbox_wgs84']=[0.00,51.46,0.08,51.51]; c['next_city_index']=157
+          attempted=list(c.get('attempted_cities') or []); attempted.append('Greenwich') if 'Greenwich' not in attempted else None; c['attempted_cities']=attempted
+          c['already_processed_ids']={'strategy':'derived_from_latest_shard_feature.id_plus_parcel_id_plus_osm_id_plus_source_ref','unique_key_count':len(keys),'sha256_sorted_newline_keys':digest,'sample':new_ids[:20]}
+          sae=dict(c.get('source_access_evidence') or {}); sae.pop('greenwich_east_lindsey_source_sha256',None); sae['greenwich_greenwich_source_sha256']=r.get('source_sha256'); c['source_access_evidence']=sae
+          c['read_fallback_status']='READ_FALLBACK_USED'; c['read_fallback_reason']='recovery_latest.json was not found during preflight; readable checkpoint/status/shard/manifest were used.'
+          s['last_batch']=last; s['current_feature_count']=7800; s['total_features']=7800; s['classified']=s.get('classified_count'); s['unknown']=s.get('unknown_count'); s['confidence_level_distribution']=s.get('confidence_distribution')
+          s['last_batch_index']=156; s['last_batch_city']='Greenwich'; s['last_batch_added_feature_count']=50; s['last_batch_source']='OpenStreetMap Overpass API'; s['last_batch_evidence_distribution']=r.get('evidence_distribution_new') or {}; s['last_batch_confidence_distribution']=r.get('confidence_distribution_new') or {}
+          s['progress_reason']='50 new Greenwich OSM building elements appended after feature.id/parcel_id/osm_id/source_ref exclusion'; s['note']='Appended 50 unique Greenwich OSM building elements; no second task/owner created.'; s['read_fallback_status']='READ_FALLBACK_USED'; s['read_fallback_reason']=c['read_fallback_reason']
+          r['grid_id']='uk-grid-greenwich-001'; r['local_authority']='Greenwich'; r['region']='London Outer'; r['read_fallback_status']='READ_FALLBACK_USED'; r['read_fallback_reason']=c['read_fallback_reason']
+          for src in reversed(m.get('sources') or []):
+              if src.get('source_sha256')==r.get('source_sha256') and src.get('features_used')==50:
+                  src['name']='OpenStreetMap Overpass API - Greenwich/Greenwich'; src['url']='https://overpass-api.de/api/interpreter'; src['note']='Runtime-only Overpass response; raw source not committed. building=* evidence from Greenwich/Greenwich bbox.'; break
+          m['feature_count_before']=7750; m['feature_count_after']=7800; m['added_feature_count']=50; m['last_batch_city']='Greenwich'; m['last_batch_source']='OpenStreetMap Overpass API'; m['last_batch_source_sha256']=r.get('source_sha256'); m['last_batch_index']=156; m['last_batch_grid_id']='uk-grid-greenwich-001'; m['last_batch_bbox_wgs84']=[0.00,51.46,0.08,51.51]; m['read_fallback_status']='READ_FALLBACK_USED'; m['read_fallback_reason']=c['read_fallback_reason']
+          dump(M,m); dump(C,c); dump(S,s); dump(R,r)
+          print('LOCAL_VALIDATION_OK building_type_2 7750->7800 batch156 Greenwich')
+          PY
+          sha256sum -c /tmp/current_task.before.sha256
+
+      - name: Commit and push exact slot outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson \
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json \
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json \
+            docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json
+          git diff --cached --quiet && { echo 'No progress'; exit 1; }
+          git commit -m 'data(building_type_2): append Greenwich OSM batch 156 7750->7800'
+          for a in 1 2 3 4 5; do
+            git push origin HEAD:codex/aays-single-runner-v5-20260706 && exit 0
+            git fetch origin codex/aays-single-runner-v5-20260706 --depth=90
+            git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }
+          done
+          exit 1
+
+      - name: Remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=90
+          python - <<'PY'
+          import hashlib,json,subprocess
+          def raw(p): return subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:'+p])
+          def j(p): return json.loads(raw(p))
+          g=j('england_map_web/data/building_type/shards/building_type_2_latest.geojson'); m=j('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json'); c=j('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json'); s=j('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json'); r=j('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json'); t=j('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          assert len(g['features'])==7800 and m.get('total_features')==7800 and m.get('feature_count_before')==7750 and m.get('feature_count_after')==7800 and m.get('last_batch_index')==156
+          assert c['feature_count_before']==7750 and c['feature_count_after']==7800 and c['next_batch_index']==157 and c.get('last_city')=='Greenwich' and c.get('last_grid_id')=='uk-grid-greenwich-001' and c.get('read_fallback_status')=='READ_FALLBACK_USED'
+          assert s.get('total_elements')==7800 and s.get('last_batch_index')==156 and s.get('last_batch_city')=='Greenwich'
+          assert r.get('city')=='Greenwich' and len(r.get('records') or [])==50 and r.get('confidence_distribution_new')=={'3':50} and r.get('evidence_distribution_new')=={'B':50}
+          assert t['task_id']=='building-type-2-england-classification-v1-20260808' and t.get('owner') in (None,'') and (t.get('continuation_key') or '')=='' and t.get('final_ready') is False
+          seen=set()
+          for f in g['features']:
+              p=f.get('properties') or {}; vals={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')) if v not in (None,'')}; assert not (seen & vals); seen.update(vals)
+          digest=hashlib.sha256(('\n'.join(sorted(seen))+'\n').encode()).hexdigest(); assert c['already_processed_ids']['unique_key_count']==len(seen) and c['already_processed_ids']['sha256_sorted_newline_keys']==digest
+          assert all(z.get('fake_data') is False and z.get('final_ready') is False and z.get('confidence_level_1_to_4')==3 and z.get('evidence_level')=='B' and z.get('source_ref') for z in r['records'])
+          print('REMOTE_READBACK_OK building_type_2 7750->7800 batch156 Greenwich next_batch=157 unique_keys='+str(len(seen)))
+          PY
