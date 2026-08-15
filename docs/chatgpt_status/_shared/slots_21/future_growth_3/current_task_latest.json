@@ -5,11 +5,11 @@
   "slot_id": "future_growth_3",
   "slot_family": "future_growth",
   "continuation_key": "future_growth_3_open_source_v2_20260813",
-  "updated_at": "2026-08-15T07:54:17Z",
+  "updated_at": "2026-08-15T08:44:52Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
-  "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
+  "state": "BLOCKED_SOURCE_PAYLOAD_INTEGRITY_REQUIRED",
   "task_id": "future_growth_3_open_source_continuation_v2_20260813",
   "target_output": "AAYS/england_map_web/data/future_growth/shards/future_growth_3_latest.geojson",
   "task_contract": {
@@ -33,9 +33,16 @@
     ]
   },
   "legacy_task_archive": "legacy_state_before_open_source_v2_repair_20260814.json",
-  "blocker": "BLOCKED_REGION_CENTROID_COVERAGE_REQUIRED",
-  "blocker_reason": "East of England için slot kapsamına ait kanonik parsel centroid katmanı yok.",
-  "next_action": "Önce East of England centroid katmanı; sonra official allocation/infrastructure polygon coverage gate.",
+  "blocker": "BLOCKED_EAST_PMTILES_PAYLOAD_INTEGRITY_AND_REMOTE_AUTH_REQUIRED",
+  "blocker_reason": "East PMTiles metadata exposes parcels, but a strict z18 tile directory entry points to a zero-byte payload; the configured Hugging Face canonical URL returns HTTP 401 to an anonymous range request.",
+  "next_action": "Obtain a SHA-256 verified, range-readable canonical East parcel PMTiles archive, then rerun the bounded official polygon pilot.",
   "canonical_checkpoint_path": "state/slots/future_growth_3/checkpoint_latest.json",
-  "prompt_contract_unchanged": true
+  "prompt_contract_unchanged": true,
+  "source_contract": {
+    "source_id": "east_england_pmtiles_parcels",
+    "local_archive": "AAYS/england_map_web/data/east_england.pmtiles",
+    "configured_canonical_url": "https://huggingface.co/datasets/terrayield-tiles/Terra_1/resolve/main/east/parcels.pmtiles",
+    "verified_failure": "local selected z18 payload is all zero bytes; remote anonymous range request HTTP 401",
+    "matching_method": "strict parcel centroid within official project polygon"
+  }
 }
