@@ -5,10 +5,11 @@
   "slot_id": "planned_buildings_5",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_5_open_source_v2_20260813",
-  "updated_at": "2026-08-15T07:54:17Z",
+  "updated_at": "2026-08-16T15:25:14Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
+  "demo_only": true,
   "task_id": "planned_buildings_5_open_source_continuation_v2_20260813",
   "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
   "task_contract": {
@@ -17,6 +18,8 @@
       "F:\\TerraYield_AAYS_Portable\\docs\\AAYS_FG_PB_SLOT_REGISTRY.json",
       "F:\\TerraYield_AAYS_Portable\\docs\\AAYS_FG_PB_COMMON_CONTINUE_PROMPT_V2_OPEN_SOURCE_TR.md"
     ],
+    "repo_state_authority": true,
+    "local_paths_not_used_this_turn": true,
     "allowed_sources": [
       "Planning Data API and bulk downloads",
       "Brownfield Land Register",
@@ -26,23 +29,31 @@
       "Council open GIS/register endpoints that do not require credentials"
     ],
     "write_outputs": [
-      "AAYS/england_map_web/data/program_layer_matrix/planned_buildings.geojson",
-      "state/slots/planned_buildings_5/checkpoint_latest.json",
-      "state/slots/planned_buildings_5/status_latest.json",
-      "state/slots/planned_buildings_5/evidence_manifest_latest.json"
+      "england_map_web/data/planned_buildings/shards/planned_buildings_5_latest.geojson",
+      "england_map_web/data/planned_buildings/shards/planned_buildings_5_manifest_latest.json",
+      "docs/chatgpt_status/_shared/slots_21/planned_buildings_5/checkpoint_latest.json",
+      "docs/chatgpt_status/_shared/slots_21/planned_buildings_5/status_latest.json",
+      "docs/chatgpt_status/_shared/slots_21/planned_buildings_5/current_task_latest.json",
+      "docs/chatgpt_status/_shared/slots_21/planned_buildings_5/recovery_latest.json"
     ],
+    "read_only_target_until_eligible": "england_map_web/data/program_layer_matrix/planned_buildings.geojson",
     "hard_rules": [
       "fake_data=false",
       "final_ready=false until real QA and owner approval",
-      "demo_only=true for demos",
+      "production_merge=false",
+      "demo_only=true for planned_buildings until approved",
+      "planned_building_value and planned_building_probability null unless approved scoring rule exists",
       "planned_building_complete_month only official explicit YYYY-MM",
+      "strict centroid-within-polygon or exact intersection only; nearest matching forbidden",
       "no git reset/clean/force push",
       "large raw data stays in runtime/cache"
     ]
   },
   "blocker": "BLOCKED_DEMO_ONLY_MERGE_GUARD",
-  "blocker_reason": "Hedefte 47 source-point candidate var; bunlar parcel-matched project polygon değildir. PB2 kayıtları da demo_only.",
-  "next_action": "Yalnız QA/onaylı PB1-PB4 polygon shardlarından score/merge yap; complete_month explicit resmi YYYY-MM değilse null tut.",
-  "canonical_checkpoint_path": "state/slots/planned_buildings_5/checkpoint_latest.json",
+  "blocker_reason": "Canonical slot shard/manifest paths are reconciled, but no eligible QA-approved parcel-matched planned-project polygon records are available for append. Program-layer candidates are non-parcel-matched points; reviewed PB1/PB2 evidence is demo_only and/or lacks an explicit production/scoring approval gate.",
+  "next_action": "Do not advance source/batch indexes. Continue only when a QA-approved PB1-PB4 polygon shard or new official polygon source satisfies strict spatial matching; preserve null scoring/month fields unless explicitly approved/supported.",
+  "canonical_checkpoint_path": "docs/chatgpt_status/_shared/slots_21/planned_buildings_5/checkpoint_latest.json",
+  "canonical_shard_path": "england_map_web/data/planned_buildings/shards/planned_buildings_5_latest.geojson",
+  "canonical_manifest_path": "england_map_web/data/planned_buildings/shards/planned_buildings_5_manifest_latest.json",
   "prompt_contract_unchanged": true
 }
