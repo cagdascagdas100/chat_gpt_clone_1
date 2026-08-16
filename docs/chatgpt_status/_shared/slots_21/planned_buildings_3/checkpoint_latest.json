@@ -5,25 +5,25 @@
   "slot_id": "planned_buildings_3",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_3_open_source_v2_20260813",
-  "updated_at": "2026-08-16T17:33:00Z",
+  "updated_at": "2026-08-16T18:00:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
   "demo_only": true,
-  "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
+  "state": "INPUT_REQUIRED",
   "feature_count_before": 0,
   "feature_count_after": 0,
   "already_processed_ids": [],
   "next_source_index": 0,
   "next_batch_index": 1,
   "blocker": {
-    "code": "BLOCKED_STRICT_GEOMETRY_STATUS_REQUIRED",
-    "detail": "Planning Data API source_index=0 batch_index=0 (offset=0, limit=100) returned 100 planning-application records; all had empty geometry and point fields, and this bounded page exposed no planning-application-status field. Strict centroid-within-polygon/exact-intersection plus status evidence is therefore unavailable for this batch.",
-    "previous_blocker": "BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED",
-    "previous_blocker_resolved": true
+    "code": "INPUT_REQUIRED_RUNTIME_SOURCE_BYTES",
+    "detail": "Planning Data API source_index=0 batch_index=1 targets offset=100 limit=100. Official documentation confirms offset pagination, but the exact page-2 response bytes were not retrievable through the available web/runtime paths in this turn. Batch 1 is not consumed and no feature/status/spatial claim was fabricated.",
+    "requires_user_action": false,
+    "previous_blocker": "BLOCKED_STRICT_GEOMETRY_STATUS_REQUIRED"
   },
   "control_check": {
-    "checked_at": "2026-08-16T17:33:00Z",
+    "checked_at": "2026-08-16T18:00:00Z",
     "github_state_access": "OK",
     "continuation_key_match": true,
     "duplicate_owner_or_task_detected": false,
@@ -34,14 +34,16 @@
     "write_path_integration_mismatch": false,
     "unsupported_score_detected": false,
     "incorrect_confidence_detected": false,
-    "source_endpoint_retried": false,
     "previous_batch_repeated": false,
     "official_source_calls_this_turn": 1,
-    "source_records_examined_this_turn": 100,
+    "source_records_examined_this_turn": 0,
     "strict_eligible_records_this_turn": 0,
     "new_source_features_processed_this_turn": 0,
     "new_evidence_records_this_turn": 1,
-    "checkpoint_only_write": false
+    "batch_consumed": false,
+    "web_exact_page_open_succeeded": false,
+    "container_dns_succeeded": false,
+    "repo_cache_hit": false
   },
   "paths": {
     "shard": "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_3_latest.geojson",
@@ -52,29 +54,10 @@
     "recovery": "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/recovery_latest.json"
   },
   "history": [
-    {
-      "at": "2026-08-16T13:54:00Z",
-      "state": "NEW_PAGE_RESUME_READY",
-      "blocker": "STATE_PUBLISH_PATH_MISMATCH",
-      "checkpoint_sha": "c2e909904e2bd42e954076e9467e078c879fc13f"
-    },
-    {
-      "at": "2026-08-16T17:06:00Z",
-      "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
-      "blocker": "BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED",
-      "state_integration_repaired": true
-    },
-    {
-      "at": "2026-08-16T17:33:00Z",
-      "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
-      "source_index": 0,
-      "batch_index": 0,
-      "source_url": "https://www.planning.data.gov.uk/entity.json?dataset=planning-application&limit=100&offset=0",
-      "records_examined": 100,
-      "strict_eligible_records": 0,
-      "feature_count_after": 0,
-      "blocker": "BLOCKED_STRICT_GEOMETRY_STATUS_REQUIRED"
-    }
+    {"at":"2026-08-16T13:54:00Z","state":"NEW_PAGE_RESUME_READY","blocker":"STATE_PUBLISH_PATH_MISMATCH","checkpoint_sha":"c2e909904e2bd42e954076e9467e078c879fc13f"},
+    {"at":"2026-08-16T17:06:00Z","state":"BLOCKED_SOURCE_COVERAGE_REQUIRED","blocker":"BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED","state_integration_repaired":true},
+    {"at":"2026-08-16T17:33:00Z","state":"BLOCKED_SOURCE_COVERAGE_REQUIRED","source_index":0,"batch_index":0,"source_url":"https://www.planning.data.gov.uk/entity.json?dataset=planning-application&limit=100&offset=0","records_examined":100,"strict_eligible_records":0,"feature_count_after":0,"blocker":"BLOCKED_STRICT_GEOMETRY_STATUS_REQUIRED"},
+    {"at":"2026-08-16T18:00:00Z","state":"INPUT_REQUIRED","source_index":0,"batch_index":1,"offset":100,"limit":100,"source_bytes_available":false,"records_examined":0,"strict_eligible_records":0,"feature_count_after":0,"batch_consumed":false,"blocker":"INPUT_REQUIRED_RUNTIME_SOURCE_BYTES"}
   ],
-  "next_action": "Continue the same task at source_index=0 batch_index=1 (offset=100, limit<=100). Add only records with strict spatial evidence plus explicit project status and PB3 project type; otherwise continue bounded source evidence without fabrication."
+  "next_action": "Retry the same source_index=0 batch_index=1 offset=100 only when the official response bytes are accessible to the runtime; do not advance the batch or emit features before strict geometry+status evidence is actually read."
 }
