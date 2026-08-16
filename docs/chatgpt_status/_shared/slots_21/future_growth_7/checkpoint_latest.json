@@ -5,7 +5,7 @@
   "slot_id": "future_growth_7",
   "slot_family": "future_growth",
   "continuation_key": "future_growth_7_open_source_v2_20260813",
-  "updated_at": "2026-08-16T15:33:50Z",
+  "updated_at": "2026-08-16T16:00:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
@@ -49,8 +49,8 @@
   "next_source_index": 1,
   "next_batch_index": 0,
   "blocker": "BLOCKED_RUNTIME_OFFICIAL_GEOMETRY_FETCH_UNAVAILABLE",
-  "blocker_reason": "Open-licensed Scotland parcel and housing-growth sources were identified, but this runtime could not retrieve the raw vector geometry needed for strict centroid-within-polygon or exact intersection: the Clackmannanshire Housing Land Audit WFS returned a web-connector cache miss and runtime DNS resolution failed for both the WFS host and the RoS INSPIRE download host. No spatial match was asserted and no feature was added.",
-  "next_action": "Resume source_index=1,batch_index=0 only when raw official vector geometry is fetchable; use RoS INSPIRE cadastral parcels plus Clackmannanshire Housing Land Audit OGL geometry and accept only strict centroid-within-polygon or exact intersection. Do not retry source_index=0 or duplicate the existing 18 NPF4 source_feature_ids.",
+  "blocker_reason": "Official Scotland parcel and housing-growth metadata are reachable, but raw vector geometry remains unavailable to this execution path: runtime DNS resolution again failed for RoS INSPIRE, Clackmannanshire WFS, and the discovered ArcGIS feature service; web retrieval could read RoS and national Housing Land Supply metadata but raw WFS/GeoJSON exports returned cache-miss/forbidden. Without raw polygon geometry no strict centroid-within-polygon or exact intersection can be proven, so no feature was added.",
+  "next_action": "Keep source_index=1,batch_index=0 and the same continuation_key. On a later run, first test raw RoS cadastral parcel and official housing-growth geometry retrieval; only if both geometries are actually obtained may up to 250 strict centroid-within-polygon or exact-intersection records be appended. Do not reprocess source_index=0 or duplicate the 18 NPF4 source_feature_ids.",
   "reconciliation": {
     "previous_checkpoint_feature_count_after": 0,
     "canonical_shard_feature_count": 18,
@@ -66,5 +66,27 @@
     "growth_source_id": "clackmannanshire_housing_land_audit",
     "parcel_source_id": "ros_inspire_cadastral_parcels",
     "result": "NO_NEW_VERIFIED_RECORDS_TECHNICAL_FETCH_BLOCKER"
-  }
+  },
+  "continuation_attempts": [
+    {
+      "attempted_at": "2026-08-16T15:33:50Z",
+      "source_index": 1,
+      "batch_index": 0,
+      "result": "NO_NEW_VERIFIED_RECORDS_TECHNICAL_FETCH_BLOCKER"
+    },
+    {
+      "attempted_at": "2026-08-16T16:00:00Z",
+      "source_index": 1,
+      "batch_index": 0,
+      "parcel_source_id": "ros_inspire_cadastral_parcels",
+      "growth_source_ids_checked": [
+        "clackmannanshire_housing_land_audit",
+        "housing_land_supply_scotland_2026",
+        "glasgow_city_region_housing_land_supply_2024"
+      ],
+      "raw_geometry_records_read": 0,
+      "spatial_match_executed": false,
+      "result": "BLOCKED_RUNTIME_OFFICIAL_GEOMETRY_FETCH_UNAVAILABLE"
+    }
+  ]
 }
