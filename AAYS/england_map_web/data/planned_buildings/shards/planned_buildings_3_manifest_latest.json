@@ -3,7 +3,7 @@
   "slot_id": "planned_buildings_3",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_3_open_source_v2_20260813",
-  "updated_at": "2026-08-16T18:00:00Z",
+  "updated_at": "2026-08-16T18:24:00Z",
   "state": "INPUT_REQUIRED",
   "feature_count_before": 0,
   "new_records_added": 0,
@@ -16,7 +16,8 @@
     "records_with_application_status_cumulative": 0,
     "strict_spatial_and_status_eligible_cumulative": 0,
     "batch_1_records_examined": 0,
-    "batch_1_source_bytes_available": false
+    "batch_1_source_bytes_available": false,
+    "batch_1_fetch_attempts_cumulative": 2
   },
   "sources_used": [
     "repo_state:docs/chatgpt_status/_shared/slots_21/planned_buildings_3/checkpoint_latest.json",
@@ -62,9 +63,28 @@
       "batch_consumed": false,
       "result": "INPUT_REQUIRED",
       "root_cause": "Official Planning Data API page-2 bytes could not be retrieved by the available runtime paths, so strict spatial/status eligibility cannot be evaluated without inventing evidence."
+    },
+    {
+      "at": "2026-08-16T18:24:00Z",
+      "source_index": 0,
+      "batch_index": 1,
+      "offset": 100,
+      "limit": 100,
+      "official_url": "https://www.planning.data.gov.uk/entity.json?dataset=planning-application&limit=100&offset=100",
+      "web_service_available": false,
+      "web_error": "503_SERVICE_UNAVAILABLE",
+      "container_dns_succeeded": false,
+      "repo_cache_hit": false,
+      "source_bytes_available": false,
+      "records_examined": 0,
+      "strict_eligible_records": 0,
+      "new_records_added": 0,
+      "batch_consumed": false,
+      "result": "INPUT_REQUIRED",
+      "root_cause": "The same official page-2 response bytes remained unavailable on bounded retry; no record-level or spatial/status claim can be made safely."
     }
   ],
-  "source_calls_this_turn": 1,
+  "source_calls_this_turn": 2,
   "source_index": 0,
   "batch_index": 1,
   "next_source_index": 0,
@@ -81,13 +101,14 @@
   "demo_only": true,
   "blocker": {
     "code": "INPUT_REQUIRED_RUNTIME_SOURCE_BYTES",
-    "root_cause": "Planning Data API source_index=0 batch_index=1 cannot be consumed because the official offset=100 response bytes were unavailable to the current runtime; no spatial/status claim can be made safely.",
+    "root_cause": "Planning Data API source_index=0 batch_index=1 remains unconsumed because the official offset=100 response bytes were unavailable on retry; strict spatial/status eligibility cannot be evaluated.",
     "requires_user_action": false
   },
   "history": [
     {"at":"2026-08-16T17:06:00Z","state":"BLOCKED_SOURCE_COVERAGE_REQUIRED","feature_count_after":0,"blocker":"BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED"},
     {"at":"2026-08-16T17:33:00Z","state":"BLOCKED_SOURCE_COVERAGE_REQUIRED","source_index":0,"batch_index":0,"records_examined":100,"new_records_added":0,"feature_count_after":0,"blocker":"BLOCKED_STRICT_GEOMETRY_STATUS_REQUIRED"},
-    {"at":"2026-08-16T18:00:00Z","state":"INPUT_REQUIRED","source_index":0,"batch_index":1,"records_examined":0,"new_records_added":0,"feature_count_after":0,"batch_consumed":false,"blocker":"INPUT_REQUIRED_RUNTIME_SOURCE_BYTES"}
+    {"at":"2026-08-16T18:00:00Z","state":"INPUT_REQUIRED","source_index":0,"batch_index":1,"records_examined":0,"new_records_added":0,"feature_count_after":0,"batch_consumed":false,"blocker":"INPUT_REQUIRED_RUNTIME_SOURCE_BYTES"},
+    {"at":"2026-08-16T18:24:00Z","state":"INPUT_REQUIRED","source_index":0,"batch_index":1,"records_examined":0,"new_records_added":0,"feature_count_after":0,"batch_consumed":false,"retry":true,"blocker":"INPUT_REQUIRED_RUNTIME_SOURCE_BYTES"}
   ],
   "shard_path": "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_3_latest.geojson",
   "checkpoint_path": "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/checkpoint_latest.json"
