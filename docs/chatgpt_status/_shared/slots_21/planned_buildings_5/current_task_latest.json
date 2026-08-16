@@ -5,7 +5,7 @@
   "slot_id": "planned_buildings_5",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_5_open_source_v2_20260813",
-  "updated_at": "2026-08-16T18:01:00Z",
+  "updated_at": "2026-08-16T18:03:30Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
@@ -20,38 +20,14 @@
     ],
     "repo_state_authority": true,
     "local_paths_not_used_this_turn": true,
-    "allowed_sources": [
-      "Planning Data API and bulk downloads",
-      "Brownfield Land Register",
-      "Local Plan datasets",
-      "NSIP CSV/GeoJSON",
-      "UK Infrastructure Pipeline",
-      "Council open GIS/register endpoints that do not require credentials"
-    ],
-    "write_outputs": [
-      "england_map_web/data/planned_buildings/shards/planned_buildings_5_latest.geojson",
-      "england_map_web/data/planned_buildings/shards/planned_buildings_5_manifest_latest.json",
-      "docs/chatgpt_status/_shared/slots_21/planned_buildings_5/checkpoint_latest.json",
-      "docs/chatgpt_status/_shared/slots_21/planned_buildings_5/status_latest.json",
-      "docs/chatgpt_status/_shared/slots_21/planned_buildings_5/current_task_latest.json",
-      "docs/chatgpt_status/_shared/slots_21/planned_buildings_5/recovery_latest.json"
-    ],
+    "allowed_sources": ["Planning Data API and bulk downloads","Brownfield Land Register","Local Plan datasets","NSIP CSV/GeoJSON","UK Infrastructure Pipeline","Council open GIS/register endpoints that do not require credentials"],
+    "write_outputs": ["england_map_web/data/planned_buildings/shards/planned_buildings_5_latest.geojson","england_map_web/data/planned_buildings/shards/planned_buildings_5_manifest_latest.json","docs/chatgpt_status/_shared/slots_21/planned_buildings_5/checkpoint_latest.json","docs/chatgpt_status/_shared/slots_21/planned_buildings_5/status_latest.json","docs/chatgpt_status/_shared/slots_21/planned_buildings_5/current_task_latest.json","docs/chatgpt_status/_shared/slots_21/planned_buildings_5/recovery_latest.json"],
     "read_only_target_until_eligible": "england_map_web/data/program_layer_matrix/planned_buildings.geojson",
-    "hard_rules": [
-      "fake_data=false",
-      "final_ready=false until real QA and owner approval",
-      "production_merge=false",
-      "demo_only=true for planned_buildings until approved",
-      "planned_building_value and planned_building_probability null unless approved scoring rule exists",
-      "planned_building_complete_month only official explicit YYYY-MM",
-      "strict centroid-within-polygon or exact intersection only; nearest matching forbidden",
-      "no git reset/clean/force push",
-      "large raw data stays in runtime/cache"
-    ]
+    "hard_rules": ["fake_data=false","final_ready=false until real QA and owner approval","production_merge=false","demo_only=true for planned_buildings until approved","planned_building_value and planned_building_probability null unless approved scoring rule exists","planned_building_complete_month only official explicit YYYY-MM","strict centroid-within-polygon or exact intersection only; nearest matching forbidden","no git reset/clean/force push","large raw data stays in runtime/cache"]
   },
   "blocker": "BLOCKED_DEMO_ONLY_MERGE_GUARD",
   "single_root_cause": "NO_QA_APPROVED_PARCEL_MATCHED_PROJECT_POLYGON_EVIDENCE",
-  "blocker_reason": "Latest canonical repo scan at 91a0cc4aabd2914244d19c42eca81d0e859dd98e found no append-eligible QA-approved parcel-matched project polygon evidence. PB1 remains demo_only; PB2 remains demo_only and newest canonical event at 17:56:00Z is METHODOLOGY_REQUIRED/MISSING_VERIFIED_SOURCE_CONTRACT with NO_VERIFIED_CONTRACT_IN_REPO_STATE; PB3 has no canonical shard/manifest; PB4 canonical shard remains empty and newest manifest at 17:58:00Z reports no new official geometry/identity evidence. QA-approved parcel-geometry and approved scoring-contract repo searches returned no result.",
+  "blocker_reason": "Latest canonical repo scan plus concurrent upstream recheck at e2469cec5a335384869d93bec5d6b2fe90299dff found no append-eligible QA-approved parcel-matched project polygon evidence. PB1 remains demo_only; PB2 remains demo_only and newest canonical event at 17:56:00Z is METHODOLOGY_REQUIRED/MISSING_VERIFIED_SOURCE_CONTRACT; PB3 now has slot state but no canonical shard/manifest in the planned_buildings shard directory and its 18:00:00Z status is INPUT_REQUIRED_RUNTIME_SOURCE_BYTES with records_examined=0/new_records_added=0; PB4 canonical shard remains empty and latest manifest at 17:58:00Z reports no new official geometry/identity evidence. QA-approved parcel-geometry and approved scoring-contract repo searches returned no result.",
   "source_attempted_this_turn": false,
   "next_action": "Do not advance source/batch indexes and do not blindly retry previously checked official source URLs. Re-read PB1-PB4 and any new QA gate/parcel-geometry evidence on the next bounded turn; append only strict centroid-within-polygon or exact intersection matches. Preserve null scoring and completion fields unless approved/official.",
   "canonical_checkpoint_path": "docs/chatgpt_status/_shared/slots_21/planned_buildings_5/checkpoint_latest.json",
@@ -64,6 +40,7 @@
     {"timestamp":"2026-08-16T16:42:31Z","observed_branch_head":"28381b315b7b621a5ffd0ba89c86dfeda81fad42","result":"BLOCKED","feature_delta":0,"source_index":0,"batch_index":0,"reason":"NO_QA_APPROVED_PARCEL_MATCHED_PROJECT_POLYGON_EVIDENCE"},
     {"timestamp":"2026-08-16T17:09:03Z","observed_branch_head":"b5739e43c8b0b789fe653656be2aaf4e24ae767e","result":"BLOCKED","feature_delta":0,"source_index":0,"batch_index":0,"reason":"NO_QA_APPROVED_PARCEL_MATCHED_PROJECT_POLYGON_EVIDENCE"},
     {"timestamp":"2026-08-16T17:36:10Z","observed_branch_head":"7bf27d6578be896127b525f390bbab68fe8b7665","result":"BLOCKED","feature_delta":0,"source_index":0,"batch_index":0,"source_attempted":true,"reason":"NO_QA_APPROVED_PARCEL_MATCHED_PROJECT_POLYGON_EVIDENCE"},
-    {"timestamp":"2026-08-16T18:01:00Z","observed_branch_head":"91a0cc4aabd2914244d19c42eca81d0e859dd98e","result":"BLOCKED","feature_delta":0,"source_index":0,"batch_index":0,"source_attempted":false,"reason":"NO_QA_APPROVED_PARCEL_MATCHED_PROJECT_POLYGON_EVIDENCE"}
+    {"timestamp":"2026-08-16T18:01:00Z","observed_branch_head":"91a0cc4aabd2914244d19c42eca81d0e859dd98e","result":"BLOCKED","feature_delta":0,"source_index":0,"batch_index":0,"source_attempted":false,"reason":"NO_QA_APPROVED_PARCEL_MATCHED_PROJECT_POLYGON_EVIDENCE"},
+    {"timestamp":"2026-08-16T18:03:30Z","observed_branch_head":"e2469cec5a335384869d93bec5d6b2fe90299dff","result":"BLOCKED","feature_delta":0,"source_index":0,"batch_index":0,"concurrent_upstream_recheck":true,"pb3_state":"INPUT_REQUIRED_RUNTIME_SOURCE_BYTES","reason":"NO_QA_APPROVED_PARCEL_MATCHED_PROJECT_POLYGON_EVIDENCE"}
   ]
 }
