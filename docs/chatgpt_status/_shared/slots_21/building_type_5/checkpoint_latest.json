@@ -7,14 +7,14 @@
   "shard_index": 5,
   "region": "East of England",
   "region_code": "EE",
-  "sequence": 93,
+  "sequence": 94,
   "hydration_state": "BLOCKED_OPEN_SOURCE_ENDPOINT_UNREACHABLE_AFTER_ALTERNATE_ENDPOINT_RETRY",
-  "remote_head": "f910bfb625c3e29c101f5b9eef6489a9356b269d",
+  "remote_head": "c503d4de1abb3183d6857d2bc1dbc7ec35ee9cb3",
   "first_unverified_step": "AŞAMA_1_OSM_GENISLETME_APPEND_NEW_BATCH_THEN_OPTIONAL_EPC_VOA_HMLR_UPGRADE",
   "first_unverified_step_status": "BLOCKED_BY_OPEN_SOURCE_ENDPOINT_ACCESS",
   "terminal_no_replay": [],
   "terminal_status": "NEW_PAGE_RESUME_READY",
-  "updated_at": "2026-08-16T16:10:06Z",
+  "updated_at": "2026-08-16T16:32:00Z",
   "final_ready": false,
   "state": "BLOCKED",
   "status": "BLOCKED",
@@ -53,7 +53,7 @@
     "recovery_do_not_create_new_task": true,
     "recovery_do_not_reprocess_existing_features": true,
     "source_processing_attempted": true,
-    "endpoint_retry_count": 7,
+    "endpoint_retry_count": 11,
     "source_payload_verified": false,
     "shard_changed": false,
     "manifest_changed": false
@@ -104,12 +104,27 @@
       ],
       "alternate_endpoint_discovery_verified": true,
       "result": "BLOCKED_OPEN_SOURCE_ENDPOINT_UNREACHABLE"
+    },
+    {
+      "attempted_at": "2026-08-16T16:32:00Z",
+      "batch_index": 123,
+      "feature_count_before": 6100,
+      "feature_count_after": 6100,
+      "new_features_appended": 0,
+      "source_payload_verified": false,
+      "source_attempts": [
+        {"endpoint": "https://overpass-api.de/api/interpreter", "method": "runtime_https_post", "result": "DNS_RESOLUTION_FAILED"},
+        {"endpoint": "https://overpass.kumi.systems/api/interpreter", "method": "runtime_https_post", "result": "DNS_RESOLUTION_FAILED"},
+        {"endpoint": "https://overpass.private.coffee/api/interpreter", "method": "runtime_https_post", "result": "DNS_RESOLUTION_FAILED"},
+        {"endpoint": "https://api.openstreetmap.org/api/0.6/map", "method": "web_dynamic_get", "result": "RUNTIME_SAFE_URL_GATE_BLOCKED_DYNAMIC_QUERY"}
+      ],
+      "result": "BLOCKED_OPEN_SOURCE_ENDPOINT_UNREACHABLE"
     }
   ],
   "blocker": {
     "code": "BLOCKED",
     "root_cause": "OPEN_SOURCE_ENDPOINT_UNREACHABLE_FROM_RUNTIME",
-    "detail": "Canonical state remains 6100. Batch 123 was retried through the official OSM map API and alternate public Overpass endpoints. Dynamic query URLs were blocked by the web runtime, the alternate endpoint did not return a usable payload, and runtime HTTPS DNS resolution failed for the tested OSM hosts. No source payload was obtained, so no evidence-backed append is safe and fake data remains prohibited.",
+    "detail": "Canonical state remains 6100. Batch 123 was retried against three public Overpass endpoints using bounded POST requests; all failed DNS resolution in the runtime. A bounded official OSM map API URL was also rejected by the web safe-URL gate. No source payload was obtained, so no evidence-backed append is safe and fake data remains prohibited.",
     "evidence_url_or_path": "batch_123_public_osm_endpoint_attempts",
     "next_index": 123
   },
