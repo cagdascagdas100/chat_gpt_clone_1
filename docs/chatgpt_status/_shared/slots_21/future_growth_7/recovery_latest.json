@@ -8,14 +8,14 @@
   "continuation_key": "future_growth_7_open_source_v2_20260813",
   "next_source_index": 1,
   "next_batch_index": 0,
-  "updated_at": "2026-08-16T18:35:31Z",
+  "updated_at": "2026-08-16T19:01:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
   "demo_only": true,
-  "recovery_reason": "Canonical shard remains at 18 verified source records and source 0 batch 0 remains complete. This bounded continuation tested a distinct ArcGIS returnIdsOnly plus container-download route for the resolved Stirling OGL polygon pair. Query metadata/forms remained available, but no raw feature bytes were obtained. Strict spatial matching cannot be proven and the shard was not changed.",
+  "recovery_reason": "Canonical shard remains at 18 verified source records and source 0 batch 0 remains complete. This bounded continuation tested a distinct ArcGIS FeatureServer operation route for the resolved Stirling OGL polygon pair. The service contract was revalidated, but no raw feature bytes were obtained. Strict spatial matching cannot be proven and the shard was not changed.",
   "blocker": "BLOCKED_RUNTIME_OFFICIAL_GEOMETRY_FETCH_UNAVAILABLE",
-  "blocker_reason": "Stirling cadastral layer 12 and HLA layer 62 remain source-contract-compatible polygon FeatureLayers. Parameterized returnIdsOnly/raw query URLs are blocked by the current web exact-URL safety path; the container download layer failed to retrieve the HLA Hub GeoJSON and could not retrieve the parcel Hub GeoJSON because the exact URL could not satisfy the viewed-URL prerequisite; DNS resolution for the ArcGIS/Stirling hosts remains unavailable. No raw parcel-plus-growth feature set is available for strict centroid-within-polygon or exact intersection.",
+  "blocker_reason": "Stirling cadastral layer 12 and HLA layer 62 remain source-contract-compatible polygon FeatureLayers. Search-indexed official ArcGIS service metadata confirms the cadastral FeatureServer, layer 12, EPSG:27700 and Query/ConvertFormat/Create Replica operations, but each raw operation endpoint returns cache miss and exact parameterized GeoJSON searches return no indexed raw result. No raw parcel-plus-growth feature set is available for strict centroid-within-polygon or exact intersection.",
   "recovery_attempts": [
     {"attempted_at": "2026-08-16T15:33:50Z", "method": "web_connector_raw_wfs_fetch", "result": "CACHE_MISS"},
     {"attempted_at": "2026-08-16T15:33:50Z", "method": "runtime_https_fetch", "result": "DNS_RESOLUTION_FAILED"},
@@ -38,7 +38,9 @@
     {"attempted_at": "2026-08-16T18:08:00Z", "method": "github_current_repo_exact_cache_recheck", "targets": ["68dba0e4e55349f0b74ad6144ffd187c","c9ee133e2a804f8ca165f59964f8a2b0","HLA_2024_01"], "result": "NO_RAW_PROVENANCE_CACHE_FOUND"},
     {"attempted_at": "2026-08-16T18:35:31Z", "method": "web_arcgis_return_ids_only_chain", "targets": ["ros_cadastral_parcels FeatureServer/12 query","HLA_2024_01 FeatureServer/62 query"], "metadata_result": "QUERY_FORM_READ_OK", "result": "PARAMETERIZED_RAW_URL_EXACT_URL_SAFETY_BLOCKED"},
     {"attempted_at": "2026-08-16T18:35:31Z", "method": "container_download_stirling_geojson", "targets": ["HLA Hub GeoJSON item c9ee133e2a804f8ca165f59964f8a2b0 layer 62","RoS cadastral Hub GeoJSON item 68dba0e4e55349f0b74ad6144ffd187c layer 12"], "result": "HLA_DOWNLOAD_FAILED_NO_FILE_PARCEL_VIEWED_URL_PRECONDITION_BLOCKED"},
-    {"attempted_at": "2026-08-16T18:35:31Z", "method": "runtime_dns_state_check", "targets": ["services-eu1.arcgis.com","data-stirling-council.hub.arcgis.com"], "result": "NO_HOST_RESOLUTION"}
+    {"attempted_at": "2026-08-16T18:35:31Z", "method": "runtime_dns_state_check", "targets": ["services-eu1.arcgis.com","data-stirling-council.hub.arcgis.com"], "result": "NO_HOST_RESOLUTION"},
+    {"attempted_at": "2026-08-16T19:01:00Z", "method": "web_arcgis_feature_server_operation_route", "targets": ["ros_cadastral_parcels FeatureServer Query","ConvertFormat","Create Replica"], "metadata_result": "OFFICIAL_FEATURESERVER_INDEXED_LAYER12_EPSG27700_OPERATIONS_CONFIRMED", "result": "QUERY_CACHE_MISS_CONVERTFORMAT_CACHE_MISS_CREATE_REPLICA_CACHE_MISS"},
+    {"attempted_at": "2026-08-16T19:01:00Z", "method": "web_exact_parameterized_geojson_index_search", "targets": ["HLA layer 62 bounded GeoJSON query","cadastral layer 12 bounded GeoJSON query"], "result": "NO_INDEXED_RAW_RESULT"}
   ],
   "next_action": "Do not retry source 0. Re-check source_index=1,batch_index=0 only if raw geometry fetch capability changes or a new provenance-preserving raw route becomes available; prioritize the resolved Stirling RoS cadastral layer 12 plus Stirling HLA layer 62, then compute at most 250 strict spatial matches and keep future_growth value/probability null unless an approved scoring rule is present.",
   "recovery_decision": "PARK_UNTIL_OFFICIAL_GEOMETRY_FETCH_AVAILABLE",
