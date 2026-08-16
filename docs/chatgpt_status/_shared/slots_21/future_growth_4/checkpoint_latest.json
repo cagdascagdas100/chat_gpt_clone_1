@@ -5,12 +5,12 @@
   "slot_id": "future_growth_4",
   "slot_family": "future_growth",
   "continuation_key": "future_growth_4_open_source_v2_20260813",
-  "updated_at": "2026-08-16T15:28:00Z",
+  "updated_at": "2026-08-16T16:00:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
   "demo_only": true,
-  "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
+  "state": "BLOCKED_STRICT_RELATION_EVIDENCE_REQUIRED",
   "feature_count_before": 0,
   "feature_count_after": 0,
   "new_records_added": 0,
@@ -57,33 +57,17 @@
     "shard_written": false,
     "shard_not_written_reason": "Existing shard/source-manifest schema remains unavailable within the explicitly allowed continuation state reads; avoid unverified schema writes."
   },
-  "accuracy_distribution": {
-    "1": 0,
-    "2": 0,
-    "3": 4,
-    "4": 0
-  },
-  "evidence_type_distribution": {
-    "site_specific_permissioned_brownfield_proxy": 4
-  },
-  "value_counts": {
-    "filled": 0,
-    "null": 4
-  },
-  "probability_counts": {
-    "filled": 0,
-    "null": 4
-  },
-  "planned_building_complete_month_counts": {
-    "filled": 0,
-    "null": 4
-  },
+  "accuracy_distribution": {"1": 0, "2": 0, "3": 4, "4": 0},
+  "evidence_type_distribution": {"site_specific_permissioned_brownfield_proxy": 4},
+  "value_counts": {"filled": 0, "null": 4},
+  "probability_counts": {"filled": 0, "null": 4},
+  "planned_building_complete_month_counts": {"filled": 0, "null": 4},
   "shard_state": "MISSING_ON_CANONICAL_BRANCH",
   "shard_path": "england_map_web/data/future_growth/shards/future_growth_4_latest.geojson",
   "source_manifest_state": "MISSING_ON_CANONICAL_BRANCH",
   "source_manifest_path": "england_map_web/data/future_growth/shards/future_growth_4_manifest_latest.json",
-  "blocker": "BLOCKED_REGION_CENTROID_COVERAGE_REQUIRED",
-  "blocker_reason": "Midlands source candidates exist, but the canonical repo state has no Midlands parcel centroid/polygon coverage for strict centroid-within-polygon or exact-intersection linkage.",
+  "blocker": "BLOCKED_STRICT_RELATION_EVIDENCE_REQUIRED",
+  "blocker_reason": "Canonical repo contains real Midlands/Birmingham parcel multipolygons, but no unprocessed official future-growth source record is strictly related to one of those parcels by centroid-within-polygon or exact intersection; the existing brownfield checkpoint point (-1.84236, 52.429315) has no corresponding parcel entry in the reviewed 225-source geometry table.",
   "resume_history": [
     {
       "at": "2026-08-16T15:28:00Z",
@@ -96,7 +80,23 @@
       "manifest_read": "NOT_FOUND",
       "relation_gate": "BLOCKED",
       "reason": "No compliant parcel geometry/centroid coverage available; nearest matching is prohibited."
+    },
+    {
+      "at": "2026-08-16T16:00:00Z",
+      "mode": "CONTINUE_REPO_ONLY",
+      "source_head": "9d7a652d5b52abc4fc9d9aa8beab789f191cefb5",
+      "feature_count_before": 0,
+      "new_records_added": 0,
+      "feature_count_after": 0,
+      "geometry_probe_path": "england_map_web/data/geometry_review_3of4/visible_225_sources_table.json",
+      "geometry_probe_result": "REAL_MIDLANDS_PARCELS_FOUND_BUT_NO_STRICT_FUTURE_GROWTH_RELATION",
+      "birmingham_probe_parcel_ref": "57224151",
+      "birmingham_probe_inspire": "england:birmingham-city-council:57224151",
+      "checkpoint_source_point": "POINT (-1.84236 52.429315)",
+      "checkpoint_point_in_geometry_table": false,
+      "relation_gate": "BLOCKED",
+      "reason": "Parcel geometry alone is insufficient future-growth evidence; no exact intersection or centroid-within-polygon relation to an unprocessed official growth source is evidenced in canonical repo state."
     }
   ],
-  "next_action": "Keep next_source_index=0 and next_batch_index=4. Resume only when named Midlands parcel centroid/polygon coverage is present; then apply CRS validation plus strict centroid-within-polygon or exact intersection. Do not repeat processed brownfield identities."
+  "next_action": "Keep next_source_index=0 and next_batch_index=4. Resume when canonical repo state provides an unprocessed official future-growth source geometry/point that can be strictly linked to a parcel by centroid-within-polygon or exact intersection. Do not repeat processed brownfield identities and do not use nearest matching."
 }
