@@ -5,7 +5,7 @@
   "slot_id": "planned_buildings_3",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_3_open_source_v2_20260813",
-  "updated_at": "2026-08-16T18:50:00Z",
+  "updated_at": "2026-08-16T19:16:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
@@ -18,12 +18,12 @@
   "next_batch_index": 1,
   "blocker": {
     "code": "INPUT_REQUIRED_RUNTIME_SOURCE_BYTES",
-    "detail": "Planning Data API source_index=0 batch_index=1 offset=100 limit=100 was retried. Official page 1 was readable and its links.next explicitly verified the offset=100 target, but the target response bytes remained unavailable; direct runtime DNS resolution also failed. Batch 1 remains unconsumed and no feature/status/spatial claim was fabricated.",
+    "detail": "Planning Data API source_index=0 batch_index=1 offset=100 limit=100 was retried. Official page 1 was readable and links.next verified the target, but the target page remained blocked by the web safe gate and container download also refused the unviewed target URL. Batch 1 remains unconsumed; no feature/status/spatial claim was fabricated.",
     "requires_user_action": false,
     "previous_blocker": "INPUT_REQUIRED_RUNTIME_SOURCE_BYTES"
   },
   "control_check": {
-    "checked_at": "2026-08-16T18:50:00Z",
+    "checked_at": "2026-08-16T19:16:00Z",
     "github_state_access": "OK",
     "continuation_key_match": true,
     "duplicate_owner_or_task_detected": false,
@@ -35,7 +35,7 @@
     "unsupported_score_detected": false,
     "incorrect_confidence_detected": false,
     "previous_batch_repeated": false,
-    "official_source_calls_this_turn": 1,
+    "official_source_calls_this_turn": 2,
     "source_records_examined_this_turn": 0,
     "strict_eligible_records_this_turn": 0,
     "new_source_features_processed_this_turn": 0,
@@ -45,7 +45,8 @@
     "official_page_1_links_next_verified": true,
     "target_page_bytes_available": false,
     "target_web_open_safe_gate_passed": false,
-    "container_dns_succeeded": false
+    "container_download_succeeded": false,
+    "container_download_error": "URL_NOT_VIEWED_SAFE_GATE"
   },
   "paths": {
     "shard": "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_3_latest.geojson",
@@ -61,7 +62,8 @@
     {"at":"2026-08-16T17:33:00Z","state":"BLOCKED_SOURCE_COVERAGE_REQUIRED","source_index":0,"batch_index":0,"source_url":"https://www.planning.data.gov.uk/entity.json?dataset=planning-application&limit=100&offset=0","records_examined":100,"strict_eligible_records":0,"feature_count_after":0,"blocker":"BLOCKED_STRICT_GEOMETRY_STATUS_REQUIRED"},
     {"at":"2026-08-16T18:00:00Z","state":"INPUT_REQUIRED","source_index":0,"batch_index":1,"offset":100,"limit":100,"source_bytes_available":false,"records_examined":0,"strict_eligible_records":0,"feature_count_after":0,"batch_consumed":false,"blocker":"INPUT_REQUIRED_RUNTIME_SOURCE_BYTES"},
     {"at":"2026-08-16T18:24:00Z","state":"INPUT_REQUIRED","source_index":0,"batch_index":1,"offset":100,"limit":100,"source_bytes_available":false,"records_examined":0,"strict_eligible_records":0,"feature_count_after":0,"batch_consumed":false,"retry":true,"web_error":"503_SERVICE_UNAVAILABLE","container_dns_succeeded":false,"blocker":"INPUT_REQUIRED_RUNTIME_SOURCE_BYTES"},
-    {"at":"2026-08-16T18:50:00Z","state":"INPUT_REQUIRED","source_index":0,"batch_index":1,"offset":100,"limit":100,"official_page_1_read_succeeded":true,"official_page_1_links_next_verified":true,"target_page_bytes_available":false,"records_examined":0,"strict_eligible_records":0,"feature_count_after":0,"batch_consumed":false,"retry":true,"blocker":"INPUT_REQUIRED_RUNTIME_SOURCE_BYTES"}
+    {"at":"2026-08-16T18:50:00Z","state":"INPUT_REQUIRED","source_index":0,"batch_index":1,"offset":100,"limit":100,"official_page_1_read_succeeded":true,"official_page_1_links_next_verified":true,"target_page_bytes_available":false,"records_examined":0,"strict_eligible_records":0,"feature_count_after":0,"batch_consumed":false,"retry":true,"blocker":"INPUT_REQUIRED_RUNTIME_SOURCE_BYTES"},
+    {"at":"2026-08-16T19:16:00Z","state":"INPUT_REQUIRED","source_index":0,"batch_index":1,"offset":100,"limit":100,"official_page_1_read_succeeded":true,"official_page_1_links_next_verified":true,"target_page_bytes_available":false,"target_web_open_safe_gate_passed":false,"container_download_succeeded":false,"records_examined":0,"strict_eligible_records":0,"feature_count_after":0,"batch_consumed":false,"retry":true,"blocker":"INPUT_REQUIRED_RUNTIME_SOURCE_BYTES"}
   ],
   "next_action": "Retry exactly source_index=0 batch_index=1 offset=100 only when the verified target response bytes are accessible; do not advance the batch or emit features before strict geometry+status evidence is actually read."
 }
