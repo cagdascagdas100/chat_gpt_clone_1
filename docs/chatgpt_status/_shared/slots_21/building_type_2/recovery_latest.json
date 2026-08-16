@@ -1,5 +1,5 @@
 {
-  "state": "RECOVERY_ACTIVE_SOURCE_NETWORK_BLOCKED",
+  "state": "RECOVERY_RESUMED_NO_NEW_OPEN_SOURCE",
   "schema_version": 2,
   "slot_id": "building_type_2",
   "recovery_type": "NEW_PAGE_RESUME",
@@ -25,7 +25,7 @@
   "canonical_feature_count": 8800,
   "last_completed_batch_index": 176,
   "next_batch_index": 177,
-  "resume_result": "BLOCKED",
+  "resume_result": "NO_NEW_OPEN_SOURCE",
   "resume_attempts": [
     {
       "attempted_at": "2026-08-16T15:09:30Z",
@@ -47,11 +47,22 @@
       "fake_data_generated": false,
       "duplicate_features_generated": false,
       "recovery_action": "retain batch 177 and retry source discovery without changing task, owner, continuation key, shard, or manifest"
+    },
+    {
+      "attempted_at": "2026-08-16T16:29:38Z",
+      "feature_count_before": 8800,
+      "feature_count_after": 8800,
+      "added_feature_count": 0,
+      "root_cause": "canonical branch contains no new bounded evidence payload for batch 177; repository searches for declared OSM/pilot and batch-specific inputs returned no candidates",
+      "requires_user_action": false,
+      "fake_data_generated": false,
+      "duplicate_features_generated": false,
+      "recovery_action": "retain batch 177; do not change task, owner, continuation key, shard, or manifest; recheck canonical repo sources on next continue"
     }
   ],
   "active_blocker": {
-    "type": "SOURCE_NETWORK_DNS_UNAVAILABLE",
-    "detected_at": "2026-08-16T16:04:45Z",
+    "type": "NO_NEW_OPEN_SOURCE",
+    "detected_at": "2026-08-16T16:29:38Z",
     "requires_user_action": false,
     "next_retry_batch_index": 177
   }
