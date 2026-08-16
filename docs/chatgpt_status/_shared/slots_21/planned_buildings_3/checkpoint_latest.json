@@ -5,7 +5,7 @@
   "slot_id": "planned_buildings_3",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_3_open_source_v2_20260813",
-  "updated_at": "2026-08-16T17:06:00Z",
+  "updated_at": "2026-08-16T17:33:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
@@ -15,15 +15,15 @@
   "feature_count_after": 0,
   "already_processed_ids": [],
   "next_source_index": 0,
-  "next_batch_index": 0,
+  "next_batch_index": 1,
   "blocker": {
-    "code": "BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED",
-    "detail": "Repo-only NEW_PAGE_RESUME readback found no PB3 feature evidence. Canonical PB3 shard and manifest now exist, but no commercial/office/industrial/logistics/mixed-use project polygon with both project type and status is present in the allowed repo evidence for strict centroid-within-polygon or exact-intersection matching.",
-    "previous_blocker": "STATE_PUBLISH_PATH_MISMATCH",
+    "code": "BLOCKED_STRICT_GEOMETRY_STATUS_REQUIRED",
+    "detail": "Planning Data API source_index=0 batch_index=0 (offset=0, limit=100) returned 100 planning-application records; all had empty geometry and point fields, and this bounded page exposed no planning-application-status field. Strict centroid-within-polygon/exact-intersection plus status evidence is therefore unavailable for this batch.",
+    "previous_blocker": "BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED",
     "previous_blocker_resolved": true
   },
   "control_check": {
-    "checked_at": "2026-08-16T17:06:00Z",
+    "checked_at": "2026-08-16T17:33:00Z",
     "github_state_access": "OK",
     "continuation_key_match": true,
     "duplicate_owner_or_task_detected": false,
@@ -36,8 +36,11 @@
     "incorrect_confidence_detected": false,
     "source_endpoint_retried": false,
     "previous_batch_repeated": false,
+    "official_source_calls_this_turn": 1,
+    "source_records_examined_this_turn": 100,
+    "strict_eligible_records_this_turn": 0,
     "new_source_features_processed_this_turn": 0,
-    "new_evidence_records_this_turn": 0,
+    "new_evidence_records_this_turn": 1,
     "checkpoint_only_write": false
   },
   "paths": {
@@ -60,7 +63,18 @@
       "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
       "blocker": "BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED",
       "state_integration_repaired": true
+    },
+    {
+      "at": "2026-08-16T17:33:00Z",
+      "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
+      "source_index": 0,
+      "batch_index": 0,
+      "source_url": "https://www.planning.data.gov.uk/entity.json?dataset=planning-application&limit=100&offset=0",
+      "records_examined": 100,
+      "strict_eligible_records": 0,
+      "feature_count_after": 0,
+      "blocker": "BLOCKED_STRICT_GEOMETRY_STATUS_REQUIRED"
     }
   ],
-  "next_action": "Keep next_source_index=0 and next_batch_index=0. On the next source-enabled bounded turn, inspect one official planning/project polygon source that exposes both project type and status; add only strict spatial matches not present in already_processed_ids."
+  "next_action": "Continue the same task at source_index=0 batch_index=1 (offset=100, limit<=100). Add only records with strict spatial evidence plus explicit project status and PB3 project type; otherwise continue bounded source evidence without fabrication."
 }
