@@ -5,7 +5,7 @@
   "slot_id": "planned_buildings_3",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_3_open_source_v2_20260813",
-  "updated_at": "2026-08-16T18:00:00Z",
+  "updated_at": "2026-08-16T18:24:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
@@ -13,9 +13,9 @@
   "state": "INPUT_REQUIRED",
   "next_source_index": 0,
   "next_batch_index": 1,
-  "recovery_reason": "Source index 0 batch 1 was selected from the canonical checkpoint, but the official Planning Data API offset=100 response bytes were unavailable to the current runtime. Batch 1 was not consumed and no feature or spatial/status claim was fabricated.",
+  "recovery_reason": "Source index 0 batch 1 was retried from the canonical checkpoint, but the official Planning Data API offset=100 response bytes remained unavailable. Web retrieval returned 503 and direct runtime DNS resolution failed. Batch 1 was not consumed and no feature or spatial/status claim was fabricated.",
   "blocker": "INPUT_REQUIRED_RUNTIME_SOURCE_BYTES",
-  "blocker_reason": "Official page-2 source bytes could not be retrieved through the available web/runtime paths; strict spatial+status evaluation cannot proceed without those bytes.",
+  "blocker_reason": "Official page-2 source bytes remain unavailable through current runtime paths; strict spatial+status evaluation cannot proceed without those bytes.",
   "requires_user_action": false,
   "resolved": [
     {"code":"STATE_PUBLISH_PATH_MISMATCH","resolved_at":"2026-08-16T17:06:00Z","resolution":"Canonical PB3 shard/manifest paths established and docs/chatgpt_status slot state paths aligned."},
@@ -25,7 +25,8 @@
     {"at":"2026-08-15T07:54:17Z","state":"BLOCKED_SOURCE_COVERAGE_REQUIRED","recovery_decision":"WAIT_FOR_NAMED_COVERAGE_OR_SOURCE_CONTRACT","source_sha":"06d37af44479353d3911ed01dccd34ac4d636a30"},
     {"at":"2026-08-16T17:06:00Z","state":"BLOCKED_SOURCE_COVERAGE_REQUIRED","recovery_decision":"STATE_INTEGRATION_REPAIRED_WAIT_FOR_SOURCE_COVERAGE"},
     {"at":"2026-08-16T17:33:00Z","state":"BLOCKED_SOURCE_COVERAGE_REQUIRED","recovery_decision":"SOURCE_0_BATCH_0_NO_STRICT_MATCH_CONTINUE_BATCH_1","source_index":0,"batch_index":0,"offset":0,"limit":100,"records_examined":100,"strict_eligible_records":0},
-    {"at":"2026-08-16T18:00:00Z","state":"INPUT_REQUIRED","recovery_decision":"SOURCE_0_BATCH_1_RUNTIME_BYTES_UNAVAILABLE_RETRY_SAME_BATCH","source_index":0,"batch_index":1,"offset":100,"limit":100,"records_examined":0,"source_bytes_available":false,"web_exact_page_open_succeeded":false,"container_dns_succeeded":false,"repo_cache_hit":false,"batch_consumed":false}
+    {"at":"2026-08-16T18:00:00Z","state":"INPUT_REQUIRED","recovery_decision":"SOURCE_0_BATCH_1_RUNTIME_BYTES_UNAVAILABLE_RETRY_SAME_BATCH","source_index":0,"batch_index":1,"offset":100,"limit":100,"records_examined":0,"source_bytes_available":false,"web_exact_page_open_succeeded":false,"container_dns_succeeded":false,"repo_cache_hit":false,"batch_consumed":false},
+    {"at":"2026-08-16T18:24:00Z","state":"INPUT_REQUIRED","recovery_decision":"SOURCE_0_BATCH_1_RUNTIME_BYTES_UNAVAILABLE_RETRY_SAME_BATCH","source_index":0,"batch_index":1,"offset":100,"limit":100,"records_examined":0,"source_bytes_available":false,"web_service_available":false,"web_error":"503_SERVICE_UNAVAILABLE","container_dns_succeeded":false,"repo_cache_hit":false,"batch_consumed":false,"retry":true}
   ],
   "canonical_checkpoint_path": "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/checkpoint_latest.json",
   "shard_path": "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_3_latest.geojson",
