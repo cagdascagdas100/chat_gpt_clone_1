@@ -5,56 +5,31 @@
   "slot_id": "planned_buildings_3",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_3_open_source_v2_20260813",
-  "updated_at": "2026-08-16T17:33:00Z",
+  "updated_at": "2026-08-16T18:00:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
   "demo_only": true,
-  "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
+  "state": "INPUT_REQUIRED",
   "next_source_index": 0,
   "next_batch_index": 1,
-  "recovery_reason": "Source index 0 batch 0 was executed against the official Planning Data API. The bounded 100-record page yielded no strict geometry+status eligible record, so no feature was fabricated and the same task continues at batch 1.",
-  "blocker": "BLOCKED_STRICT_GEOMETRY_STATUS_REQUIRED",
-  "blocker_reason": "Planning Data API source_index=0 batch_index=0 returned 100 records with empty geometry/point and no application-status field; strict spatial+status evidence is unavailable for this batch.",
+  "recovery_reason": "Source index 0 batch 1 was selected from the canonical checkpoint, but the official Planning Data API offset=100 response bytes were unavailable to the current runtime. Batch 1 was not consumed and no feature or spatial/status claim was fabricated.",
+  "blocker": "INPUT_REQUIRED_RUNTIME_SOURCE_BYTES",
+  "blocker_reason": "Official page-2 source bytes could not be retrieved through the available web/runtime paths; strict spatial+status evaluation cannot proceed without those bytes.",
+  "requires_user_action": false,
   "resolved": [
-    {
-      "code": "STATE_PUBLISH_PATH_MISMATCH",
-      "resolved_at": "2026-08-16T17:06:00Z",
-      "resolution": "Canonical PB3 shard/manifest paths established and docs/chatgpt_status slot state paths aligned."
-    },
-    {
-      "code": "BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED",
-      "resolved_at": "2026-08-16T17:33:00Z",
-      "resolution": "The bounded Planning Data batch contains explicit commercial/retail/office descriptions; the remaining root blocker is strict geometry plus application-status coverage."
-    }
+    {"code":"STATE_PUBLISH_PATH_MISMATCH","resolved_at":"2026-08-16T17:06:00Z","resolution":"Canonical PB3 shard/manifest paths established and docs/chatgpt_status slot state paths aligned."},
+    {"code":"BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED","resolved_at":"2026-08-16T17:33:00Z","resolution":"The bounded Planning Data batch contains explicit commercial/retail/office descriptions; the remaining data requirement moved to strict geometry plus status coverage."}
   ],
   "history": [
-    {
-      "at": "2026-08-15T07:54:17Z",
-      "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
-      "recovery_decision": "WAIT_FOR_NAMED_COVERAGE_OR_SOURCE_CONTRACT",
-      "source_sha": "06d37af44479353d3911ed01dccd34ac4d636a30"
-    },
-    {
-      "at": "2026-08-16T17:06:00Z",
-      "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
-      "recovery_decision": "STATE_INTEGRATION_REPAIRED_WAIT_FOR_SOURCE_COVERAGE"
-    },
-    {
-      "at": "2026-08-16T17:33:00Z",
-      "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
-      "recovery_decision": "SOURCE_0_BATCH_0_NO_STRICT_MATCH_CONTINUE_BATCH_1",
-      "source_index": 0,
-      "batch_index": 0,
-      "offset": 0,
-      "limit": 100,
-      "records_examined": 100,
-      "strict_eligible_records": 0
-    }
+    {"at":"2026-08-15T07:54:17Z","state":"BLOCKED_SOURCE_COVERAGE_REQUIRED","recovery_decision":"WAIT_FOR_NAMED_COVERAGE_OR_SOURCE_CONTRACT","source_sha":"06d37af44479353d3911ed01dccd34ac4d636a30"},
+    {"at":"2026-08-16T17:06:00Z","state":"BLOCKED_SOURCE_COVERAGE_REQUIRED","recovery_decision":"STATE_INTEGRATION_REPAIRED_WAIT_FOR_SOURCE_COVERAGE"},
+    {"at":"2026-08-16T17:33:00Z","state":"BLOCKED_SOURCE_COVERAGE_REQUIRED","recovery_decision":"SOURCE_0_BATCH_0_NO_STRICT_MATCH_CONTINUE_BATCH_1","source_index":0,"batch_index":0,"offset":0,"limit":100,"records_examined":100,"strict_eligible_records":0},
+    {"at":"2026-08-16T18:00:00Z","state":"INPUT_REQUIRED","recovery_decision":"SOURCE_0_BATCH_1_RUNTIME_BYTES_UNAVAILABLE_RETRY_SAME_BATCH","source_index":0,"batch_index":1,"offset":100,"limit":100,"records_examined":0,"source_bytes_available":false,"web_exact_page_open_succeeded":false,"container_dns_succeeded":false,"repo_cache_hit":false,"batch_consumed":false}
   ],
   "canonical_checkpoint_path": "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/checkpoint_latest.json",
   "shard_path": "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_3_latest.geojson",
   "manifest_path": "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_3_manifest_latest.json",
-  "recovery_decision": "SOURCE_0_BATCH_0_NO_STRICT_MATCH_CONTINUE_BATCH_1",
-  "next_action": "Resume the same task at source_index=0 batch_index=1 offset=100; process at most one bounded page, using strict spatial matching and duplicate filtering."
+  "recovery_decision": "SOURCE_0_BATCH_1_RUNTIME_BYTES_UNAVAILABLE_RETRY_SAME_BATCH",
+  "next_action": "Retry exactly source_index=0 batch_index=1 offset=100 when runtime source access is available; keep batch unconsumed until actual response bytes are read and strict spatial/status eligibility is evaluated."
 }
