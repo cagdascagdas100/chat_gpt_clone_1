@@ -1,5 +1,5 @@
 {
-  "state": "READY_OPEN_SOURCE_CONTINUATION",
+  "state": "BLOCKED",
   "schema_version": 3,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
@@ -9,30 +9,53 @@
   "region": "East of England",
   "region_code": "EE",
   "task_id": "building-type-5-england-classification-v1-20260808",
-  "updated_at": "2026-08-14T13:54:50Z",
+  "updated_at": "2026-08-16T15:20:00Z",
   "owner": "codex-deepseek-batch-session",
+  "owner_ignored_by_recovery": true,
   "final_ready": false,
-  "classified_count": 116,
+  "classified_count": 5916,
   "unknown_count": 184,
-  "total_elements": 300,
+  "total_elements": 6100,
   "confidence_distribution": {
     "1": 184,
-    "2": 37,
-    "3": 79,
+    "2": 1237,
+    "3": 4679,
     "4": 0
   },
   "evidence_distribution": {
     "A": 0,
-    "B": 79,
+    "B": 4679,
     "C": 14,
-    "D": 23,
+    "D": 1223,
     "U": 184
   },
-  "output_sha256": "0b77e7c852fa4fc287bc12e76ed609043e9d263da08d7844f1bdb9e9410247be",
-  "note": "OSM cache classification complete. EPC/VOA needed.",
+  "output_sha256": "9d07b459267b5e8fbfa74d39cf1f11f3e7e862e5f44f7cbc26d127c889f6729d",
+  "previous_output_sha256": "0b77e7c852fa4fc287bc12e76ed609043e9d263da08d7844f1bdb9e9410247be",
+  "note": "NEW_PAGE_RESUME state reconciled to canonical shard manifest: 6100 total features. No new feature appended in this turn because the bounded open-source OSM endpoint could not be retrieved from the available runtime; fake rows were not generated.",
   "continuation_key": "building-type-5-england-classification-v1-20260808",
   "production_merge": false,
   "fake_data": false,
   "resume_metadata_repaired_at": "2026-08-14T13:54:50Z",
-  "resume_metadata_repair_reason": "restored_existing_recovery_continuation_key_without_replaying_features"
+  "resume_metadata_repair_reason": "restored_existing_recovery_continuation_key_without_replaying_features",
+  "feature_count_before": 6100,
+  "feature_count_after": 6100,
+  "new_features_appended": 0,
+  "next_batch_index": 123,
+  "next_target_feature_count": 6150,
+  "canonical_manifest_sha": "ec4814da9dce844bda97c0164c81e3927ce2d849",
+  "canonical_shard_blob_sha": "fda9188715b376ac6cb1b5486736be0caeb1d371",
+  "blocker": {
+    "code": "BLOCKED",
+    "root_cause": "OPEN_SOURCE_ENDPOINT_UNREACHABLE_FROM_RUNTIME",
+    "detail": "Batch 123 source retrieval was attempted against a bounded OSM/Overpass query. The dynamic URL could not be fetched by the web runtime and the container could not resolve overpass-api.de. No source payload means no evidence-backed records can be appended safely.",
+    "source_processing_attempted": true,
+    "endpoint_retry_count": 2
+  },
+  "next_source": {
+    "batch_index": 123,
+    "candidate_area": "Felixstowe/Suffolk",
+    "bbox_south_west_north_east": [51.94, 1.26, 52.0, 1.36],
+    "query": "[out:json][timeout:30];way[\"building\"][\"building\"!~\"^(yes|no)$\"](51.94,1.26,52.00,1.36);out tags center 1000;",
+    "matching_rule": "OSM way center only; no nearest matching or inferred parcel assignment"
+  }
 }
