@@ -5,7 +5,7 @@
   "slot_id": "planned_buildings_3",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_3_open_source_v2_20260813",
-  "updated_at": "2026-08-16T17:06:00Z",
+  "updated_at": "2026-08-16T17:33:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
@@ -16,10 +16,10 @@
   "feature_count_after": 0,
   "already_processed_ids": [],
   "next_source_index": 0,
-  "next_batch_index": 0,
+  "next_batch_index": 1,
   "focus": "Commercial, retail, office, industrial, logistics and mixed-use major projects",
-  "blocker": "BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED",
-  "blocker_reason": "Repo-only evidence currently contains no PB3 project polygon with both project type and status sufficient for strict centroid-within-polygon or exact-intersection matching. No nearest match or inferred feature was produced.",
+  "blocker": "BLOCKED_STRICT_GEOMETRY_STATUS_REQUIRED",
+  "blocker_reason": "Planning Data API source_index=0 batch_index=0 returned 100 records, but all geometry/point fields were empty and the bounded page exposed no planning-application-status field; strict spatial+status eligibility is zero.",
   "target_output": "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_3_latest.geojson",
   "manifest": "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_3_manifest_latest.json",
   "canonical_checkpoint_path": "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/checkpoint_latest.json",
@@ -36,7 +36,19 @@
       "at": "2026-08-16T17:06:00Z",
       "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
       "state_manifest_shard_paths_aligned": true
+    },
+    {
+      "at": "2026-08-16T17:33:00Z",
+      "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
+      "source_index": 0,
+      "batch_index": 0,
+      "offset": 0,
+      "limit": 100,
+      "records_examined": 100,
+      "strict_eligible_records": 0,
+      "new_records_added": 0,
+      "blocker": "BLOCKED_STRICT_GEOMETRY_STATUS_REQUIRED"
     }
   ],
-  "next_action": "Use source_index=0 for one bounded official planning/project polygon source exposing both project type and status; preserve strict spatial matching and duplicate filtering."
+  "next_action": "Use source_index=0 batch_index=1 offset=100 for the next bounded Planning Data API page; preserve strict spatial matching and duplicate filtering."
 }
