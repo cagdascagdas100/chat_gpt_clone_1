@@ -5,11 +5,18 @@
   "slot_id": "planned_buildings_4",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_4_open_source_v2_20260813",
-  "updated_at": "2026-08-15T07:54:17Z",
+  "updated_at": "2026-08-16T15:50:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
+  "demo_only": true,
   "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
+  "feature_count_before": 0,
+  "new_feature_count": 0,
+  "feature_count_after": 0,
+  "already_processed_ids": [],
+  "next_source_index": 0,
+  "next_batch_index": 0,
   "blocker": "BLOCKED_CANONICAL_PROJECT_GEOMETRY_REQUIRED",
   "focus": "Project geometry acquisition, planning red-line boundaries, parcel intersections",
   "target_output": "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_4_latest.geojson",
@@ -18,8 +25,24 @@
   "continue_prompt": "F:\\TerraYield_AAYS_Portable\\docs\\AAYS_FG_PB_COMMON_CONTINUE_PROMPT_V2_OPEN_SOURCE_TR.md",
   "demo_script": "F:\\TerraYield_AAYS_Portable\\tools\\BUILD_FG_PB_OPEN_SOURCE_SCORE_DEMO.py",
   "demo_note": "Use demo outputs as method examples only; do not mark final_ready or production merge from demo_only files.",
-  "blocker_reason": "Yerelde yalnız demo/capture poligonları var; kanonik production shard yok.",
-  "next_action": "Her proje için resmi red-line/project polygon + identity evidence ile strict relation oluştur.",
+  "blocker_reason": "Canonical branch exact-path reads contain no planned_buildings_4 shard and no slot-specific official project geometry plus identity evidence; strict centroid-within-polygon or exact intersection cannot be executed from repo state without fabricating data.",
+  "next_action": "Resume source index 0 only when canonical slot-specific official project geometry plus identity evidence exists in repo state; then apply strict centroid-within-polygon or exact intersection and keep scores/month null unless supported by approved rule/official YYYY-MM.",
   "canonical_checkpoint_path": "state/slots/planned_buildings_4/checkpoint_latest.json",
-  "prompt_contract_unchanged": true
+  "prompt_contract_unchanged": true,
+  "evidence_distribution": {
+    "official_project_geometry": 0,
+    "official_identity_evidence": 0,
+    "strict_centroid_within_polygon": 0,
+    "exact_intersection": 0
+  },
+  "resume_events": [
+    {
+      "event": "NEW_PAGE_RESUME",
+      "observed_at": "2026-08-16T15:50:00Z",
+      "observed_branch_head": "54588885463a74419f648700871133f79c0d87d0",
+      "result": "BLOCKED",
+      "feature_delta": 0,
+      "blocker": "BLOCKED_CANONICAL_PROJECT_GEOMETRY_REQUIRED"
+    }
+  ]
 }
