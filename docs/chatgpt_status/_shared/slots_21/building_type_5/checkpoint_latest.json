@@ -7,14 +7,14 @@
   "shard_index": 5,
   "region": "East of England",
   "region_code": "EE",
-  "sequence": 91,
-  "hydration_state": "BLOCKED_OPEN_SOURCE_ENDPOINT_UNREACHABLE_AFTER_STATE_RECONCILIATION",
-  "remote_head": "87ab8775b52a613631dbd27b66adc75fa5723f2e",
+  "sequence": 92,
+  "hydration_state": "BLOCKED_OPEN_SOURCE_ENDPOINT_UNREACHABLE_AFTER_BOUNDED_RETRY",
+  "remote_head": "9bc43e71df3c6d0026bb87120680309112ae907a",
   "first_unverified_step": "AŞAMA_1_OSM_GENISLETME_APPEND_NEW_BATCH_THEN_OPTIONAL_EPC_VOA_HMLR_UPGRADE",
   "first_unverified_step_status": "BLOCKED_BY_OPEN_SOURCE_ENDPOINT_ACCESS",
   "terminal_no_replay": [],
   "terminal_status": "NEW_PAGE_RESUME_READY",
-  "updated_at": "2026-08-16T15:20:00Z",
+  "updated_at": "2026-08-16T15:39:00Z",
   "final_ready": false,
   "state": "BLOCKED",
   "status": "BLOCKED",
@@ -53,7 +53,7 @@
     "recovery_do_not_create_new_task": true,
     "recovery_do_not_reprocess_existing_features": true,
     "source_processing_attempted": true,
-    "endpoint_retry_count": 2,
+    "endpoint_retry_count": 4,
     "source_payload_verified": false,
     "shard_changed": false,
     "manifest_changed": false
@@ -65,10 +65,41 @@
     "previous_status_count": 300,
     "previous_current_task_count": 0
   },
+  "resume_attempt_history": [
+    {
+      "attempted_at": "2026-08-16T15:20:00Z",
+      "batch_index": 123,
+      "feature_count_before": 6100,
+      "feature_count_after": 6100,
+      "new_features_appended": 0,
+      "source_payload_verified": false,
+      "result": "BLOCKED_OPEN_SOURCE_ENDPOINT_UNREACHABLE"
+    },
+    {
+      "attempted_at": "2026-08-16T15:39:00Z",
+      "batch_index": 123,
+      "feature_count_before": 6100,
+      "feature_count_after": 6100,
+      "new_features_appended": 0,
+      "source_payload_verified": false,
+      "source_attempts": [
+        {
+          "method": "web_dynamic_get",
+          "result": "RUNTIME_SAFE_URL_GATE_BLOCKED_DYNAMIC_QUERY"
+        },
+        {
+          "method": "runtime_https_get",
+          "result": "DNS_RESOLUTION_FAILED",
+          "error": "Temporary failure in name resolution for overpass-api.de"
+        }
+      ],
+      "result": "BLOCKED_OPEN_SOURCE_ENDPOINT_UNREACHABLE"
+    }
+  ],
   "blocker": {
     "code": "BLOCKED",
     "root_cause": "OPEN_SOURCE_ENDPOINT_UNREACHABLE_FROM_RUNTIME",
-    "detail": "Canonical state mismatch was reconciled to 6100. Batch 123 source retrieval was attempted with a bounded OSM/Overpass query, but no source payload could be retrieved from the available runtime. Without a payload there is no evidence basis for a safe append, so feature_count remains 6100 and fake data is prohibited.",
+    "detail": "Canonical state remains 6100. Batch 123 source retrieval was retried with the same bounded OSM/Overpass query. The web runtime rejected the dynamic endpoint URL and the runtime HTTPS client failed DNS resolution for overpass-api.de. No source payload was obtained, so no evidence-backed append is safe and fake data remains prohibited.",
     "evidence_url_or_path": "https://overpass-api.de/api/interpreter",
     "next_index": 123
   },
