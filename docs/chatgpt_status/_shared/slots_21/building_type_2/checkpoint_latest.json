@@ -7,14 +7,14 @@
   "shard_index": 2,
   "region": "London Outer",
   "region_code": "LDN_OUTER",
-  "sequence": 86,
+  "sequence": 87,
   "hydration_state": "REMOTE_STATE_SYNCHRONIZED_NO_NEW_OPEN_SOURCE",
-  "remote_head": "aa7ddf0859d71ad043c7b192e3e89241a50ef9d3",
+  "remote_head": "4f7ac97fe9d49b14efeb6b3cd38e2df2b4179e37",
   "first_unverified_step": "AŞAMA_1_OSM_GENISLETME_APPEND_NEW_BATCH_THEN_OPTIONAL_EPC_VOA_HMLR_UPGRADE",
   "first_unverified_step_status": "NO_NEW_OPEN_SOURCE",
   "terminal_no_replay": [],
   "terminal_status": "NEW_PAGE_RESUME_READY",
-  "updated_at": "2026-08-16T16:55:50Z",
+  "updated_at": "2026-08-16T17:22:00Z",
   "final_ready": false,
   "summary": {
     "pilot_osm_classified": 429,
@@ -27,7 +27,7 @@
   "remaining_items": {
     "epc_residential_classification_pending": true,
     "voa_non_domestic_classification_pending": true,
-    "note": "Batch 177 için canonical repo içinde yeni bounded kanıt payloadı bulunamadı; exact source path kontrolleri 404 ve building_type veri kökü yalnız shards içeriyor."
+    "note": "Batch 177 için canonical repo HEAD yeniden kontrol edildi; yeni bounded kanıt payloadı yok, ilan edilmiş pilot/HMLR yolları yok ve building_type kökü yalnız shards içeriyor."
   },
   "state": "NO_NEW_OPEN_SOURCE",
   "feature_count_before": 8800,
@@ -131,12 +131,33 @@
       "new_features": 0,
       "fake_data_generated": false,
       "duplicate_features_generated": false
+    },
+    {
+      "attempted_at": "2026-08-16T17:22:00Z",
+      "batch_index": 177,
+      "result": "NO_NEW_OPEN_SOURCE",
+      "canonical_repo_head": "4f7ac97fe9d49b14efeb6b3cd38e2df2b4179e37",
+      "canonical_repo_searches": [
+        "building_type_2 batch 177",
+        "osm_cache_england_",
+        "parcel_building_type_england_pilot"
+      ],
+      "canonical_repo_inputs_checked": [
+        "england_map_web/data/parcel_building_type_england_pilot.geojson",
+        "england_map_web/data/parcel_building_type_england_pilot_manifest.json",
+        "england_map_web/data/meta/hmlr_inspire_authority_manifest.json",
+        "england_map_web/data/building_type/"
+      ],
+      "result_detail": "new branch HEAD contains no batch-177 evidence payload; searches returned no candidates, declared exact source paths remain absent, and building_type root contains only shards",
+      "new_features": 0,
+      "fake_data_generated": false,
+      "duplicate_features_generated": false
     }
   ],
   "blocker": {
     "type": "NO_NEW_OPEN_SOURCE",
-    "detected_at": "2026-08-16T16:55:50Z",
-    "root_cause": "canonical branch contains no new bounded evidence payload for batch 177; declared pilot/HMLR source paths are absent and building_type data root contains only shards",
+    "detected_at": "2026-08-16T17:22:00Z",
+    "root_cause": "canonical branch contains no new bounded evidence payload for batch 177; repo searches return no candidates, declared pilot/HMLR paths are absent, and building_type data root contains only shards",
     "source_processing_allowed": false,
     "requires_user_action": false,
     "constraints": [
