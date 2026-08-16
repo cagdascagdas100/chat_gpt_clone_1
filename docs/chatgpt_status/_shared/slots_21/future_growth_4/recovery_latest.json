@@ -4,22 +4,22 @@
   "workstream_id": "AAYS_FUTURE_GROWTH_PLANNED_BUILDINGS_OPEN_SOURCE_V2",
   "slot_id": "future_growth_4",
   "slot_family": "future_growth",
-  "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
+  "state": "BLOCKED_STRICT_RELATION_EVIDENCE_REQUIRED",
   "continuation_key": "future_growth_4_open_source_v2_20260813",
   "next_source_index": 0,
   "next_batch_index": 4,
-  "updated_at": "2026-08-16T15:28:00Z",
+  "updated_at": "2026-08-16T16:00:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
   "demo_only": true,
-  "recovery_reason": "Resume readback confirms no business feature can be added without the missing strict-relation parcel coverage; existing task and continuation key preserved.",
-  "blocker": "BLOCKED_REGION_CENTROID_COVERAGE_REQUIRED",
-  "blocker_reason": "Midlands source candidates exist, but the canonical repo state has no Midlands parcel centroid/polygon coverage for strict centroid-within-polygon or exact-intersection linkage.",
-  "next_action": "Wait for named Midlands parcel centroid/polygon coverage in repo state, then resume source 0 / batch 4 with CRS validation and strict relation gate.",
+  "recovery_reason": "Repo-only recheck found real Midlands/Birmingham parcel geometry, but no safe business feature can be added because no unprocessed official growth source has a strict source-to-parcel relation; existing task and continuation key remain unchanged.",
+  "blocker": "BLOCKED_STRICT_RELATION_EVIDENCE_REQUIRED",
+  "blocker_reason": "Parcel geometry exists, but a compliant centroid-within-polygon or exact-intersection relation to an unprocessed official future-growth source is not evidenced in canonical repo state.",
+  "next_action": "Keep source 0 / batch 4. Resume only after strict source-to-parcel relation evidence is available; no nearest matching.",
   "canonical_checkpoint_path": "state/slots/future_growth_4/checkpoint_latest.json",
   "prompt_contract_unchanged": true,
-  "recovery_decision": "WAIT_FOR_NAMED_COVERAGE_OR_SOURCE_CONTRACT",
+  "recovery_decision": "WAIT_FOR_STRICT_SOURCE_PARCEL_RELATION",
   "recovery_history": [
     {
       "at": "2026-08-15T07:54:17Z",
@@ -33,6 +33,17 @@
       "next_source_index": 0,
       "next_batch_index": 4,
       "result": "POINTER_RECONCILED_TO_CANONICAL_CHECKPOINT",
+      "new_records_added": 0
+    },
+    {
+      "at": "2026-08-16T16:00:00Z",
+      "source_head": "9d7a652d5b52abc4fc9d9aa8beab789f191cefb5",
+      "next_source_index": 0,
+      "next_batch_index": 4,
+      "geometry_probe": "england_map_web/data/geometry_review_3of4/visible_225_sources_table.json",
+      "birmingham_parcel_ref_found": "57224151",
+      "strict_relation_to_unprocessed_growth_source": false,
+      "result": "BLOCKED_NO_NEW_FEATURE",
       "new_records_added": 0
     }
   ]
