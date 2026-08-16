@@ -9,29 +9,18 @@
   "region": "East of England",
   "region_code": "EE",
   "task_id": "building-type-5-england-classification-v1-20260808",
-  "updated_at": "2026-08-16T15:39:00Z",
+  "updated_at": "2026-08-16T16:10:06Z",
   "owner": "codex-deepseek-batch-session",
   "owner_ignored_by_recovery": true,
   "final_ready": false,
   "classified_count": 5916,
   "unknown_count": 184,
   "total_elements": 6100,
-  "confidence_distribution": {
-    "1": 184,
-    "2": 1237,
-    "3": 4679,
-    "4": 0
-  },
-  "evidence_distribution": {
-    "A": 0,
-    "B": 4679,
-    "C": 14,
-    "D": 1223,
-    "U": 184
-  },
+  "confidence_distribution": {"1": 184, "2": 1237, "3": 4679, "4": 0},
+  "evidence_distribution": {"A": 0, "B": 4679, "C": 14, "D": 1223, "U": 184},
   "output_sha256": "9d07b459267b5e8fbfa74d39cf1f11f3e7e862e5f44f7cbc26d127c889f6729d",
   "previous_output_sha256": "0b77e7c852fa4fc287bc12e76ed609043e9d263da08d7844f1bdb9e9410247be",
-  "note": "NEW_PAGE_RESUME bounded retry completed without business append. Canonical shard remains 6100 because the batch 123 OSM payload was not reachable from the runtime. No fake rows were generated and no existing IDs were replayed.",
+  "note": "NEW_PAGE_RESUME alternate-endpoint bounded retry completed without business append. Canonical shard remains 6100 because batch 123 produced no retrievable OSM payload. No fake rows were generated and no existing IDs were replayed.",
   "continuation_key": "building-type-5-england-classification-v1-20260808",
   "production_merge": false,
   "fake_data": false,
@@ -45,31 +34,16 @@
   "canonical_manifest_sha": "ec4814da9dce844bda97c0164c81e3927ce2d849",
   "canonical_shard_blob_sha": "fda9188715b376ac6cb1b5486736be0caeb1d371",
   "resume_attempt_history": [
-    {
-      "attempted_at": "2026-08-16T15:20:00Z",
-      "batch_index": 123,
-      "source_payload_verified": false,
-      "new_features_appended": 0,
-      "result": "BLOCKED_OPEN_SOURCE_ENDPOINT_UNREACHABLE"
-    },
-    {
-      "attempted_at": "2026-08-16T15:39:00Z",
-      "batch_index": 123,
-      "source_payload_verified": false,
-      "new_features_appended": 0,
-      "runtime_fetch_results": [
-        "web_dynamic_get_safe_url_gate",
-        "https_dns_resolution_failed"
-      ],
-      "result": "BLOCKED_OPEN_SOURCE_ENDPOINT_UNREACHABLE"
-    }
+    {"attempted_at": "2026-08-16T15:20:00Z", "batch_index": 123, "source_payload_verified": false, "new_features_appended": 0, "result": "BLOCKED_OPEN_SOURCE_ENDPOINT_UNREACHABLE"},
+    {"attempted_at": "2026-08-16T15:39:00Z", "batch_index": 123, "source_payload_verified": false, "new_features_appended": 0, "runtime_fetch_results": ["web_dynamic_get_safe_url_gate", "https_dns_resolution_failed"], "result": "BLOCKED_OPEN_SOURCE_ENDPOINT_UNREACHABLE"},
+    {"attempted_at": "2026-08-16T16:10:06Z", "batch_index": 123, "source_payload_verified": false, "new_features_appended": 0, "runtime_fetch_results": ["osm_api_web_dynamic_get_safe_url_gate", "kumi_web_dynamic_get_safe_url_gate", "private_coffee_http_400_timeout_fetching", "private_coffee_https_dns_resolution_failed", "osm_api_https_dns_resolution_failed"], "alternate_public_osm_routes_attempted": true, "result": "BLOCKED_OPEN_SOURCE_ENDPOINT_UNREACHABLE"}
   ],
   "blocker": {
     "code": "BLOCKED",
     "root_cause": "OPEN_SOURCE_ENDPOINT_UNREACHABLE_FROM_RUNTIME",
-    "detail": "Batch 123 retrieval was retried with the bounded Felixstowe/Suffolk Overpass query. The web runtime did not permit the dynamic query URL and the runtime HTTPS client could not resolve overpass-api.de. No source payload means no evidence-backed records can be appended safely.",
+    "detail": "Batch 123 retrieval was retried through the official OSM map API and alternate public Overpass endpoints. No usable payload was returned by the available runtime; dynamic query URLs were blocked and runtime HTTPS DNS resolution failed for tested OSM hosts. Without a payload, no evidence-backed records can be appended safely.",
     "source_processing_attempted": true,
-    "endpoint_retry_count": 4
+    "endpoint_retry_count": 7
   },
   "next_source": {
     "batch_index": 123,
