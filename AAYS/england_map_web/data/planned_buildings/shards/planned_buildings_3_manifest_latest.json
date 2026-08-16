@@ -3,18 +3,20 @@
   "slot_id": "planned_buildings_3",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_3_open_source_v2_20260813",
-  "updated_at": "2026-08-16T17:33:00Z",
-  "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
+  "updated_at": "2026-08-16T18:00:00Z",
+  "state": "INPUT_REQUIRED",
   "feature_count_before": 0,
   "new_records_added": 0,
   "feature_count_after": 0,
   "already_processed_ids": [],
   "evidence_distribution": {
-    "planning_data_api_records_examined": 100,
-    "records_with_polygon_geometry": 0,
-    "records_with_point": 0,
-    "records_with_application_status": 0,
-    "strict_spatial_and_status_eligible": 0
+    "planning_data_api_records_examined_cumulative": 100,
+    "records_with_polygon_geometry_cumulative": 0,
+    "records_with_point_cumulative": 0,
+    "records_with_application_status_cumulative": 0,
+    "strict_spatial_and_status_eligible_cumulative": 0,
+    "batch_1_records_examined": 0,
+    "batch_1_source_bytes_available": false
   },
   "sources_used": [
     "repo_state:docs/chatgpt_status/_shared/slots_21/planned_buildings_3/checkpoint_latest.json",
@@ -23,7 +25,8 @@
     "repo_state:docs/chatgpt_status/_shared/slots_21/planned_buildings_3/recovery_latest.json",
     "https://www.planning.data.gov.uk/entity.json?dataset=planning-application&limit=100&offset=0",
     "https://www.planning.data.gov.uk/docs",
-    "https://www.planning.data.gov.uk/dataset/planning-application"
+    "https://www.planning.data.gov.uk/dataset/planning-application",
+    "https://www.planning.data.gov.uk/entity.json?dataset=planning-application&limit=100&offset=100"
   ],
   "source_evidence": {
     "source_name": "Planning Data API - planning-application",
@@ -40,9 +43,30 @@
     "result": "NO_STRICT_ELIGIBLE_RECORD",
     "root_cause": "Planning Data API planning-application source_index=0 batch_index=0 returned 100 records, but every record had empty geometry and point fields and the batch exposed no planning-application-status field; strict centroid-within-polygon/exact-intersection matching plus status evidence therefore cannot be satisfied."
   },
+  "source_attempt_history": [
+    {
+      "at": "2026-08-16T18:00:00Z",
+      "source_index": 0,
+      "batch_index": 1,
+      "offset": 100,
+      "limit": 100,
+      "official_url": "https://www.planning.data.gov.uk/entity.json?dataset=planning-application&limit=100&offset=100",
+      "pagination_rule_verified_from_official_docs": true,
+      "web_exact_page_open_succeeded": false,
+      "container_dns_succeeded": false,
+      "repo_cache_hit": false,
+      "source_bytes_available": false,
+      "records_examined": 0,
+      "strict_eligible_records": 0,
+      "new_records_added": 0,
+      "batch_consumed": false,
+      "result": "INPUT_REQUIRED",
+      "root_cause": "Official Planning Data API page-2 bytes could not be retrieved by the available runtime paths, so strict spatial/status eligibility cannot be evaluated without inventing evidence."
+    }
+  ],
   "source_calls_this_turn": 1,
   "source_index": 0,
-  "batch_index": 0,
+  "batch_index": 1,
   "next_source_index": 0,
   "next_batch_index": 1,
   "match_method": "strict centroid-within-polygon or exact intersection only",
@@ -56,26 +80,14 @@
   "production_merge": false,
   "demo_only": true,
   "blocker": {
-    "code": "BLOCKED_STRICT_GEOMETRY_STATUS_REQUIRED",
-    "root_cause": "Planning Data API batch 0 has no polygon/point geometry and no application-status field, so no strict spatial+status eligible PB3 record exists in this bounded page."
+    "code": "INPUT_REQUIRED_RUNTIME_SOURCE_BYTES",
+    "root_cause": "Planning Data API source_index=0 batch_index=1 cannot be consumed because the official offset=100 response bytes were unavailable to the current runtime; no spatial/status claim can be made safely.",
+    "requires_user_action": false
   },
   "history": [
-    {
-      "at": "2026-08-16T17:06:00Z",
-      "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
-      "feature_count_after": 0,
-      "blocker": "BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED"
-    },
-    {
-      "at": "2026-08-16T17:33:00Z",
-      "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
-      "source_index": 0,
-      "batch_index": 0,
-      "records_examined": 100,
-      "new_records_added": 0,
-      "feature_count_after": 0,
-      "blocker": "BLOCKED_STRICT_GEOMETRY_STATUS_REQUIRED"
-    }
+    {"at":"2026-08-16T17:06:00Z","state":"BLOCKED_SOURCE_COVERAGE_REQUIRED","feature_count_after":0,"blocker":"BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED"},
+    {"at":"2026-08-16T17:33:00Z","state":"BLOCKED_SOURCE_COVERAGE_REQUIRED","source_index":0,"batch_index":0,"records_examined":100,"new_records_added":0,"feature_count_after":0,"blocker":"BLOCKED_STRICT_GEOMETRY_STATUS_REQUIRED"},
+    {"at":"2026-08-16T18:00:00Z","state":"INPUT_REQUIRED","source_index":0,"batch_index":1,"records_examined":0,"new_records_added":0,"feature_count_after":0,"batch_consumed":false,"blocker":"INPUT_REQUIRED_RUNTIME_SOURCE_BYTES"}
   ],
   "shard_path": "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_3_latest.geojson",
   "checkpoint_path": "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/checkpoint_latest.json"
