@@ -5,14 +5,14 @@
   "slot_id": "future_growth_7",
   "slot_family": "future_growth",
   "continuation_key": "future_growth_7_open_source_v2_20260813",
-  "updated_at": "2026-08-16T15:33:50Z",
+  "updated_at": "2026-08-16T16:00:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
   "demo_only": true,
   "state": "RECOVERY_PARKED",
   "blocker": "BLOCKED_RUNTIME_OFFICIAL_GEOMETRY_FETCH_UNAVAILABLE",
-  "blocker_reason": "The canonical shard already contains 18 records, but the next parcel-level exact-intersection batch cannot be executed because raw official vector geometry is not fetchable in this runtime. Clackmannanshire Housing Land Audit WFS returned a web cache miss and DNS resolution failed for both the WFS and RoS INSPIRE hosts.",
+  "blocker_reason": "Official parcel and housing-growth metadata could be revalidated, including the RoS cadastral download service and polygon Housing Land Supply services, but raw vector geometries still could not be retrieved. Runtime DNS failed for the geometry hosts and web raw WFS/GeoJSON/query endpoints returned cache-miss/forbidden, so strict centroid-within-polygon or exact intersection was not executable.",
   "focus": "Scotland NPF4, major developments, housing/transport growth zones",
   "target_output": "AAYS/england_map_web/data/future_growth/shards/future_growth_7_latest.geojson",
   "feature_count_before": 18,
@@ -25,7 +25,14 @@
   },
   "next_source_index": 1,
   "next_batch_index": 0,
-  "next_action": "When official raw vector geometry becomes fetchable, run a bounded source_index=1,batch_index=0 join between RoS INSPIRE cadastral parcels and Clackmannanshire Housing Land Audit polygons; accept only strict centroid-within-polygon or exact intersection and add no more than 250 new records. Source 0 batch 0 is already processed and must not be repeated.",
-  "resume_note": "Checkpoint count 0 was stale relative to the canonical shard and evidence manifest, both of which prove 18 existing records. Baseline reconciled to 18 without modifying the shard.",
+  "next_action": "Keep the same task and continuation_key. Recheck raw official geometry capability on the next continuation; if both a parcel polygon source and an official housing-growth polygon source are actually readable, append at most 250 strict centroid-within-polygon or exact-intersection records. Do not repeat source 0 batch 0.",
+  "resume_note": "The canonical shard remains 18 features. No parcel_id/source_ref/project_ref/osm_id fields exist in those legacy records; the 18 source_feature_ids remain the duplicate guard. No shard write occurred in this continuation.",
+  "source_recheck": {
+    "checked_at": "2026-08-16T16:00:00Z",
+    "ros_inspire_metadata": "WEB_READ_OK_RAW_DOWNLOAD_UNAVAILABLE",
+    "clackmannanshire_hla_metadata": "WEB_READ_OK_RAW_WFS_UNAVAILABLE",
+    "housing_land_supply_scotland_2026_metadata": "WEB_READ_OK_RAW_OPEN_RESOURCE_FORBIDDEN",
+    "glasgow_city_region_housing_land_supply_2024_metadata": "WEB_READ_OK_POLYGON_LAYER_RAW_QUERY_UNAVAILABLE"
+  },
   "prompt_contract_unchanged": true
 }
