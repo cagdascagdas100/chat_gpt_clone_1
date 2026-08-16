@@ -5,46 +5,28 @@
   "slot_id": "future_growth_7",
   "slot_family": "future_growth",
   "continuation_key": "future_growth_7_open_source_v2_20260813",
-  "updated_at": "2026-08-16T16:25:50Z",
+  "updated_at": "2026-08-16T16:50:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
   "demo_only": true,
   "state": "RECOVERY_PARKED",
   "blocker": "BLOCKED_RUNTIME_OFFICIAL_GEOMETRY_FETCH_UNAVAILABLE",
-  "blocker_reason": "The national Spatial Hub Housing Land Supply dataset is confirmed open and advertises WFS/GeoJSON/Shapefile resources, but the raw WFS GetFeature endpoint returned web cache miss and runtime DNS failure. RoS cadastral raw geometry is likewise still unreachable. Therefore no raw parcel-plus-growth polygon pair was available and strict centroid-within-polygon or exact intersection was not executable.",
+  "blocker_reason": "The Housing Land Supply polygon layer is confirmed readable at metadata level and advertises geoJSON query support, but raw query features remain unavailable; the direct runtime path also cannot resolve Spatial Hub or RoS geometry hosts. No raw parcel-plus-growth geometry pair exists for strict centroid-within-polygon or exact intersection.",
   "focus": "Scotland NPF4, major developments, housing/transport growth zones",
   "target_output": "AAYS/england_map_web/data/future_growth/shards/future_growth_7_latest.geojson",
   "feature_count_before": 18,
   "new_verified_records": 0,
   "feature_count_after": 18,
-  "evidence_distribution": {
-    "area_proxy": 15,
-    "direct_project_or_site": 3,
-    "accuracy_level_4": 18
-  },
+  "evidence_distribution": {"area_proxy": 15, "direct_project_or_site": 3, "accuracy_level_4": 18},
   "next_source_index": 1,
   "next_batch_index": 0,
-  "next_action": "Keep the same task and continuation_key. Recheck source_index=1,batch_index=0 using RoS cadastral parcels plus the Spatial Hub Housing Land Supply open WFS; append at most 250 records only after both raw geometries are actually readable and a strict centroid-within-polygon or exact intersection succeeds. Do not repeat source 0 batch 0.",
+  "next_action": "Keep the same task and continuation_key. Resume source_index=1,batch_index=0 only after both RoS cadastral parcel geometry and an official Housing Land Supply polygon feed return raw features; append at most 250 records using only strict centroid-within-polygon or exact intersection. Do not repeat source 0 batch 0.",
   "resume_note": "The canonical shard remains 18 features. No parcel_id/source_ref/project_ref/osm_id fields exist in those legacy records; the 18 source_feature_ids remain the duplicate guard. No shard write occurred in this continuation.",
-  "source_recheck": {
-    "checked_at": "2026-08-16T16:00:00Z",
-    "ros_inspire_metadata": "WEB_READ_OK_RAW_DOWNLOAD_UNAVAILABLE",
-    "clackmannanshire_hla_metadata": "WEB_READ_OK_RAW_WFS_UNAVAILABLE",
-    "housing_land_supply_scotland_2026_metadata": "WEB_READ_OK_RAW_OPEN_RESOURCE_FORBIDDEN",
-    "glasgow_city_region_housing_land_supply_2024_metadata": "WEB_READ_OK_POLYGON_LAYER_RAW_QUERY_UNAVAILABLE"
-  },
+  "source_recheck": {"checked_at": "2026-08-16T16:00:00Z", "ros_inspire_metadata": "WEB_READ_OK_RAW_DOWNLOAD_UNAVAILABLE", "clackmannanshire_hla_metadata": "WEB_READ_OK_RAW_WFS_UNAVAILABLE", "housing_land_supply_scotland_2026_metadata": "WEB_READ_OK_RAW_OPEN_RESOURCE_FORBIDDEN", "glasgow_city_region_housing_land_supply_2024_metadata": "WEB_READ_OK_POLYGON_LAYER_RAW_QUERY_UNAVAILABLE"},
   "continuation_rechecks": [
-    {
-      "checked_at": "2026-08-16T16:25:50Z",
-      "source_index": 1,
-      "batch_index": 0,
-      "growth_source_id": "housing_land_supply_scotland_spatialhub_open_wfs",
-      "metadata_status": "WEB_READ_OK_OPEN_DATA_WFS_GEOJSON_SHAPEFILE_DECLARED",
-      "raw_geometry_status": "WEB_WFS_CACHE_MISS_AND_RUNTIME_DNS_RESOLUTION_FAILED",
-      "raw_geometry_records_read": 0,
-      "new_verified_records": 0
-    }
+    {"checked_at": "2026-08-16T16:25:50Z", "source_index": 1, "batch_index": 0, "growth_source_id": "housing_land_supply_scotland_spatialhub_open_wfs", "metadata_status": "WEB_READ_OK_OPEN_DATA_WFS_GEOJSON_SHAPEFILE_DECLARED", "raw_geometry_status": "WEB_WFS_CACHE_MISS_AND_RUNTIME_DNS_RESOLUTION_FAILED", "raw_geometry_records_read": 0, "new_verified_records": 0},
+    {"checked_at": "2026-08-16T16:50:00Z", "source_index": 1, "batch_index": 0, "growth_source_id": "glasgow_city_region_housing_land_supply_2024_arcgis", "metadata_status": "WEB_READ_OK_POLYGON_AND_GEOJSON_QUERY_SUPPORT_CONFIRMED", "raw_geometry_status": "WEB_QUERY_CACHE_MISS_AND_RUNTIME_DNS_RESOLUTION_FAILED", "parcel_raw_geometry_status": "RUNTIME_DNS_RESOLUTION_FAILED", "raw_geometry_records_read": 0, "new_verified_records": 0}
   ],
   "prompt_contract_unchanged": true
 }
