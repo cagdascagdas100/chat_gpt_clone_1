@@ -6,7 +6,7 @@
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_3_open_source_v2_20260813",
   "task_id": "planned_buildings_3_open_source_continuation_v2_20260813",
-  "updated_at": "2026-08-16T17:06:00Z",
+  "updated_at": "2026-08-16T17:33:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
@@ -17,7 +17,7 @@
   "feature_count_after": 0,
   "already_processed_ids": [],
   "next_source_index": 0,
-  "next_batch_index": 0,
+  "next_batch_index": 1,
   "task_contract": {
     "must_read": [
       "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/checkpoint_latest.json",
@@ -55,8 +55,8 @@
       "large raw data stays outside Git"
     ]
   },
-  "blocker": "BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED",
-  "blocker_reason": "No PB3-qualified project polygon with both project type and status exists in the current repo evidence; no feature can be added without an external official open-source evidence batch.",
+  "blocker": "BLOCKED_STRICT_GEOMETRY_STATUS_REQUIRED",
+  "blocker_reason": "Planning Data API source_index=0 batch_index=0 returned 100 records with no usable geometry/point and no application-status field, so no strict PB3 match can be written.",
   "history": [
     {
       "at": "2026-08-15T07:54:17Z",
@@ -69,7 +69,19 @@
       "state_manifest_shard_paths_aligned": true,
       "same_task_id": true,
       "same_continuation_key": true
+    },
+    {
+      "at": "2026-08-16T17:33:00Z",
+      "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
+      "same_task_id": true,
+      "same_continuation_key": true,
+      "source_index": 0,
+      "batch_index": 0,
+      "records_examined": 100,
+      "strict_eligible_records": 0,
+      "new_records_added": 0,
+      "blocker": "BLOCKED_STRICT_GEOMETRY_STATUS_REQUIRED"
     }
   ],
-  "next_action": "Continue same task at source_index=0 with one bounded official project/planning polygon source when source access is in scope."
+  "next_action": "Continue same task at source_index=0 batch_index=1 (offset=100) with the next bounded Planning Data API page; no new task or continuation key."
 }
