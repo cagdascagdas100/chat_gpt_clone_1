@@ -7,14 +7,14 @@
   "shard_index": 2,
   "region": "London Outer",
   "region_code": "LDN_OUTER",
-  "sequence": 81,
-  "hydration_state": "REMOTE_STATE_INCONSISTENT_CONTROL_BLOCKED",
-  "remote_head": "7135c4a197ad75bad2d8de9aae0869cd66496636",
+  "sequence": 82,
+  "hydration_state": "REMOTE_STATE_SYNCHRONIZED_RESUME_READY",
+  "remote_head": "d5d8bf935fca92094308a1287327a9ffd1445afd",
   "first_unverified_step": "AŞAMA_1_OSM_GENISLETME_APPEND_NEW_BATCH_THEN_OPTIONAL_EPC_VOA_HMLR_UPGRADE",
-  "first_unverified_step_status": "BLOCKED_STATE_MISMATCH",
+  "first_unverified_step_status": "READY",
   "terminal_no_replay": [],
   "terminal_status": "NEW_PAGE_RESUME_READY",
-  "updated_at": "2026-08-16T14:08:00Z",
+  "updated_at": "2026-08-16T15:09:00Z",
   "final_ready": false,
   "summary": {
     "pilot_osm_classified": 429,
@@ -27,14 +27,14 @@
   "remaining_items": {
     "epc_residential_classification_pending": true,
     "voa_non_domestic_classification_pending": true,
-    "note": "OSM pilot Aşama 1 tamamlandı. EPC bulk residential verisi ile devam edilmeli."
+    "note": "OSM genişletme devam ediyor; EPC/VOA yükseltmesi kanıtlı exact join mevcut olduğunda uygulanmalı."
   },
-  "state": "BLOCKED_STATE_MISMATCH",
-  "feature_count_before": 300,
-  "feature_count_after": 1750,
-  "current_feature_count": 1750,
-  "next_batch_index": 7,
-  "next_target_feature_count": 1800,
+  "state": "READY_OPEN_SOURCE_CONTINUATION",
+  "feature_count_before": 8800,
+  "feature_count_after": 8800,
+  "current_feature_count": 8800,
+  "next_batch_index": 177,
+  "next_target_feature_count": 8850,
   "last_processed_ids_sample": [
     "ENG_OSM_node_3760810176",
     "ENG_OSM_node_3760810181",
@@ -57,34 +57,39 @@
     "ENG_OSM_node_3881228468",
     "ENG_OSM_node_3881228476"
   ],
-  "next_required_action": "WAIT_FOR_STATE_MANIFEST_WEB_INTEGRATION_FIX_DO_NOT_PROCESS_SOURCE_OR_CHANGE_TASK_OWNER",
+  "last_processed_ids_sample_scope": "legacy sample retained; canonical already_processed_ids are all parcel_id/source_ref/project_ref/osm_id values present in building_type_2_latest.geojson",
+  "next_required_action": "PROCESS_BOUNDED_BATCH_177_ONLY_WITH_PROVEN_BUILDING_TYPE_AND_SHARD_DEDUPE; NO_NEAREST_MATCH",
   "fake_data": false,
   "continuation_key": "building-type-2-england-classification-v1-20260808",
   "production_merge": false,
   "resume_metadata_repaired_at": "2026-08-14T13:54:50Z",
   "resume_metadata_repair_reason": "restored_existing_recovery_continuation_key_without_replaying_features",
   "resume_signal": "NEW_PAGE_RESUME_READY",
+  "state_sync_history": [
+    {
+      "resolved_at": "2026-08-16T15:09:00Z",
+      "previous_blocker": "STATE_MANIFEST_PUBLISH_MISMATCH",
+      "manifest_feature_count": 8800,
+      "manifest_feature_count_before": 8750,
+      "manifest_feature_count_after": 8800,
+      "manifest_last_batch_index": 176,
+      "manifest_last_batch_city": "Hayes",
+      "manifest_geojson_sha256": "6865f749fffc0de60e4424a114c177e13282a4607b63a0edbd6ab01f24c7dbfc",
+      "shard_git_blob_sha": "cf8847ab972018059d30a9e2badfc7a9ee97ff81",
+      "manifest_git_blob_sha": "8946e1708a9574c301d894b98e094d89b3af318b",
+      "resolution": "checkpoint/status counters realigned to latest shard manifest without replaying or creating features"
+    }
+  ],
   "blocker": {
-    "type": "STATE_MANIFEST_PUBLISH_MISMATCH",
-    "detected_at": "2026-08-16T14:08:00Z",
-    "checkpoint_current_feature_count": 1750,
-    "status_total_elements": 300,
-    "checkpoint_pilot_osm_classified": 429,
-    "status_classified_count": 120,
-    "status_owner": "codex-deepseek-batch-session",
-    "current_task_owner": null,
-    "recovery_latest": "FOUND_RECOVERY_REQUESTED",
-    "recovery_ignore_stale_owner": true,
-    "recovery_reuse_continuation_key": true,
-    "continuation_key_consistent": true,
-    "required_resume_manifest_outside_current_allowed_scope": true,
-    "source_processing_allowed": false,
-    "safe_requested_fix": "state_manifest_web_integration_only",
-    "evidence_paths": [
-      "docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json",
-      "docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json",
-      "docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json",
-      "docs/chatgpt_status/_shared/slots_21/building_type_2/recovery_latest.json"
+    "type": "NONE",
+    "resolved_at": "2026-08-16T15:09:00Z",
+    "previous_type": "STATE_MANIFEST_PUBLISH_MISMATCH",
+    "source_processing_allowed": true,
+    "constraints": [
+      "dedupe against all IDs in latest shard",
+      "proven building type only",
+      "nearest matching forbidden",
+      "strict centroid-within-polygon or exact intersection required when joining geometries"
     ]
   }
 }
