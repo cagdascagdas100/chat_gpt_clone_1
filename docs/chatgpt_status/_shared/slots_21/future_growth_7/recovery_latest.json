@@ -8,14 +8,14 @@
   "continuation_key": "future_growth_7_open_source_v2_20260813",
   "next_source_index": 1,
   "next_batch_index": 0,
-  "updated_at": "2026-08-16T16:50:00Z",
+  "updated_at": "2026-08-16T17:16:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
   "demo_only": true,
-  "recovery_reason": "Canonical shard remains at 18 verified source records and source 0 batch 0 remains complete. This bounded recheck confirmed that an official Housing Land Supply ArcGIS layer is polygon geometry and advertises geoJSON query support, but raw feature retrieval still failed; RoS parcel raw geometry remains unreachable. Strict spatial matching cannot be proven and the shard was not changed.",
+  "recovery_reason": "Canonical shard remains at 18 verified source records and source 0 batch 0 remains complete. This bounded continuation resolved a same-area Stirling pair of OGL EPSG:27700 polygon layers (RoS cadastral parcels and Housing Land Audit 2023), but raw feature retrieval still failed through both web and runtime paths. Strict spatial matching cannot be proven and the shard was not changed.",
   "blocker": "BLOCKED_RUNTIME_OFFICIAL_GEOMETRY_FETCH_UNAVAILABLE",
-  "blocker_reason": "Web metadata retrieval confirms an official polygon layer and query formats, but the raw ArcGIS query returns cache miss. Runtime HTTPS again fails DNS resolution for geo.spatialhub.scot and ros-inspire.themapcloud.com. No raw parcel-plus-growth feature set is available for strict centroid-within-polygon or exact intersection.",
+  "blocker_reason": "Stirling cadastral layer 12 and HLA layer 62 are proven polygon FeatureLayers with query/download capability, but web GeoJSON downloads return cache miss and runtime DNS resolution fails for services-eu1.arcgis.com and data-stirling-council.hub.arcgis.com. No raw parcel-plus-growth feature set is available for strict centroid-within-polygon or exact intersection.",
   "recovery_attempts": [
     {"attempted_at": "2026-08-16T15:33:50Z", "method": "web_connector_raw_wfs_fetch", "result": "CACHE_MISS"},
     {"attempted_at": "2026-08-16T15:33:50Z", "method": "runtime_https_fetch", "result": "DNS_RESOLUTION_FAILED"},
@@ -24,9 +24,13 @@
     {"attempted_at": "2026-08-16T16:25:50Z", "method": "web_spatialhub_hls_wfs_recheck", "target": "https://geo.spatialhub.scot/geoserver/sh_hls/wfs?service=wfs&typeName=sh_hls%3Apub_hls", "metadata_result": "OPEN_DATA_WFS_GEOJSON_SHAPEFILE_CONFIRMED", "result": "RAW_GETFEATURE_CACHE_MISS"},
     {"attempted_at": "2026-08-16T16:25:50Z", "method": "runtime_https_geometry_recheck", "targets": ["geo.spatialhub.scot","ros-inspire.themapcloud.com"], "result": "DNS_RESOLUTION_FAILED"},
     {"attempted_at": "2026-08-16T16:50:00Z", "method": "web_arcgis_polygon_query_recheck", "target": "Glasgow City Region Housing Land Supply 2024 FeatureServer/31", "metadata_result": "POLYGON_LAYER_GEOJSON_QUERY_SUPPORT_CONFIRMED", "result": "RAW_QUERY_CACHE_MISS"},
-    {"attempted_at": "2026-08-16T16:50:00Z", "method": "runtime_direct_https_recheck", "targets": ["geo.spatialhub.scot","ros-inspire.themapcloud.com"], "result": "DNS_RESOLUTION_FAILED"}
+    {"attempted_at": "2026-08-16T16:50:00Z", "method": "runtime_direct_https_recheck", "targets": ["geo.spatialhub.scot","ros-inspire.themapcloud.com"], "result": "DNS_RESOLUTION_FAILED"},
+    {"attempted_at": "2026-08-16T17:16:00Z", "method": "github_source_contract_resolution", "targets": ["OpenDataScotland/jkan Stirling cadastral metadata","OpenDataScotland/jkan Stirling HLA metadata"], "result": "OGL_POLYGON_PAIR_RESOLVED", "parcel_item_id": "68dba0e4e55349f0b74ad6144ffd187c", "growth_item_id": "c9ee133e2a804f8ca165f59964f8a2b0"},
+    {"attempted_at": "2026-08-16T17:16:00Z", "method": "web_stirling_arcgis_metadata_and_download_probe", "targets": ["ros_cadastral_parcels FeatureServer/12","HLA_2024_01 FeatureServer/62","Stirling Hub GeoJSON downloads"], "metadata_result": "BOTH_LAYER_METADATA_AND_QUERY_FORMS_READ_OK", "result": "RAW_GEOJSON_CACHE_MISS"},
+    {"attempted_at": "2026-08-16T17:16:00Z", "method": "runtime_direct_https_stirling_pair", "targets": ["services-eu1.arcgis.com","data-stirling-council.hub.arcgis.com"], "result": "DNS_RESOLUTION_FAILED"},
+    {"attempted_at": "2026-08-16T17:16:00Z", "method": "github_raw_mirror_search", "targets": ["68dba0e4e55349f0b74ad6144ffd187c","c9ee133e2a804f8ca165f59964f8a2b0"], "result": "METADATA_ONLY_NO_RAW_GEOJSON_MIRROR"}
   ],
-  "next_action": "Do not retry source 0. Re-check source_index=1,batch_index=0 only if raw geometry fetch capability changes; prioritize RoS cadastral parcels plus an official Housing Land Supply polygon feed, then compute at most 250 strict spatial matches and keep future_growth value/probability null unless an approved scoring rule is present.",
+  "next_action": "Do not retry source 0. Re-check source_index=1,batch_index=0 only if raw geometry fetch capability changes; prioritize the resolved Stirling RoS cadastral layer 12 plus Stirling HLA layer 62, then compute at most 250 strict spatial matches and keep future_growth value/probability null unless an approved scoring rule is present.",
   "recovery_decision": "PARK_UNTIL_OFFICIAL_GEOMETRY_FETCH_AVAILABLE",
   "prompt_contract_unchanged": true
 }
