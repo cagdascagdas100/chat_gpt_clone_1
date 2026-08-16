@@ -10,7 +10,7 @@
   "region_code": "LDN_INNER",
   "task_id": "building-type-1-england-classification-v1-20260808",
   "attempt_id": "building-type-v1-001-20260808",
-  "updated_at": "2026-08-16T15:08:00Z",
+  "updated_at": "2026-08-16T15:35:00Z",
   "owner": null,
   "owner_started_at": "2026-08-08T19:00:00Z",
   "final_ready": false,
@@ -41,7 +41,7 @@
   "output_sha256_scope": "LEGACY_300_FEATURE_STATUS_VALUE_NOT_REVALIDATED_FOR_10050_FEATURE_SHARD",
   "result": {
     "state": "METHODOLOGY_REQUIRED",
-    "note": "Latest shard manifest and last successful data commit prove 10050 features and next_batch_index 165. No exact batch 165 grid/bbox or approved source index is present in canonical state, so nearest/guessed selection is prohibited and no new row was produced."
+    "note": "Latest shard manifest and last successful data commit prove 10050 features and next_batch_index 165. Current HEAD still has no exact batch 165 grid/bbox or approved source index, so nearest/guessed selection is prohibited and no new row was produced."
   },
   "feature_count_before": 10050,
   "new_features_added": 0,
@@ -51,7 +51,7 @@
   "next_target_feature_count": 10100,
   "blocker": {
     "type": "METHODOLOGY_REQUIRED",
-    "root_cause": "next_grid_hint is UNRESOLVED_NEXT_UNPROCESSED_GRID and canonical repo state does not define the exact batch 165 grid/bbox/source index; guessing would violate the no-nearest/no-inference rule",
+    "root_cause": "next_grid_hint is UNRESOLVED_NEXT_UNPROCESSED_GRID and canonical repo state does not define the exact batch 165 grid/bbox/source index; the declared deterministic methodology file is absent; guessing would violate the no-nearest/no-inference rule",
     "source_attempted": false
   },
   "continuation_key": "building-type-1-england-classification-v1-20260808",
@@ -63,5 +63,21 @@
     "strategy": "latest_shard parcel_id/source_ref/project_ref/osm_id plus feature.id",
     "authoritative_feature_count": 10050,
     "do_not_reprocess": true
-  }
+  },
+  "resume_checks": [
+    {
+      "checked_at": "2026-08-16T15:35:00Z",
+      "observed_remote_head": "1005762738a615b9d7bc40cdec6bb539d11dc192",
+      "feature_count_before": 10050,
+      "new_features_added": 0,
+      "feature_count_after": 10050,
+      "next_batch_index": 165,
+      "repo_batch165_definition_found": false,
+      "declared_methodology_file_found": false,
+      "source_attempted": false,
+      "shard_modified": false,
+      "manifest_modified": false,
+      "blocker": "METHODOLOGY_REQUIRED"
+    }
+  ]
 }
