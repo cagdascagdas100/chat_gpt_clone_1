@@ -5,15 +5,18 @@
   "slot_id": "future_growth_5",
   "slot_family": "future_growth",
   "continuation_key": "future_growth_5_open_source_v2_20260813",
-  "updated_at": "2026-08-15T09:18:00Z",
+  "updated_at": "2026-08-16T15:29:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
-  "state": "NEW_PAGE_RESUME_READY",
-  "feature_count_before": 0,
-  "feature_count_after": 0,
-  "already_processed_ids": [],
-  "next_source_index": 1,
+  "demo_only": true,
+  "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
+  "feature_count_before": 1,
+  "feature_count_after": 1,
+  "already_processed_ids": [
+    "0018x"
+  ],
+  "next_source_index": 2,
   "next_batch_index": 0,
   "blocked_source_access": {
     "source_index": 0,
@@ -30,20 +33,33 @@
     "unknown_reason": "No source feature payload was obtained; no value/probability generated."
   },
   "control_hold": {
-    "problem": "CHECKPOINT_STALE_AGAINST_CURRENT_REGION_CENTROID_COVERAGE_BLOCKER_AND_NEXT_SOURCE_INDEX_MISMATCH",
+    "problem": "BLOCKED_REGION_CENTROID_COVERAGE_REQUIRED",
     "observed_status_state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
     "observed_blocker": "BLOCKED_REGION_CENTROID_COVERAGE_REQUIRED",
-    "observed_recovery_next_source_index": 0,
-    "checkpoint_next_source_index": 1,
+    "observed_recovery_next_source_index": 2,
+    "checkpoint_next_source_index": 2,
     "evidence_paths": [
       "docs/chatgpt_status/_shared/slots_21/future_growth_5/checkpoint_latest.json",
       "docs/chatgpt_status/_shared/slots_21/future_growth_5/status_latest.json",
       "docs/chatgpt_status/_shared/slots_21/future_growth_5/current_task_latest.json",
-      "docs/chatgpt_status/_shared/slots_21/future_growth_5/recovery_latest.json"
+      "docs/chatgpt_status/_shared/slots_21/future_growth_5/recovery_latest.json",
+      "state/slots/future_growth_5/evidence_manifest_latest.json",
+      "AAYS/england_map_web/data/future_growth/shards/future_growth_5_latest.geojson"
     ],
-    "safe_requested_fix": "state_manifest_web_integration_only",
+    "safe_requested_fix": "canonical_north_centroid_or_polygon_coverage_gate",
     "do_not_change_prompts": true,
     "do_not_create_fake_data": true
   },
-  "next_action": "Wait for Codex state/manifest/web integration reconciliation and North canonical centroid/source coverage gate; do not retry source index 0 and do not process another source until state is reconciled."
+  "resume_events": [
+    {
+      "at": "2026-08-16T15:29:00Z",
+      "event": "NEW_PAGE_RESUME_STATE_RECONCILIATION",
+      "feature_count_before": 1,
+      "new_features_added": 0,
+      "feature_count_after": 1,
+      "manifest_next_source_index": 2,
+      "blocker": "BLOCKED_REGION_CENTROID_COVERAGE_REQUIRED"
+    }
+  ],
+  "next_action": "Resume at source index 2 only after canonical North centroid/polygon coverage permits strict centroid-within-polygon or exact intersection; keep future_growth value/probability null unless an approved scoring rule is present."
 }
