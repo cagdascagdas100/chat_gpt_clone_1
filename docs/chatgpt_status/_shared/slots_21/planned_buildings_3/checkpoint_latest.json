@@ -5,46 +5,62 @@
   "slot_id": "planned_buildings_3",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_3_open_source_v2_20260813",
-  "updated_at": "2026-08-16T13:54:00Z",
+  "updated_at": "2026-08-16T17:06:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
-  "state": "NEW_PAGE_RESUME_READY",
+  "demo_only": true,
+  "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
   "feature_count_before": 0,
   "feature_count_after": 0,
   "already_processed_ids": [],
   "next_source_index": 0,
   "next_batch_index": 0,
   "blocker": {
-    "code": "STATE_PUBLISH_PATH_MISMATCH",
-    "evidence_path": "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/current_task_latest.json",
-    "detail": "checkpoint is updated_at=2026-08-16T13:28:00Z state=NEW_PAGE_RESUME_READY while status_latest/current_task_latest/recovery_latest remain updated_at=2026-08-15T07:54:17Z state=BLOCKED_SOURCE_COVERAGE_REQUIRED with blocker=BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED; canonical checkpoint/output integration still points outside the authorized docs/chatgpt_status slot state path. Source continuation is held until state/manifest/web integration is aligned.",
-    "safe_requested_fix": "state_manifest_web_integration_only"
+    "code": "BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED",
+    "detail": "Repo-only NEW_PAGE_RESUME readback found no PB3 feature evidence. Canonical PB3 shard and manifest now exist, but no commercial/office/industrial/logistics/mixed-use project polygon with both project type and status is present in the allowed repo evidence for strict centroid-within-polygon or exact-intersection matching.",
+    "previous_blocker": "STATE_PUBLISH_PATH_MISMATCH",
+    "previous_blocker_resolved": true
   },
   "control_check": {
-    "checked_at": "2026-08-16T13:54:00Z",
+    "checked_at": "2026-08-16T17:06:00Z",
     "github_state_access": "OK",
     "continuation_key_match": true,
     "duplicate_owner_or_task_detected": false,
     "checkpoint_stale": false,
-    "status_current_task_stale_vs_checkpoint": true,
+    "status_current_task_stale_vs_checkpoint": false,
     "recovery_index_mismatch": false,
-    "missing_source_manifest_or_web_target": true,
-    "write_path_integration_mismatch": true,
+    "missing_source_manifest_or_web_target": false,
+    "write_path_integration_mismatch": false,
     "unsupported_score_detected": false,
     "incorrect_confidence_detected": false,
     "source_endpoint_retried": false,
     "previous_batch_repeated": false,
     "new_source_features_processed_this_turn": 0,
     "new_evidence_records_this_turn": 0,
-    "checkpoint_only_write": true
+    "checkpoint_only_write": false
   },
-  "observed_state": {
-    "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
-    "blocker": "BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED",
-    "blocker_reason": "Mevcut Brownfield kaynakları ticari/ofis/sanayi proje tipi kanıtı olmadan PB3 kapsamını desteklemiyor.",
-    "next_action": "Resmi planning/project polygon kaynağıyla proje tipi ve status alanları birlikte doğrulanmalı.",
-    "observed_updated_at": "2026-08-15T07:54:17Z"
+  "paths": {
+    "shard": "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_3_latest.geojson",
+    "manifest": "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_3_manifest_latest.json",
+    "checkpoint": "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/checkpoint_latest.json",
+    "status": "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/status_latest.json",
+    "current_task": "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/current_task_latest.json",
+    "recovery": "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/recovery_latest.json"
   },
-  "next_action": "Wait for state/manifest/web integration repair to align status/current_task/recovery and canonical paths with the authorized checkpoint; then re-read the same four files before any source call."
+  "history": [
+    {
+      "at": "2026-08-16T13:54:00Z",
+      "state": "NEW_PAGE_RESUME_READY",
+      "blocker": "STATE_PUBLISH_PATH_MISMATCH",
+      "checkpoint_sha": "c2e909904e2bd42e954076e9467e078c879fc13f"
+    },
+    {
+      "at": "2026-08-16T17:06:00Z",
+      "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
+      "blocker": "BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED",
+      "state_integration_repaired": true
+    }
+  ],
+  "next_action": "Keep next_source_index=0 and next_batch_index=0. On the next source-enabled bounded turn, inspect one official planning/project polygon source that exposes both project type and status; add only strict spatial matches not present in already_processed_ids."
 }

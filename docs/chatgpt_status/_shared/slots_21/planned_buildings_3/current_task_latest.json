@@ -5,17 +5,26 @@
   "slot_id": "planned_buildings_3",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_3_open_source_v2_20260813",
-  "updated_at": "2026-08-15T07:54:17Z",
+  "task_id": "planned_buildings_3_open_source_continuation_v2_20260813",
+  "updated_at": "2026-08-16T17:06:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
-  "task_id": "planned_buildings_3_open_source_continuation_v2_20260813",
+  "demo_only": true,
   "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
+  "feature_count_before": 0,
+  "new_records_added": 0,
+  "feature_count_after": 0,
+  "already_processed_ids": [],
+  "next_source_index": 0,
+  "next_batch_index": 0,
   "task_contract": {
     "must_read": [
-      "F:\\TerraYield_AAYS_Portable\\docs\\AAYS_FG_PB_OPEN_SOURCE_VALUE_PROBABILITY_CONTRACT_TR.md",
-      "F:\\TerraYield_AAYS_Portable\\docs\\AAYS_FG_PB_SLOT_REGISTRY.json",
-      "F:\\TerraYield_AAYS_Portable\\docs\\AAYS_FG_PB_COMMON_CONTINUE_PROMPT_V2_OPEN_SOURCE_TR.md"
+      "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/checkpoint_latest.json",
+      "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/status_latest.json",
+      "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/recovery_latest.json",
+      "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_3_manifest_latest.json",
+      "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_3_latest.geojson"
     ],
     "allowed_sources": [
       "Planning Data API and bulk downloads",
@@ -27,22 +36,40 @@
     ],
     "write_outputs": [
       "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_3_latest.geojson",
-      "state/slots/planned_buildings_3/checkpoint_latest.json",
-      "state/slots/planned_buildings_3/status_latest.json",
-      "state/slots/planned_buildings_3/evidence_manifest_latest.json"
+      "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_3_manifest_latest.json",
+      "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/checkpoint_latest.json",
+      "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/status_latest.json",
+      "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/current_task_latest.json",
+      "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/recovery_latest.json"
     ],
     "hard_rules": [
       "fake_data=false",
-      "final_ready=false until real QA and owner approval",
-      "demo_only=true for demos",
+      "final_ready=false",
+      "production_merge=false",
+      "demo_only=true",
+      "no duplicate parcel_id/source_ref/project_ref/osm_id",
+      "nearest matching forbidden",
+      "strict centroid-within-polygon or exact intersection only",
+      "planned_building value/probability null without approved scoring rule",
       "planned_building_complete_month only official explicit YYYY-MM",
-      "no git reset/clean/force push",
-      "large raw data stays in runtime/cache"
+      "large raw data stays outside Git"
     ]
   },
   "blocker": "BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED",
-  "blocker_reason": "Mevcut Brownfield kaynakları ticari/ofis/sanayi proje tipi kanıtı olmadan PB3 kapsamını desteklemiyor.",
-  "next_action": "Resmi planning/project polygon kaynağıyla proje tipi ve status alanları birlikte doğrulanmalı.",
-  "canonical_checkpoint_path": "state/slots/planned_buildings_3/checkpoint_latest.json",
-  "prompt_contract_unchanged": true
+  "blocker_reason": "No PB3-qualified project polygon with both project type and status exists in the current repo evidence; no feature can be added without an external official open-source evidence batch.",
+  "history": [
+    {
+      "at": "2026-08-15T07:54:17Z",
+      "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
+      "source_sha": "d8278227ee4062258321359695732b0d5fcd8f27"
+    },
+    {
+      "at": "2026-08-16T17:06:00Z",
+      "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
+      "state_manifest_shard_paths_aligned": true,
+      "same_task_id": true,
+      "same_continuation_key": true
+    }
+  ],
+  "next_action": "Continue same task at source_index=0 with one bounded official project/planning polygon source when source access is in scope."
 }
