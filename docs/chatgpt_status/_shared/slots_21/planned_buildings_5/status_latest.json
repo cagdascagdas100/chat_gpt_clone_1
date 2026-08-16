@@ -5,13 +5,14 @@
   "slot_id": "planned_buildings_5",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_5_open_source_v2_20260813",
-  "updated_at": "2026-08-16T15:25:14Z",
+  "updated_at": "2026-08-16T15:50:30Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
   "demo_only": true,
   "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
   "blocker": "BLOCKED_DEMO_ONLY_MERGE_GUARD",
+  "single_root_cause": "NO_QA_APPROVED_PARCEL_MATCHED_PROJECT_POLYGON_EVIDENCE",
   "focus": "Scoring, completion month, owner type, and eventual program-layer merge only from eligible parcel-matched planned-project polygon evidence",
   "target_output": "england_map_web/data/program_layer_matrix/planned_buildings.geojson",
   "contract": "F:\\TerraYield_AAYS_Portable\\docs\\AAYS_FG_PB_OPEN_SOURCE_VALUE_PROBABILITY_CONTRACT_TR.md",
@@ -21,10 +22,20 @@
   "repo_state_authority": true,
   "local_paths_not_used_this_turn": true,
   "demo_note": "Use demo outputs as method examples only; do not mark final_ready or production merge from demo_only files.",
-  "blocker_reason": "Canonical slot shard/manifest paths are now present, but no eligible QA-approved parcel-matched project polygon batch is available for merge. The 47 program-layer candidates are non-parcel-matched points; reviewed PB1/PB2 shard evidence is demo_only and/or lacks an explicit production/scoring approval gate.",
-  "next_action": "Keep the same continuation_key and indexes. Append only evidence that satisfies strict centroid-within-polygon or exact intersection and an explicit QA/production gate; scores remain null without an approved scoring rule and complete_month remains null without official YYYY-MM.",
+  "blocker_reason": "Bounded repo scan at branch head d95b466ec9bb90f5ac04c829ee0e9653385608f4 found no QA-approved parcel-matched planned-project polygon batch: PB1/PB2 remain demo_only, PB2 reports MISSING_VERIFIED_SOURCE_CONTRACT, PB3 has no shard/manifest, and PB4 has only a blocked manifest with no canonical project-geometry shard.",
+  "next_action": "Keep continuation_key and indexes unchanged. On next bounded turn, re-read PB1-PB4 canonical shard/manifest state and append only newly eligible QA-approved polygon evidence satisfying strict centroid-within-polygon or exact intersection; scores/month stay null unless explicitly approved/supported.",
   "canonical_checkpoint_path": "docs/chatgpt_status/_shared/slots_21/planned_buildings_5/checkpoint_latest.json",
   "canonical_shard_path": "england_map_web/data/planned_buildings/shards/planned_buildings_5_latest.geojson",
   "canonical_manifest_path": "england_map_web/data/planned_buildings/shards/planned_buildings_5_manifest_latest.json",
-  "prompt_contract_unchanged": true
+  "prompt_contract_unchanged": true,
+  "resume_events": [
+    {
+      "timestamp": "2026-08-16T15:50:30Z",
+      "result": "BLOCKED",
+      "feature_delta": 0,
+      "source_index": 0,
+      "batch_index": 0,
+      "reason": "NO_QA_APPROVED_PARCEL_MATCHED_PROJECT_POLYGON_EVIDENCE"
+    }
+  ]
 }
