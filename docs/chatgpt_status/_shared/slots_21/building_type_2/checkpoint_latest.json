@@ -7,14 +7,14 @@
   "shard_index": 2,
   "region": "London Outer",
   "region_code": "LDN_OUTER",
-  "sequence": 84,
-  "hydration_state": "REMOTE_STATE_SYNCHRONIZED_SOURCE_NETWORK_BLOCKED",
-  "remote_head": "9b4c1cb9ac69c1965c2b0877c86d387dc116d16e",
+  "sequence": 85,
+  "hydration_state": "REMOTE_STATE_SYNCHRONIZED_NO_NEW_OPEN_SOURCE",
+  "remote_head": "6c142de022d58b6a2483ed5b5d884c5e98ee259b",
   "first_unverified_step": "AŞAMA_1_OSM_GENISLETME_APPEND_NEW_BATCH_THEN_OPTIONAL_EPC_VOA_HMLR_UPGRADE",
-  "first_unverified_step_status": "BLOCKED",
+  "first_unverified_step_status": "NO_NEW_OPEN_SOURCE",
   "terminal_no_replay": [],
   "terminal_status": "NEW_PAGE_RESUME_READY",
-  "updated_at": "2026-08-16T16:04:45Z",
+  "updated_at": "2026-08-16T16:29:38Z",
   "final_ready": false,
   "summary": {
     "pilot_osm_classified": 429,
@@ -27,9 +27,9 @@
   "remaining_items": {
     "epc_residential_classification_pending": true,
     "voa_non_domestic_classification_pending": true,
-    "note": "Batch 177 auth-free source fetch teknik DNS/network engeli nedeniyle çalıştırılamadı; kanıtsız veya nearest-derived satır eklenmedi."
+    "note": "Batch 177 için canonical repo içinde yeni bounded kanıt payloadı bulunamadı; kanıtsız, duplicate veya nearest-derived satır eklenmedi."
   },
-  "state": "BLOCKED",
+  "state": "NO_NEW_OPEN_SOURCE",
   "feature_count_before": 8800,
   "feature_count_after": 8800,
   "current_feature_count": 8800,
@@ -58,7 +58,7 @@
     "ENG_OSM_node_3881228476"
   ],
   "last_processed_ids_sample_scope": "legacy sample retained; canonical already_processed_ids are all parcel_id/source_ref/project_ref/osm_id values present in building_type_2_latest.geojson",
-  "next_required_action": "RETRY_BATCH_177_AUTH_FREE_SOURCE_FETCH_WHEN_RUNTIME_NETWORK_RESOLVES; APPEND_ONLY_PROVEN_BUILDING_TYPES_AFTER_FULL_SHARD_DEDUPE; NO_NEAREST_MATCH",
+  "next_required_action": "BATCH_177_RECHECK_CANONICAL_REPO_SOURCE_INPUTS_THEN_APPEND_ONLY_PROVEN_BUILDING_TYPES_AFTER_FULL_SHARD_DEDUPE; NO_NEAREST_MATCH",
   "fake_data": false,
   "continuation_key": "building-type-2-england-classification-v1-20260808",
   "production_merge": false,
@@ -101,12 +101,26 @@
       "new_features": 0,
       "fake_data_generated": false,
       "duplicate_features_generated": false
+    },
+    {
+      "attempted_at": "2026-08-16T16:29:38Z",
+      "batch_index": 177,
+      "result": "NO_NEW_OPEN_SOURCE",
+      "canonical_repo_searches": [
+        "osm_cache_england_",
+        "parcel_building_type_england_pilot",
+        "building_type_2 batch 177"
+      ],
+      "result_detail": "all canonical repository searches returned no candidate source payload; latest shard and manifest remain unchanged at 8800 features",
+      "new_features": 0,
+      "fake_data_generated": false,
+      "duplicate_features_generated": false
     }
   ],
   "blocker": {
-    "type": "SOURCE_NETWORK_DNS_UNAVAILABLE",
-    "detected_at": "2026-08-16T16:04:45Z",
-    "root_cause": "execution runtime cannot resolve the auth-free public source network endpoint required to obtain a new evidence payload for batch 177",
+    "type": "NO_NEW_OPEN_SOURCE",
+    "detected_at": "2026-08-16T16:29:38Z",
+    "root_cause": "canonical branch contains no new bounded evidence payload for batch 177; declared OSM/pilot and batch-specific repository searches returned no candidates",
     "source_processing_allowed": false,
     "requires_user_action": false,
     "constraints": [
