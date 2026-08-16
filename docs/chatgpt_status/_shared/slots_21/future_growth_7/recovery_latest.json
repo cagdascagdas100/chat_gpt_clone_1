@@ -8,14 +8,14 @@
   "continuation_key": "future_growth_7_open_source_v2_20260813",
   "next_source_index": 1,
   "next_batch_index": 0,
-  "updated_at": "2026-08-16T15:33:50Z",
+  "updated_at": "2026-08-16T16:00:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
   "demo_only": true,
-  "recovery_reason": "Canonical shard/manifest reconciliation succeeded: 18 existing records are preserved and source 0 batch 0 is complete. The next exact-intersection batch is parked because official raw vector geometry could not be retrieved by either the web connector or runtime network path.",
+  "recovery_reason": "Canonical shard remains at 18 verified source records and source 0 batch 0 remains complete. A bounded geometry recheck found official parcel and housing-growth metadata but raw vector geometry is still unavailable, so strict spatial matching cannot be proven and the shard was not changed.",
   "blocker": "BLOCKED_RUNTIME_OFFICIAL_GEOMETRY_FETCH_UNAVAILABLE",
-  "blocker_reason": "Clackmannanshire Housing Land Audit WFS was discoverable but returned a cache miss in the web connector; runtime DNS resolution failed for clacks.cloud.cadcorp.com and ros-inspire.themapcloud.com. Without raw polygon and cadastral geometries, strict centroid-within-polygon or exact intersection cannot be proven.",
+  "blocker_reason": "Runtime DNS resolution failed again for RoS INSPIRE, Clackmannanshire WFS, and the ArcGIS feature-service host. Web retrieval could validate official/catalog metadata and polygon-layer declarations, but raw WFS/GeoJSON/query resources returned cache-miss or forbidden. No raw vector feature set was available for strict centroid-within-polygon or exact intersection.",
   "recovery_attempts": [
     {
       "attempted_at": "2026-08-16T15:33:50Z",
@@ -26,9 +26,30 @@
       "attempted_at": "2026-08-16T15:33:50Z",
       "method": "runtime_https_fetch",
       "result": "DNS_RESOLUTION_FAILED"
+    },
+    {
+      "attempted_at": "2026-08-16T16:00:00Z",
+      "method": "runtime_https_geometry_recheck",
+      "targets": [
+        "clacks.cloud.cadcorp.com",
+        "ros-inspire.themapcloud.com",
+        "services2.arcgis.com"
+      ],
+      "result": "DNS_RESOLUTION_FAILED"
+    },
+    {
+      "attempted_at": "2026-08-16T16:00:00Z",
+      "method": "web_official_geometry_source_recheck",
+      "targets": [
+        "RoS INSPIRE Cadastral Parcels download service",
+        "Clackmannanshire Housing Land Audit WFS",
+        "Housing Land Supply Scotland open resource",
+        "Glasgow City Region Housing Land Supply ArcGIS polygon layer"
+      ],
+      "result": "METADATA_READ_OK_RAW_GEOMETRY_UNAVAILABLE"
     }
   ],
-  "next_action": "Do not retry source 0. Re-check source_index=1,batch_index=0 only after geometry fetch capability changes; then compute at most 250 exact spatial matches and keep value/probability null unless an approved scoring rule is present.",
+  "next_action": "Do not retry source 0. Re-check source_index=1,batch_index=0 on a later continuation only if raw geometry fetch capability may have changed; then compute at most 250 strict spatial matches and keep future_growth value/probability null unless an approved scoring rule is present.",
   "recovery_decision": "PARK_UNTIL_OFFICIAL_GEOMETRY_FETCH_AVAILABLE",
   "prompt_contract_unchanged": true
 }
