@@ -5,19 +5,22 @@
   "slot_id": "future_growth_4",
   "slot_family": "future_growth",
   "continuation_key": "future_growth_4_open_source_v2_20260813",
-  "updated_at": "2026-08-15T07:33:00Z",
+  "updated_at": "2026-08-16T15:28:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
-  "state": "NEW_PAGE_RESUME_READY",
+  "demo_only": true,
+  "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
   "feature_count_before": 0,
   "feature_count_after": 0,
+  "new_records_added": 0,
   "already_processed_ids": [
     "brownfield-land:2807",
     "brownfield-land:2537",
     "brownfield-land:2808",
     "brownfield-land:2026"
   ],
+  "already_processed_ids_basis": "No future_growth_4 shard exists on canonical branch; preserve checkpoint evidence identities and do not repeat them.",
   "next_source_index": 0,
   "next_batch_index": 4,
   "evidence_records_processed": 4,
@@ -60,6 +63,9 @@
     "3": 4,
     "4": 0
   },
+  "evidence_type_distribution": {
+    "site_specific_permissioned_brownfield_proxy": 4
+  },
   "value_counts": {
     "filled": 0,
     "null": 4
@@ -72,6 +78,25 @@
     "filled": 0,
     "null": 4
   },
-  "source_manifest_state": "MISSING_OR_UNVERIFIED_IN_ALLOWED_STATE_SCOPE",
-  "next_action": "Continue Planning Data API source at next unprocessed bounded batch; do not repeat brownfield-land:2807, brownfield-land:2537, brownfield-land:2808, or brownfield-land:2026. Resolve source-manifest/shard schema integration before writing business shard values."
+  "shard_state": "MISSING_ON_CANONICAL_BRANCH",
+  "shard_path": "england_map_web/data/future_growth/shards/future_growth_4_latest.geojson",
+  "source_manifest_state": "MISSING_ON_CANONICAL_BRANCH",
+  "source_manifest_path": "england_map_web/data/future_growth/shards/future_growth_4_manifest_latest.json",
+  "blocker": "BLOCKED_REGION_CENTROID_COVERAGE_REQUIRED",
+  "blocker_reason": "Midlands source candidates exist, but the canonical repo state has no Midlands parcel centroid/polygon coverage for strict centroid-within-polygon or exact-intersection linkage.",
+  "resume_history": [
+    {
+      "at": "2026-08-16T15:28:00Z",
+      "mode": "NEW_PAGE_RESUME",
+      "source_head": "79df85c3d752d35736f11b78ff8783c6832f7040",
+      "feature_count_before": 0,
+      "new_records_added": 0,
+      "feature_count_after": 0,
+      "shard_read": "NOT_FOUND",
+      "manifest_read": "NOT_FOUND",
+      "relation_gate": "BLOCKED",
+      "reason": "No compliant parcel geometry/centroid coverage available; nearest matching is prohibited."
+    }
+  ],
+  "next_action": "Keep next_source_index=0 and next_batch_index=4. Resume only when named Midlands parcel centroid/polygon coverage is present; then apply CRS validation plus strict centroid-within-polygon or exact intersection. Do not repeat processed brownfield identities."
 }
