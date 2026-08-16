@@ -4,7 +4,7 @@
   "slot_id": "building_type_6",
   "recovery_type": "NEW_PAGE_RESUME",
   "requested_at": "2026-08-13T00:46:14.116939+00:00",
-  "updated_at": "2026-08-16T15:42:03Z",
+  "updated_at": "2026-08-16T23:36:00Z",
   "reason": "ChatGPT page reached maximum message limit or stalled; new page must continue from canonical checkpoint/shard.",
   "ignore_stale_owner": true,
   "reuse_continuation_key": true,
@@ -20,7 +20,7 @@
   ],
   "success_condition": "feature_count_after > feature_count_before",
   "minimum_target_new_features_per_continue": 50,
-  "last_attempt": {
+  "previous_attempt": {
     "attempted_at": "2026-08-16T15:42:03Z",
     "feature_count_before": 22250,
     "new_features_added": 0,
@@ -30,9 +30,35 @@
     "last_successful_source": "OpenStreetMap Overpass API - Measham/North West Leicestershire",
     "already_processed_ids_source": "building_type_6_latest.geojson parcel_id/source_ref/project_ref/osm_id",
     "blocker_root_cause": "NO_SAFE_SHARD_APPEND_CAPABILITY_IN_CURRENT_EXECUTION_ENVIRONMENT",
-    "blocker_detail": "The GitHub connector exposes whole-file replacement for the large shard and the isolated container has no gh or outbound GitHub network access. A bounded batch cannot be safely appended without risking truncation or duplicate replay.",
+    "blocker_detail": "The GitHub connector exposed whole-file replacement for the large shard and the isolated container had no gh or outbound GitHub network access.",
     "requires_user_action": false
   },
+  "last_attempt": {
+    "attempted_at": "2026-08-16T23:36:00Z",
+    "source_head_before_attempt": "ff5d4f55f9054333e3587bccee5390e9cae44495",
+    "feature_count_before": 22250,
+    "new_features_added": 0,
+    "feature_count_after": 22250,
+    "last_successful_batch_index": 105,
+    "next_batch_index": 106,
+    "last_successful_source": "OpenStreetMap Overpass API - Measham/North West Leicestershire",
+    "already_processed_ids_source": "building_type_6_latest.geojson parcel_id/source_ref/project_ref/osm_id",
+    "blocker_root_cause": "METHODOLOGY_REQUIRED",
+    "blocker_detail": "Fresh repository readback reconfirmed both task-declared parcel geometry inputs are absent (404). Strict centroid-within-polygon or exact intersection cannot be proven, and nearest/OSM staging matches are forbidden.",
+    "requires_user_action": false
+  },
+  "attempt_history": [
+    {
+      "attempted_at": "2026-08-16T15:42:03Z",
+      "result": "BLOCKED",
+      "root_cause": "NO_SAFE_SHARD_APPEND_CAPABILITY_IN_CURRENT_EXECUTION_ENVIRONMENT"
+    },
+    {
+      "attempted_at": "2026-08-16T23:36:00Z",
+      "result": "METHODOLOGY_REQUIRED",
+      "root_cause": "STRICT_PARCEL_GEOMETRY_BINDING_INPUTS_UNAVAILABLE"
+    }
+  ],
   "final_ready": false,
   "fake_data_allowed": false,
   "fake_data": false,
