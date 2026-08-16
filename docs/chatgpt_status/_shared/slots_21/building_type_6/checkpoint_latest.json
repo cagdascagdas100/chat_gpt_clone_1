@@ -1,12 +1,12 @@
 {
   "schema_version": 3,
   "slot_id": "building_type_6",
-  "sequence": 90,
+  "sequence": 91,
   "task_id": "building-type-6-england-classification-v1-20260808",
   "continuation_key": "building-type-6-england-classification-v1-20260808",
   "owner": null,
   "state": "METHODOLOGY_REQUIRED",
-  "updated_at": "2026-08-16T16:07:00Z",
+  "updated_at": "2026-08-16T23:36:00Z",
   "final_ready": false,
   "fake_data": false,
   "production_merge": false,
@@ -28,7 +28,19 @@
   "unknown_reason": "METHODOLOGY_REQUIRED",
   "control_issue": "STRICT_PARCEL_GEOMETRY_BINDING_INPUTS_UNAVAILABLE",
   "blocker_root_cause": "METHODOLOGY_REQUIRED",
-  "blocker_detail": "The current task requires parcel-level spatial binding, and this page requires strict centroid-within-polygon or exact intersection. At current branch HEAD, both declared parcel geometry inputs england_map_web/data/parcel_building_type_england_pilot.geojson and england_map_web/data/meta/hmlr_inspire_authority_manifest.json return 404, and repository code search found no equivalent parcel geometry source. The noncanonical batch-128 runner staging uses OSM-derived staging identifiers and does not record strict parcel polygon containment/intersection, so it cannot be appended under the active methodology.",
+  "blocker_detail": "Fresh readback at source HEAD ff5d4f55f9054333e3587bccee5390e9cae44495 reconfirmed that both declared parcel geometry inputs return 404. Under the active rule, candidate building evidence may be bound only by strict centroid-within-polygon or exact intersection; nearest/OSM staging matches are forbidden and cannot be appended.",
   "requires_user_action": false,
-  "resume_policy": "NEW_PAGE_RESUME; reuse existing task/owner/continuation_key; do not replay already_processed_ids"
+  "resume_policy": "NEW_PAGE_RESUME; reuse existing task/owner/continuation_key; do not replay already_processed_ids",
+  "attempt_history": [
+    {
+      "attempted_at": "2026-08-16T23:36:00Z",
+      "source_head_before_attempt": "ff5d4f55f9054333e3587bccee5390e9cae44495",
+      "feature_count_before": 22250,
+      "new_features_added": 0,
+      "feature_count_after": 22250,
+      "next_batch_index": 106,
+      "verification": "declared parcel geometry inputs rechecked; both 404",
+      "result": "METHODOLOGY_REQUIRED"
+    }
+  ]
 }
