@@ -1,5 +1,5 @@
 {
-  "state": "NO_NEW_OPEN_SOURCE",
+  "state": "BLOCKED",
   "schema_version": 3,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
@@ -9,27 +9,16 @@
   "region": "London Outer",
   "region_code": "LDN_OUTER",
   "task_id": "building-type-2-england-classification-v1-20260808",
-  "updated_at": "2026-08-16T15:09:30Z",
+  "updated_at": "2026-08-16T16:04:45Z",
   "owner": "codex-deepseek-batch-session",
   "final_ready": false,
   "classified_count": 8620,
   "unknown_count": 180,
   "total_elements": 8800,
-  "confidence_distribution": {
-    "1": 180,
-    "2": 6795,
-    "3": 1825,
-    "4": 0
-  },
-  "evidence_distribution": {
-    "A": 0,
-    "B": 1825,
-    "C": 170,
-    "D": 6625,
-    "U": 180
-  },
+  "confidence_distribution": {"1":180,"2":6795,"3":1825,"4":0},
+  "evidence_distribution": {"A":0,"B":1825,"C":170,"D":6625,"U":180},
   "output_sha256": "6865f749fffc0de60e4424a114c177e13282a4607b63a0edbd6ab01f24c7dbfc",
-  "note": "State synchronized to latest shard/manifest. Batch 177 did not append rows because declared canonical repo source payloads were unavailable; fake/nearest-derived rows were not generated.",
+  "note": "Latest shard/manifest remain canonical at 8800. Batch 177 source fetch was technically blocked by runtime DNS/network resolution; no rows were appended and no fake/nearest-derived classification was produced.",
   "continuation_key": "building-type-2-england-classification-v1-20260808",
   "production_merge": false,
   "fake_data": false,
@@ -50,14 +39,36 @@
     "feature_rows_added": 0,
     "already_processed_ids_authority": "latest shard parcel_id/source_ref/project_ref/osm_id"
   },
+  "batch_attempt_history": [
+    {
+      "batch_index": 177,
+      "attempted_at": "2026-08-16T15:09:30Z",
+      "result": "NO_NEW_OPEN_SOURCE",
+      "added_feature_count": 0,
+      "feature_count_before": 8800,
+      "feature_count_after": 8800,
+      "root_cause": "canonical branch lacks declared OSM cache/pilot payloads required for a new proven fully-deduped batch",
+      "requires_user_action": false
+    },
+    {
+      "batch_index": 177,
+      "attempted_at": "2026-08-16T16:04:45Z",
+      "result": "BLOCKED",
+      "added_feature_count": 0,
+      "feature_count_before": 8800,
+      "feature_count_after": 8800,
+      "root_cause": "execution runtime cannot resolve the auth-free public source network endpoint required for a new evidence payload",
+      "requires_user_action": false
+    }
+  ],
   "batch_attempt": {
     "batch_index": 177,
-    "attempted_at": "2026-08-16T15:09:30Z",
-    "result": "NO_NEW_OPEN_SOURCE",
+    "attempted_at": "2026-08-16T16:04:45Z",
+    "result": "BLOCKED",
     "added_feature_count": 0,
     "feature_count_before": 8800,
     "feature_count_after": 8800,
-    "root_cause": "canonical branch lacks declared OSM cache/pilot payloads required for a new proven fully-deduped batch",
+    "root_cause": "execution runtime cannot resolve the auth-free public source network endpoint required for a new evidence payload",
     "requires_user_action": false
   }
 }
