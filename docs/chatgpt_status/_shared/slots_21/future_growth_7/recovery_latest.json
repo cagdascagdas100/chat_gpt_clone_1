@@ -8,14 +8,14 @@
   "continuation_key": "future_growth_7_open_source_v2_20260813",
   "next_source_index": 1,
   "next_batch_index": 0,
-  "updated_at": "2026-08-16T16:00:00Z",
+  "updated_at": "2026-08-16T16:25:50Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
   "demo_only": true,
-  "recovery_reason": "Canonical shard remains at 18 verified source records and source 0 batch 0 remains complete. A bounded geometry recheck found official parcel and housing-growth metadata but raw vector geometry is still unavailable, so strict spatial matching cannot be proven and the shard was not changed.",
+  "recovery_reason": "Canonical shard remains at 18 verified source records and source 0 batch 0 remains complete. A further bounded recheck confirmed the national Spatial Hub Housing Land Supply source is open and declares WFS/GeoJSON/Shapefile resources, but no raw vector geometry could be retrieved, so strict spatial matching cannot be proven and the shard was not changed.",
   "blocker": "BLOCKED_RUNTIME_OFFICIAL_GEOMETRY_FETCH_UNAVAILABLE",
-  "blocker_reason": "Runtime DNS resolution failed again for RoS INSPIRE, Clackmannanshire WFS, and the ArcGIS feature-service host. Web retrieval could validate official/catalog metadata and polygon-layer declarations, but raw WFS/GeoJSON/query resources returned cache-miss or forbidden. No raw vector feature set was available for strict centroid-within-polygon or exact intersection.",
+  "blocker_reason": "Web retrieval can read the Spatial Hub dataset metadata and resolve its WFS resource URL, but the raw GetFeature endpoint returns cache miss; runtime DNS resolution fails for geo.spatialhub.scot and ros-inspire.themapcloud.com. No raw parcel-plus-growth vector feature set is available for strict centroid-within-polygon or exact intersection.",
   "recovery_attempts": [
     {
       "attempted_at": "2026-08-16T15:33:50Z",
@@ -47,9 +47,25 @@
         "Glasgow City Region Housing Land Supply ArcGIS polygon layer"
       ],
       "result": "METADATA_READ_OK_RAW_GEOMETRY_UNAVAILABLE"
+    },
+    {
+      "attempted_at": "2026-08-16T16:25:50Z",
+      "method": "web_spatialhub_hls_wfs_recheck",
+      "target": "https://geo.spatialhub.scot/geoserver/sh_hls/wfs?service=wfs&typeName=sh_hls%3Apub_hls",
+      "metadata_result": "OPEN_DATA_WFS_GEOJSON_SHAPEFILE_CONFIRMED",
+      "result": "RAW_GETFEATURE_CACHE_MISS"
+    },
+    {
+      "attempted_at": "2026-08-16T16:25:50Z",
+      "method": "runtime_https_geometry_recheck",
+      "targets": [
+        "geo.spatialhub.scot",
+        "ros-inspire.themapcloud.com"
+      ],
+      "result": "DNS_RESOLUTION_FAILED"
     }
   ],
-  "next_action": "Do not retry source 0. Re-check source_index=1,batch_index=0 on a later continuation only if raw geometry fetch capability may have changed; then compute at most 250 strict spatial matches and keep future_growth value/probability null unless an approved scoring rule is present.",
+  "next_action": "Do not retry source 0. Re-check source_index=1,batch_index=0 only if raw geometry fetch capability changes; prioritize RoS cadastral parcels plus the Spatial Hub Housing Land Supply open WFS, then compute at most 250 strict spatial matches and keep future_growth value/probability null unless an approved scoring rule is present.",
   "recovery_decision": "PARK_UNTIL_OFFICIAL_GEOMETRY_FETCH_AVAILABLE",
   "prompt_contract_unchanged": true
 }
