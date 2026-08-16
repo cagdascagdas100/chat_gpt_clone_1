@@ -5,22 +5,27 @@
   "slot_id": "planned_buildings_3",
   "slot_family": "planned_buildings",
   "continuation_key": "planned_buildings_3_open_source_v2_20260813",
-  "updated_at": "2026-08-16T17:06:00Z",
+  "updated_at": "2026-08-16T17:33:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
   "demo_only": true,
   "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
   "next_source_index": 0,
-  "next_batch_index": 0,
-  "recovery_reason": "NEW_PAGE_RESUME repo-only readback confirmed the PB3 state-path mismatch. Canonical PB3 shard and manifest were created with zero features, and slot state paths were aligned without changing continuation_key/task_id or fabricating evidence.",
-  "blocker": "BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED",
-  "blocker_reason": "Current repo evidence has no PB3-qualified official project polygon with both project type and status for strict spatial matching.",
+  "next_batch_index": 1,
+  "recovery_reason": "Source index 0 batch 0 was executed against the official Planning Data API. The bounded 100-record page yielded no strict geometry+status eligible record, so no feature was fabricated and the same task continues at batch 1.",
+  "blocker": "BLOCKED_STRICT_GEOMETRY_STATUS_REQUIRED",
+  "blocker_reason": "Planning Data API source_index=0 batch_index=0 returned 100 records with empty geometry/point and no application-status field; strict spatial+status evidence is unavailable for this batch.",
   "resolved": [
     {
       "code": "STATE_PUBLISH_PATH_MISMATCH",
       "resolved_at": "2026-08-16T17:06:00Z",
       "resolution": "Canonical PB3 shard/manifest paths established and docs/chatgpt_status slot state paths aligned."
+    },
+    {
+      "code": "BLOCKED_COMMERCIAL_PROJECT_TYPE_SOURCE_REQUIRED",
+      "resolved_at": "2026-08-16T17:33:00Z",
+      "resolution": "The bounded Planning Data batch contains explicit commercial/retail/office descriptions; the remaining root blocker is strict geometry plus application-status coverage."
     }
   ],
   "history": [
@@ -34,11 +39,22 @@
       "at": "2026-08-16T17:06:00Z",
       "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
       "recovery_decision": "STATE_INTEGRATION_REPAIRED_WAIT_FOR_SOURCE_COVERAGE"
+    },
+    {
+      "at": "2026-08-16T17:33:00Z",
+      "state": "BLOCKED_SOURCE_COVERAGE_REQUIRED",
+      "recovery_decision": "SOURCE_0_BATCH_0_NO_STRICT_MATCH_CONTINUE_BATCH_1",
+      "source_index": 0,
+      "batch_index": 0,
+      "offset": 0,
+      "limit": 100,
+      "records_examined": 100,
+      "strict_eligible_records": 0
     }
   ],
   "canonical_checkpoint_path": "docs/chatgpt_status/_shared/slots_21/planned_buildings_3/checkpoint_latest.json",
   "shard_path": "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_3_latest.geojson",
   "manifest_path": "AAYS/england_map_web/data/planned_buildings/shards/planned_buildings_3_manifest_latest.json",
-  "recovery_decision": "STATE_INTEGRATION_REPAIRED_WAIT_FOR_SOURCE_COVERAGE",
-  "next_action": "Resume the same task at source_index=0; process at most one official source or 250 features, using strict spatial matching and duplicate filtering."
+  "recovery_decision": "SOURCE_0_BATCH_0_NO_STRICT_MATCH_CONTINUE_BATCH_1",
+  "next_action": "Resume the same task at source_index=0 batch_index=1 offset=100; process at most one bounded page, using strict spatial matching and duplicate filtering."
 }
