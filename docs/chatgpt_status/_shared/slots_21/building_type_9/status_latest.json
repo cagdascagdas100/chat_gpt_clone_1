@@ -1,5 +1,5 @@
 {
-  "state": "READY_OPEN_SOURCE_CONTINUATION",
+  "state": "METHODOLOGY_REQUIRED",
   "schema_version": 3,
   "architecture_version": 3,
   "workstream_id": "AAYS_21_SLOT_SAFE_PARALLEL_V1",
@@ -9,7 +9,7 @@
   "region": "Yorkshire & North East",
   "region_code": "NE_YKS",
   "task_id": "building-type-9-england-classification-v1-20260808",
-  "updated_at": "2026-08-16T15:17:00Z",
+  "updated_at": "2026-08-16T15:44:00Z",
   "owner": null,
   "final_ready": false,
   "classified_count": 7143,
@@ -29,7 +29,7 @@
     "U": 57
   },
   "output_sha256": "9a375cf4916b6afeef14a7ad71fa1df2504000c204e898f6a9782d91e69c7d1f",
-  "note": "NEW_PAGE_RESUME state reconciled to canonical 7200-feature shard/manifest. No new feature appended during reconciliation; next bounded source batch is 145.",
+  "note": "Batch 145 strict spatial-binding preflight produced zero admissible records. Canonical shard remains 7200; batch 145 is not consumed.",
   "continuation_key": "building-type-9-england-classification-v1-20260808",
   "production_merge": false,
   "fake_data": false,
@@ -51,5 +51,24 @@
       "canonical_last_batch_city": "Tow Law",
       "new_features_added_during_reconciliation": 0
     }
-  ]
+  ],
+  "batch_attempt_history": [
+    {
+      "attempted_at": "2026-08-16T15:44:00Z",
+      "batch_index": 145,
+      "feature_count_before": 7200,
+      "added_feature_count": 0,
+      "feature_count_after": 7200,
+      "admissible_binding_methods": ["strict_centroid_within_polygon", "exact_intersection"],
+      "nearest_matching_allowed": false,
+      "result": "METHODOLOGY_REQUIRED",
+      "root_cause": "STRICT_SPATIAL_BINDING_NOT_EXECUTABLE_WITH_AVAILABLE_SOURCE_ARTIFACTS",
+      "batch_consumed": false
+    }
+  ],
+  "blocker": {
+    "code": "METHODOLOGY_REQUIRED",
+    "root_cause": "STRICT_SPATIAL_BINDING_NOT_EXECUTABLE_WITH_AVAILABLE_SOURCE_ARTIFACTS",
+    "next_batch_index": 145
+  }
 }
