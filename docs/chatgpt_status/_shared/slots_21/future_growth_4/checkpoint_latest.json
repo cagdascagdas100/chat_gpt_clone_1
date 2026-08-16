@@ -5,7 +5,7 @@
   "slot_id": "future_growth_4",
   "slot_family": "future_growth",
   "continuation_key": "future_growth_4_open_source_v2_20260813",
-  "updated_at": "2026-08-16T16:21:00Z",
+  "updated_at": "2026-08-16T16:46:00Z",
   "fake_data": false,
   "final_ready": false,
   "production_merge": false,
@@ -67,7 +67,7 @@
   "source_manifest_state": "MISSING_ON_CANONICAL_BRANCH",
   "source_manifest_path": "england_map_web/data/future_growth/shards/future_growth_4_manifest_latest.json",
   "blocker": "BLOCKED_STRICT_RELATION_EVIDENCE_REQUIRED",
-  "blocker_reason": "Canonical repo contains real Midlands/Birmingham parcel multipolygons, but no unprocessed official future-growth source record is strictly related to one of those parcels by centroid-within-polygon or exact intersection; repo recheck found no new exact planning-reference, source-entity, coordinate, or parcel-identity relation evidence.",
+  "blocker_reason": "Canonical repo contains real Midlands/Birmingham parcel multipolygons, but no unprocessed official future-growth source record is strictly related to one of those parcels by centroid-within-polygon or exact intersection; bounded repo plus official Planning Data discovery found candidates but no compliant source-to-parcel relation.",
   "resume_history": [
     {
       "at": "2026-08-16T15:28:00Z",
@@ -112,7 +112,23 @@
       "repo_search_birmingham_parcel_ref": "NO_RESULTS",
       "relation_gate": "BLOCKED",
       "reason": "No new repo evidence establishes strict centroid-within-polygon or exact-intersection linkage for an unprocessed official future-growth source."
+    },
+    {
+      "at": "2026-08-16T16:46:00Z",
+      "mode": "CONTINUE_REPO_PLUS_OPEN_SOURCE",
+      "source_head": "93c90d73210b6247c533960457fdcd47bcb7b832",
+      "feature_count_before": 0,
+      "new_records_added": 0,
+      "feature_count_after": 0,
+      "shard_read": "NOT_FOUND",
+      "manifest_read": "NOT_FOUND",
+      "repo_geometry_probe": "BIRMINGHAM_PARCEL_57224151_PRESENT_BUT_MARKET_SOURCE_POINT_OUTSIDE_PARCEL",
+      "repo_geometry_probe_distance_m": 24.34,
+      "official_source_probe": "PLANNING_DATA_BIRMINGHAM_BROWNFIELD_CANDIDATES_FOUND_NO_PROVEN_STRICT_RELATION_TO_REPO_PARCEL",
+      "scoring_rule_status": "NOT_FOUND_IN_GITHUB_STATE",
+      "relation_gate": "BLOCKED",
+      "reason": "Official Birmingham brownfield candidates were discoverable, but none was evidenced by strict centroid-within-polygon or exact intersection against the repo parcel geometry; address/proximity inference and nearest matching are prohibited."
     }
   ],
-  "next_action": "Keep next_source_index=0 and next_batch_index=4. Resume when canonical repo state provides an unprocessed official future-growth source geometry/point that can be strictly linked to a parcel by centroid-within-polygon or exact intersection. Do not repeat processed brownfield identities and do not use nearest matching."
+  "next_action": "Keep next_source_index=0 and next_batch_index=4. Resume when an unprocessed official future-growth source geometry/point can be strictly linked to a repo parcel by centroid-within-polygon or exact intersection. Do not repeat processed brownfield identities; keep value/probability null until an approved scoring rule is present."
 }
