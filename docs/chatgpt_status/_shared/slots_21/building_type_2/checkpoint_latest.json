@@ -7,14 +7,14 @@
   "shard_index": 2,
   "region": "London Outer",
   "region_code": "LDN_OUTER",
-  "sequence": 83,
-  "hydration_state": "REMOTE_STATE_SYNCHRONIZED_NO_NEW_OPEN_SOURCE",
-  "remote_head": "d5d8bf935fca92094308a1287327a9ffd1445afd",
+  "sequence": 84,
+  "hydration_state": "REMOTE_STATE_SYNCHRONIZED_SOURCE_NETWORK_BLOCKED",
+  "remote_head": "9b4c1cb9ac69c1965c2b0877c86d387dc116d16e",
   "first_unverified_step": "AŞAMA_1_OSM_GENISLETME_APPEND_NEW_BATCH_THEN_OPTIONAL_EPC_VOA_HMLR_UPGRADE",
-  "first_unverified_step_status": "NO_NEW_OPEN_SOURCE",
+  "first_unverified_step_status": "BLOCKED",
   "terminal_no_replay": [],
   "terminal_status": "NEW_PAGE_RESUME_READY",
-  "updated_at": "2026-08-16T15:09:30Z",
+  "updated_at": "2026-08-16T16:04:45Z",
   "final_ready": false,
   "summary": {
     "pilot_osm_classified": 429,
@@ -27,9 +27,9 @@
   "remaining_items": {
     "epc_residential_classification_pending": true,
     "voa_non_domestic_classification_pending": true,
-    "note": "Yeni kanıtlı batch için canonical repo veya auth-free public source girdisi gerekli; fake/nearest satır üretilemez."
+    "note": "Batch 177 auth-free source fetch teknik DNS/network engeli nedeniyle çalıştırılamadı; kanıtsız veya nearest-derived satır eklenmedi."
   },
-  "state": "NO_NEW_OPEN_SOURCE",
+  "state": "BLOCKED",
   "feature_count_before": 8800,
   "feature_count_after": 8800,
   "current_feature_count": 8800,
@@ -58,7 +58,7 @@
     "ENG_OSM_node_3881228476"
   ],
   "last_processed_ids_sample_scope": "legacy sample retained; canonical already_processed_ids are all parcel_id/source_ref/project_ref/osm_id values present in building_type_2_latest.geojson",
-  "next_required_action": "BATCH_177_DISCOVER_AUTH_FREE_OPEN_SOURCE_THEN_APPEND_ONLY_PROVEN_BUILDING_TYPES_WITH_SHARD_DEDUPE; NO_NEAREST_MATCH",
+  "next_required_action": "RETRY_BATCH_177_AUTH_FREE_SOURCE_FETCH_WHEN_RUNTIME_NETWORK_RESOLVES; APPEND_ONLY_PROVEN_BUILDING_TYPES_AFTER_FULL_SHARD_DEDUPE; NO_NEAREST_MATCH",
   "fake_data": false,
   "continuation_key": "building-type-2-england-classification-v1-20260808",
   "production_merge": false,
@@ -91,12 +91,22 @@
       ],
       "result_detail": "declared repo source inputs are absent on canonical branch; no bounded new payload available for proven classification and full-shard dedupe",
       "new_features": 0
+    },
+    {
+      "attempted_at": "2026-08-16T16:04:45Z",
+      "batch_index": 177,
+      "result": "BLOCKED",
+      "source": "OpenStreetMap Overpass API auth-free bounded fetch",
+      "result_detail": "execution runtime could not resolve outbound source network/DNS, so no source payload was obtained and no classification was attempted",
+      "new_features": 0,
+      "fake_data_generated": false,
+      "duplicate_features_generated": false
     }
   ],
   "blocker": {
-    "type": "NO_NEW_OPEN_SOURCE",
-    "detected_at": "2026-08-16T15:09:30Z",
-    "root_cause": "canonical branch does not contain the declared OSM cache/pilot payloads needed for a new bounded, fully deduped evidence batch",
+    "type": "SOURCE_NETWORK_DNS_UNAVAILABLE",
+    "detected_at": "2026-08-16T16:04:45Z",
+    "root_cause": "execution runtime cannot resolve the auth-free public source network endpoint required to obtain a new evidence payload for batch 177",
     "source_processing_allowed": false,
     "requires_user_action": false,
     "constraints": [
