@@ -1,0 +1,77 @@
+name: AAYS BT5 strict 176-187 corrected recovery
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/aays-bt5-strict-176-187-corrected-recovery.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-building-type-5-strict-main-once-176-187
+  cancel-in-progress: true
+jobs:
+  strict-spatial:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - name: Mark corrected BT5 run started
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const path='docs/chatgpt_status/_shared/slots_21/building_type_5/actions_main_run_176_187_corrected_status.json';
+            let sha; try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
+            const body={slot_id:'building_type_5',source_windows:'176-187',state:'RUNNING',mode:'CORRECTED_IDENTITY_AND_CONCURRENT_PUSH_RETRY',run_id:String(context.runId),head_sha:context.sha,started_at:new Date().toISOString()};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark BT5 corrected 176-187 started',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
+      - name: Checkout trigger shallow
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          path: trigger
+      - name: Checkout canonical shallow
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+          path: canonical
+      - name: Configure author and runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C canonical config user.name 'AAYS building_type_5'
+          git -C canonical config user.email 'aays-building-type-5@users.noreply.github.com'
+          python -m pip install --quiet requests shapely
+      - name: Extract and harden registered BT5 payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64,re,zlib
+          from pathlib import Path
+          text=Path('trigger/.github/workflows/aays-bt5-strict-176-187-main-once.yml').read_text(encoding='utf-8')
+          m=re.search(r"payload='([^']+)'",text)
+          if not m: raise SystemExit('BT5_REGISTERED_PAYLOAD_NOT_FOUND')
+          s=zlib.decompress(base64.b64decode(m.group(1))).decode('utf-8')
+          old='''def publish_batch(seq, batch_idx, expected_count):\n    expected_prev_source = seq - 1\n    expected_prev_batch = batch_idx\n    remote_guard(expected_prev_source, expected_prev_batch)\n    run(['git', 'add', '--', *PATHS], cwd=WORK)\n    if subprocess.run(['git', 'diff', '--cached', '--quiet'], cwd=WORK).returncode == 0:\n        raise SystemExit('NO_BATCH_STATE_CHANGE')\n    run(['git', 'commit', '-m', f'aays: building_type_5 strict source window {seq} batch {batch_idx}'], cwd=WORK)\n    p = subprocess.run(['git', 'push', 'origin', f'HEAD:{CANON}'], cwd=WORK, text=True)\n    if p.returncode != 0:\n        raise SystemExit(f'PUSH_FAILED_WINDOW_{seq}')\n    return verify_remote(expected_count, seq, batch_idx + 1)\n'''
+          new='''def push_with_concurrent_slot_retry(label, expected_prev_source, expected_prev_batch, attempts=6):\n    for attempt in range(1, attempts + 1):\n        p = subprocess.run(['git', 'push', 'origin', f'HEAD:{CANON}'], cwd=WORK, text=True)\n        if p.returncode == 0:\n            return\n        run(['git', 'fetch', 'origin', CANON], cwd=WORK)\n        c = git_show_json(f'origin/{CANON}', CP)\n        s = git_show_json(f'origin/{CANON}', SP)\n        if c.get('source_window_cursor') != expected_prev_source or c.get('next_batch_index') != expected_prev_batch:\n            raise SystemExit('BT5_REMOTE_MOVED_DURING_PUSH:' + repr((c.get('source_window_cursor'), c.get('next_batch_index'))))\n        if s.get('owner') not in (None, ''):\n            raise SystemExit('LIVE_OWNER_PRESENT_DURING_PUSH:' + repr(s.get('owner')))\n        run(['git', 'rebase', f'origin/{CANON}'], cwd=WORK)\n        time.sleep(min(attempt, 3))\n    raise SystemExit(f'PUSH_RETRY_EXHAUSTED:{label}')\n\n\ndef publish_batch(seq, batch_idx, expected_count):\n    expected_prev_source = seq - 1\n    expected_prev_batch = batch_idx\n    remote_guard(expected_prev_source, expected_prev_batch)\n    run(['git', 'add', '--', *PATHS], cwd=WORK)\n    if subprocess.run(['git', 'diff', '--cached', '--quiet'], cwd=WORK).returncode == 0:\n        raise SystemExit('NO_BATCH_STATE_CHANGE')\n    run(['git', 'commit', '-m', f'aays: building_type_5 strict source window {seq} batch {batch_idx}'], cwd=WORK)\n    push_with_concurrent_slot_retry(f'window_{seq}', expected_prev_source, expected_prev_batch)\n    return verify_remote(expected_count, seq, batch_idx + 1)\n'''
+          if old not in s: raise SystemExit('PUBLISH_PATCH_TARGET_NOT_FOUND')
+          s=s.replace(old,new)
+          old2="""    run(['git', 'commit', '-m', f'aays: verify building_type_5 remote readbacks {START_SOURCE}-{END_SOURCE}'], cwd=WORK)\n    p = subprocess.run(['git', 'push', 'origin', f'HEAD:{CANON}'], cwd=WORK, text=True)\n    if p.returncode != 0:\n        raise SystemExit('FINAL_STAMP_PUSH_FAILED')\n    final_remote = verify_remote(final_count, END_SOURCE, NEXT_BATCH)\n"""
+          new2="""    run(['git', 'commit', '-m', f'aays: verify building_type_5 remote readbacks {START_SOURCE}-{END_SOURCE}'], cwd=WORK)\n    push_with_concurrent_slot_retry('final_stamp', END_SOURCE, NEXT_BATCH)\n    final_remote = verify_remote(final_count, END_SOURCE, NEXT_BATCH)\n"""
+          if old2 not in s: raise SystemExit('FINAL_PATCH_TARGET_NOT_FOUND')
+          s=s.replace(old2,new2)
+          compile(s,'/tmp/run_bt5_176_187.py','exec')
+          Path('/tmp/run_bt5_176_187.py').write_text(s,encoding='utf-8')
+          PY
+          python /tmp/run_bt5_176_187.py
+      - name: Mark corrected BT5 run finished
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const path='docs/chatgpt_status/_shared/slots_21/building_type_5/actions_main_run_176_187_corrected_status.json';
+            let sha; try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
+            const body={slot_id:'building_type_5',source_windows:'176-187',state:'${{ job.status }}'.toUpperCase(),mode:'CORRECTED_IDENTITY_AND_CONCURRENT_PUSH_RETRY',run_id:String(context.runId),head_sha:context.sha,finished_at:new Date().toISOString()};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark BT5 corrected 176-187 finished',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
