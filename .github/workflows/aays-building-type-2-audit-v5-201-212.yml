@@ -1,0 +1,106 @@
+name: AAYS building_type_2 audit batches201-212
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-audit-v5-201-212.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-2-audit-v5-201-212
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 180
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
+      - name: Audit exact continuation and publish report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import datetime as dt, hashlib, json, pathlib
+          G=pathlib.Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          M=pathlib.Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          C=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          S=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          R=pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          def load(p): return json.loads(p.read_text(encoding='utf-8'))
+          def dump(p,x): p.write_text(json.dumps(x,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          g,m,c,s,r=map(load,(G,M,C,S,R))
+          assert len(g.get('features') or [])==10500
+          assert m.get('total_features')==10500
+          assert c.get('current_feature_count')==10500 and c.get('next_batch_index')==213
+          assert s.get('total_elements')==10500 and s.get('next_batch_index')==213
+          seen=set(); dup=[]
+          for f in g.get('features') or []:
+              p=f.get('properties') or {}
+              vals={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')) if v not in (None,'')}
+              hit=seen & vals
+              if hit: dup.extend(sorted(hit))
+              seen.update(vals)
+          assert not dup, dup[:10]
+          hist=[x for x in (s.get('batch_attempt_history') or []) if 201 <= int(x.get('batch_index',-1)) <= 212]
+          by={int(x['batch_index']):x for x in hist}
+          assert sorted(by)==list(range(201,213)), sorted(by)
+          rows=[by[i] for i in range(201,213)]
+          assert all(x.get('result')=='PROGRESS' and x.get('added_feature_count')==50 for x in rows)
+          assert all(x.get('fake_data_generated') is False and x.get('duplicate_features_generated') is False and x.get('nearest_match_used') is False for x in rows)
+          cities=[x.get('city') for x in rows]
+          bboxes=[x.get('bbox_wgs84') for x in rows]
+          assert len(set(cities))==12
+          assert len({tuple(float(y) for y in x) for x in bboxes})==12
+          assert rows[0].get('feature_count_before')==9900 and rows[-1].get('feature_count_after')==10500
+          report={
+            'slot_id':'building_type_2','batch_range':[201,212],'batches_processed':12,
+            'feature_count_before':9900,'added_feature_count':600,'feature_count_after':10500,
+            'next_batch_index':213,'shard_feature_count':10500,'checkpoint_feature_count':10500,
+            'status_feature_count':10500,'manifest_feature_count':10500,
+            'unique_key_count':len(seen),'duplicate_key_count':0,
+            'fake_data_generated':False,'nearest_match_used':False,'all_batches_result':'PROGRESS',
+            'cities':cities,'bboxes_wgs84':bboxes,'source_family':'OpenStreetMap Overpass API',
+            'parcel_id_semantics':'stable OSM element-derived slot identifier; not a cadastral parcel ID',
+            'geojson_sha256':hashlib.sha256(G.read_bytes()).hexdigest(),
+            'audited_at':dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'),
+            'final_ready':False,'production_merge':False
+          }
+          r['continuation_report_20260818_v5']=report
+          dump(R,r)
+          print('AUDIT_OK',json.dumps(report,ensure_ascii=False))
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json
+          git diff --cached --quiet && { echo 'no audit diff'; exit 1; }
+          git commit -m 'audit(building_type_2): report batches 201-212 9900 to 10500'
+          for i in 1 2 3 4 5; do
+            git push origin HEAD:codex/aays-single-runner-v5-20260706 && break
+            git fetch origin codex/aays-single-runner-v5-20260706 --depth=180
+            git merge --no-edit origin/codex/aays-single-runner-v5-20260706 || { git merge --abort || true; exit 1; }
+          done
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=180
+          python - <<'PY'
+          import json,subprocess
+          p='docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json'
+          r=json.loads(subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:'+p]))
+          q=r['continuation_report_20260818_v5']
+          assert q['feature_count_before']==9900 and q['added_feature_count']==600 and q['feature_count_after']==10500
+          assert q['next_batch_index']==213 and q['duplicate_key_count']==0
+          assert q['shard_feature_count']==q['checkpoint_feature_count']==q['status_feature_count']==q['manifest_feature_count']==10500
+          assert q['fake_data_generated'] is False and q['nearest_match_used'] is False and len(q['cities'])==12 and len(q['bboxes_wgs84'])==12
+          print('REMOTE_AUDIT_READBACK_OK building_type_2 9900->10500 added=600 next=213 dup=0')
+          PY
