@@ -1,0 +1,341 @@
+name: AAYS building_type_2 common continuation batches177-188
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-common-b177-188-20260818.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-2-common-b177-188-20260818
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 120
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-6-batch26-skegness-once.yml
+            .github/workflows/aays-building-type-2-batch153-barking-once.yml
+            .github/workflows/aays-building-type-2-batch157-tottenham-once.yml
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
+
+      - name: Fast-forward canonical branch and capture immutable current task
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          sha256sum docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json > /tmp/current_task.before.sha256
+
+      - name: Execute 12 bounded windows with zero-window checkpoint and remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import datetime as dt
+          import hashlib
+          import json
+          import subprocess
+
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          CONT='building-type-2-england-classification-v1-20260808'
+          TASK='building-type-2-england-classification-v1-20260808'
+          G=Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          M=Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          C=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          S=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          R=Path('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          T=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          SRC=Path('.github/workflows/aays-building-type-2-batch157-tottenham-once.yml')
+          IMMUTABLE_TASK_HASH=hashlib.sha256(T.read_bytes()).hexdigest()
+
+          specs=[
+              (177,'Orpington','Bromley',[0.06,51.35,0.14,51.40]),
+              (178,'Erith','Bexley',[0.14,51.46,0.22,51.51]),
+              (179,'Coulsdon','Croydon',[-0.16,51.29,-0.10,51.34]),
+              (180,'Carshalton','Sutton',[-0.19,51.35,-0.13,51.39]),
+              (181,'Edmonton','Enfield',[-0.08,51.60,-0.02,51.65]),
+              (182,'Stanmore','Harrow',[-0.35,51.60,-0.27,51.64]),
+              (183,'Twickenham','Richmond upon Thames',[-0.36,51.42,-0.30,51.46]),
+              (184,'Isleworth','Hounslow',[-0.36,51.45,-0.30,51.49]),
+              (185,'Ilford','Redbridge',[0.04,51.54,0.11,51.58]),
+              (186,'Walthamstow','Waltham Forest',[-0.04,51.56,0.02,51.60]),
+              (187,'Thamesmead','Bexley',[0.10,51.49,0.18,51.53]),
+              (188,'Chislehurst','Bromley',[0.02,51.40,0.09,51.44]),
+          ]
+
+          def load(p):
+              return json.loads(p.read_text(encoding='utf-8'))
+
+          def dump(p,x):
+              p.write_text(json.dumps(x,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
+          def sh(cmd, check=True, capture=False):
+              print('+',' '.join(cmd),flush=True)
+              return subprocess.run(cmd,check=check,text=True,
+                                    stdout=subprocess.PIPE if capture else None,
+                                    stderr=subprocess.STDOUT if capture else None)
+
+          src=SRC.read_text(encoding='utf-8')
+
+          def extract_run(step_name):
+              marker=f'      - name: {step_name}\n'
+              if marker not in src:
+                  raise SystemExit(f'missing inherited step: {step_name}')
+              part=src.split(marker,1)[1]
+              part=part.split('\n      - name:',1)[0]
+              run_marker='        run: |\n'
+              if run_marker not in part:
+                  raise SystemExit(f'missing run block: {step_name}')
+              block=part.split(run_marker,1)[1]
+              lines=[]
+              for line in block.splitlines():
+                  if line.startswith('          '):
+                      lines.append(line[10:])
+                  elif not line.strip():
+                      lines.append('')
+                  else:
+                      break
+              return '\n'.join(lines)+'\n'
+
+          steps=[
+              'Execute guarded batch157',
+              'Normalize metadata and validate exact batch157',
+              'Commit and push exact slot outputs',
+              'Remote readback',
+          ]
+
+          def slug(s):
+              out=''.join(ch.lower() if ch.isalnum() else '-' for ch in s).strip('-')
+              while '--' in out:
+                  out=out.replace('--','-')
+              return out
+
+          def transform(script,batch,city,authority,bbox,before):
+              after=before+50
+              nxt=after+50
+              for a,b in [
+                  ('7800','__COUNT_BEFORE__'),
+                  ('7850','__COUNT_AFTER__'),
+                  ('7900','__COUNT_NEXT__'),
+                  ('157','__BATCH_CUR__'),
+                  ('158','__BATCH_NEXT__'),
+              ]:
+                  script=script.replace(a,b)
+              compact='['+','.join(str(x) for x in bbox)+']'
+              spaced='['+', '.join(str(x) for x in bbox)+']'
+              script=script.replace('[-0.09, 51.57, -0.03, 51.62]',spaced)
+              script=script.replace('[-0.09,51.57,-0.03,51.62]',compact)
+              script=script.replace('Tottenham',city).replace('TOTTENHAM',city.upper()).replace('tottenham',slug(city))
+              script=script.replace('Haringey',authority).replace('HARINGEY',authority.upper()).replace('haringey',slug(authority))
+              script=script.replace('uk-grid-'+slug(city)+'-001',f'uk-grid-{slug(city)}-{batch}')
+              for a,b in [
+                  ('__COUNT_BEFORE__',str(before)),
+                  ('__COUNT_AFTER__',str(after)),
+                  ('__COUNT_NEXT__',str(nxt)),
+                  ('__BATCH_CUR__',str(batch)),
+                  ('__BATCH_NEXT__',str(batch+1)),
+              ]:
+                  script=script.replace(a,b)
+
+              if 'p.write_text(code)' in script:
+                  inject = (
+                      "owner_old='if task.get(\"owner\") not in (None, \"\") or status.get(\"owner\") not in (None, \"\"):\\\\n    raise SystemExit(\"live owner; refusing second owner\")'\\n"
+                      "owner_new='if task.get(\"owner\") not in (None, \"\"):\\\\n    raise SystemExit(\"live current_task owner; refusing second owner\")'\\n"
+                      "if owner_old in code:\\n    code=code.replace(owner_old,owner_new,1)\\n"
+                      f"code=code.replace('CONT = \"\"','CONT = \"{CONT}\"',1)\\n"
+                      f"zero_old='if len(chosen) < ADD_COUNT:\\\\n    raise SystemExit(f\"NO_EVIDENCE_THIS_BATCH: only {{len(evidence_candidates)}} new evidence-backed candidates; need >= {{ADD_COUNT}}; no fake data written\")'\\n"
+                      f"zero_new='if len(chosen) < ADD_COUNT:\\\\n    pathlib.Path(\"/tmp/bt2_zero_evidence_{batch}.json\").write_text(json.dumps({{{{\"source_url\":ENDPOINT,\"source_sha256\":source_sha,\"element_count\":len(elements),\"evidence_candidate_count\":len(evidence_candidates)}}}},sort_keys=True))\\\\n    raise SystemExit(f\"NO_EVIDENCE_THIS_BATCH: only {{len(evidence_candidates)}} new evidence-backed candidates; need >= {{ADD_COUNT}}; no fake data written\")'\\n"
+                      "if zero_old in code:\\n    code=code.replace(zero_old,zero_new,1)\\n"
+                  )
+                  script=script.replace('p.write_text(code)',inject+'p.write_text(code)',1)
+
+              script=script.replace(
+                  "assert t.get('owner') in (None,'') and (t.get('continuation_key') or '')==''",
+                  f"assert t.get('owner') in (None,'') and (t.get('continuation_key') or '')=='{CONT}'")
+              return script
+
+          def unique_state(g):
+              seen=set()
+              dup=[]
+              for f in g.get('features') or []:
+                  p=f.get('properties') or {}
+                  vals={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref'))
+                        if v not in (None,'')}
+                  hit=seen & vals
+                  if hit:
+                      dup.extend(sorted(hit))
+                  seen.update(vals)
+              return seen,dup
+
+          def assert_local_equal(expected_count, expected_next=None):
+              g,m,c,s,t=map(load,(G,M,C,S,T))
+              seen,dup=unique_state(g)
+              assert not dup, f'duplicate keys: {dup[:5]}'
+              assert len(g.get('features') or [])==expected_count
+              assert m.get('total_features')==expected_count
+              assert c.get('current_feature_count')==expected_count
+              assert s.get('total_elements')==expected_count
+              if expected_next is not None:
+                  assert c.get('next_batch_index')==expected_next
+              assert t.get('task_id')==TASK
+              assert t.get('owner') in (None,'')
+              assert (t.get('continuation_key') or '')==CONT
+              assert hashlib.sha256(T.read_bytes()).hexdigest()==IMMUTABLE_TASK_HASH
+              return len(seen)
+
+          def push_exact(message):
+              sh(['git','config','user.name','github-actions[bot]'])
+              sh(['git','config','user.email','41898282+github-actions[bot]@users.noreply.github.com'])
+              sh(['git','add',str(M),str(C),str(S),str(R)])
+              d=sh(['git','diff','--cached','--quiet'],check=False)
+              if d.returncode==0:
+                  raise SystemExit('metadata checkpoint produced no diff')
+              sh(['git','commit','-m',message])
+              for attempt in range(1,6):
+                  p=sh(['git','push','origin',f'HEAD:{BRANCH}'],check=False,capture=True)
+                  if p.returncode==0:
+                      return
+                  print(p.stdout,flush=True)
+                  sh(['git','fetch','origin',BRANCH,'--depth=120'])
+                  mrg=sh(['git','merge','--no-edit',f'origin/{BRANCH}'],check=False,capture=True)
+                  if mrg.returncode!=0:
+                      print(mrg.stdout,flush=True)
+                      sh(['git','merge','--abort'],check=False)
+                      raise SystemExit('merge conflict while publishing zero-window checkpoint')
+              raise SystemExit('push retry limit exceeded')
+
+          def remote_readback(expected_count, expected_next, batch, city):
+              sh(['git','fetch','origin',BRANCH,'--depth=120'])
+              def raw(path):
+                  return subprocess.check_output(['git','show',f'origin/{BRANCH}:{path}'])
+              def rj(path):
+                  return json.loads(raw(path))
+              g=rj(str(G)); m=rj(str(M)); c=rj(str(C)); s=rj(str(S)); t=rj(str(T))
+              seen,dup=unique_state(g)
+              assert not dup
+              assert len(g.get('features') or [])==expected_count
+              assert m.get('total_features')==expected_count
+              assert c.get('current_feature_count')==expected_count
+              assert s.get('total_elements')==expected_count
+              assert c.get('next_batch_index')==expected_next
+              assert t.get('task_id')==TASK and t.get('owner') in (None,'') and (t.get('continuation_key') or '')==CONT
+              assert hashlib.sha256(raw(str(T))).hexdigest()==IMMUTABLE_TASK_HASH
+              print(f'REMOTE_READBACK_OK batch={batch} city={city} count={expected_count} next={expected_next} dup=0 unique_keys={len(seen)}',flush=True)
+
+          def record_zero(batch,city,authority,bbox,before,reason):
+              now=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+              ev_path=Path(f'/tmp/bt2_zero_evidence_{batch}.json')
+              evidence={}
+              if ev_path.exists():
+                  try:
+                      evidence=json.loads(ev_path.read_text())
+                  except Exception:
+                      evidence={}
+              g,m,c,s,r,t=map(load,(G,M,C,S,R,T))
+              seen,dup=unique_state(g)
+              assert not dup
+              assert len(g.get('features') or [])==before
+              assert m.get('total_features')==before and s.get('total_elements')==before
+              attempt={
+                  'batch_index':batch,'attempted_at':now,'city':city,'local_authority':authority,
+                  'bbox_wgs84':bbox,'result':'NO_DATA_CONTINUE','added_feature_count':0,
+                  'feature_count_before':before,'feature_count_after':before,
+                  'source':'OpenStreetMap Overpass API',
+                  'source_url':evidence.get('source_url','https://overpass-api.de/api/interpreter'),
+                  'source_sha256':evidence.get('source_sha256'),
+                  'element_count':evidence.get('element_count'),
+                  'evidence_candidate_count':evidence.get('evidence_candidate_count'),
+                  'root_cause':reason[:1200],'fake_data_generated':False,'duplicate_features_generated':False,
+                  'nearest_match_used':False
+              }
+              c['state']='NO_DATA_CONTINUE'; c['updated_at']=now
+              c['feature_count_before']=before; c['feature_count_after']=before; c['current_feature_count']=before
+              c['next_batch_index']=batch+1; c['next_target_feature_count']=before+50; c['next_city_index']=batch+1
+              c['last_attempted_batch_index']=batch; c['last_attempted_city']=city; c['last_attempted_bbox_wgs84']=bbox
+              c.setdefault('source_attempt_history',[]).append(attempt)
+              attempted=list(c.get('attempted_cities') or [])
+              if city not in attempted:
+                  attempted.append(city)
+              c['attempted_cities']=attempted
+              c.setdefault('summary',{})['note']=f'NO_DATA_CONTINUE batch {batch} {city}: 0 proven additions; count remains {before}; advancing to batch {batch+1}.'
+              c.setdefault('remaining_items',{})['note']=f'Continue batch {batch+1}; all feature.id/parcel_id/osm_id/source_ref values remain already_processed_ids.'
+              c['already_processed_ids']={
+                  'strategy':'derived_from_latest_shard_feature.id_plus_parcel_id_plus_osm_id_plus_source_ref',
+                  'unique_key_count':len(seen),
+                  'sha256_sorted_newline_keys':hashlib.sha256(('\n'.join(sorted(seen))+'\n').encode()).hexdigest(),
+                  'sample':sorted(seen)[:20]
+              }
+
+              s['state']='NO_DATA_CONTINUE'; s['updated_at']=now
+              s['current_feature_count']=before; s['total_features']=before; s['total_elements']=before
+              s['manifest_feature_count']=before; s['next_batch_index']=batch+1
+              s['last_attempted_batch_index']=batch; s['last_attempted_city']=city
+              s['progress_reason']=attempt['root_cause']
+              s['note']=f'Batch {batch} {city} checkpointed with 0 additions; advanced without fake/duplicate/nearest match.'
+              s.setdefault('batch_attempt_history',[]).append(attempt)
+
+              m['feature_count_before']=before; m['feature_count_after']=before; m['added_feature_count']=0
+              m['total_features']=before; m['last_attempted_batch_index']=batch; m['last_attempted_city']=city
+              m['last_attempted_bbox_wgs84']=bbox; m['last_attempt_result']='NO_DATA_CONTINUE'
+              m.setdefault('zero_window_attempts',[]).append(attempt)
+
+              r['slot_id']='building_type_2'; r['updated_at']=now; r['last_attempt']=attempt
+              r['last_attempt_result']='NO_DATA_CONTINUE'; r['fake_data']=False; r['final_ready']=False
+
+              dump(M,m); dump(C,c); dump(S,s); dump(R,r)
+              assert_local_equal(before,batch+1)
+              push_exact(f'data(building_type_2): checkpoint zero batch {batch} {city}')
+              remote_readback(before,batch+1,batch,city)
+
+          for batch,city,authority,bbox in specs:
+              print(f'=== START batch={batch} city={city} bbox={bbox} ===',flush=True)
+              sh(['git','pull','--ff-only','origin',BRANCH])
+              c=load(C); g=load(G); m=load(M); s=load(S)
+              before=len(g.get('features') or [])
+              if c.get('next_batch_index')!=batch:
+                  raise SystemExit(f'cursor moved: expected {batch}, got {c.get("next_batch_index")}')
+              if m.get('total_features')!=before or s.get('total_elements')!=before or c.get('current_feature_count')!=before:
+                  raise SystemExit('shard/checkpoint/status/manifest count mismatch before batch')
+              assert_local_equal(before,batch)
+
+              step1=transform(extract_run(steps[0]),batch,city,authority,bbox,before)
+              p=Path(f'/tmp/bt2_batch{batch}_step1.sh')
+              p.write_text(step1,encoding='utf-8')
+              run=sh(['bash',str(p)],check=False,capture=True)
+              print(run.stdout or '',flush=True)
+              if run.returncode!=0:
+                  text=run.stdout or ''
+                  if ('NO_EVIDENCE_THIS_BATCH' in text or 'Overpass failed after 3 attempts' in text or
+                      'invalid Overpass response' in text or 'only 0 new geometry-bearing candidates' in text):
+                      record_zero(batch,city,authority,bbox,before,text)
+                      continue
+                  raise SystemExit(f'batch {batch} source/generator failed unexpectedly')
+
+              for idx,name in enumerate(steps[1:],2):
+                  script=transform(extract_run(name),batch,city,authority,bbox,before)
+                  q=Path(f'/tmp/bt2_batch{batch}_step{idx}.sh')
+                  q.write_text(script,encoding='utf-8')
+                  sh(['bash',str(q)])
+              remote_readback(before+50,batch+1,batch,city)
+              print(f'=== SUCCESS batch={batch} city={city} {before}->{before+50} dup=0 ===',flush=True)
+
+          final=load(G)
+          final_count=len(final.get('features') or [])
+          seen,dup=unique_state(final)
+          assert not dup
+          print(f'FINAL building_type_2 before=8800 added={final_count-8800} after={final_count} batches=12 dup=0 unique_keys={len(seen)}',flush=True)
+          PY
