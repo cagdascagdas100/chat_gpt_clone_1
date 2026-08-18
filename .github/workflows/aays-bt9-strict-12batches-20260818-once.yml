@@ -5,6 +5,11 @@ on:
       - agent/aays-bt9-strict-12-20260818-0441
     paths:
       - '.github/workflows/aays-bt9-strict-12batches-20260818-once.yml'
+  pull_request:
+    branches:
+      - agent/aays-bt9-strict-12-20260818-0441
+    paths:
+      - 'docs/chatgpt_status/_shared/slots_21/building_type_9/actions_pr_trigger_193_204.txt'
 permissions:
   contents: write
 concurrency:
@@ -18,7 +23,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: agent/aays-bt9-strict-12-20260818-0441
-          fetch-depth: 3
+          fetch-depth: 0
           path: trigger
       - name: Extract verified parent runner for cursor 193
         shell: bash
@@ -27,7 +32,7 @@ jobs:
           python - <<'PY'
           import re,subprocess,textwrap
           p='.github/workflows/aays-bt9-strict-12batches-20260818-once.yml'
-          old=subprocess.check_output(['git','-C','trigger','show',f'HEAD^^:{p}'],text=True)
+          old=subprocess.check_output(['git','-C','trigger','show',f'434fa3dd744ccafb6c38aaeb6a849e90f8837bf2:{p}'],text=True)
           m=re.search(r"cat > /tmp/bt9_181_192\.py <<'PY'\n(.*?)\n\s*PY\n\s*python /tmp/bt9_181_192\.py",old,re.S)
           if not m: raise SystemExit('VERIFIED_PARENT_RUNNER_NOT_FOUND')
           s=textwrap.dedent(m.group(1))
