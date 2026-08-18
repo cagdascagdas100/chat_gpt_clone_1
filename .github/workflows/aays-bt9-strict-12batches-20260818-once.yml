@@ -33,7 +33,7 @@ jobs:
           import re,subprocess,textwrap
           p='.github/workflows/aays-bt9-strict-12batches-20260818-once.yml'
           old=subprocess.check_output(['git','-C','trigger','show',f'434fa3dd744ccafb6c38aaeb6a849e90f8837bf2:{p}'],text=True)
-          m=re.search(r"cat > /tmp/bt9_181_192\\.py <<'PY'\\n(.*?)\\n\\s*PY\\n\\s*python /tmp/bt9_181_192\\.py",old,re.S)
+          m=re.search(r"cat > /tmp/bt9_181_192\.py <<'PY'\n(.*?)\n\s*PY\n\s*python /tmp/bt9_181_192\.py",old,re.S)
           if not m: raise SystemExit('VERIFIED_PARENT_RUNNER_NOT_FOUND')
           s=textwrap.dedent(m.group(1))
           repl=[
