@@ -1,0 +1,25 @@
+name: AAYS bt9 isolated actions canary
+on:
+  push:
+    paths:
+      - '.github/workflows/aays-bt9-action-canary-20260818.yml'
+permissions:
+  contents: write
+jobs:
+  canary:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/aays-bt9-strict-12-20260818-0441
+          fetch-depth: 5
+      - name: Write isolated marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          printf '{"slot_id":"building_type_9","actions_canary":"ok","fake_data":false}\n' > .aays_bt9_actions_canary.json
+          git add -- .aays_bt9_actions_canary.json
+          git commit -m 'ci(aays): bt9 actions canary marker'
+          git push origin HEAD:agent/aays-bt9-strict-12-20260818-0441
