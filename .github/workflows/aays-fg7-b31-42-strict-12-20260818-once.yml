@@ -1,0 +1,178 @@
+name: AAYS future_growth_7 strict batches 31-42 20260818 once
+on:
+  push:
+    paths:
+      - '.github/workflows/aays-fg7-b31-42-strict-12-20260818-once.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-future-growth-7-strict-31-42-20260818
+  cancel-in-progress: false
+jobs:
+  strict-spatial:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 100
+          persist-credentials: true
+      - name: Process 12 unused official windows and checkpoint every batch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          python - <<'PY'
+          import json, hashlib, pathlib, urllib.request, time
+
+          SLOT='future_growth_7'
+          CONT='future_growth_7_open_source_v2_20260813'
+          STATE=pathlib.Path('state/slots/future_growth_7')
+          SHARD=pathlib.Path('AAYS/england_map_web/data/future_growth/shards/future_growth_7_latest.geojson')
+          CP=STATE/'checkpoint_latest.json'
+          ST=STATE/'status_latest.json'
+          MF=STATE/'evidence_manifest_latest.json'
+          RP=STATE/'report_latest.json'
+          STATE.mkdir(parents=True, exist_ok=True)
+
+          sources=[
+            ('transport_scotland:a83_access_to_argyll_and_bute','A83 Rest and Be Thankful / Access to Argyll and Bute','In preparation','https://www.transport.gov.scot/projects/access-to-argyll-and-bute-a83/'),
+            ('transport_scotland:a82_tarbet_to_inverarnan','A82 Tarbet to Inverarnan','In preparation','https://www.transport.gov.scot/projects/a82-tarbet-to-inverarnan/'),
+            ('transport_scotland:a720_sheriffhall_roundabout','A720 Sheriffhall Roundabout','In preparation','https://www.transport.gov.scot/projects/a720-sheriffhall-roundabout/'),
+            ('transport_scotland:a737_improvements_at_beith','A737 Improvements at Beith','In preparation','https://www.transport.gov.scot/projects/a737-improvements-at-beith/'),
+            ('transport_scotland:a9a96_inshes_to_smithton','A9/A96 Inshes to Smithton','In preparation','https://www.transport.gov.scot/projects/a9a96-inshes-to-smithton/'),
+            ('transport_scotland:a90a937_laurencekirk_junction','A90/A937 Laurencekirk Junction Improvement Scheme','In preparation','https://www.transport.gov.scot/projects/a90a937-laurencekirk-junction-improvement-scheme/'),
+            ('transport_scotland:a75_springholm_crocketford','A75 Springholm and Crocketford Improvements Scheme','In preparation','https://www.transport.gov.scot/projects/a75-springholm-and-crocketford-improvements-scheme/'),
+            ('transport_scotland:a75_mossyard','A75 Mossyard','In preparation','https://www.transport.gov.scot/projects/a75-mossyard/'),
+            ('transport_scotland:a737_the_den_realignment','A737 The Den Realignment','Official index: Under construction','https://www.transport.gov.scot/projects/a737-the-den-realignment/'),
+            ('transport_scotland:a95_gaich_to_craggan','A95 Gaich to Craggan Section Improvements','In preparation','https://www.transport.gov.scot/projects/a95-gaich-to-craggan-section-improvements/'),
+            ('transport_scotland:a95_lackghie','A95 Lackghie Carriageway Realignment','Statutory procedures complete','https://www.transport.gov.scot/projects/a95-lackghie-carriageway-realignment/'),
+            ('transport_scotland:a96_threapland_junction','A96 Threapland Junction Improvements','Statutory procedures complete','https://www.transport.gov.scot/projects/a96-threapland-junction-improvements/'),
+          ]
+
+          cp0=json.loads(CP.read_text())
+          if cp0.get('slot_id') != SLOT: raise SystemExit('WRONG_SLOT')
+          if cp0.get('continuation_key') != CONT: raise SystemExit('WRONG_CONTINUATION_KEY')
+          if cp0.get('next_batch_index') != 31: raise SystemExit(f"CURSOR_MISMATCH:{cp0.get('next_batch_index')}")
+          old_used=list(cp0.get('used_window_keys',[]))
+          old_used_set=set(old_used)
+          if len({x[0] for x in sources}) != 12: raise SystemExit('NEW_WINDOW_DUPLICATE')
+          if old_used_set.intersection(x[0] for x in sources): raise SystemExit('REUSED_WINDOW')
+
+          shard=json.loads(SHARD.read_text())
+          if shard.get('metadata',{}).get('slot_id') != SLOT: raise SystemExit('WRONG_SHARD_SLOT')
+          features=shard.get('features',[])
+          artifact_count=len(features)
+          if artifact_count != 18: raise SystemExit(f'UNEXPECTED_SHARD_COUNT:{artifact_count}')
+          ids=[f.get('properties',{}).get('source_feature_id') for f in features]
+          ids=[x for x in ids if x is not None]
+          if len(ids) != len(set(ids)): raise SystemExit('SHARD_DUPLICATE_IDS')
+          strict_before=sum(1 for f in features if f.get('geometry') is not None and f.get('properties',{}).get('parcel_id'))
+          if strict_before != 0: raise SystemExit(f'UNEXPECTED_STRICT_BEFORE:{strict_before}')
+
+          def dump(path,obj):
+              path.write_text(json.dumps(obj,ensure_ascii=False,indent=2)+'\n')
+          def sha(path):
+              return hashlib.sha256(path.read_bytes()).hexdigest()
+          def fetch(url):
+              last=None
+              for attempt in range(3):
+                  try:
+                      req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 AAYS evidence runner/1.0','Accept':'text/html,application/xhtml+xml'})
+                      with urllib.request.urlopen(req,timeout=35) as r:
+                          body=r.read()
+                          final=r.geturl()
+                          code=getattr(r,'status',200)
+                      return {'ok':True,'http_status':code,'final_url':final,'sha256':hashlib.sha256(body).hexdigest(),'bytes':len(body)}
+                  except Exception as e:
+                      last=repr(e); time.sleep(2+attempt)
+              return {'ok':False,'error':last,'sha256':None,'bytes':0}
+
+          processed=[]
+          readbacks=[]
+          used=old_used[:]
+          source_contract={
+            'existing_source_family':'Scottish Government NPF4 Annex B national developments',
+            'new_source_family':'Transport Scotland official project pages - unused window set 2',
+            'project_index':'https://www.transport.gov.scot/projects/',
+            'canonical_target':'AAYS england_map_web future_growth parcel mirror',
+            'matching_rule':'STRICT_CENTROID_WITHIN_POLYGON_OR_EXACT_INTERSECTION_ONLY',
+            'nearest_match_allowed':False,
+            'strict_join_input_status':'No jointly readable machine-readable official project polygon plus canonical parcel polygon pair was exposed to this runner; source-only project evidence is not promoted to parcel evidence.'
+          }
+          reason='Official project window verified where fetch succeeded. No strict centroid-within-polygon or exact-intersection parcel relation is provable without a jointly readable machine-readable official project polygon and canonical parcel geometry; no implicit/proximity/nearest match used.'
+
+          for i,(key,name,stage,url) in enumerate(sources,start=31):
+              fr=fetch(url)
+              result='ZERO_SAFE_CANONICAL_MATCHES' if fr['ok'] else 'SOURCE_FETCH_FAILED_NO_PROMOTION'
+              rec={
+                'batch':i,'window_key':key,'project_name':name,'project_stage':stage,'source_ref':url,
+                'source_fetch_ok':fr['ok'],'source_http_status':fr.get('http_status'),'source_final_url':fr.get('final_url',url),
+                'source_sha256_runtime':fr.get('sha256'),'source_bytes_runtime':fr.get('bytes',0),
+                'result':result,'new_unique_evidenced_parcels':0,
+                'reason':reason if fr['ok'] else 'Official source URL was selected from Transport Scotland project index but runtime fetch failed after retries; no parcel promotion, implicit match, or fabricated evidence was allowed.',
+              }
+              if not fr['ok']: rec['source_fetch_error']=fr.get('error')
+              processed.append(rec); used.append(key)
+
+              cp={
+                'schema_version':5,'slot_id':SLOT,'continuation_key':CONT,'state':'BOUNDED_RUN_IN_PROGRESS_NO_NEW_STRICT_MATCHES' if i<42 else 'BOUNDED_RUN_COMPLETE_NO_NEW_STRICT_MATCHES',
+                'unique_evidenced_parcel_count_before':strict_before,'unique_evidenced_parcel_count_after':strict_before,'new_unique_evidenced_parcels':0,
+                'mirror_feature_count':artifact_count,'artifact_feature_count':artifact_count,'legacy_source_evidence_feature_count':artifact_count,'duplicate_count':0,
+                'next_batch_index':i+1,'new_run_bounded_batches_completed':i-30,'used_window_keys':used,
+                'last_batch':rec,'source_contract':source_contract,'blocker':'STRICT_SPATIAL_JOIN_INPUT_PAIR_UNAVAILABLE_TO_RUNNER',
+                'fake_data':False,'nearest_match_used':False,'demo_only':True,'final_ready':False,'production_merge':False
+              }
+              st={
+                'schema_version':1,'slot_id':SLOT,'continuation_key':CONT,'state':cp['state'],'latest_batch':i,'bounded_batches_completed_this_run':i-30,
+                'artifact_feature_count':artifact_count,'unique_evidenced_parcel_count':strict_before,'duplicate_count':0,
+                'nearest_match_used':False,'fake_data':False,'cross_slot_writes':False,'final_ready':False,'production_merge':False,
+                'last_window_key':key,'last_result':result
+              }
+              mf={
+                'schema_version':1,'slot_id':SLOT,'continuation_key':CONT,'artifact_feature_count':artifact_count,'legacy_source_evidence_feature_count':artifact_count,
+                'unique_evidenced_parcel_count':strict_before,'duplicate_count':0,'existing_source_id':'gov_scot_npf4_annex_b_2023',
+                'existing_source_url':'https://www.gov.scot/publications/national-planning-framework-4/pages/5/',
+                'new_source_family':'Transport Scotland official project pages - unused window set 2','processed_windows_this_run':processed,
+                'fake_data':False,'nearest_match_used':False,'demo_only':True,'final_ready':False,'production_merge':False
+              }
+              dump(CP,cp); dump(ST,st); dump(MF,mf)
+
+              shard_rb=json.loads(SHARD.read_text()); cp_rb=json.loads(CP.read_text()); st_rb=json.loads(ST.read_text()); mf_rb=json.loads(MF.read_text())
+              counts=[len(shard_rb.get('features',[])),cp_rb['artifact_feature_count'],st_rb['artifact_feature_count'],mf_rb['artifact_feature_count']]
+              dup=len(ids)-len(set(ids))
+              ok=(counts==[artifact_count]*4 and dup==0 and cp_rb['duplicate_count']==0 and st_rb['duplicate_count']==0 and mf_rb['duplicate_count']==0 and not cp_rb['nearest_match_used'] and not cp_rb['fake_data'])
+              if not ok: raise SystemExit(f'READBACK_FAIL_BATCH_{i}:{counts}:dup={dup}')
+              readbacks.append({'batch':i,'window_key':key,'shard_checkpoint_status_manifest_count':artifact_count,'duplicate_count':0,'pass':True,
+                'sha256':{'shard':sha(SHARD),'checkpoint':sha(CP),'status':sha(ST),'manifest':sha(MF)}})
+
+          report={
+            'schema_version':1,'slot_id':SLOT,'continuation_key':CONT,'run_id':'common_continuation_20260818_batches_31_42',
+            'requested_common_continuation_path':r'F:\TerraYield_AAYS_Portable\docs\deepseek_prompts\AAYS_CHATGPT_PLAN_00_23_SLOT_COMMON_CONTINUATION_20260818.md',
+            'requested_common_continuation_file_read':False,
+            'requested_common_continuation_file_note':'Exact F: path is not mounted in the hosted GitHub runner. Execution followed the user continuation instruction and authoritative canonical FG7 report/checkpoint/status/manifest/shard state.',
+            'requested_new_bounded_batches':12,'completed_new_bounded_batches':12,'batch_range':{'first':31,'last':42},
+            'counts':{'before_unique_evidenced_parcels':strict_before,'added_unique_evidenced_parcels':0,'after_unique_evidenced_parcels':strict_before,'legacy_source_evidence_feature_count':artifact_count,'mirror_feature_count':artifact_count,'duplicate_count':0},
+            'quality_gates':{'shard_checkpoint_status_manifest_count_invariant_equal_each_batch':True,'duplicate_count_zero_each_batch':True,'nearest_match_used':False,'fake_data':False,'cross_slot_writes':False,'final_ready':False,'production_merge':False,'future_growth_value_probability_unchanged':True,'all_zero_or_fetch_failed_windows_checkpointed':True,'reused_window_count':0,'own_slot_only':True},
+            'artifact_paths':{'shard':str(SHARD),'checkpoint':str(CP),'status':str(ST),'manifest':str(MF),'report':str(RP)},
+            'source_contract':source_contract,'source_windows':processed,'per_batch_readbacks':readbacks,
+            'blocker':'STRICT_SPATIAL_JOIN_INPUT_PAIR_UNAVAILABLE_TO_RUNNER',
+            'blocker_reason':'Twelve unused official Transport Scotland project windows were processed. No project was promoted to parcel evidence because a strict spatial relation to canonical parcel geometry was not provable; no nearest/implicit match was used.',
+            'next_batch_index':43,'next_action':'Continue only with previously unused official source windows; do not reuse batches 19-42.'
+          }
+          dump(RP,report)
+          print(json.dumps({'slot':SLOT,'before':strict_before,'added':0,'after':strict_before,'batches':'31-42','next':43,'readbacks':len(readbacks)},indent=2))
+          PY
+          git add state/slots/future_growth_7/checkpoint_latest.json state/slots/future_growth_7/status_latest.json state/slots/future_growth_7/evidence_manifest_latest.json state/slots/future_growth_7/report_latest.json
+          python - <<'PY'
+          import subprocess
+          paths=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          if not paths: raise SystemExit('NO_STAGED_STATE')
+          bad=[p for p in paths if not p.startswith('state/slots/future_growth_7/')]
+          if bad: raise SystemExit('CROSS_SLOT_STAGED:'+','.join(bad))
+          print('staged', paths)
+          PY
+          git commit -m 'future_growth_7: process strict batches 31-42'
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
