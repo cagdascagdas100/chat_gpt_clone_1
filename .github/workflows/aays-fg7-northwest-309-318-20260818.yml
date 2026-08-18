@@ -1,0 +1,29 @@
+name: AAYS FG7 North West 309-318 strict continuation
+
+on:
+  pull_request:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - 'ai-task-scripts/aays_fg7_northwest_309_318_20260818.py'
+      - '.github/workflows/aays-fg7-northwest-309-318-20260818.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  run-fg7-northwest:
+    if: github.event.pull_request.head.ref == 'agent/aays-fg7-northwest-309-318-20260818-2315'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout orchestration branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aays-fg7-northwest-309-318-20260818-2315
+          fetch-depth: 1
+          persist-credentials: true
+      - name: Execute strict FG7 North West batches 309-318
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: python ai-task-scripts/aays_fg7_northwest_309_318_20260818.py
