@@ -1,0 +1,50 @@
+name: AAYS building_type_2 common driver escape fix
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-common-driver-fix-once.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 120
+      - name: Patch continuation workflow escape block
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('.github/workflows/aays-building-type-2-common-b177-188-20260818.yml')
+          text=p.read_text(encoding='utf-8')
+          pattern=r"              if 'p\.write_text\(code\)' in script:\n                  inject = \(\n.*?                  script=script\.replace\('p\.write_text\(code\)',inject\+'p\.write_text\(code\)',1\)\n"
+          replacement=r'''              if 'p.write_text(code)' in script:
+                  inject = f"""
+owner_old='if task.get("owner") not in (None, "") or status.get("owner") not in (None, ""):\n    raise SystemExit("live owner; refusing second owner")'
+owner_new='if task.get("owner") not in (None, ""):\n    raise SystemExit("live current_task owner; refusing second owner")'
+if owner_old in code:
+    code=code.replace(owner_old,owner_new,1)
+code=code.replace('CONT = ""','CONT = "{CONT}"',1)
+"""
+                  script=script.replace('p.write_text(code)',inject+'p.write_text(code)',1)
+'''
+          new,n=re.subn(pattern,lambda m:replacement,text,count=1,flags=re.S)
+          if n!=1:
+              raise SystemExit(f'expected one escape block, replaced {n}')
+          compile('\n'.join(line[10:] if line.startswith('          ') else line for line in new.split("          python - <<'PY'\n",1)[1].rsplit('\n          PY',1)[0].splitlines()),'<driver>','exec')
+          p.write_text(new,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/aays-building-type-2-common-b177-188-20260818.yml
+          git commit -m 'ci(building_type_2): fix continuation driver escape block'
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
