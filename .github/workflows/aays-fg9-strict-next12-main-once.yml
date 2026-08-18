@@ -19,8 +19,8 @@ jobs:
           script: |
             const owner=context.repo.owner,repo=context.repo.repo,path='docs/chatgpt_status/_shared/slots_21/future_growth_9/actions_main_run_next12_status.json'; let sha;
             try{sha=(await github.rest.repos.getContent({owner,repo,path,ref:'main'})).data.sha}catch(e){if(e.status!==404)throw e}
-            const body={slot_id:'future_growth_9',state:'RUNNING_RECONCILE_AND_NEXT12',run_id:String(context.runId),head_sha:context.sha,canonical_branch:'codex/aays-single-runner-v5-20260706',executor:'reconcile_duplicate_sw122_20260818.py + run_strict_next12_after_reconcile_20260818.py'};
-            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark FG9 reconcile and next-12 started',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
+            const body={slot_id:'future_growth_9',state:'RUNNING_NEXT12_W103_114',run_id:String(context.runId),head_sha:context.sha,canonical_branch:'codex/aays-single-runner-v5-20260706',executor:'run_strict_next12_w103_114_20260818.py',expected_start:{count:102,window:103}};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark FG9 next-12 w103-114 started',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
       - name: Checkout executor
         uses: actions/checkout@v4
         with:
@@ -35,19 +35,11 @@ jobs:
           path: canonical
       - name: Install source runtime
         run: python -m pip install --quiet requests
-      - name: Reconcile historical exact duplicate and run 12 new bounded windows
+      - name: Run 12 new bounded windows and verify remote readback
         shell: bash
         run: |
           set +e
-          {
-            python trigger/docs/chatgpt_status/_shared/slots_21/future_growth_9/automation/reconcile_duplicate_sw122_20260818.py
-            rc=$?
-            if [ "$rc" -eq 0 ]; then
-              python trigger/docs/chatgpt_status/_shared/slots_21/future_growth_9/automation/run_strict_next12_after_reconcile_20260818.py
-              rc=$?
-            fi
-            exit "$rc"
-          } 2>&1 | tee fg9-exec.log
+          python trigger/docs/chatgpt_status/_shared/slots_21/future_growth_9/automation/run_strict_next12_w103_114_20260818.py 2>&1 | tee fg9-exec.log
           exit ${PIPESTATUS[0]}
       - name: Mark run finished
         if: always()
@@ -57,5 +49,5 @@ jobs:
             const fs=require('fs'); const owner=context.repo.owner,repo=context.repo.repo,path='docs/chatgpt_status/_shared/slots_21/future_growth_9/actions_main_run_next12_status.json'; let sha;
             try{sha=(await github.rest.repos.getContent({owner,repo,path,ref:'main'})).data.sha}catch(e){if(e.status!==404)throw e}
             let execution_log_tail=''; try{execution_log_tail=fs.readFileSync('fg9-exec.log','utf8').slice(-20000)}catch(e){}
-            const body={slot_id:'future_growth_9',state:'${{ job.status }}'.toUpperCase(),run_id:String(context.runId),head_sha:context.sha,finished_at:new Date().toISOString(),canonical_branch:'codex/aays-single-runner-v5-20260706',executor:'reconcile_duplicate_sw122_20260818.py + run_strict_next12_after_reconcile_20260818.py',execution_log_tail};
-            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark FG9 reconcile and next-12 finished',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
+            const body={slot_id:'future_growth_9',state:'${{ job.status }}'.toUpperCase(),run_id:String(context.runId),head_sha:context.sha,finished_at:new Date().toISOString(),canonical_branch:'codex/aays-single-runner-v5-20260706',executor:'run_strict_next12_w103_114_20260818.py',execution_log_tail};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark FG9 next-12 w103-114 finished',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
