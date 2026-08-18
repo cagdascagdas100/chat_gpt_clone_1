@@ -1,0 +1,65 @@
+name: AAYS future_growth_3 strict batches 169-180 20260818 once
+on:
+  push:
+    paths:
+      - '.github/workflows/aays-fg3-b169-180-strict-spatial-20260818-once.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-future-growth-3-strict-169-180-20260818
+  cancel-in-progress: false
+jobs:
+  strict-spatial:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 100
+          persist-credentials: true
+      - name: Install spatial dependency
+        run: python -m pip install --disable-pip-version-check --quiet shapely==2.1.1
+      - name: Process 12 unused authoritative growth polygons
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          python - <<'PY'
+          import base64,gzip
+          exec(gzip.decompress(base64.b64decode('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')).decode())
+          PY
+          git add \
+            AAYS/england_map_web/data/future_growth/shards/future_growth_3_latest.geojson \
+            state/slots/future_growth_3/checkpoint_latest.json \
+            state/slots/future_growth_3/status_latest.json \
+            state/slots/future_growth_3/evidence_manifest_latest.json \
+            state/slots/future_growth_3/report_latest.json
+          python - <<'PY'
+          import subprocess
+          paths=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
+          allowed={
+            'AAYS/england_map_web/data/future_growth/shards/future_growth_3_latest.geojson',
+            'state/slots/future_growth_3/checkpoint_latest.json',
+            'state/slots/future_growth_3/status_latest.json',
+            'state/slots/future_growth_3/evidence_manifest_latest.json',
+            'state/slots/future_growth_3/report_latest.json',
+          }
+          bad=[p for p in paths if p not in allowed]
+          if bad: raise SystemExit('CROSS_SLOT_STAGED:'+','.join(bad))
+          if not paths: raise SystemExit('NO_STAGED_STATE')
+          print('staged',paths)
+          PY
+          git commit -m 'future_growth_3: process strict batches 169-180'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git merge-base --is-ancestor origin/codex/aays-single-runner-v5-20260706 HEAD; then
+              git rebase origin/codex/aays-single-runner-v5-20260706 || exit 1
+            fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then break; fi
+            if [ "$attempt" = "5" ]; then exit 1; fi
+            sleep $((attempt*3))
+          done
+          git fetch origin codex/aays-single-runner-v5-20260706
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/codex/aays-single-runner-v5-20260706)"
