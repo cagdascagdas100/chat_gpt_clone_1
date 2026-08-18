@@ -1,0 +1,128 @@
+name: AAYS building_type_2 batches177-188 strict sequential
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-batches177-188-strict-once.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-2-batches177-188-strict-sequential
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 120
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-6-batch26-skegness-once.yml
+            .github/workflows/aays-building-type-2-batch153-barking-once.yml
+            .github/workflows/aays-building-type-2-batch157-tottenham-once.yml
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
+
+      - name: Fast-forward canonical branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          sha256sum docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json > /tmp/current_task.before.sha256
+
+      - name: Execute 12 guarded batches with checkpoint and remote readback after each batch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          src = Path('.github/workflows/aays-building-type-2-batch157-tottenham-once.yml').read_text(encoding='utf-8')
+
+          def extract_run(step_name):
+              marker = f'      - name: {step_name}\n'
+              if marker not in src:
+                  raise SystemExit(f'missing inherited step: {step_name}')
+              part = src.split(marker, 1)[1]
+              part = part.split('\n      - name:', 1)[0]
+              run_marker = '        run: |\n'
+              if run_marker not in part:
+                  raise SystemExit(f'missing run block: {step_name}')
+              block = part.split(run_marker, 1)[1]
+              lines = []
+              for line in block.splitlines():
+                  if line.startswith('          '):
+                      lines.append(line[10:])
+                  elif not line.strip():
+                      lines.append('')
+                  else:
+                      break
+              return '\n'.join(lines) + '\n'
+
+          specs = [
+              (177,'Croydon','Croydon',[-0.14,51.34,-0.05,51.40],8800,8850,8900),
+              (178,'Sutton','Sutton',[-0.23,51.34,-0.14,51.39],8850,8900,8950),
+              (179,'Bromley','Bromley',[0.00,51.36,0.10,51.43],8900,8950,9000),
+              (180,'Enfield','Enfield',[-0.10,51.63,-0.02,51.70],8950,9000,9050),
+              (181,'Harrow','Harrow',[-0.37,51.56,-0.28,51.62],9000,9050,9100),
+              (182,'Hounslow','Hounslow',[-0.39,51.44,-0.31,51.50],9050,9100,9150),
+              (183,'Twickenham','Richmond upon Thames',[-0.36,51.42,-0.27,51.47],9100,9150,9200),
+              (184,'Ilford','Redbridge',[0.04,51.53,0.13,51.59],9150,9200,9250),
+              (185,'Walthamstow','Waltham Forest',[-0.04,51.56,0.04,51.62],9200,9250,9300),
+              (186,'Bexleyheath','Bexley',[0.10,51.43,0.20,51.49],9250,9300,9350),
+              (187,'Brentford','Hounslow',[-0.33,51.47,-0.24,51.52],9300,9350,9400),
+              (188,'Edgware','Barnet',[-0.30,51.59,-0.22,51.64],9350,9400,9450),
+          ]
+
+          steps = [
+              'Execute guarded batch157',
+              'Normalize metadata and validate exact batch157',
+              'Commit and push exact slot outputs',
+              'Remote readback',
+          ]
+
+          def transform(s, batch, city, authority, bbox, before, after, nxt):
+              pairs = [
+                  ('7800', '__COUNT_BEFORE__'),
+                  ('7850', '__COUNT_AFTER__'),
+                  ('7900', '__COUNT_NEXT__'),
+                  ('157', '__BATCH_CUR__'),
+                  ('158', '__BATCH_NEXT__'),
+              ]
+              for a,b in pairs:
+                  s=s.replace(a,b)
+              compact='['+','.join(str(x) for x in bbox)+']'
+              spaced='['+', '.join(str(x) for x in bbox)+']'
+              s=s.replace('[-0.09, 51.57, -0.03, 51.62]', spaced)
+              s=s.replace('[-0.09,51.57,-0.03,51.62]', compact)
+              s=s.replace('Tottenham',city).replace('TOTTENHAM',city.upper()).replace('tottenham',city.lower().replace(' ','-'))
+              s=s.replace('Haringey',authority).replace('HARINGEY',authority.upper()).replace('haringey',authority.lower().replace(' ','-'))
+              for a,b in [
+                  ('__COUNT_BEFORE__',str(before)),
+                  ('__COUNT_AFTER__',str(after)),
+                  ('__COUNT_NEXT__',str(nxt)),
+                  ('__BATCH_CUR__',str(batch)),
+                  ('__BATCH_NEXT__',str(batch+1)),
+              ]:
+                  s=s.replace(a,b)
+              return s
+
+          for batch, city, authority, bbox, before, after, nxt in specs:
+              print(f'=== START batch {batch} {city} {before}->{after} ===', flush=True)
+              for i, name in enumerate(steps, 1):
+                  script = transform(extract_run(name), batch, city, authority, bbox, before, after, nxt)
+                  p = Path(f'/tmp/bt2_batch{batch}_step{i}.sh')
+                  p.write_text(script, encoding='utf-8')
+                  subprocess.run(['bash', str(p)], check=True)
+              print(f'=== READBACK_OK batch {batch} {city} {before}->{after} ===', flush=True)
+          PY
