@@ -1,14 +1,14 @@
-name: AAYS BT6 canonical strict executor 118-129
+name: AAYS BT6 canonical strict executor 130-141
 on:
-  pull_request:
+  push:
     branches:
       - codex/aays-single-runner-v5-20260706
     paths:
-      - '.github/workflows/aays-bt6-strict-106-117-20260818.yml'
+      - '.github/workflows/aays-bt6-canonical-exec-106-117-20260818.yml'
 permissions:
   contents: write
 concurrency:
-  group: aays-bt6-canonical-exec-118-129-20260818
+  group: aays-bt6-canonical-exec-130-141-20260818
   cancel-in-progress: false
 jobs:
   strict-bt6:
@@ -30,13 +30,14 @@ jobs:
           import re,textwrap
           p=Path('trigger/.github/workflows/aays-bt6-strict-106-117-20260818.yml')
           s=p.read_text(encoding='utf-8')
-          m=re.search(r"cat > /tmp/bt6_106_117\.py <<'PY'\n(.*?)\n          PY\n          python /tmp/bt6_106_117\.py",s,re.S)
+          m=re.search(r"cat > /tmp/bt6_106_117\.py <<'PY'\n(.*?)\nPY\npython /tmp/bt6_106_117\.py",s,re.S)
           if not m: raise SystemExit('BT6_RUNNER_EXTRACTION_FAILED')
           s=textwrap.dedent(m.group(1))
-          if "START=118; END=129; BEFORE=22250" not in s: raise SystemExit('BT6_CURSOR_PAYLOAD_MISMATCH')
+          if "START=130; END=141; BEFORE=22250" not in s: raise SystemExit('BT6_CURSOR_PAYLOAD_MISMATCH')
+          if "NOTTINGHAM_CITY_COUNCIL_ARCGIS_HMLR_INSPIRE" not in s: raise SystemExit('BT6_SOURCE_FAMILY_MISMATCH')
           if "REPORT=REP" not in s: raise SystemExit('BT6_REPORT_OWNERSHIP_MISMATCH')
           Path('/tmp/bt6_106_117.py').write_text(s,encoding='utf-8')
-          print({'slot':'building_type_6','batches':'118-129','runner_lines':len(s.splitlines()),'source_family':'HMLR INSPIRE GML + OSM','ownership':'six canonical BT6 paths'})
+          print({'slot':'building_type_6','batches':'130-141','source_family':'Nottingham City ArcGIS HMLR INSPIRE + OSM','ownership':'six canonical BT6 paths'})
           PY
       - name: Checkout canonical branch
         uses: actions/checkout@v4
@@ -44,7 +45,7 @@ jobs:
           ref: codex/aays-single-runner-v5-20260706
           fetch-depth: 0
           path: canonical
-      - name: Install existing geometry dependencies
+      - name: Install geometry dependencies
         run: python -m pip install --quiet requests shapely pyproj
       - name: Execute twelve strict bounded batches with per-batch remote readback
         shell: bash
@@ -52,4 +53,4 @@ jobs:
           set -euo pipefail
           cd canonical
           python /tmp/bt6_106_117.py
-# execution_only_pr_trigger: 20260818T2047+0300
+# trigger_nonce: 20260818T2209+0300
