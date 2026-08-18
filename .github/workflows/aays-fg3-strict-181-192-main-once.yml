@@ -1,0 +1,40 @@
+name: AAYS FG3 strict 181-192 main one-shot
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/aays-fg3-strict-181-192-main-once.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-future-growth-3-strict-181-192
+  cancel-in-progress: false
+jobs:
+  strict-source-expansion:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - name: Checkout FG3 executor
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aays-fg3-b181-192-strict-spatial-20260818-2057
+          fetch-depth: 0
+          path: trigger
+      - name: Checkout canonical slot branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+          path: canonical
+          persist-credentials: true
+      - name: Install spatial runtime
+        run: python -m pip install --disable-pip-version-check --quiet shapely==2.1.1
+      - name: Execute FG3 strict 181-192 with per-batch readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          python ../trigger/tools/aays_fg3_181_192_strict.py
