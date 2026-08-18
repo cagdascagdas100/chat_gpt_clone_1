@@ -1,0 +1,254 @@
+name: AAYS FG7 strict 12 batches 20260818 once
+
+on:
+  push:
+    branches:
+      - agent/aays-fg7-strict-12-20260818-0552
+    paths:
+      - '.github/workflows/aays-fg7-strict-12batches-20260818-once.yml'
+      - '.aays_fg7_trigger'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-fg7-strict-12-20260818
+  cancel-in-progress: false
+
+jobs:
+  run-fg7:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout canonical AAYS branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Run future_growth_7 bounded source windows with per-batch readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, html, json, re, subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          SLOT = 'future_growth_7'
+          CONT = 'future_growth_7_open_source_v2_20260813'
+          SHARD = Path('AAYS/england_map_web/data/future_growth/shards/future_growth_7_latest.geojson')
+          STATE = Path('state/slots/future_growth_7')
+          CP = STATE / 'checkpoint_latest.json'
+          ST = STATE / 'status_latest.json'
+          MF = STATE / 'evidence_manifest_latest.json'
+          RP = STATE / 'report_latest.json'
+          STATE.mkdir(parents=True, exist_ok=True)
+
+          def load_json(p):
+              return json.loads(p.read_text(encoding='utf-8'))
+          def write_json(p, obj):
+              p.write_text(json.dumps(obj, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          def sha(p):
+              return hashlib.sha256(p.read_bytes()).hexdigest()
+          def norm_text(raw):
+              s = html.unescape(raw.decode('utf-8', errors='ignore'))
+              s = re.sub(r'<script\b[^>]*>.*?</script>', ' ', s, flags=re.I|re.S)
+              s = re.sub(r'<style\b[^>]*>.*?</style>', ' ', s, flags=re.I|re.S)
+              s = re.sub(r'<[^>]+>', ' ', s)
+              return re.sub(r'\s+', ' ', s).strip()
+
+          shard = load_json(SHARD)
+          assert shard.get('type') == 'FeatureCollection'
+          md = shard.get('metadata') or {}
+          assert md.get('slot_id') == SLOT, md
+          assert md.get('continuation_key') == CONT, md
+          features = shard.get('features') or []
+          raw_count = len(features)
+          assert raw_count == int(md.get('feature_count', raw_count)) == 18
+          ids = [str((f.get('properties') or {}).get('source_feature_id','')) for f in features]
+          assert all(ids) and len(ids) == len(set(ids)), 'existing shard source_feature_id duplicate'
+          shard_dup = len(ids) - len(set(ids))
+          strict_before = sum(1 for f in features if f.get('geometry') is not None and (f.get('properties') or {}).get('parcel_id'))
+          assert strict_before == 0, 'legacy proxy evidence must not be counted as strict parcel evidence'
+
+          candidates = [
+            ('transport_scotland:a9_pass_of_birnam_to_tay_crossing','A9 Pass of Birnam to Tay Crossing','In preparation','https://www.transport.gov.scot/projects/a9-dualling-perth-to-inverness/a9-pass-of-birnam-to-tay-crossing/'),
+            ('transport_scotland:a9_tay_crossing_to_ballinluig','A9 Tay Crossing to Ballinluig','Under construction','https://www.transport.gov.scot/projects/a9-dualling-perth-to-inverness/a9-tay-crossing-to-ballinluig/'),
+            ('transport_scotland:a9_pitlochry_to_killiecrankie','A9 Pitlochry to Killiecrankie','In preparation','https://www.transport.gov.scot/projects/a9-dualling-perth-to-inverness/a9-pitlochry-to-killiecrankie/'),
+            ('transport_scotland:a9_killiecrankie_to_glen_garry','A9 Killiecrankie to Glen Garry','In preparation','https://www.transport.gov.scot/projects/a9-dualling-perth-to-inverness/a9-killiecrankie-to-glen-garry/'),
+            ('transport_scotland:a9_glen_garry_to_dalwhinnie','A9 Glen Garry to Dalwhinnie','In preparation','https://www.transport.gov.scot/projects/a9-dualling-perth-to-inverness/a9-glen-garry-to-dalwhinnie/'),
+            ('transport_scotland:a9_dalwhinnie_to_crubenmore','A9 Dalwhinnie to Crubenmore','In preparation','https://www.transport.gov.scot/projects/a9-dualling-perth-to-inverness/a9-dalwhinnie-to-crubenmore/'),
+            ('transport_scotland:a9_crubenmore_to_kincraig','A9 Crubenmore to Kincraig','In preparation','https://www.transport.gov.scot/projects/a9-dualling-perth-to-inverness/a9-crubenmore-to-kincraig/'),
+            ('transport_scotland:a9_dalraddy_to_slochd','A9 Dalraddy to Slochd','In preparation','https://www.transport.gov.scot/projects/a9-dualling-perth-to-inverness/a9-dalraddy-to-slochd/'),
+            ('transport_scotland:a9_tomatin_to_moy','A9 Tomatin to Moy','Under construction','https://www.transport.gov.scot/projects/a9-dualling-perth-to-inverness/a9-tomatin-to-moy/'),
+            ('transport_scotland:a96_inverness_to_nairn','A96 Inverness to Nairn including Nairn Bypass','In preparation','https://www.transport.gov.scot/projects/a96-dualling-inverness-to-aberdeen/a96-inverness-to-nairn-including-nairn-bypass/'),
+            ('transport_scotland:a96_hardmuir_to_fochabers','A96 Hardmuir to Fochabers','In preparation','https://www.transport.gov.scot/projects/a96-dualling-inverness-to-aberdeen/a96-hardmuir-to-fochabers/'),
+            ('transport_scotland:a96_east_of_huntly_to_aberdeen','A96 East of Huntly to Aberdeen','In preparation','https://www.transport.gov.scot/projects/a96-dualling-inverness-to-aberdeen/a96-east-of-huntly-to-aberdeen/'),
+          ]
+
+          recovered_ids = sorted(ids)
+          existing_used = []
+          start_index = 19
+          prior_cp = None
+          if CP.exists():
+              prior_cp = load_json(CP)
+              assert prior_cp.get('slot_id') == SLOT and prior_cp.get('continuation_key') == CONT
+              existing_used = list(prior_cp.get('used_window_keys') or [])
+              start_index = int(prior_cp.get('next_batch_index') or 19)
+          selected = [x for x in candidates if x[0] not in set(existing_used)]
+          assert len(selected) == 12, f'expected 12 unused FG7 windows, got {len(selected)}; fail closed rather than reuse'
+
+          source_contract = {
+            'existing_source_family': 'Scottish Government NPF4 Annex B national developments',
+            'new_source_family': 'Transport Scotland official project pages',
+            'project_index': 'https://www.transport.gov.scot/projects/',
+            'canonical_target': 'AAYS england_map_web future_growth parcel mirror',
+            'matching_rule': 'STRICT_CENTROID_WITHIN_POLYGON_OR_EXACT_INTERSECTION_ONLY',
+            'nearest_match_allowed': False,
+            'strict_join_input_status': 'No jointly readable machine-readable official project polygon plus canonical parcel polygon pair was exposed to this runner; source-only project evidence is not promoted to parcel evidence.'
+          }
+          windows = []
+          readbacks = []
+          used = list(existing_used)
+          accessed = datetime.now(timezone.utc).isoformat().replace('+00:00','Z')
+
+          for offset, (key, name, stage, url) in enumerate(selected):
+              batch = start_index + offset
+              proc = subprocess.run([
+                  'curl','-L','--fail','--silent','--show-error','--retry','2','--connect-timeout','10','--max-time','30',
+                  '-A','AAYS-FG7-Evidence/1.0', url
+              ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+              if proc.returncode != 0:
+                  raise RuntimeError(f'official source fetch failed for {key}: {proc.stderr.decode(errors="ignore")[:300]}')
+              body = proc.stdout
+              if len(body) < 500:
+                  raise RuntimeError(f'official source unexpectedly small for {key}: {len(body)} bytes')
+              text = norm_text(body)
+              if name.lower() not in text.lower():
+                  raise RuntimeError(f'official source identity check failed for {key}: project name not present')
+              source_sha = hashlib.sha256(body).hexdigest()
+              result = 'ZERO_SAFE_CANONICAL_MATCHES'
+              reason = 'Official project window verified. No strict centroid-within-polygon or exact-intersection parcel relation is provable without a jointly readable machine-readable official project polygon and canonical parcel geometry; no implicit/proximity/nearest match used.'
+              used.append(key)
+              win = {
+                'batch': batch, 'window_key': key, 'project_name': name, 'project_stage': stage,
+                'source_ref': url, 'source_sha256_runtime': source_sha, 'result': result,
+                'new_unique_evidenced_parcels': 0, 'reason': reason
+              }
+              windows.append(win)
+
+              cp = {
+                'schema_version': 5, 'slot_id': SLOT, 'continuation_key': CONT,
+                'state': 'BOUNDED_RUN_IN_PROGRESS_NO_SAFE_ADDITIONS' if offset < 11 else 'BOUNDED_RUN_COMPLETE_NO_NEW_STRICT_MATCHES',
+                'cursor_recovery_basis': 'Canonical FG7 shard contained source_feature_id npf4-national-development-01..18 and no state/slots/future_growth_7 directory. Batch cursor recovered conservatively at 19; legacy proxy rows were preserved but not counted as strict parcel evidence.',
+                'recovered_processed_source_feature_ids': recovered_ids,
+                'unique_evidenced_parcel_count_before': strict_before,
+                'unique_evidenced_parcel_count_after': strict_before,
+                'new_unique_evidenced_parcels': 0,
+                'mirror_feature_count': raw_count, 'artifact_feature_count': raw_count,
+                'legacy_source_evidence_feature_count': raw_count,
+                'duplicate_count': 0, 'next_batch_index': batch + 1,
+                'new_run_bounded_batches_completed': offset + 1,
+                'used_window_keys': used, 'last_batch': win, 'source_contract': source_contract,
+                'blocker': 'STRICT_SPATIAL_JOIN_INPUT_PAIR_UNAVAILABLE_TO_RUNNER',
+                'fake_data': False, 'nearest_match_used': False, 'demo_only': True,
+                'final_ready': False, 'production_merge': False
+              }
+              st = {
+                'schema_version': 1, 'slot_id': SLOT, 'continuation_key': CONT,
+                'state': cp['state'], 'latest_batch': batch,
+                'bounded_batches_completed_this_run': offset + 1,
+                'artifact_feature_count': raw_count,
+                'unique_evidenced_parcel_count': strict_before,
+                'duplicate_count': 0, 'nearest_match_used': False, 'fake_data': False,
+                'cross_slot_writes': False, 'final_ready': False, 'production_merge': False,
+                'last_window_key': key, 'last_result': result
+              }
+              mf = {
+                'schema_version': 1, 'slot_id': SLOT, 'continuation_key': CONT,
+                'artifact_feature_count': raw_count,
+                'legacy_source_evidence_feature_count': raw_count,
+                'unique_evidenced_parcel_count': strict_before,
+                'duplicate_count': 0,
+                'existing_source_id': md.get('source_id'),
+                'existing_source_url': md.get('source_url'),
+                'recovered_processed_source_feature_ids': recovered_ids,
+                'new_source_family': source_contract['new_source_family'],
+                'processed_windows_this_run': windows,
+                'fake_data': False, 'nearest_match_used': False,
+                'demo_only': True, 'final_ready': False, 'production_merge': False
+              }
+              write_json(CP, cp); write_json(ST, st); write_json(MF, mf)
+
+              # Required per-batch readback: shard + checkpoint + status + manifest.
+              rb_shard = load_json(SHARD); rb_cp = load_json(CP); rb_st = load_json(ST); rb_mf = load_json(MF)
+              counts = [int((rb_shard.get('metadata') or {}).get('feature_count', -1)),
+                        int(rb_cp.get('artifact_feature_count', -2)),
+                        int(rb_st.get('artifact_feature_count', -3)),
+                        int(rb_mf.get('artifact_feature_count', -4))]
+              assert counts == [raw_count, raw_count, raw_count, raw_count], counts
+              assert rb_cp.get('duplicate_count') == rb_st.get('duplicate_count') == rb_mf.get('duplicate_count') == 0
+              rb_ids = [str((f.get('properties') or {}).get('source_feature_id','')) for f in (rb_shard.get('features') or [])]
+              assert len(rb_ids) - len(set(rb_ids)) == shard_dup == 0
+              assert rb_cp.get('nearest_match_used') is False and rb_st.get('nearest_match_used') is False and rb_mf.get('nearest_match_used') is False
+              assert rb_cp.get('fake_data') is False and rb_st.get('fake_data') is False and rb_mf.get('fake_data') is False
+              readbacks.append({
+                'batch': batch, 'window_key': key, 'shard_checkpoint_status_manifest_count': raw_count,
+                'duplicate_count': 0, 'pass': True,
+                'sha256': {'shard': sha(SHARD), 'checkpoint': sha(CP), 'status': sha(ST), 'manifest': sha(MF)}
+              })
+
+          report = {
+            'schema_version': 1, 'slot_id': SLOT, 'continuation_key': CONT,
+            'run_id': 'common_continuation_20260818_recovered_batches_19_30',
+            'requested_common_continuation_path': r'F:\TerraYield_AAYS_Portable\docs\deepseek_prompts\AAYS_CHATGPT_PLAN_00_23_SLOT_COMMON_CONTINUATION_20260818.md',
+            'requested_common_continuation_file_read': False,
+            'requested_common_continuation_file_note': 'Exact F: path is not mounted in the hosted runner/repository. Execution uses the user continuation instruction plus canonical FG7 mirror recovery and the same strict schema/readback policy used by active sibling future_growth slots.',
+            'cursor_recovery': {'legacy_source_rows': raw_count, 'legacy_strict_parcel_rows': strict_before, 'recovered_next_batch_index': start_index, 'basis': 'npf4-national-development-01..18 exact IDs in canonical FG7 mirror'},
+            'requested_new_bounded_batches': 12, 'completed_new_bounded_batches': 12,
+            'batch_range': {'first': start_index, 'last': start_index + 11},
+            'counts': {'before_unique_evidenced_parcels': strict_before, 'added_unique_evidenced_parcels': 0, 'after_unique_evidenced_parcels': strict_before, 'legacy_source_evidence_feature_count': raw_count, 'mirror_feature_count': raw_count, 'duplicate_count': 0},
+            'quality_gates': {'shard_checkpoint_status_manifest_count_invariant_equal_each_batch': True, 'duplicate_count_zero_each_batch': True, 'nearest_match_used': False, 'fake_data': False, 'cross_slot_writes': False, 'final_ready': False, 'production_merge': False, 'future_growth_value_probability_unchanged': True, 'all_zero_windows_checkpointed': True, 'reused_window_count': 0, 'own_slot_only': True},
+            'artifact_paths': {'shard': str(SHARD), 'checkpoint': str(CP), 'status': str(ST), 'manifest': str(MF), 'report': str(RP)},
+            'source_contract': source_contract,
+            'source_windows': windows, 'per_batch_readbacks': readbacks,
+            'blocker': 'STRICT_SPATIAL_JOIN_INPUT_PAIR_UNAVAILABLE_TO_RUNNER',
+            'blocker_reason': 'All 12 unused official Transport Scotland project windows were verified, but no project was promoted to parcel evidence because a strict spatial relation to canonical parcel geometry was not provable in the runner. Legacy NPF4 rows remain source evidence/proxies, not parcel evidence.',
+            'next_batch_index': start_index + 12,
+            'next_action': 'Continue only with previously unused official Scottish planning/transport source windows that expose machine-readable project geometry jointly with canonical parcel geometry; do not reuse the 12 Transport Scotland windows recorded here.'
+          }
+          write_json(RP, report)
+          # Final full readback including report.
+          final_cp, final_st, final_mf, final_rp = map(load_json, [CP, ST, MF, RP])
+          assert final_rp['completed_new_bounded_batches'] == 12
+          assert final_rp['counts']['duplicate_count'] == 0
+          assert final_cp['next_batch_index'] == final_rp['next_batch_index']
+          assert final_cp['artifact_feature_count'] == final_st['artifact_feature_count'] == final_mf['artifact_feature_count'] == raw_count
+          print(json.dumps({'slot_id': SLOT, 'before': strict_before, 'added': 0, 'after': strict_before, 'mirror_feature_count': raw_count, 'batches': 12, 'next_batch_index': final_rp['next_batch_index'], 'report_path': str(RP)}, indent=2))
+          PY
+
+      - name: Commit only future_growth_7 state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'AAYS FG7 bounded runner'
+          git config user.email 'actions@users.noreply.github.com'
+          allowed='state/slots/future_growth_7/'
+          changed="$(git status --porcelain | awk '{print $2}')"
+          if [ -n "$changed" ]; then
+            while IFS= read -r p; do
+              [ -z "$p" ] && continue
+              case "$p" in
+                state/slots/future_growth_7/*) ;;
+                *) echo "Refusing cross-slot/path write: $p" >&2; exit 31;;
+              esac
+            done <<< "$changed"
+          fi
+          git add state/slots/future_growth_7/
+          git diff --cached --quiet && { echo 'No FG7 state changes to commit'; exit 0; }
+          git commit -m 'future_growth_7: process 12 strict bounded Transport Scotland windows'
+          git pull --rebase origin codex/aays-single-runner-v5-20260706
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
