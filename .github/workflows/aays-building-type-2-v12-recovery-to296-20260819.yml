@@ -1,0 +1,113 @@
+name: AAYS building_type_2 v12 recovery to batch 296
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-v12-recovery-to296-20260819.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-2-common-v10-next12-20260818
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 460
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-2-common-v2-b177-188-20260818.yml
+            .github/workflows/aays-building-type-2-common-v12-next12-20260819.yml
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
+      - name: Resume only remaining batches through 296
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          from pathlib import Path
+          import ast, json
+
+          TARGET_NEXT=297
+          driver_path=Path('.github/workflows/aays-building-type-2-common-v2-b177-188-20260818.yml')
+          selector_path=Path('.github/workflows/aays-building-type-2-common-v12-next12-20260819.yml')
+          cp_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          st_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          task_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          geo_path=Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          man_path=Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          cp=json.loads(cp_path.read_text(encoding='utf-8'))
+          st=json.loads(st_path.read_text(encoding='utf-8'))
+          task=json.loads(task_path.read_text(encoding='utf-8'))
+          geo=json.loads(geo_path.read_text(encoding='utf-8'))
+          man=json.loads(man_path.read_text(encoding='utf-8'))
+          start_batch=int(cp['next_batch_index'])
+          start_count=len(geo.get('features') or [])
+          if start_batch >= TARGET_NEXT:
+              print('ALREADY_COMPLETE', start_batch, start_count, flush=True)
+              raise SystemExit(0)
+          assert start_batch >= 285, (start_batch, 'refusing stale/replayed cursor')
+          assert cp.get('current_feature_count')==start_count
+          assert st.get('total_elements')==start_count
+          assert man.get('total_features')==start_count
+          assert task.get('owner') in (None,'')
+          assert (task.get('continuation_key') or '') == 'building-type-2-england-classification-v1-20260808'
+          remaining=TARGET_NEXT-start_batch
+
+          syml=selector_path.read_text(encoding='utf-8')
+          a=syml.index('          candidates=[') + len('          candidates=')
+          b=syml.index('\n          used_cities=', a)
+          candidates=ast.literal_eval(syml[a:b])
+
+          used_cities=set(str(x).strip().lower() for x in (cp.get('attempted_cities') or []) if x)
+          used_bboxes=set()
+          for obj in (cp,st):
+              for k in ('source_attempt_history','batch_attempt_history','zero_window_attempts'):
+                  for rec in obj.get(k) or []:
+                      if rec.get('city'): used_cities.add(str(rec['city']).strip().lower())
+                      bb=rec.get('bbox_wgs84')
+                      if isinstance(bb,list) and len(bb)==4: used_bboxes.add(tuple(float(x) for x in bb))
+              for k in ('last_bbox_wgs84','last_attempted_bbox_wgs84'):
+                  bb=obj.get(k)
+                  if isinstance(bb,list) and len(bb)==4: used_bboxes.add(tuple(float(x) for x in bb))
+              for k in ('last_city','last_attempted_city','last_batch_city'):
+                  if obj.get(k): used_cities.add(str(obj[k]).strip().lower())
+
+          selected=[]
+          for city,authority,bbox in candidates:
+              tb=tuple(float(x) for x in bbox)
+              if city.lower() in used_cities or tb in used_bboxes:
+                  continue
+              selected.append((city,authority,bbox))
+              used_cities.add(city.lower()); used_bboxes.add(tb)
+              if len(selected)==remaining: break
+          if len(selected)<remaining:
+              raise SystemExit(f'only {len(selected)} unused windows available for {remaining} remaining batches; refusing replay')
+          specs=[(start_batch+i,city,authority,bbox) for i,(city,authority,bbox) in enumerate(selected)]
+          print('RECOVERY_SELECTED_UNUSED_WINDOWS',json.dumps(specs,ensure_ascii=False),flush=True)
+
+          yml=driver_path.read_text(encoding='utf-8')
+          marker="          python - <<'PY'\n"
+          begin=yml.index(marker)+len(marker)
+          end=yml.rindex("\n          PY")
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in yml[begin:end].splitlines())+'\n'
+          code=code.replace('START_COUNT = 8800',f'START_COUNT = {start_count}',1)
+          code=code.replace('START_BATCH = 177',f'START_BATCH = {start_batch}',1)
+          x=code.index('SPECS = [')
+          y=code.index('ENDPOINTS = [',x)
+          code=code[:x]+'SPECS = '+repr(specs)+'\n'+code[y:]
+          code=code.replace('next=189',f'next={TARGET_NEXT}')
+          compile(code,'<building_type_2-v12-recovery>','exec')
+          exec(compile(code,'<building_type_2-v12-recovery>','exec'),{})
+          PY
