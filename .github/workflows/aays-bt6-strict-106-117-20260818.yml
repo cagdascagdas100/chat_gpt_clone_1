@@ -1,5 +1,5 @@
-# BT6 existing runner payload reused for continuation batches 142-153.
-# No replay of 130-141. Fresh report baseline is canonical count 22400.
+# BT6 continuation payload for strict bounded batches 154-165.
+# No replay of 130-153. Fresh attempt baseline is canonical count 22401.
 cat > /tmp/bt6_106_117.py <<'PY'
 import os,re,json,time,hashlib,subprocess,datetime
 from pathlib import Path
@@ -10,7 +10,7 @@ from shapely.ops import transform as shp_transform
 from pyproj import Transformer
 
 BR='codex/aays-single-runner-v5-20260706'; SLOT='building_type_6'; CONT='building-type-6-england-classification-v1-20260808'
-START=142; END=153; INITIAL=22400; OVERALL_BEFORE=22400
+START=154; END=165; INITIAL=22401; OVERALL_BEFORE=22401
 SHARD=Path('england_map_web/data/building_type/shards/building_type_6_latest.geojson')
 MAN=Path('england_map_web/data/building_type/shards/building_type_6_manifest_latest.json')
 REP=Path('docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json'); REPORT=REP
@@ -21,12 +21,12 @@ OWN=[SHARD,MAN,REP,ST,CP,TASK]
 ARCGIS='https://maps164.nottinghamcity.gov.uk/server/rest/services/Core_services/Housing_and_Property/MapServer/22/query'
 ARCGIS_LAYER='Nottingham City Council Land Registry INSPIRE Index Polygons'; AUTH='Nottingham City Council'
 OPS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']
-S=requests.Session(); S.headers.update({'User-Agent':'TerraYield-AAYS-building_type_6/20260818 evidence-collection'})
+S=requests.Session(); S.headers.update({'User-Agent':'TerraYield-AAYS-building_type_6/20260819 evidence-collection'})
 TOWGS=Transformer.from_crs(27700,4326,always_xy=True); TOBNG=Transformer.from_crs(4326,27700,always_xy=True)
 W=[]; n=START
-for y in (333000,334000,335000):
+for y in (336000,337000,338000):
     for x in (456000,457000,458000,459000):
-        W.append((n,f'BT6_NOTTM_ARCGIS_E{x//1000:03d}_N{y//1000:03d}_1K_20260818',[x,y,x+1000,y+1000])); n+=1
+        W.append((n,f'BT6_NOTTM_ARCGIS_E{x//1000:03d}_N{y//1000:03d}_1K_20260819',[x,y,x+1000,y+1000])); n+=1
 assert [a for a,_,_ in W]==list(range(START,END+1))
 
 def now(): return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
@@ -36,7 +36,7 @@ def save(p,o):
     with open(q,'w',encoding='utf-8',newline='\n') as f: json.dump(o,f,ensure_ascii=False,separators=(',',':')); f.write('\n')
     os.replace(q,p)
 def cmd(a,check=True): return subprocess.run(a,text=True,check=check,capture_output=True)
-def gj(p,ref=None): return json.loads(subprocess.check_output(['git','show',f'{ref or "origin/"+BR}:{p}']))
+def gj(p): return json.loads(subprocess.check_output(['git','show',f'origin/{BR}:{p}']))
 def dup(fs):
     d=0
     for ex in (lambda f:f.get('id'),lambda f:(f.get('properties') or {}).get('parcel_id')):
@@ -44,7 +44,7 @@ def dup(fs):
         for f in fs:
             v=ex(f)
             if v is None: continue
-            v=str(v); d += v in z; z.add(v)
+            v=str(v); d += int(v in z); z.add(v)
     return d
 def seen(fs):
     fi=set();pa=set();hi=set();oi=set()
@@ -63,23 +63,23 @@ def pre(cur,cnt):
     if got!=want: raise RuntimeError(f'REMOTE_BT6_MOVED got={got!r} want={want!r}')
 def push_owned(msg,cur,cnt,paths=None):
     pre(cur,cnt); ps=paths or OWN; cmd(['git','add','--']+[str(p) for p in ps])
-    if cmd(['git','diff','--cached','--quiet'],False).returncode==0: return False
+    if cmd(['git','diff','--cached','--quiet'],False).returncode==0:return False
     cmd(['git','commit','-m',msg])
     for _ in range(4):
         p=cmd(['git','push','origin',f'HEAD:{BR}'],False)
         if p.returncode==0:return True
         cmd(['git','fetch','origin',BR]); c=gj(CP); s=gj(ST)
-        if (c.get('next_batch_index'),c.get('feature_count_after'),c.get('owner'),s.get('owner'))!=(cur,cnt,None,None): raise RuntimeError('PUSH_RACE_BT6_CHANGED')
-        if cmd(['git','rebase',f'origin/{BR}'],False).returncode: raise RuntimeError('REBASE_FAILED')
+        if (c.get('next_batch_index'),c.get('feature_count_after'),c.get('owner'),s.get('owner'))!=(cur,cnt,None,None):raise RuntimeError('PUSH_RACE_BT6_CHANGED')
+        if cmd(['git','rebase',f'origin/{BR}'],False).returncode:raise RuntimeError('REBASE_FAILED')
     raise RuntimeError('PUSH_FAILED')
 def rb(cur,cnt):
     cmd(['git','fetch','origin',BR]); c=gj(CP);s=gj(ST);m=gj(MAN);r=gj(REP);g=json.loads(subprocess.check_output(['git','show',f'origin/{BR}:{SHARD}']));fs=g.get('features') or []
-    vals=[len(fs),c.get('feature_count_after'),s.get('feature_count_after'),m.get('total_features'),r.get('feature_count_after')]; d=dup(fs)
-    if len(set(vals))!=1 or vals[0]!=cnt or d or c.get('next_batch_index')!=cur or s.get('next_batch_index')!=cur or r.get('next_batch_index')!=cur: raise RuntimeError(f'READBACK_FAIL {vals!r} dup={d} cursor={cur}')
+    vals=[len(fs),c.get('feature_count_after'),s.get('feature_count_after'),m.get('total_features'),r.get('feature_count_after')];d=dup(fs)
+    if len(set(vals))!=1 or vals[0]!=cnt or d or c.get('next_batch_index')!=cur or s.get('next_batch_index')!=cur or r.get('next_batch_index')!=cur:raise RuntimeError(f'READBACK_FAIL vals={vals!r} dup={d} cursor={cur}')
     return {'shard':vals[0],'checkpoint':vals[1],'status':vals[2],'manifest':vals[3],'report':vals[4],'dup':d}
 
 def classify(t):
-    b=str(t.get('building') or '').lower(); M={'detached':('residential_detached','residential'),'semidetached_house':('residential_semidetached','residential'),'house':('residential_house','residential'),'terrace':('residential_terrace','residential'),'residential':('residential','residential'),'apartments':('residential_apartments','residential'),'industrial':('industrial','commercial'),'warehouse':('warehouse','commercial'),'commercial':('commercial','commercial'),'retail':('commercial_retail','commercial'),'office':('office','commercial'),'hotel':('hospitality','commercial'),'school':('education','institutional'),'college':('education','institutional'),'university':('education','institutional'),'hospital':('healthcare_care','institutional'),'church':('religious','institutional'),'chapel':('religious','institutional'),'mosque':('religious','institutional'),'temple':('religious','institutional'),'civic':('public_infrastructure','institutional'),'government':('public_infrastructure','institutional'),'public':('public_infrastructure','institutional'),'barn':('agricultural_outbuilding','agricultural'),'farm_auxiliary':('agricultural_outbuilding','agricultural'),'stable':('agricultural_outbuilding','agricultural')}
+    b=str(t.get('building') or '').lower();M={'detached':('residential_detached','residential'),'semidetached_house':('residential_semidetached','residential'),'house':('residential_house','residential'),'terrace':('residential_terrace','residential'),'residential':('residential','residential'),'apartments':('residential_apartments','residential'),'industrial':('industrial','commercial'),'warehouse':('warehouse','commercial'),'commercial':('commercial','commercial'),'retail':('commercial_retail','commercial'),'office':('office','commercial'),'hotel':('hospitality','commercial'),'school':('education','institutional'),'college':('education','institutional'),'university':('education','institutional'),'hospital':('healthcare_care','institutional'),'church':('religious','institutional'),'chapel':('religious','institutional'),'mosque':('religious','institutional'),'temple':('religious','institutional'),'civic':('public_infrastructure','institutional'),'government':('public_infrastructure','institutional'),'public':('public_infrastructure','institutional'),'barn':('agricultural_outbuilding','agricultural'),'farm_auxiliary':('agricultural_outbuilding','agricultural'),'stable':('agricultural_outbuilding','agricultural')}
     if b in M:return M[b],'building='+b
     if b not in ('yes','service',''):return None
     a=str(t.get('amenity') or '').lower();q=str(t.get('tourism') or '').lower()
@@ -93,7 +93,7 @@ def classify(t):
     return None
 
 def arcgis(tile):
-    x0,y0,x1,y1=tile; params={'f':'geojson','where':'1=1','outFields':'OBJECTID,INSPIRE_ID,WEBSITE','returnGeometry':'true','geometry':f'{x0},{y0},{x1},{y1}','geometryType':'esriGeometryEnvelope','inSR':'27700','outSR':'27700','spatialRel':'esriSpatialRelIntersects','resultRecordCount':'2000'}
+    x0,y0,x1,y1=tile;params={'f':'geojson','where':'1=1','outFields':'OBJECTID,INSPIRE_ID,WEBSITE','returnGeometry':'true','geometry':f'{x0},{y0},{x1},{y1}','geometryType':'esriGeometryEnvelope','inSR':'27700','outSR':'27700','spatialRel':'esriSpatialRelIntersects','resultRecordCount':'2000'}
     r=S.get(ARCGIS,params=params,timeout=120);r.raise_for_status();raw=r.content;j=r.json();feats=j.get('features') or [];out=[]
     for f in feats:
         p=f.get('properties') or {};iid=str(p.get('INSPIRE_ID') or '').strip()
@@ -128,46 +128,50 @@ def distributions(fs):
 def updman(m,fs,src=None):
     ty,ev,cf,u=distributions(fs);m.update({'generated_at':now(),'total_features':len(fs),'classified':len(fs)-u,'unknown':u,'type_distribution':dict(ty),'evidence_distribution':dict(ev),'confidence_level_distribution':dict(cf)})
     if src and not any((x.get('name') or '')==ARCGIS_LAYER+' + OpenStreetMap Overpass API' for x in m.setdefault('sources',[]) if isinstance(x,dict)):
-        m['sources'].append({'name':ARCGIS_LAYER+' + OpenStreetMap Overpass API','url':ARCGIS,'license':'HMLR OGL / OSM ODbL 1.0','accessed_at':src['accessed_at'],'source_sha256':src['source_sha256'],'note':'Nottingham City Council ArcGIS HMLR INSPIRE polygons; strict centroid or >=85% building intersection only.'})
+        m['sources'].append({'name':ARCGIS_LAYER+' + OpenStreetMap Overpass API','url':ARCGIS,'license':'HMLR OGL / OSM ODbL 1.0','accessed_at':src['accessed_at'],'source_sha256':src['source_sha256'],'note':'Nottingham City Council ArcGIS HMLR INSPIRE polygons; strict centroid-within or full building-within parcel only.'})
     return m
-def state(st,cp,task,fs,nxt,res,new_added,srcname=None):
+def state(st,cp,task,fs,nxt,res,new_added):
     t=now();after=len(fs);sha=hashlib.sha256(SHARD.read_bytes()).hexdigest();ty,ev,cf,u=distributions(fs)
     for o in (st,cp):
         o.update({'slot_id':SLOT,'continuation_key':CONT,'owner':None,'state':'CONTINUE','updated_at':t,'final_ready':False,'fake_data':False,'production_merge':False,'feature_count_before':OVERALL_BEFORE,'feature_count_after':after,'current_feature_count':after,'new_features_added_this_attempt':after-OVERALL_BEFORE,'progress_counted':after>OVERALL_BEFORE,'next_batch_index':nxt,'canonical_manifest_feature_count':after,'canonical_geojson_sha256':sha,'output_sha256':sha,'last_attempt_result':res,'total_elements':after,'classified_count':after-u,'unknown_count':u,'evidence_distribution':dict(ev),'confidence_distribution':dict(cf)})
-        if new_added:o['last_successful_batch_index']=nxt-1;o['last_successful_source']=srcname or (ARCGIS_LAYER+' + OpenStreetMap Overpass API')
+        if new_added:o['last_successful_batch_index']=nxt-1;o['last_successful_source']=ARCGIS_LAYER+' + OpenStreetMap Overpass API'
     if isinstance(cp.get('sequence'),int):cp['sequence']+=1
     task.update({'updated_at':t,'owner':None,'final_ready':False,'fake_data':False,'production_merge':False,'first_unverified_step':f'BATCH_{nxt}_STRICT_PARCEL_GEOMETRY_BINDING'});task.setdefault('progress',{})['completed_count']=after;task.setdefault('resume_context',{}).update({'canonical_feature_count':after,'classified_count':after-u,'unknown_count':u,'next_batch_index':nxt,'new_features_added_this_attempt':after-OVERALL_BEFORE})
-    if new_added:task['resume_context']['last_successful_batch_index']=nxt-1;task['resume_context']['last_successful_source']=srcname or (ARCGIS_LAYER+' + OpenStreetMap Overpass API')
+    if new_added:task['resume_context']['last_successful_batch_index']=nxt-1;task['resume_context']['last_successful_source']=ARCGIS_LAYER+' + OpenStreetMap Overpass API'
     return st,cp,task
 
 cmd(['git','config','user.name','TerraYield AAYS Bot']);cmd(['git','config','user.email','aays-bot@users.noreply.github.com']);pre(START,INITIAL);cmd(['git','reset','--hard',f'origin/{BR}'])
 g=load(SHARD);m=load(MAN);st=load(ST);cp=load(CP);task=load(TASK);fs=g.get('features') or []
 if len(fs)!=INITIAL or dup(fs):raise RuntimeError('BASELINE_COUNT_OR_DUP_FAILED')
 R={'schema_version':3,'slot_id':SLOT,'continuation_key':CONT,'generated_at':now(),'run_mode':'STRICT_12_BOUNDED_BATCH_CONTINUATION','source_contract':'AAYS_CHATGPT_PLAN_00_23_SLOT_COMMON_CONTINUATION_20260818 + NOTTINGHAM_CITY_ARCGIS_HMLR_INSPIRE_OSM_STRICT_V1','source_family':'NOTTINGHAM_CITY_COUNCIL_ARCGIS_HMLR_INSPIRE + OSM_OVERPASS_API','start_batch_index':START,'completed_bounded_batches':0,'next_batch_index':START,'feature_count_before':OVERALL_BEFORE,'feature_count_after':INITIAL,'new_added':0,'progress':False,'duplicate_count':0,'nearest_matching_used':False,'fake_data':False,'final_ready':False,'production_merge':False,'remote_readback_verified':False,'report_path':str(REP),'batches':[]}
-save(REP,R);push_owned('aays: building_type_6 initialize strict report 142-153',START,INITIAL,[REP]);fi,pa,hi,oi=seen(fs);cnt=INITIAL
+save(REP,R);push_owned('aays: building_type_6 initialize strict report 154-165',START,INITIAL,[REP]);fi,pa,hi,oi=seen(fs);cnt=INITIAL
 for bi,key,tile in W:
-    pre(bi,cnt);b={'batch_index':bi,'window_key':key,'bbox_osgb27700':tile,'feature_count_before':cnt,'started_at':now(),'source_family':'NOTTINGHAM_CITY_COUNCIL_ARCGIS_HMLR_INSPIRE + OSM_OVERPASS_API','binding_method_used':'strict_centroid_within_polygon_or_exact_intersection_ge_85pct','nearest_matching_used':False,'fake_data':False,'added_feature_count':0,'strict_matches':0,'zero_result_window':False};new=[];res='ZERO_RESULT_CHECKPOINTED';src=None
+    pre(bi,cnt);b={'batch_index':bi,'window_key':key,'bbox_osgb27700':tile,'feature_count_before':cnt,'started_at':now(),'source_family':'NOTTINGHAM_CITY_COUNCIL_ARCGIS_HMLR_INSPIRE + OSM_OVERPASS_API','binding_method_used':'strict_centroid_within_polygon_or_full_building_within_polygon','nearest_matching_used':False,'fake_data':False,'added_feature_count':0,'strict_matches':0,'zero_result_window':False};new=[];res='ZERO_RESULT_CHECKPOINTED';src=None
     try:
-        pars,src=arcgis(tile);obs,om=osm(tile);b['arcgis_source']=src;b['osm_source']=om;b['parcel_polygon_count']=len(pars);prov=[]
-        for iid,pg,pp in pars:
-            pid='parcel_nottm_inspire_'+re.sub(r'[^A-Za-z0-9_.-]+','_',iid)
-            if iid in hi or pid in fi or pid in pa:continue
-            mm=[]
-            for oid,bg,tags,cl in obs:
-                if oid in oi:continue
-                method='centroid_within_hmlr_inspire_polygon' if pg.covers(bg.centroid) else ('exact_intersection_ge_85pct_building_area' if pg.intersects(bg) and bg.area>0 and pg.intersection(bg).area/bg.area>=.85 else None)
-                if method:mm.append((oid,bg,tags,cl,method))
-            if len(mm)==1:prov.append((iid,pid,pg,mm[0]))
-        oc=Counter(x[3][0] for x in prov);cand=[x for x in prov if oc[x[3][0]]==1];b['candidate_unique_bindings_before_cap']=len(cand);b['rejected_shared_osm_way_candidates']=len(prov)-len(cand)
-        for iid,pid,pg,(oid,bg,tags,cl,method) in cand[:50]:
-            (pt,cat),evid=cl;props={'slot_id':SLOT,'region':'East Midlands','local_authority':AUTH,'parcel_id':pid,'osm_id':'way/'+oid,'source_ref':'nottm_hmlr_inspire:'+iid,'building_type_primary':pt,'building_category':cat,'confidence_level_1_to_4':3,'confidence_score':.95,'evidence_level':'B','source_url':ARCGIS,'source_path':ARCGIS,'fields_used':'INSPIRE_ID;ArcGIS HMLR geometry;OSM '+evid,'match_method':method,'limitations':'HMLR INSPIRE polygon is indicative extent; explicit OSM building/use evidence only; no nearest match','needs_manual_review':False,'source_count':2,'source_name':ARCGIS_LAYER+' + OpenStreetMap Overpass API','licence':'HM Land Registry OGL; OpenStreetMap ODbL 1.0','accessed_at':now(),'fake_data':False,'updated_at':now()};new.append({'type':'Feature','id':pid,'properties':props,'geometry':mapping(shp_transform(TOWGS.transform,pg))});hi.add(iid);fi.add(pid);pa.add(pid);oi.add(oid)
-        if new:res='STRICT_MATCHES_APPENDED'
-        else:b['zero_result_window']=True
+        pars,src=arcgis(tile);b['arcgis_source']=src;b['parcel_polygon_count']=len(pars)
+        if not pars:
+            b['zero_result_window']=True;b['osm_skipped_reason']='NO_PARCEL_POLYGONS'
+        else:
+            obs,om=osm(tile);b['osm_source']=om;prov=[]
+            for iid,pg,pp in pars:
+                pid='parcel_nottm_inspire_'+re.sub(r'[^A-Za-z0-9_.-]+','_',iid)
+                if iid in hi or pid in fi or pid in pa:continue
+                mm=[]
+                for oid,bg,tags,cl in obs:
+                    if oid in oi:continue
+                    method='centroid_within_hmlr_inspire_polygon' if pg.covers(bg.centroid) else ('building_fully_within_hmlr_inspire_polygon' if pg.covers(bg) else None)
+                    if method:mm.append((oid,bg,tags,cl,method))
+                if len(mm)==1:prov.append((iid,pid,pg,mm[0]))
+            oc=Counter(x[3][0] for x in prov);cand=[x for x in prov if oc[x[3][0]]==1];b['candidate_unique_bindings_before_cap']=len(cand);b['rejected_shared_osm_way_candidates']=len(prov)-len(cand)
+            for iid,pid,pg,(oid,bg,tags,cl,method) in cand[:50]:
+                (pt,cat),evid=cl;props={'slot_id':SLOT,'region':'East Midlands','local_authority':AUTH,'parcel_id':pid,'osm_id':'way/'+oid,'source_ref':'nottm_hmlr_inspire:'+iid,'building_type_primary':pt,'building_category':cat,'confidence_level_1_to_4':3,'confidence_score':0.95,'evidence_level':'B','source_url':ARCGIS,'source_path':ARCGIS,'fields_used':'INSPIRE_ID;ArcGIS HMLR geometry;OSM '+evid,'match_method':method,'limitations':'HMLR INSPIRE polygon is indicative extent; explicit OSM building/use evidence only; no nearest match','needs_manual_review':False,'source_count':2,'source_name':ARCGIS_LAYER+' + OpenStreetMap Overpass API','licence':'HM Land Registry OGL; OpenStreetMap ODbL 1.0','accessed_at':now(),'fake_data':False,'updated_at':now()};new.append({'type':'Feature','id':pid,'properties':props,'geometry':mapping(shp_transform(TOWGS.transform,pg))});hi.add(iid);fi.add(pid);pa.add(pid);oi.add(oid)
+            if new:res='STRICT_MATCHES_APPENDED'
+            else:b['zero_result_window']=True
     except Exception as e:b['zero_result_window']=True;res='SOURCE_READ_FAILED_CHECKPOINTED';b['source_error']=f'{type(e).__name__}:{e}'
-    if new:g['features']=fs+new;save(SHARD,g);fs=g['features'];m=updman(m,fs,src);m['output_sha256']=hashlib.sha256(SHARD.read_bytes()).hexdigest();save(MAN,m)
-    else:m['generated_at']=now();m['total_features']=len(fs);save(MAN,m)
-    after=len(fs);b.update({'result':res,'added_feature_count':len(new),'strict_matches':len(new),'feature_count_after':after,'finished_at':now()});st,cp,task=state(st,cp,task,fs,bi+1,res,len(new),ARCGIS_LAYER+' + OpenStreetMap Overpass API');R['batches'].append(b);R.update({'completed_bounded_batches':len(R['batches']),'next_batch_index':bi+1,'feature_count_after':after,'new_added':after-OVERALL_BEFORE,'progress':after>OVERALL_BEFORE,'duplicate_count':0,'nearest_matching_used':False,'fake_data':False,'generated_at':now()});save(ST,st);save(CP,cp);save(TASK,task);save(REP,R);push_owned(f'aays: building_type_6 Nottingham ArcGIS strict batch {bi}',bi,cnt)
+    if new:
+        g['features']=fs+new;save(SHARD,g);fs=g['features'];m=updman(m,fs,src);m['output_sha256']=hashlib.sha256(SHARD.read_bytes()).hexdigest();save(MAN,m)
+    after=len(fs);b.update({'result':res,'added_feature_count':len(new),'strict_matches':len(new),'feature_count_after':after,'finished_at':now()});st,cp,task=state(st,cp,task,fs,bi+1,res,len(new));R['batches'].append(b);R.update({'completed_bounded_batches':len(R['batches']),'next_batch_index':bi+1,'feature_count_after':after,'new_added':after-OVERALL_BEFORE,'progress':after>OVERALL_BEFORE,'duplicate_count':0,'nearest_matching_used':False,'fake_data':False,'generated_at':now()});save(ST,st);save(CP,cp);save(TASK,task);save(REP,R);push_owned(f'aays: building_type_6 Nottingham north strict batch {bi}',bi,cnt)
     b['readback']=rb(bi+1,after);b['readback_verified']=True;b['shard_equals_checkpoint_equals_status_equals_manifest']=True;save(REP,R);push_owned(f'aays: building_type_6 readback batch {bi}',bi+1,after,[REP]);cnt=after;time.sleep(1)
-fr=rb(END+1,cnt);R['remote_readback_verified']=True;R['completed_bounded_batches']=12;R['next_batch_index']=END+1;R['feature_count_after']=cnt;R['new_added']=cnt-OVERALL_BEFORE;R['duplicate_count']=0;R['generated_at']=now();save(REP,R);push_owned('aays: building_type_6 final remote readback 142-153',END+1,cnt,[REP]);print(json.dumps({'report':str(REP),'before':OVERALL_BEFORE,'added':cnt-OVERALL_BEFORE,'after':cnt,'next_batch':END+1,'dup':fr['dup'],'remote_readback_verified':True},ensure_ascii=False))
+fr=rb(END+1,cnt);R['remote_readback_verified']=True;R['completed_bounded_batches']=12;R['next_batch_index']=END+1;R['feature_count_after']=cnt;R['new_added']=cnt-OVERALL_BEFORE;R['duplicate_count']=0;R['generated_at']=now();save(REP,R);push_owned('aays: building_type_6 final remote readback 154-165',END+1,cnt,[REP]);print(json.dumps({'report':str(REP),'before':OVERALL_BEFORE,'added':cnt-OVERALL_BEFORE,'after':cnt,'next_batch':END+1,'dup':fr['dup'],'remote_readback_verified':True},ensure_ascii=False))
 PY
 python /tmp/bt6_106_117.py
