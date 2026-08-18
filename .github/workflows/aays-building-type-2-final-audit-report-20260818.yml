@@ -1,0 +1,131 @@
+name: AAYS building_type_2 final audit report 20260818
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-final-audit-report-20260818.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-2-final-audit-report-20260818
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 180
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json
+      - name: Audit exact state and write report into slot-owned runner output
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import datetime as dt
+          import hashlib
+          import json
+          from pathlib import Path
+
+          G=Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          M=Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          C=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          S=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          R=Path('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          def load(p): return json.loads(p.read_text(encoding='utf-8'))
+          g,m,c,s,r=map(load,(G,M,C,S,R))
+          assert len(g.get('features') or [])==9900
+          assert m.get('total_features')==9900
+          assert c.get('current_feature_count')==9900 and c.get('next_batch_index')==201
+          assert s.get('total_elements')==9900 and s.get('next_batch_index')==201
+          assert r.get('batch_index')==200 and r.get('feature_count_after')==9900
+          assert r.get('fake_data') is False and r.get('final_ready') is False
+
+          seen=set(); dup=[]
+          for f in g.get('features') or []:
+              p=f.get('properties') or {}
+              vals={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')) if v not in (None,'')}
+              hit=seen & vals
+              if hit: dup.extend(sorted(hit))
+              seen.update(vals)
+          assert not dup
+
+          latest={}
+          for x in s.get('batch_attempt_history') or []:
+              try: bi=int(x.get('batch_index'))
+              except Exception: continue
+              if 189 <= bi <= 200:
+                  latest[bi]=x
+          assert sorted(latest)==list(range(189,201)), sorted(latest)
+          rows=[latest[i] for i in range(189,201)]
+          assert all(x.get('result')=='PROGRESS' and x.get('added_feature_count')==50 for x in rows)
+          assert all(x.get('fake_data_generated') is False and x.get('duplicate_features_generated') is False and x.get('nearest_match_used') is False for x in rows)
+          cities=[x.get('city') for x in rows]
+          bboxes=[tuple(float(z) for z in x.get('bbox_wgs84')) for x in rows]
+          assert len(set(cities))==12 and len(set(bboxes))==12
+          assert sum(int(x.get('added_feature_count') or 0) for x in rows)==600
+
+          stamp=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          r['continuation_report_20260818']={
+              'slot_id':'building_type_2',
+              'batch_range':[189,200],
+              'batches_processed':12,
+              'feature_count_before':9300,
+              'added_feature_count':600,
+              'feature_count_after':9900,
+              'next_batch_index':201,
+              'shard_feature_count':9900,
+              'checkpoint_feature_count':9900,
+              'status_feature_count':9900,
+              'manifest_feature_count':9900,
+              'unique_key_count':len(seen),
+              'duplicate_key_count':0,
+              'fake_data_generated':False,
+              'nearest_match_used':False,
+              'all_batches_result':'PROGRESS',
+              'cities':cities,
+              'bboxes_wgs84':[list(x) for x in bboxes],
+              'source_family':'OpenStreetMap Overpass API',
+              'parcel_id_semantics':'stable OSM element-derived slot identifier; not a cadastral parcel ID',
+              'geojson_sha256':hashlib.sha256(G.read_bytes()).hexdigest(),
+              'audited_at':stamp,
+              'final_ready':False,
+              'production_merge':False
+          }
+          R.write_text(json.dumps(r,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print('FINAL_AUDIT_OK before=9300 added=600 after=9900 next=201 dup=0 cities=12 bboxes=12')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json
+          git commit -m 'report(building_type_2): audit batches 189-200 9300->9900'
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
+      - name: Remote report readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=180
+          python - <<'PY'
+          import json,subprocess
+          p='docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json'
+          r=json.loads(subprocess.check_output(['git','show','origin/codex/aays-single-runner-v5-20260706:'+p]))
+          q=r['continuation_report_20260818']
+          assert q['feature_count_before']==9300 and q['added_feature_count']==600 and q['feature_count_after']==9900
+          assert q['next_batch_index']==201 and q['duplicate_key_count']==0
+          assert q['shard_feature_count']==q['checkpoint_feature_count']==q['status_feature_count']==q['manifest_feature_count']==9900
+          assert q['fake_data_generated'] is False and q['nearest_match_used'] is False
+          assert len(q['cities'])==12 and len(q['bboxes_wgs84'])==12
+          print('REMOTE_REPORT_READBACK_OK before=9300 added=600 after=9900 next=201 dup=0')
+          PY
