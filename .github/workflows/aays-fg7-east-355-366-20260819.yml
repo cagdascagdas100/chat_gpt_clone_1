@@ -1,0 +1,24 @@
+name: AAYS FG7 East 355-366 strict continuation
+on:
+  pull_request:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - 'ai-task-scripts/aays_fg7_east_355_366_20260819.py'
+      - '.github/workflows/aays-fg7-east-355-366-20260819.yml'
+permissions:
+  contents: write
+jobs:
+  run-fg7-east:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout orchestration branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aays-fg7-east-355-366-20260819-0111
+          fetch-depth: 1
+          persist-credentials: true
+      - name: Execute strict FG7 East batches 355-366
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: python ai-task-scripts/aays_fg7_east_355_366_20260819.py
