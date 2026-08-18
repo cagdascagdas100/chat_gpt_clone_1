@@ -1,0 +1,97 @@
+name: AAYS building_type_2 v15 recovery2 finish through 332
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-common-v15r2-finish-to-332-20260819.yml]
+
+permissions:
+  actions: write
+  contents: write
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Cancel stale predecessor runs by trigger SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for sha in c2b90369c1af3f5bf0ce45bac3b70959a7c3a33a f44a0505e76cbe627d2356b1516839ed1b688764; do
+            ids=$(gh api --paginate "repos/$REPO/actions/runs?head_sha=$sha&per_page=100" --jq '.workflow_runs[] | select(.status=="in_progress" or .status=="queued" or .status=="waiting") | .id')
+            for id in $ids; do
+              echo "CANCEL_PREDECESSOR sha=$sha run=$id"
+              gh api --method POST "repos/$REPO/actions/runs/$id/cancel" >/dev/null || true
+              for i in $(seq 1 30); do
+                s=$(gh api "repos/$REPO/actions/runs/$id" --jq '.status' 2>/dev/null || echo completed)
+                test "$s" = completed && break
+                sleep 4
+              done
+              s=$(gh api "repos/$REPO/actions/runs/$id" --jq '.status' 2>/dev/null || echo completed)
+              test "$s" = completed
+            done
+          done
+
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 500
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-2-common-v2-b177-188-20260818.yml
+            .github/workflows/aays-building-type-2-common-v14-next12-20260819.yml
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
+
+      - name: Finish exactly remaining batches through 332
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          cp_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          st_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          task_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          geo_path=Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          man_path=Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          cp=json.loads(cp_path.read_text(encoding='utf-8'))
+          st=json.loads(st_path.read_text(encoding='utf-8'))
+          task=json.loads(task_path.read_text(encoding='utf-8'))
+          geo=json.loads(geo_path.read_text(encoding='utf-8'))
+          man=json.loads(man_path.read_text(encoding='utf-8'))
+          start_batch=int(cp['next_batch_index'])
+          start_count=len(geo.get('features') or [])
+          assert 330 <= start_batch <= 333, (start_batch, 'unexpected recovery cursor')
+          assert cp.get('current_feature_count')==start_count
+          assert st.get('total_elements')==start_count
+          assert man.get('total_features')==start_count
+          assert task.get('owner') in (None,'')
+          assert (task.get('continuation_key') or '')=='building-type-2-england-classification-v1-20260808'
+          if start_batch >= 333:
+              print('RECOVERY_NOT_NEEDED already complete',start_batch,start_count,flush=True)
+              raise SystemExit(0)
+
+          src=Path('.github/workflows/aays-building-type-2-common-v14-next12-20260819.yml').read_text(encoding='utf-8')
+          marker="          python - <<'PY'\n"
+          begin=src.index(marker)+len(marker)
+          end=src.rindex("\n          PY")
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in src[begin:end].splitlines())+'\n'
+          code=code.replace("assert start_batch >= 309, (start_batch, 'refusing stale/replayed cursor')","assert start_batch >= 330, (start_batch, 'refusing stale/replayed cursor')",1)
+          code=code.replace("selected=[]\nfor city,authority,bbox in candidates:","needed=333-start_batch\nselected=[]\nfor city,authority,bbox in candidates:",1)
+          code=code.replace("if len(selected)==12: break","if len(selected)==needed: break",1)
+          code=code.replace("if len(selected)<12:","if len(selected)<needed:",1)
+          code=code.replace("raise SystemExit(f'only {len(selected)} unused windows available; refusing replay')","raise SystemExit(f'only {len(selected)} unused windows available for needed={needed}; refusing replay')",1)
+          code=code.replace("code=code.replace('next=189',f'next={start_batch+12}')","code=code.replace('next=189',f'next={start_batch+len(specs)}')",1)
+          code=code.replace('<building_type_2-next12-v14>','<building_type_2-v15r2-finish>')
+          compile(code,'<building_type_2-v15r2-wrapper>','exec')
+          exec(compile(code,'<building_type_2-v15r2-wrapper>','exec'),{})
+          PY
