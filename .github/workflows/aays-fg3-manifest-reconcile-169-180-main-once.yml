@@ -1,0 +1,175 @@
+name: AAYS FG3 reconcile 169-180 manifest/readback one-shot
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/aays-fg3-manifest-reconcile-169-180-main-once.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-future-growth-3-manifest-reconcile-169-180
+  cancel-in-progress: false
+jobs:
+  reconcile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Mark reconcile started
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const path='docs/chatgpt_status/_shared/slots_21/future_growth_3/actions_manifest_reconcile_169_180_status.json';
+            let sha; try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
+            const body={slot_id:'future_growth_3',state:'RUNNING',run_id:String(context.runId),started_at:new Date().toISOString(),canonical_branch:'codex/aays-single-runner-v5-20260706'};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark FG3 manifest reconcile started',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Reconcile manifest from canonical checkpoint and report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          python - <<'PY'
+          import json, pathlib
+          root=pathlib.Path('.')
+          P={
+            'shard':root/'AAYS/england_map_web/data/future_growth/shards/future_growth_3_latest.geojson',
+            'checkpoint':root/'state/slots/future_growth_3/checkpoint_latest.json',
+            'status':root/'state/slots/future_growth_3/status_latest.json',
+            'manifest':root/'state/slots/future_growth_3/evidence_manifest_latest.json',
+            'report':root/'state/slots/future_growth_3/report_latest.json',
+          }
+          d={k:json.loads(p.read_text()) for k,p in P.items()}
+          cp,st,mf,rp,sh=d['checkpoint'],d['status'],d['manifest'],d['report'],d['shard']
+          meta=sh.get('metadata',{})
+          assert cp['slot_id']==st['slot_id']==rp['slot_id']==meta['slot_id']=='future_growth_3'
+          assert cp['request_batch_start']==st['request_batch_start']==169
+          assert cp['request_batch_end']==st['request_batch_end']==180
+          assert cp['completed_new_bounded_batches_this_request']==st['completed_new_bounded_batches_this_request']==rp['completed_new_bounded_batches']==12
+          assert cp['next_batch_index']==180 and st['bounded_batches_completed_this_continuation']==180 and meta['bounded_batches_completed']==180
+          assert len(sh.get('features',[]))==0 and cp['feature_count_after']==st['feature_count_after']==meta['feature_count_after']==0
+          assert cp['duplicate_count']==st['duplicate_count']==meta['duplicate_count']==rp['counts']['duplicate_count']==0
+          assert cp['nearest_match_used'] is False and st['nearest_match_used'] is False and meta['nearest_match_used'] is False and rp['quality_gates']['nearest_match_used'] is False
+          assert cp['fake_data'] is False and st['fake_data'] is False and meta['fake_data'] is False and rp['quality_gates']['fake_data'] is False
+          windows=rp['source_windows']
+          assert len(windows)==12
+          assert [w['batch_index'] for w in windows]==list(range(169,181))
+          ids=[w['window_id'] for w in windows]
+          assert len(ids)==len(set(ids))==12
+          assert all(w['dup']==0 and w['feature_count_before']==w['feature_count_after']==0 and w['new_records']==0 for w in windows)
+          assert all(i in cp['processed_window_ids'] for i in ids)
+          assert len(cp['processed_window_ids'])==180 and len(set(cp['processed_window_ids']))==180
+          old_sources=mf.get('sources',[])
+          seen={x.get('window_id') for x in old_sources if isinstance(x,dict)}
+          for w in windows:
+            if w['window_id'] not in seen:
+              old_sources.append({
+                'batch':w['batch_index'],'window_id':w['window_id'],'source_family':w['source_family'],
+                'publisher':w['publisher'],'url':w['source_url'],'source_entity':w['source_entity'],
+                'source_reference':w['source_reference'],'source_sha256':w['source_sha256'],
+                'source_bytes':w['source_bytes'],'result':w['result'],'new_records':0,'dup':0,
+              })
+          mf.update({
+            'schema_version':4,'slot_id':'future_growth_3','continuation_key':cp['continuation_key'],
+            'updated_at':cp['updated_at'],'bounded_batches_completed':180,'processed_window_count':180,
+            'request_batch_start':169,'request_batch_end':180,'completed_new_bounded_batches_this_request':12,
+            'accepted_new_canonical_parcels':0,'rejected_or_blocked_candidates':180,
+            'fake_data':False,'nearest_match_used':False,'final_ready':False,'production_merge':False,'demo_only':True,
+            'duplicate_count':0,'feature_count_before':0,'new_features_added':0,'feature_count_after':0,
+            'processed_window_ids':cp['processed_window_ids'],'sources':old_sources,'request_source_windows':windows,
+            'per_batch_readback':[{
+              'batch_index':w['batch_index'],'window_id':w['window_id'],'shard_count':0,'checkpoint_count':0,
+              'status_count':0,'manifest_count':0,'dup':0,'nearest_match_used':False,'fake_data':False,
+              'result':w['result'],'reconciled_from_canonical_batch_record':True
+            } for w in windows],
+            'source_contract':cp['source_contract'],
+            'remote_readback_verified':False,
+            'reconciliation_note':'The prior run committed shard/checkpoint/status/report for batches 169-180 but left the remote manifest at the previous 157-168 snapshot. This deterministic reconciliation preserves historical manifest content, appends the 12 canonical batch records from report_latest, and restores the 4-artifact count/dup invariant without creating or changing parcel evidence.'
+          })
+          rp.setdefault('quality_gates',{})['manifest_reconciled_after_post_step_failure']=True
+          rp['quality_gates']['shard_checkpoint_status_manifest_count_invariant_equal_each_batch']=True
+          rp['quality_gates']['remote_readback_verified']=False
+          rp['manifest_reconciliation']={'required':True,'reason':'remote manifest remained on 157-168 after first job post-step failure','target_batch_range':'169-180','data_counts_changed':False,'parcel_records_added_by_reconciliation':0}
+          P['manifest'].write_text(json.dumps(mf,ensure_ascii=False,indent=2)+'\n')
+          P['report'].write_text(json.dumps(rp,ensure_ascii=False,indent=2)+'\n')
+          # local readback after write
+          mf2=json.loads(P['manifest'].read_text()); rp2=json.loads(P['report'].read_text())
+          assert mf2['bounded_batches_completed']==180 and mf2['completed_new_bounded_batches_this_request']==12
+          assert mf2['feature_count_after']==0 and mf2['duplicate_count']==0 and len(mf2['per_batch_readback'])==12
+          assert rp2['counts']['before_unique_evidenced_parcels']==rp2['counts']['added_unique_evidenced_parcels']==rp2['counts']['after_unique_evidenced_parcels']==0
+          PY
+          git add state/slots/future_growth_3/evidence_manifest_latest.json state/slots/future_growth_3/report_latest.json
+          test -n "$(git diff --cached --name-only)"
+          test "$(git diff --cached --name-only | grep -vc '^state/slots/future_growth_3/' || true)" = 0
+          git commit -m 'future_growth_3: reconcile manifest for strict batches 169-180'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git merge-base --is-ancestor origin/codex/aays-single-runner-v5-20260706 HEAD; then git rebase origin/codex/aays-single-runner-v5-20260706; fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then break; fi
+            test "$attempt" != 5
+            sleep $((attempt*3))
+          done
+      - name: Remote readback, mark report and manifest verified, then final readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git reset --hard origin/codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json, pathlib
+          base=pathlib.Path('state/slots/future_growth_3')
+          sh=json.loads(pathlib.Path('AAYS/england_map_web/data/future_growth/shards/future_growth_3_latest.geojson').read_text())
+          cp=json.loads((base/'checkpoint_latest.json').read_text())
+          st=json.loads((base/'status_latest.json').read_text())
+          mf=json.loads((base/'evidence_manifest_latest.json').read_text())
+          rp=json.loads((base/'report_latest.json').read_text())
+          vals=[sh['metadata']['feature_count_after'],cp['feature_count_after'],st['feature_count_after'],mf['feature_count_after']]
+          assert vals==[0,0,0,0]
+          assert sh['metadata']['bounded_batches_completed']==cp['next_batch_index']==st['bounded_batches_completed_this_continuation']==mf['bounded_batches_completed']==180
+          assert cp['completed_new_bounded_batches_this_request']==st['completed_new_bounded_batches_this_request']==mf['completed_new_bounded_batches_this_request']==rp['completed_new_bounded_batches']==12
+          assert sh['metadata']['duplicate_count']==cp['duplicate_count']==st['duplicate_count']==mf['duplicate_count']==rp['counts']['duplicate_count']==0
+          assert len(mf['per_batch_readback'])==12 and all(x['dup']==0 for x in mf['per_batch_readback'])
+          mf['remote_readback_verified']=True
+          mf['remote_readback_summary']={'shard':0,'checkpoint':0,'status':0,'manifest':0,'bounded_batches_total':180,'new_batches':12,'dup':0}
+          rp['quality_gates']['remote_readback_verified']=True
+          rp['remote_readback_summary']={'shard':0,'checkpoint':0,'status':0,'manifest':0,'bounded_batches_total':180,'new_batches':12,'dup':0}
+          (base/'evidence_manifest_latest.json').write_text(json.dumps(mf,ensure_ascii=False,indent=2)+'\n')
+          (base/'report_latest.json').write_text(json.dumps(rp,ensure_ascii=False,indent=2)+'\n')
+          PY
+          git add state/slots/future_growth_3/evidence_manifest_latest.json state/slots/future_growth_3/report_latest.json
+          git commit -m 'future_growth_3: record remote readback for batches 169-180'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git merge-base --is-ancestor origin/codex/aays-single-runner-v5-20260706 HEAD; then git rebase origin/codex/aays-single-runner-v5-20260706; fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then break; fi
+            test "$attempt" != 5
+            sleep $((attempt*3))
+          done
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git reset --hard origin/codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json,pathlib
+          base=pathlib.Path('state/slots/future_growth_3')
+          sh=json.loads(pathlib.Path('AAYS/england_map_web/data/future_growth/shards/future_growth_3_latest.geojson').read_text())
+          cp=json.loads((base/'checkpoint_latest.json').read_text()); st=json.loads((base/'status_latest.json').read_text()); mf=json.loads((base/'evidence_manifest_latest.json').read_text()); rp=json.loads((base/'report_latest.json').read_text())
+          assert [sh['metadata']['feature_count_after'],cp['feature_count_after'],st['feature_count_after'],mf['feature_count_after']]==[0,0,0,0]
+          assert [sh['metadata']['duplicate_count'],cp['duplicate_count'],st['duplicate_count'],mf['duplicate_count'],rp['counts']['duplicate_count']]==[0,0,0,0,0]
+          assert mf['remote_readback_verified'] is True and rp['quality_gates']['remote_readback_verified'] is True
+          assert mf['bounded_batches_completed']==180 and len(mf['per_batch_readback'])==12
+          print('FINAL_REMOTE_READBACK_OK batches=169-180 total=180 counts=0/0/0/0 dup=0')
+          PY
+      - name: Mark reconcile finished
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const path='docs/chatgpt_status/_shared/slots_21/future_growth_3/actions_manifest_reconcile_169_180_status.json';
+            let sha; try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
+            const body={slot_id:'future_growth_3',state:'${{ job.status }}'.toUpperCase(),run_id:String(context.runId),finished_at:new Date().toISOString(),canonical_branch:'codex/aays-single-runner-v5-20260706'};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark FG3 manifest reconcile finished',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
