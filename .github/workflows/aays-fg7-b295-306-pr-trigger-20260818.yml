@@ -1,0 +1,73 @@
+name: AAYS FG7 strict 295-306 PR trigger 20260818
+
+on:
+  pull_request:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - '.github/workflows/aays-fg7-b295-306-pr-trigger-20260818.yml'
+      - 'ai-task-scripts/aays_fg7_batches_295_306_20260818.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-fg7-strict-295-306-pr-trigger-20260818
+  cancel-in-progress: false
+
+jobs:
+  run-fg7:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - name: Checkout trigger branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: trigger
+          fetch-depth: 1
+
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          path: canonical
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Execute strict FG7 continuation
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          python ../trigger/ai-task-scripts/aays_fg7_batches_295_306_20260818.py
+          git add -- state/slots/future_growth_7/checkpoint_latest.json state/slots/future_growth_7/status_latest.json state/slots/future_growth_7/evidence_manifest_latest.json state/slots/future_growth_7/report_latest.json
+          mapfile -t staged < <(git diff --cached --name-only)
+          test ${#staged[@]} -eq 4 || { echo "UNEXPECTED_STAGED_COUNT:${#staged[@]}"; printf '%s\n' "${staged[@]}"; exit 1; }
+          for p in "${staged[@]}"; do [[ "$p" == state/slots/future_growth_7/* ]] || { echo "CROSS_SLOT_STAGED:$p"; exit 1; }; done
+          git commit -m 'future_growth_7: process strict batches 295-306'
+          pushed=0
+          for i in 1 2 3 4; do
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then pushed=1; break; fi
+            git fetch origin codex/aays-single-runner-v5-20260706
+            git rebase origin/codex/aays-single-runner-v5-20260706 || { git rebase --abort || true; echo REBASE_CONFLICT_FAIL_CLOSED; exit 1; }
+            sleep $((i*2))
+          done
+          test "$pushed" = 1 || { echo PUSH_FAILED_AFTER_RETRIES; exit 1; }
+          git fetch origin codex/aays-single-runner-v5-20260706 --depth=1
+          git show origin/codex/aays-single-runner-v5-20260706:state/slots/future_growth_7/report_latest.json > /tmp/fg7_report.json
+          python - <<'PY'
+          import json
+          p=json.load(open('/tmp/fg7_report.json',encoding='utf-8'))
+          assert p['slot_id']=='future_growth_7'
+          assert p['run_id']=='common_continuation_20260818_batches_295_306_hosted'
+          assert p['completed_new_bounded_batches']==12
+          assert p['batch_range']=={'first':295,'last':306}
+          assert p['counts']['duplicate_count']==0
+          assert p['quality_gates']['nearest_match_used'] is False
+          assert p['quality_gates']['fake_data'] is False
+          assert p['next_batch_index']==307
+          print('REMOTE_READBACK_PASS future_growth_7 batches 295-306')
+          PY
