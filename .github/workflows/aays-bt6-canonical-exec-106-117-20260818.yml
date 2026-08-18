@@ -1,9 +1,5 @@
-name: AAYS BT6 canonical strict executor 130-141
+name: AAYS BT6 canonical strict executor 142-153
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'docs/chatgpt_status/_shared/slots_21/building_type_6/actions_main_trigger_130_141.txt'
   pull_request:
     branches: [main]
     paths:
@@ -11,7 +7,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: aays-bt6-canonical-exec-130-141-20260818
+  group: aays-bt6-canonical-exec-142-153-20260818
   cancel-in-progress: true
 jobs:
   strict-bt6:
@@ -24,7 +20,7 @@ jobs:
           ref: work/openai/agent-aays-bt6-strict-12-20260818-2018
           fetch-depth: 1
           path: trigger
-      - name: Extract existing BT6 checkpoint-recovery payload
+      - name: Extract existing BT6 continuation payload
         shell: bash
         run: |
           set -euo pipefail
@@ -36,11 +32,11 @@ jobs:
           m=re.search(r"cat > /tmp/bt6_106_117\.py <<'PY'\n(.*?)\nPY\npython /tmp/bt6_106_117\.py",s,re.S)
           if not m: raise SystemExit('BT6_RUNNER_EXTRACTION_FAILED')
           s=textwrap.dedent(m.group(1))
-          if "START=135; END=141; INITIAL=22300; OVERALL_BEFORE=22250" not in s: raise SystemExit('BT6_RECOVERY_CURSOR_PAYLOAD_MISMATCH')
+          if "START=142; END=153; INITIAL=22400; OVERALL_BEFORE=22400" not in s: raise SystemExit('BT6_CURSOR_PAYLOAD_MISMATCH')
           if "NOTTINGHAM_CITY_COUNCIL_ARCGIS_HMLR_INSPIRE" not in s: raise SystemExit('BT6_SOURCE_FAMILY_MISMATCH')
           if "REPORT=REP" not in s: raise SystemExit('BT6_REPORT_OWNERSHIP_MISMATCH')
           Path('/tmp/bt6_106_117.py').write_text(s,encoding='utf-8')
-          print({'slot':'building_type_6','resume_cursor':135,'remaining_batches':'135-141','overall_batches':'130-141','source_family':'Nottingham City ArcGIS HMLR INSPIRE + OSM','ownership':'six canonical BT6 paths'})
+          print({'slot':'building_type_6','batches':'142-153','baseline':22400,'source_family':'Nottingham City ArcGIS HMLR INSPIRE + OSM','ownership':'six canonical BT6 paths'})
           PY
       - name: Checkout canonical branch
         uses: actions/checkout@v4
@@ -50,7 +46,7 @@ jobs:
           path: canonical
       - name: Install geometry dependencies
         run: python -m pip install --quiet requests shapely pyproj
-      - name: Resume remaining strict bounded batches with per-batch remote readback
+      - name: Execute twelve strict bounded batches with per-batch remote readback
         shell: bash
         run: |
           set -euo pipefail
