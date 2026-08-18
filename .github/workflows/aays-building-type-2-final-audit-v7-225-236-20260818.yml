@@ -1,0 +1,141 @@
+name: AAYS building_type_2 final audit batches 225-236
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-final-audit-v7-225-236-20260818.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-2-common-v8-next12-20260818
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 260
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
+      - name: Audit and publish continuation report
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH=codex/aays-single-runner-v5-20260706
+          git pull --ff-only origin "$BRANCH"
+          python - <<'PY'
+          import datetime as dt, hashlib, json
+          from pathlib import Path
+
+          G=Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          M=Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          C=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          S=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          T=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          R=Path('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          def load(p): return json.loads(p.read_text(encoding='utf-8'))
+          geo,man,cp,st,task,rep=map(load,(G,M,C,S,T,R))
+          feats=geo.get('features') or []
+          expected=11600
+          assert len(feats)==expected
+          assert man.get('total_features')==expected
+          assert cp.get('current_feature_count')==expected
+          assert st.get('total_elements')==expected
+          assert cp.get('next_batch_index')==237
+          assert st.get('next_batch_index')==237
+          assert rep.get('batch_index')==236 and rep.get('feature_count_after')==expected
+          assert task.get('owner') in (None,'')
+          assert task.get('continuation_key')=='building-type-2-england-classification-v1-20260808'
+
+          seen=set(); dup=[]
+          for f in feats:
+              p=f.get('properties') or {}
+              vals={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')) if v not in (None,'')}
+              hit=seen & vals
+              if hit: dup.extend(sorted(hit))
+              seen.update(vals)
+          assert not dup, dup[:20]
+
+          attempts=[]
+          for x in st.get('batch_attempt_history') or []:
+              try: bi=int(x.get('batch_index',-1))
+              except Exception: continue
+              if 225 <= bi <= 236 and str(x.get('attempted_at','')).startswith('2026-08-18T19:'):
+                  attempts.append(x)
+          by_batch={}
+          for x in attempts: by_batch[int(x['batch_index'])]=x
+          assert sorted(by_batch)==list(range(225,237)), sorted(by_batch)
+          ordered=[by_batch[i] for i in range(225,237)]
+          cities=[x.get('city') for x in ordered]
+          bboxes=[x.get('bbox_wgs84') for x in ordered]
+          assert len(set(cities))==12, cities
+          assert len({tuple(float(v) for v in b) for b in bboxes if isinstance(b,list) and len(b)==4})==12, bboxes
+          assert all(not x.get('fake_data_generated',False) for x in ordered)
+          assert all(not x.get('duplicate_features_generated',False) for x in ordered)
+          assert all(not x.get('nearest_match_used',False) for x in ordered)
+          progress=[x for x in ordered if x.get('result')=='PROGRESS']
+          zero=[x for x in ordered if int(x.get('added_feature_count') or 0)==0]
+          before=int(ordered[0]['feature_count_before'])
+          added=sum(int(x.get('added_feature_count') or 0) for x in ordered)
+          after=int(ordered[-1]['feature_count_after'])
+          assert before==11050
+          assert added==550
+          assert after==11600
+          assert after-before==added
+          assert len(progress)==11
+          assert len(zero)==1 and int(zero[0]['batch_index'])==229
+          assert zero[0].get('city')=='Erith West'
+          assert zero[0].get('result')=='SOURCE_READ_FAILED_CONTINUE'
+
+          stamp=dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          report={
+              'slot_id':'building_type_2','batch_range':[225,236],'batches_processed':12,
+              'feature_count_before':before,'added_feature_count':added,'feature_count_after':after,
+              'next_batch_index':237,'shard_feature_count':len(feats),'checkpoint_feature_count':cp.get('current_feature_count'),
+              'status_feature_count':st.get('total_elements'),'manifest_feature_count':man.get('total_features'),
+              'unique_key_count':len(seen),'duplicate_key_count':0,'fake_data_generated':False,'nearest_match_used':False,
+              'progress_batches':len(progress),'zero_addition_batches':len(zero),
+              'zero_batch':{'batch_index':229,'city':'Erith West','result':'SOURCE_READ_FAILED_CONTINUE'},
+              'cities':cities,'bboxes_wgs84':bboxes,'source_family':'OpenStreetMap Overpass API',
+              'parcel_id_semantics':'stable OSM element-derived slot identifier; not a cadastral parcel ID',
+              'geojson_sha256':hashlib.sha256(G.read_bytes()).hexdigest(),'audited_at':stamp,
+              'final_ready':False,'production_merge':False
+          }
+          rep['continuation_report_20260818_v7']=report
+          R.write_text(json.dumps(rep,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print('AUDIT_OK',json.dumps(report,ensure_ascii=False),flush=True)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json
+          git commit -m 'report(building_type_2): audit batches 225-236'
+          for i in 1 2 3 4 5; do
+            if git push origin "HEAD:$BRANCH"; then break; fi
+            git fetch origin "$BRANCH" --depth=260
+            git rebase "origin/$BRANCH"
+          done
+          git fetch origin "$BRANCH" --depth=260
+          python - <<'PY'
+          import json, subprocess
+          branch='codex/aays-single-runner-v5-20260706'
+          path='docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json'
+          raw=subprocess.check_output(['git','show',f'origin/{branch}:{path}'])
+          rep=json.loads(raw)
+          r=rep['continuation_report_20260818_v7']
+          assert r['feature_count_before']==11050 and r['added_feature_count']==550 and r['feature_count_after']==11600
+          assert r['next_batch_index']==237 and r['duplicate_key_count']==0
+          assert r['shard_feature_count']==r['checkpoint_feature_count']==r['status_feature_count']==r['manifest_feature_count']==11600
+          assert r['fake_data_generated'] is False and r['nearest_match_used'] is False
+          print('REMOTE_AUDIT_READBACK_OK',json.dumps(r,ensure_ascii=False),flush=True)
+          PY
