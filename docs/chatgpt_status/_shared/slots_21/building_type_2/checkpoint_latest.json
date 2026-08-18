@@ -14,7 +14,7 @@
   "first_unverified_step_status": "NO_NEW_OPEN_SOURCE",
   "terminal_no_replay": [],
   "terminal_status": "NEW_PAGE_RESUME_READY",
-  "updated_at": "2026-08-18T18:41:37Z",
+  "updated_at": "2026-08-18T18:46:17Z",
   "final_ready": false,
   "summary": {
     "pilot_osm_classified": 429,
@@ -23,19 +23,19 @@
     "migrated_to_9_slot": true,
     "previous_pipeline_stage": 1,
     "next_pipeline_stage": 2,
-    "note": "PROGRESS: feature_count 10900 -> 10950; 50 unique evidence-B OSM building-use records.",
+    "note": "SOURCE_READ_FAILED_CONTINUE batch 222 Willesden: 0 proven additions; count remains 10950; advancing.",
     "current_feature_count": 10950
   },
   "remaining_items": {
     "epc_residential_classification_pending": true,
     "voa_non_domestic_classification_pending": true,
-    "note": "Continue batch 222; all feature.id/parcel_id/osm_id/source_ref remain already_processed_ids."
+    "note": "Continue batch 223; all existing IDs remain already_processed_ids."
   },
-  "state": "PROGRESS",
-  "feature_count_before": 10900,
+  "state": "SOURCE_READ_FAILED_CONTINUE",
+  "feature_count_before": 10950,
   "feature_count_after": 10950,
   "current_feature_count": 10950,
-  "next_batch_index": 222,
+  "next_batch_index": 223,
   "next_target_feature_count": 11000,
   "last_processed_ids_sample": [
     "ENG_OSM_node_3760810176",
@@ -1790,6 +1790,31 @@
       "fake_data_generated": false,
       "duplicate_features_generated": false,
       "nearest_match_used": false
+    },
+    {
+      "batch_index": 222,
+      "attempted_at": "2026-08-18T18:46:17Z",
+      "city": "Willesden",
+      "local_authority": "Brent",
+      "bbox_wgs84": [
+        -0.27,
+        51.53,
+        -0.2,
+        51.57
+      ],
+      "result": "SOURCE_READ_FAILED_CONTINUE",
+      "added_feature_count": 0,
+      "feature_count_before": 10950,
+      "feature_count_after": 10950,
+      "source": "OpenStreetMap Overpass API",
+      "source_url": null,
+      "source_sha256": null,
+      "element_count": null,
+      "evidence_candidate_count": null,
+      "root_cause": "https://overpass-api.de/api/interpreter attempt 1: <HTTPError 429: 'Too Many Requests'> | https://overpass-api.de/api/interpreter attempt 2: <HTTPError 429: 'Too Many Requests'> | https://overpass.kumi.systems/api/interpreter attempt 1: TimeoutError('The read operation timed out') | https://overpass.kumi.systems/api/interpreter attempt 2: TimeoutError('The read operation timed out')",
+      "fake_data_generated": false,
+      "duplicate_features_generated": false,
+      "nearest_match_used": false
     }
   ],
   "blocker": {
@@ -1806,14 +1831,14 @@
       "no fake data"
     ]
   },
-  "next_city_index": 222,
-  "last_attempted_batch_index": 183,
-  "last_attempted_city": "Twickenham",
+  "next_city_index": 223,
+  "last_attempted_batch_index": 222,
+  "last_attempted_city": "Willesden",
   "last_attempted_bbox_wgs84": [
-    -0.36,
-    51.42,
-    -0.3,
-    51.46
+    -0.27,
+    51.53,
+    -0.2,
+    51.57
   ],
   "attempted_cities": [
     "Orpington",
@@ -1860,33 +1885,34 @@
     "Northwood",
     "Barking",
     "Finchley",
-    "Welling"
+    "Welling",
+    "Willesden"
   ],
   "already_processed_ids": {
     "strategy": "derived_from_latest_shard_feature.id_plus_parcel_id_plus_osm_id_plus_source_ref",
     "unique_key_count": 24900,
     "sha256_sorted_newline_keys": "c67b9a8305c82cbb303dae48c19399519c84cbe0a6895526b7fd5e5af0e07943",
     "sample": [
-      "BT2_B221_OSM_way_1013573523",
-      "BT2_B221_OSM_way_1017195333",
-      "BT2_B221_OSM_way_103164069",
-      "BT2_B221_OSM_way_1046192598",
-      "BT2_B221_OSM_way_1047660325",
-      "BT2_B221_OSM_way_1047660332",
-      "BT2_B221_OSM_way_1047660333",
-      "BT2_B221_OSM_way_1047660334",
-      "BT2_B221_OSM_way_1047660335",
-      "BT2_B221_OSM_way_1087950133",
-      "BT2_B221_OSM_way_1087950135",
-      "BT2_B221_OSM_way_1107356071",
-      "BT2_B221_OSM_way_1108023605",
-      "BT2_B221_OSM_way_1108027876",
-      "BT2_B221_OSM_way_1108027877",
-      "BT2_B221_OSM_way_1108027878",
-      "BT2_B221_OSM_way_1108027879",
-      "BT2_B221_OSM_way_1108027880",
-      "BT2_B221_OSM_way_1108027881",
-      "BT2_B221_OSM_way_1108027882"
+      "BARKING_DAGENHAM_FHRSID_1008173",
+      "BARKING_DAGENHAM_FHRSID_1016862",
+      "BARKING_DAGENHAM_FHRSID_1016867",
+      "BARKING_DAGENHAM_FHRSID_1016873",
+      "BARKING_DAGENHAM_FHRSID_1016874",
+      "BARKING_DAGENHAM_FHRSID_1016875",
+      "BARKING_DAGENHAM_FHRSID_1016876",
+      "BARKING_DAGENHAM_FHRSID_1016877",
+      "BARKING_DAGENHAM_FHRSID_1016878",
+      "BARKING_DAGENHAM_FHRSID_1016879",
+      "BARKING_DAGENHAM_FHRSID_1020377",
+      "BARKING_DAGENHAM_FHRSID_102493",
+      "BARKING_DAGENHAM_FHRSID_102647",
+      "BARKING_DAGENHAM_FHRSID_102698",
+      "BARKING_DAGENHAM_FHRSID_102930",
+      "BARKING_DAGENHAM_FHRSID_1030084",
+      "BARKING_DAGENHAM_FHRSID_1030088",
+      "BARKING_DAGENHAM_FHRSID_1030096",
+      "BARKING_DAGENHAM_FHRSID_1030100",
+      "BARKING_DAGENHAM_FHRSID_1030106"
     ]
   },
   "technical_recovery_history": [
