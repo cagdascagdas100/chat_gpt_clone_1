@@ -1,0 +1,64 @@
+name: AAYS FG3 normalize 193-204 main one-shot
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/aays-fg3-normalize-193-204-main-once.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-future-growth-3-normalize-193-204
+  cancel-in-progress: false
+jobs:
+  normalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Mark normalization started
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const path='docs/chatgpt_status/_shared/slots_21/future_growth_3/actions_manifest_normalize_193_204_status.json';
+            let sha; try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
+            const body={slot_id:'future_growth_3',state:'RUNNING',run_id:String(context.runId),head_sha:context.sha,started_at:new Date().toISOString()};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark FG3 193-204 normalization started',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
+      - name: Checkout normalization tool
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aays-fg3-b193-204-strict-spatial-20260818-2347
+          fetch-depth: 1
+          sparse-checkout: |
+            tools/aays_fg3_normalize_manifest_193_204.py
+          sparse-checkout-cone-mode: false
+          path: trigger
+      - name: Checkout canonical slot artifacts
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+          sparse-checkout: |
+            state/slots/future_growth_3
+            AAYS/england_map_web/data/future_growth/shards/future_growth_3_latest.geojson
+          sparse-checkout-cone-mode: false
+          path: canonical
+          persist-credentials: true
+      - name: Normalize current manifest/report and remote-readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          python ../trigger/tools/aays_fg3_normalize_manifest_193_204.py
+      - name: Mark normalization finished
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const path='docs/chatgpt_status/_shared/slots_21/future_growth_3/actions_manifest_normalize_193_204_status.json';
+            let sha; try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
+            const body={slot_id:'future_growth_3',state:'${{ job.status }}'.toUpperCase(),run_id:String(context.runId),head_sha:context.sha,finished_at:new Date().toISOString()};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark FG3 193-204 normalization finished',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
