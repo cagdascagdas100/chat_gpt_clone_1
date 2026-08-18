@@ -1,0 +1,118 @@
+name: AAYS BT6 strict 106-117 observable run
+on:
+  pull_request:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - 'docs/chatgpt_status/_shared/slots_21/building_type_6/actions_pr_trigger_106_117.txt'
+permissions:
+  contents: write
+concurrency:
+  group: aays-bt6-strict-106-117-pr-20260818
+  cancel-in-progress: false
+jobs:
+  strict-spatial:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - name: Checkout trigger head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          path: trigger
+      - name: Extract exact BT6 runner from trigger workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re,textwrap
+          p=Path('trigger/.github/workflows/aays-bt6-strict-106-117-20260818.yml')
+          s=p.read_text(encoding='utf-8')
+          m=re.search(r"cat > /tmp/bt6_106_117\.py <<'PY'\n(.*?)\n          PY\n          python /tmp/bt6_106_117\.py",s,re.S)
+          if not m: raise SystemExit('BT6_RUNNER_EXTRACTION_FAILED')
+          Path('/tmp/bt6_106_117.py').write_text(textwrap.dedent(m.group(1)),encoding='utf-8')
+          print('runner_lines',len(Path('/tmp/bt6_106_117.py').read_text().splitlines()))
+          PY
+      - name: Checkout canonical slot branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+          path: canonical
+      - name: Install geometry helpers
+        run: python -m pip install --quiet requests shapely pyproj
+      - name: Run exactly twelve new strict bounded windows
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          python /tmp/bt6_106_117.py
+      - name: Package only owned BT6 paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          P=(england_map_web/data/building_type/shards/building_type_6_latest.geojson england_map_web/data/building_type/shards/building_type_6_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/current_task_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/recovery_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/reports/20260818T2018Z_building_type_6_strict_b106_117.json)
+          rm -rf /tmp/bt6_payload && mkdir -p /tmp/bt6_payload
+          for p in "${P[@]}"; do mkdir -p "/tmp/bt6_payload/$(dirname "$p")"; cp "$p" "/tmp/bt6_payload/$p"; done
+      - name: Race-safe publish exact owned BT6 paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          git fetch origin codex/aays-single-runner-v5-20260706
+          rm -rf /tmp/bt6_publish
+          git worktree add --detach /tmp/bt6_publish origin/codex/aays-single-runner-v5-20260706
+          cd /tmp/bt6_publish
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          P=(england_map_web/data/building_type/shards/building_type_6_latest.geojson england_map_web/data/building_type/shards/building_type_6_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/current_task_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/recovery_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/reports/20260818T2018Z_building_type_6_strict_b106_117.json)
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json,subprocess
+          b='origin/codex/aays-single-runner-v5-20260706'
+          def j(p): return json.loads(subprocess.check_output(['git','show',f'{b}:{p}']))
+          c=j('docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json');s=j('docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json')
+          if c.get('slot_id')!='building_type_6' or c.get('continuation_key')!='building-type-6-england-classification-v1-20260808' or c.get('next_batch_index')!=106 or c.get('feature_count_after')!=22250: raise SystemExit('REMOTE_BT6_MOVED_ABORT:'+repr((c.get('slot_id'),c.get('continuation_key'),c.get('next_batch_index'),c.get('feature_count_after'))))
+          if s.get('owner') not in (None,'') or c.get('owner') not in (None,''): raise SystemExit('REMOTE_OWNER_PRESENT')
+          PY
+          git reset --hard origin/codex/aays-single-runner-v5-20260706
+          for p in "${P[@]}"; do mkdir -p "$(dirname "$p")"; cp "/tmp/bt6_payload/$p" "$p"; done
+          git add -- "${P[@]}"
+          git diff --cached --quiet && { echo NO_BT6_CHANGES; exit 1; }
+          git commit -m 'aays: building_type_6 strict bounded batches 106-117'
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
+      - name: Final remote readback equality duplicate and per-batch gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json,subprocess,re
+          b='origin/codex/aays-single-runner-v5-20260706'
+          def j(p): return json.loads(subprocess.check_output(['git','show',f'{b}:{p}']))
+          rp='docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json';sp='docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json';cp='docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json';mp='england_map_web/data/building_type/shards/building_type_6_manifest_latest.json';gp='england_map_web/data/building_type/shards/building_type_6_latest.geojson'
+          r,s,c,m,g=j(rp),j(sp),j(cp),j(mp),j(gp);fs=g.get('features') or [];n=len(fs)
+          vals=[n,m.get('total_features'),c.get('feature_count_after'),s.get('feature_count_after'),r.get('feature_count_after')]
+          if len(set(vals))!=1: raise SystemExit('REMOTE_COUNT_MISMATCH:'+repr(vals))
+          if r.get('next_batch_index')!=118 or c.get('next_batch_index')!=118 or s.get('next_batch_index')!=118: raise SystemExit('REMOTE_CURSOR_FAILED')
+          d=0
+          for ext in (lambda f:f.get('id'),lambda f:(f.get('properties') or {}).get('parcel_id')):
+            seen=set()
+            for f in fs:
+              v=ext(f)
+              if v is None:continue
+              v=str(v);d += v in seen;seen.add(v)
+          if d!=0 or r.get('duplicate_count')!=0: raise SystemExit('REMOTE_DUP_FAILED:'+repr((d,r.get('duplicate_count'))))
+          bs=r.get('batches') or []
+          if len(bs)!=12 or [x.get('batch_index') for x in bs]!=list(range(106,118)): raise SystemExit('REMOTE_BATCH_RANGE_FAILED')
+          if not all(x.get('readback_verified') and x.get('shard_equals_checkpoint_equals_status_equals_manifest') and x.get('readback',{}).get('dup')==0 and not x.get('nearest_matching_used') and not x.get('fake_data') for x in bs): raise SystemExit('REMOTE_PER_BATCH_READBACK_FAILED')
+          report='docs/chatgpt_status/_shared/slots_21/building_type_6/reports/20260818T2018Z_building_type_6_strict_b106_117.json';rr=j(report)
+          if rr.get('feature_count_after')!=n or rr.get('new_added')!=r.get('new_added'): raise SystemExit('REMOTE_REPORT_MISMATCH')
+          print({'report':report,'before':r.get('feature_count_before'),'added':r.get('new_added'),'after':n,'next_batch':118,'dup':0,'zero_batches':[x.get('batch_index') for x in bs if (x.get('added_feature_count') or 0)==0],'remote_counts':vals})
+          PY
