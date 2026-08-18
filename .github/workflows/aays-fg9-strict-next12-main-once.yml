@@ -19,8 +19,8 @@ jobs:
           script: |
             const owner=context.repo.owner,repo=context.repo.repo,path='docs/chatgpt_status/_shared/slots_21/future_growth_9/actions_main_run_next12_status.json'; let sha;
             try{sha=(await github.rest.repos.getContent({owner,repo,path,ref:'main'})).data.sha}catch(e){if(e.status!==404)throw e}
-            const body={slot_id:'future_growth_9',state:'RUNNING_NEXT12_W139_150',run_id:String(context.runId),head_sha:context.sha,canonical_branch:'codex/aays-single-runner-v5-20260706',executor:'run_strict_next12_w139_150_20260818.py',expected_start:{count:138,window:139}};
-            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark FG9 next-12 w139-150 started',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
+            const body={slot_id:'future_growth_9',state:'RUNNING_NEXT12_W151_162',run_id:String(context.runId),head_sha:context.sha,canonical_branch:'codex/aays-single-runner-v5-20260706',executor:'run_strict_next12_w151_162_20260818.py',expected_start:{count:150,window:151}};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark FG9 next-12 w151-162 started',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
       - name: Checkout executor
         uses: actions/checkout@v4
         with:
@@ -39,7 +39,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          python trigger/docs/chatgpt_status/_shared/slots_21/future_growth_9/automation/run_strict_next12_w139_150_20260818.py 2>&1 | tee fg9-exec.log
+          python trigger/docs/chatgpt_status/_shared/slots_21/future_growth_9/automation/run_strict_next12_w151_162_20260818.py 2>&1 | tee fg9-exec.log
           exit ${PIPESTATUS[0]}
       - name: Mark run finished
         if: always()
@@ -49,5 +49,5 @@ jobs:
             const fs=require('fs'); const owner=context.repo.owner,repo=context.repo.repo,path='docs/chatgpt_status/_shared/slots_21/future_growth_9/actions_main_run_next12_status.json'; let sha;
             try{sha=(await github.rest.repos.getContent({owner,repo,path,ref:'main'})).data.sha}catch(e){if(e.status!==404)throw e}
             let execution_log_tail=''; try{execution_log_tail=fs.readFileSync('fg9-exec.log','utf8').slice(-20000)}catch(e){}
-            const body={slot_id:'future_growth_9',state:'${{ job.status }}'.toUpperCase(),run_id:String(context.runId),head_sha:context.sha,finished_at:new Date().toISOString(),canonical_branch:'codex/aays-single-runner-v5-20260706',executor:'run_strict_next12_w139_150_20260818.py',execution_log_tail};
-            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark FG9 next-12 w139-150 finished',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
+            const body={slot_id:'future_growth_9',state:'${{ job.status }}'.toUpperCase(),run_id:String(context.runId),head_sha:context.sha,finished_at:new Date().toISOString(),canonical_branch:'codex/aays-single-runner-v5-20260706',executor:'run_strict_next12_w151_162_20260818.py',execution_log_tail};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark FG9 next-12 w151-162 finished',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
