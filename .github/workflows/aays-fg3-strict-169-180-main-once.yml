@@ -1,4 +1,4 @@
-name: AAYS FG3 strict 169-180 main one-shot
+name: AAYS FG3 strict 181-192 recognized one-shot
 on:
   push:
     branches:
@@ -8,7 +8,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: aays-future-growth-3-strict-169-180
+  group: aays-future-growth-3-strict-181-192
   cancel-in-progress: false
 jobs:
   strict-source-expansion:
@@ -20,15 +20,14 @@ jobs:
         with:
           script: |
             const owner=context.repo.owner, repo=context.repo.repo;
-            const path='docs/chatgpt_status/_shared/slots_21/future_growth_3/actions_main_run_169_180_status.json';
-            let sha;
-            try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
-            const body={slot_id:'future_growth_3',state:'RUNNING',run_id:String(context.runId),run_attempt:String(process.env.GITHUB_RUN_ATTEMPT||''),head_sha:context.sha,started_at:new Date().toISOString(),executor_branch:'agent/aays-fg3-b169-180-strict-spatial-20260818-2031',canonical_branch:'codex/aays-single-runner-v5-20260706'};
-            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark FG3 strict 169-180 started',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
-      - name: Checkout verified FG3 executor
+            const path='docs/chatgpt_status/_shared/slots_21/future_growth_3/actions_main_run_181_192_status.json';
+            let sha; try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
+            const body={slot_id:'future_growth_3',state:'RUNNING',run_id:String(context.runId),head_sha:context.sha,started_at:new Date().toISOString(),executor_branch:'agent/aays-fg3-b181-192-strict-spatial-20260818-2057',canonical_branch:'codex/aays-single-runner-v5-20260706'};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark FG3 181-192 started',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
+      - name: Checkout FG3 executor
         uses: actions/checkout@v4
         with:
-          ref: agent/aays-fg3-b169-180-strict-spatial-20260818-2031
+          ref: agent/aays-fg3-b181-192-strict-spatial-20260818-2057
           fetch-depth: 0
           path: trigger
       - name: Checkout canonical slot branch
@@ -40,63 +39,21 @@ jobs:
           persist-credentials: true
       - name: Install spatial runtime
         run: python -m pip install --disable-pip-version-check --quiet shapely==2.1.1
-      - name: Execute FG3 strict 169-180 and verify remote readback
+      - name: Execute FG3 strict 181-192 with per-batch readback
         shell: bash
         run: |
           set -euo pipefail
           cd canonical
           git config user.name 'TerraYield AAYS Bot'
           git config user.email 'aays-bot@users.noreply.github.com'
-          python - <<'PY'
-          import base64,gzip,pathlib,re
-          p=pathlib.Path('../trigger/.github/workflows/aays-fg3-b169-180-strict-spatial-20260818-once.yml')
-          text=p.read_text()
-          m=re.search(r"base64\.b64decode\('([^']+)'\)",text)
-          if not m: raise SystemExit('EXECUTOR_PAYLOAD_NOT_FOUND')
-          code=gzip.decompress(base64.b64decode(m.group(1))).decode()
-          exec(compile(code,'fg3_strict_169_180.py','exec'))
-          PY
-          git add \
-            AAYS/england_map_web/data/future_growth/shards/future_growth_3_latest.geojson \
-            state/slots/future_growth_3/checkpoint_latest.json \
-            state/slots/future_growth_3/status_latest.json \
-            state/slots/future_growth_3/evidence_manifest_latest.json \
-            state/slots/future_growth_3/report_latest.json
-          python - <<'PY'
-          import subprocess
-          paths=subprocess.check_output(['git','diff','--cached','--name-only'],text=True).splitlines()
-          allowed={
-            'AAYS/england_map_web/data/future_growth/shards/future_growth_3_latest.geojson',
-            'state/slots/future_growth_3/checkpoint_latest.json',
-            'state/slots/future_growth_3/status_latest.json',
-            'state/slots/future_growth_3/evidence_manifest_latest.json',
-            'state/slots/future_growth_3/report_latest.json',
-          }
-          bad=[p for p in paths if p not in allowed]
-          if bad: raise SystemExit('CROSS_SLOT_STAGED:'+','.join(bad))
-          if not paths: raise SystemExit('NO_STAGED_STATE')
-          print('staged',paths)
-          PY
-          git commit -m 'future_growth_3: process strict batches 169-180'
-          for attempt in 1 2 3 4 5; do
-            git fetch origin codex/aays-single-runner-v5-20260706
-            if ! git merge-base --is-ancestor origin/codex/aays-single-runner-v5-20260706 HEAD; then
-              git rebase origin/codex/aays-single-runner-v5-20260706 || exit 1
-            fi
-            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then break; fi
-            if [ "$attempt" = "5" ]; then exit 1; fi
-            sleep $((attempt*3))
-          done
-          git fetch origin codex/aays-single-runner-v5-20260706
-          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/codex/aays-single-runner-v5-20260706)"
+          python ../trigger/tools/aays_fg3_181_192_strict.py
       - name: Mark run finished
         if: always()
         uses: actions/github-script@v7
         with:
           script: |
             const owner=context.repo.owner, repo=context.repo.repo;
-            const path='docs/chatgpt_status/_shared/slots_21/future_growth_3/actions_main_run_169_180_status.json';
-            let sha;
-            try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
-            const body={slot_id:'future_growth_3',state:'${{ job.status }}'.toUpperCase(),run_id:String(context.runId),run_attempt:String(process.env.GITHUB_RUN_ATTEMPT||''),head_sha:context.sha,finished_at:new Date().toISOString(),executor_branch:'agent/aays-fg3-b169-180-strict-spatial-20260818-2031',canonical_branch:'codex/aays-single-runner-v5-20260706'};
-            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark FG3 strict 169-180 finished',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
+            const path='docs/chatgpt_status/_shared/slots_21/future_growth_3/actions_main_run_181_192_status.json';
+            let sha; try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
+            const body={slot_id:'future_growth_3',state:'${{ job.status }}'.toUpperCase(),run_id:String(context.runId),head_sha:context.sha,finished_at:new Date().toISOString(),executor_branch:'agent/aays-fg3-b181-192-strict-spatial-20260818-2057',canonical_branch:'codex/aays-single-runner-v5-20260706'};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark FG3 181-192 finished',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
