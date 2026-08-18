@@ -1,0 +1,46 @@
+name: AAYS BT5 U schema diagnostic 20260818
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/aays-bt5-u-schema-diagnostic-20260818.yml'
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+      - name: Inspect BT5 evidence-U schema
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson')
+          d=json.loads(p.read_text(encoding='utf-8'))
+          fs=d['features']
+          def ev(f):
+              q=f.get('properties') or {}
+              return q.get('evidence_level') or q.get('evidence') or q.get('evidence_grade')
+          def bt(f):
+              q=f.get('properties') or {}
+              return q.get('building_type')
+          u=[f for f in fs if ev(f)=='U']
+          btu=[f for f in fs if bt(f)=='unknown']
+          btu_nonU=[f for f in btu if ev(f)!='U']
+          print('COUNTS',json.dumps({'total':len(fs),'evidence_U':len(u),'building_type_unknown':len(btu),'building_type_unknown_nonU':len(btu_nonU)},sort_keys=True))
+          def summarize(f):
+              q=f.get('properties') or {}
+              g=f.get('geometry') or {}
+              coords=g.get('coordinates')
+              return {'geometry_type':g.get('type'),'properties':q,'coordinates_preview':str(coords)[:700]}
+          for i,f in enumerate(u[:5]):
+              print('U_SAMPLE',i,json.dumps(summarize(f),ensure_ascii=False,sort_keys=True))
+          for i,f in enumerate(btu_nonU[:5]):
+              print('BT_UNKNOWN_NONU_SAMPLE',i,json.dumps(summarize(f),ensure_ascii=False,sort_keys=True))
+          PY
