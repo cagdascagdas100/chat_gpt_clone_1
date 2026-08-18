@@ -15,12 +15,14 @@ def source_verify_v2():
         status = getattr(r, "status", 200)
     if status != 200:
         raise RuntimeError(f"SEVERN_SOURCE_HTTP_STATUS:{status}")
+    if "the-severn-bridges" not in final:
+        raise RuntimeError(f"SEVERN_SOURCE_FINAL_URL_MISMATCH:{final!r}")
     txt = m.normalize(raw.decode("utf-8", "replace"))
     identity_tokens = [
-        "The Severn Bridges",
-        "M48 Severn Bridge: Upcoming resurfacing trial",
         "Saturday 01 August until Sunday 27 September 2026",
-        "Contraflow will be in place from 8pm Saturday 08 August until 8pm Friday 18 September 2026",
+        "8pm Saturday 08 August until 8pm Friday 18 September",
+        "Closure of westbound and eastbound carriageways",
+        "M4 Prince of Wales Bridge",
     ]
     for token in identity_tokens:
         nt = m.normalize(token)
