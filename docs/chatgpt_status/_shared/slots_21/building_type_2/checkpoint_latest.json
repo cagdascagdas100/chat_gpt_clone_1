@@ -14,7 +14,7 @@
   "first_unverified_step_status": "NO_NEW_OPEN_SOURCE",
   "terminal_no_replay": [],
   "terminal_status": "NEW_PAGE_RESUME_READY",
-  "updated_at": "2026-08-18T16:53:21Z",
+  "updated_at": "2026-08-18T17:02:09Z",
   "final_ready": false,
   "summary": {
     "pilot_osm_classified": 429,
@@ -23,18 +23,18 @@
     "migrated_to_9_slot": true,
     "previous_pipeline_stage": 1,
     "next_pipeline_stage": 2,
-    "note": "NO_DATA_CONTINUE batch 188 Chislehurst: 0 proven additions; count remains 8800; advancing to batch 189."
+    "note": "Recovered invalid technical cursor advance; retrying real source window batch 177."
   },
   "remaining_items": {
     "epc_residential_classification_pending": true,
     "voa_non_domestic_classification_pending": true,
-    "note": "Continue batch 189; all feature.id/parcel_id/osm_id/source_ref values remain already_processed_ids."
+    "note": "Retry batch 177 with live bounded source fetch; no prior data rows were added."
   },
-  "state": "NO_DATA_CONTINUE",
+  "state": "RECOVERY_RESUMED",
   "feature_count_before": 8800,
   "feature_count_after": 8800,
   "current_feature_count": 8800,
-  "next_batch_index": 189,
+  "next_batch_index": 177,
   "next_target_feature_count": 8850,
   "last_processed_ids_sample": [
     "ENG_OSM_node_3760810176",
@@ -1755,7 +1755,7 @@
       "no fake data"
     ]
   },
-  "next_city_index": 189,
+  "next_city_index": 177,
   "last_attempted_batch_index": 188,
   "last_attempted_city": "Chislehurst",
   "last_attempted_bbox_wgs84": [
@@ -1804,5 +1804,16 @@
       "BARKING_DAGENHAM_FHRSID_1030100",
       "BARKING_DAGENHAM_FHRSID_1030106"
     ]
-  }
+  },
+  "technical_recovery_history": [
+    {
+      "repaired_at": "2026-08-18T17:02:09Z",
+      "reason": "batches 177-188 were incorrectly advanced by driver Python syntax failure before any source response was obtained",
+      "invalid_attempt_count": 12,
+      "feature_count": 8800,
+      "restored_next_batch_index": 177,
+      "fake_data_generated": false,
+      "duplicate_features_generated": false
+    }
+  ]
 }
