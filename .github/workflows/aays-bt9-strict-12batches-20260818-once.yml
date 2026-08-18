@@ -1,7 +1,8 @@
-# registry retrigger after workflow registration; infrastructure only, not business progress
-name: AAYS building_type_9 strict 12 bounded batches 20260818 once
+name: AAYS building_type_9 strict bounded batches 181-192
 on:
   push:
+    branches:
+      - agent/aays-bt9-strict-12-20260818-0441
     paths:
       - '.github/workflows/aays-bt9-strict-12batches-20260818-once.yml'
 permissions:
@@ -16,28 +17,220 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/aays-bt9-strict-12-20260818-0441
-          fetch-depth: 2
-          path: trigger
-      - uses: actions/checkout@v4
-        with:
           ref: codex/aays-single-runner-v5-20260706
-          fetch-depth: 100
-          clean: false
-          path: canonical
-      - name: Extract registered runner and execute on canonical checkout
+          fetch-depth: 0
+      - name: Install runtime geometry helpers
+        run: python -m pip install --quiet requests shapely
+      - name: Run twelve new bounded strict batches
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
-          import base64,re,subprocess,zlib
-          p='.github/workflows/aays-bt9-strict-12batches-20260818-once.yml'
-          text=subprocess.check_output(['git','-C','trigger','show',f'HEAD^:{p}'],text=True)
-          m=re.search(r"base64\.b64decode\('([^']+)'\)",text)
-          if not m: raise SystemExit('REGISTERED_RUNNER_PAYLOAD_NOT_FOUND')
-          open('/tmp/bt9_strict_12.py','wb').write(zlib.decompress(base64.b64decode(m.group(1))))
-          PY
-          cd canonical
           git config user.name 'TerraYield AAYS Bot'
           git config user.email 'aays-bot@users.noreply.github.com'
-          python /tmp/bt9_strict_12.py
+          cat > /tmp/bt9_181_192.py <<'PY'
+          import json,hashlib,datetime,collections,requests,sys,os,re
+          from pathlib import Path
+          from shapely.geometry import shape,Polygon
+
+          SLOT='building_type_9'; CONT='building-type-9-england-classification-v1-20260808'
+          SHARD=Path('england_map_web/data/building_type/shards/building_type_9_latest.geojson')
+          MAN=Path('england_map_web/data/building_type/shards/building_type_9_manifest_latest.json')
+          REP=Path('docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json')
+          ST=Path('docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json')
+          CP=Path('docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json')
+          TASK=Path('docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json')
+          REC=Path('docs/chatgpt_status/_shared/slots_21/building_type_9/recovery_latest.json')
+          ARC='https://services2.arcgis.com/LrUbY6lLLgV3tEa5/ArcGIS/rest/services/Land_Registry_INSPIRE/FeatureServer/0/query'
+          CAT='https://use-land-property-data.service.gov.uk/datasets/inspire/download'
+          OPS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']
+          W=[]; bi=181
+          for y in (575000,580000,585000):
+            for x in (380000,385000,390000,395000):
+              W.append((bi,f'HMLR_NORTHUMBERLAND_20260802E_E{x//1000:03d}_N{y//1000:03d}_5K',[x,y,x+5000,y+5000])); bi+=1
+          def now(): return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          def load(p): return json.load(open(p,encoding='utf-8'))
+          def save(p,o):
+            q=Path(str(p)+'.tmp'); q.parent.mkdir(parents=True,exist_ok=True)
+            with open(q,'w',encoding='utf-8',newline='\n') as f: json.dump(o,f,ensure_ascii=False,separators=(',',':')); f.write('\n')
+            os.replace(q,p)
+          def h(b): return hashlib.sha256(b).hexdigest()
+          def osmnum(v):
+            if v is None:return None
+            m=re.search(r'(\d{4,})$',str(v)); return m.group(1) if m else None
+          def dups(fs):
+            n=0
+            for key in ('id','parcel_id'):
+              seen=set()
+              for f in fs:
+                v=f.get('id') if key=='id' else (f.get('properties') or {}).get('parcel_id')
+                if v is None: continue
+                v=str(v)
+                if v in seen:n+=1
+                else:seen.add(v)
+            return n
+          def seen_ids(fs):
+            fi=set();pa=set();oi=set()
+            for f in fs:
+              if f.get('id') is not None:fi.add(str(f['id']))
+              p=f.get('properties') or {}
+              if p.get('parcel_id') is not None:pa.add(str(p['parcel_id']))
+              for k in ('osm_id','source_ref'):
+                z=osmnum(p.get(k))
+                if z:oi.add(z)
+            return fi,pa,oi
+          def classify(t):
+            b=(t.get('building') or '').lower()
+            M={'detached':('residential_detached','residential'),'semidetached_house':('residential_semi_detached','residential'),'house':('residential_house','residential'),'terrace':('residential_house','residential'),'residential':('residential_other','residential'),'apartments':('residential_apartments','residential'),'industrial':('industrial','commercial'),'warehouse':('warehouse','commercial'),'commercial':('commercial_other','commercial'),'retail':('commercial_retail','commercial'),'office':('office','commercial'),'hotel':('hotel_or_hospitality','commercial'),'school':('education','institutional'),'college':('education','institutional'),'university':('education','institutional'),'hospital':('hospital_or_healthcare','institutional'),'church':('religious_or_community','institutional'),'chapel':('religious_or_community','institutional'),'mosque':('religious_or_community','institutional'),'temple':('religious_or_community','institutional'),'civic':('public_infrastructure','institutional'),'government':('public_infrastructure','institutional'),'public':('public_infrastructure','institutional')}
+            if b in M:return M[b],f'building={b}'
+            a=(t.get('amenity') or '').lower();q=(t.get('tourism') or '').lower()
+            if b in ('yes','service',''):
+              if a in ('school','college','university','kindergarten'):return ('education','institutional'),f'building={b or "unspecified"};amenity={a}'
+              if a in ('hospital','clinic','doctors'):return ('hospital_or_healthcare','institutional'),f'building={b or "unspecified"};amenity={a}'
+              if a in ('place_of_worship','community_centre'):return ('religious_or_community','institutional'),f'building={b or "unspecified"};amenity={a}'
+              if q in ('hotel','guest_house','hostel'):return ('hotel_or_hospitality','commercial'),f'building={b or "unspecified"};tourism={q}'
+              if t.get('shop'):return ('commercial_retail','commercial'),f'building={b or "unspecified"};shop={t.get("shop")}'
+              if t.get('office'):return ('office','commercial'),f'building={b or "unspecified"};office={t.get("office")}'
+            return None
+          def dist(fs):
+            ty=collections.Counter();ev=collections.Counter();cf=collections.Counter();u=0
+            for f in fs:
+              p=f.get('properties') or {};t=p.get('building_type_primary') or 'unknown';ty[str(t)]+=1;ev[str(p.get('evidence_level') or 'U')]+=1
+              if p.get('confidence_level_1_to_4') is not None:cf[str(p['confidence_level_1_to_4'])]+=1
+              if t=='unknown':u+=1
+            return ty,ev,cf,u
+          def counts(man,st,cp,task,rep,fs):
+            ty,ev,cf,u=dist(fs);n=len(fs)
+            man['total_features']=n;man['classified']=n-u;man['unknown']=u;man['type_distribution']=dict(ty);man['evidence_distribution']=dict(ev);man['confidence_level_distribution']=dict(cf)
+            st['total_elements']=n;st['classified_count']=n-u;st['unknown_count']=u;st['evidence_distribution']=dict(ev);st['confidence_distribution']=dict(cf)
+            cp['current_feature_count']=n;cp['feature_count_after']=n;task.setdefault('progress',{})['completed_count']=n;rep['feature_count_after']=n
+            return n
+          def verify(n):
+            sh=load(SHARD);m=load(MAN);c=load(CP);s=load(ST);r=load(REP);sn=len(sh.get('features') or []);mn=m.get('total_features');cn=c.get('feature_count_after');tn=s.get('total_elements');rn=r.get('feature_count_after');du=dups(sh.get('features') or [])
+            return sn==mn==cn==tn==rn==n and du==0,{'shard':sn,'manifest':mn,'checkpoint':cn,'status':tn,'report':rn,'dup':du}
+          sh=load(SHARD);man=load(MAN);old=load(REP);st=load(ST);cp=load(CP);task=load(TASK);recov=load(REC);fs=sh.get('features') or []
+          for o in (st,cp,task,recov):
+            if o.get('slot_id')!=SLOT:sys.exit('SLOT_MISMATCH')
+            if o.get('continuation_key') and o.get('continuation_key')!=CONT:sys.exit('CONTINUATION_MISMATCH')
+          if (st.get('owner') or task.get('owner')) and not recov.get('ignore_stale_owner'):sys.exit('LIVE_OWNER_PRESENT')
+          start=cp.get('next_batch_index') or old.get('next_batch_index')
+          if start!=181:sys.exit(f'CANONICAL_CURSOR_CHANGED:{start}')
+          if len(fs)!=7200:sys.exit(f'CANONICAL_COUNT_CHANGED:{len(fs)}')
+          if dups(fs):sys.exit('PREEXISTING_DUP_NONZERO')
+          fi,pa,oi=seen_ids(fs);before=len(fs);run_at=now();added_total=0
+          rep={'slot_id':SLOT,'continuation_key':CONT,'generated_at':run_at,'run_mode':'STRICT_12_BOUNDED_BATCH_CONTINUATION','source_contract':'AAYS_CHATGPT_PLAN_00_23_SLOT_COMMON_CONTINUATION_20260818 + source_contract_v2','start_batch_index':181,'completed_bounded_batches':0,'next_batch_index':181,'feature_count_before':before,'feature_count_after':before,'new_added':0,'progress':False,'duplicate_count':0,'nearest_matching_used':False,'fake_data':False,'final_ready':False,'production_merge':False,'remote_readback_verified':False,'batches':[]}
+          S=requests.Session();S.headers.update({'User-Agent':'TerraYield-AAYS-building_type_9/20260818'})
+          for idx,gid,bbox in W:
+            br={'batch_index':idx,'grid_id':gid,'bbox_osgb27700':bbox,'feature_count_before':len(fs),'started_at':now(),'allowed_binding_methods':['strict_centroid_within_polygon','exact_intersection'],'binding_method_used':'strict_centroid_within_polygon','nearest_matching_used':False,'fake_data':False,'source_family':'Land Registry INSPIRE public ArcGIS mirror + OSM Overpass','source_catalog_url':CAT,'added_feature_count':0,'source_bytes_available':False}
+            new=[]
+            try:
+              x1,y1,x2,y2=bbox;p={'where':'1=1','geometry':f'{x1},{y1},{x2},{y2}','geometryType':'esriGeometryEnvelope','inSR':'27700','spatialRel':'esriSpatialRelIntersects','outFields':'inspireid,validfrom,beginlifespanversion','returnGeometry':'true','outSR':'4326','f':'geojson','resultRecordCount':'2000'}
+              hr=S.get(ARC,params=p,timeout=55);hr.raise_for_status();hb=hr.content;hj=hr.json();hfs=hj.get('features') or []
+              br.update({'hmlr_query_url':hr.url,'hmlr_http_status':hr.status_code,'hmlr_source_sha256':h(hb),'hmlr_polygon_count':len(hfs),'hmlr_source_note':'Public ArcGIS mirror of Land Registry INSPIRE; not represented as the official HMLR host.','source_bytes_available':True})
+              if hfs:
+                gs=[shape(x['geometry']) for x in hfs if x.get('geometry')];u=gs[0]
+                minx=min(g.bounds[0] for g in gs)-.001;miny=min(g.bounds[1] for g in gs)-.001;maxx=max(g.bounds[2] for g in gs)+.001;maxy=max(g.bounds[3] for g in gs)+.001
+                oq=f'[out:json][timeout:45];way["building"]({miny},{minx},{maxy},{maxx});out tags geom;';orx=None;last=''
+                for ep in OPS:
+                  try:
+                    z=S.post(ep,data={'data':oq},timeout=65);z.raise_for_status();orx=z;break
+                  except Exception as e:last=f'{type(e).__name__}:{e}'
+                if orx is None:raise RuntimeError('OVERPASS_ALL_FAILED:'+last)
+                ob=orx.content;oj=orx.json();els=oj.get('elements') or [];br.update({'osm_query_url':orx.url,'osm_http_status':orx.status_code,'osm_source_sha256':h(ob),'osm_query_sha256':h(oq.encode()),'osm_way_count_raw':len(els)})
+                cand=[]
+                for e in els:
+                  oid=str(e.get('id'));cl=classify(e.get('tags') or {});geo=e.get('geometry') or []
+                  if not cl or oid in oi or len(geo)<4:continue
+                  xy=[(a['lon'],a['lat']) for a in geo if 'lon' in a and 'lat' in a]
+                  if len(xy)<4:continue
+                  try:pg=Polygon(xy)
+                  except Exception:continue
+                  if not pg.is_valid:pg=pg.buffer(0)
+                  if pg.is_empty:continue
+                  cand.append((oid,cl,pg.centroid,e.get('tags') or {}))
+                used=set()
+                for hf in sorted(hfs,key=lambda f:str((f.get('properties') or {}).get('inspireid') or f.get('id') or '')):
+                  if len(new)>=50:break
+                  hp=hf.get('properties') or {};raw=hp.get('inspireid') if hp.get('inspireid') is not None else hf.get('id')
+                  if raw is None or not hf.get('geometry'):continue
+                  pid=f'LR_INSPIRE_ARCGIS_{raw}';fid=f'{SLOT}:{pid}'
+                  if pid in pa or fid in fi:continue
+                  poly=shape(hf['geometry']);ms=[c for c in cand if c[0] not in used and poly.contains(c[2])]
+                  typ={c[1][0][0] for c in ms}
+                  if not ms or len(typ)!=1:continue
+                  c=sorted(ms,key=lambda x:int(x[0]))[0];oid=c[0];cl=c[1];stamp=now();used.add(oid)
+                  pr={'parcel_id':pid,'slot_id':SLOT,'region':'North East & Yorkshire','local_authority':'Northumberland/Tyneside bounded grid','postcode':None,'building_type_primary':cl[0][0],'building_type_code':None,'building_category':cl[0][1],'confidence_score':0.9,'confidence_level_1_to_4':3,'evidence_level':'B','source_count':2,'osm_id':oid,'source_ref':'W'+oid,'sources':[{'source_name':'Land Registry INSPIRE public ArcGIS mirror','url_or_local_path':hr.url,'accessed_at':br['started_at'],'sha256':br['hmlr_source_sha256'],'licence':'Open Government Licence data provenance; mirror endpoint','granularity':'parcel_polygon','fields_used':['inspireid','geometry'],'supports_field':'parcel_id/geometry','match_method':'strict_centroid_within_polygon'},{'source_name':'OpenStreetMap Overpass API','url_or_local_path':orx.url,'accessed_at':br['started_at'],'sha256':br['osm_source_sha256'],'licence':'ODbL 1.0','granularity':'building_polygon','fields_used':[cl[1]],'supports_field':'building_type_primary','match_method':'direct_osm_building_tag'}],'geometry_match_method':'strict_centroid_within_polygon','address_match_method':'none','limitations':'Parcel geometry is from a public ArcGIS mirror of Land Registry INSPIRE; type is direct OSM semantic evidence. No nearest matching.','needs_manual_review':False,'fake_data':False,'updated_at':stamp,'source_window':gid,'source_bbox_osgb27700':bbox}
+                  new.append({'type':'Feature','id':fid,'geometry':hf['geometry'],'properties':pr})
+              if new:
+                for f in new:
+                  pid=f['properties']['parcel_id'];oid=osmnum(f['properties']['osm_id'])
+                  if pid in pa or f['id'] in fi or oid in oi:sys.exit('DUPLICATE_CANDIDATE')
+                  fs.append(f);pa.add(pid);fi.add(f['id']);oi.add(oid)
+                sh['features']=fs;save(SHARD,sh)
+                br['result']='ADDED_EVIDENCE_BACKED_PARCELS';br['root_cause']=None
+              else:
+                br['result']='ZERO_DATA_CHECKPOINTED';br['root_cause']='NO_PARCEL_POLYGONS_IN_WINDOW' if not hfs else 'NO_UNAMBIGUOUS_UNPROCESSED_STRICT_BINDINGS'
+            except Exception as e:
+              br['result']='SOURCE_ACCESS_BLOCKED_CHECKPOINTED';br['root_cause']=f'{type(e).__name__}:{e}';br['source_bytes_available']=False;new=[]
+            br['added_feature_count']=len(new);added_total+=len(new);br['feature_count_after']=len(fs);br['batch_consumed']=True;br['completed_at']=now();nxt=idx+1
+            mh=man.setdefault('strict_spatial_batch_history',[]);mh.append(dict(br));man['last_checkpoint_batch_index']=idx;man['next_batch_index']=nxt;man['last_checkpoint_grid_id']=gid;man['fake_data']=False
+            if new:man['last_batch_index']=idx;man['last_batch_grid_id']=gid;man['last_added_feature_count']=len(new)
+            for o in (cp,st,task):
+              o['updated_at']=now();o['next_batch_index']=nxt;o['feature_count_after']=len(fs);o['first_unverified_step']=f'BATCH_{nxt}_STRICT_SPATIAL_BINDING_SOURCE_BYTES';o['final_ready']=False;o['fake_data']=False;o['production_merge']=False;o.setdefault('batch_attempt_history',[]).append(dict(br))
+            cp['feature_count_before']=before;cp['state']='CONTINUE_READY' if len(fs)>before else 'NO_DATA_CONTINUE';cp['progress']=len(fs)>before
+            st['state']='CONTINUE_READY' if len(fs)>before else 'NO_DATA_CONTINUE';st['owner']=None
+            task['state']='CONTINUE_READY' if len(fs)>before else 'NO_DATA_CONTINUE';task['owner']=None
+            rep['batches'].append(dict(br));rep['completed_bounded_batches']=len(rep['batches']);rep['next_batch_index']=nxt;rep['new_added']=added_total;rep['progress']=added_total>0
+            counts(man,st,cp,task,rep,fs);save(MAN,man);save(CP,cp);save(ST,st);save(TASK,task);save(REP,rep)
+            ok,rb=verify(len(fs))
+            if not ok:sys.exit('READBACK_MISMATCH:'+json.dumps(rb))
+            br['readback_verified']=True;br['readback']=rb;br['dup']=0;br['shard_equals_checkpoint_equals_status_equals_manifest']=True
+            rep['batches'][-1]=dict(br);man['strict_spatial_batch_history'][-1]=dict(br);cp['batch_attempt_history'][-1]=dict(br);st['batch_attempt_history'][-1]=dict(br);task['batch_attempt_history'][-1]=dict(br);rep['duplicate_count']=0;rep['readback_verified']=True
+            save(MAN,man);save(CP,cp);save(ST,st);save(TASK,task);save(REP,rep)
+            ok,rb=verify(len(fs))
+            if not ok:sys.exit('POST_CHECKPOINT_READBACK_MISMATCH:'+json.dumps(rb))
+          rep['completed_at']=now();rep['next_batch_index']=193;rep['feature_count_after']=len(fs);rep['new_added']=len(fs)-before;rep['progress']=rep['new_added']>0;rep['duplicate_count']=dups(fs);rep['zero_data_policy_applied']=any(x.get('added_feature_count',0)==0 for x in rep['batches']);rep['root_cause']=None if rep['new_added'] else 'NO_ADMISSIBLE_STRICT_BINDINGS_ACROSS_12_NEW_BOUNDED_WINDOWS'
+          cp['next_batch_index']=193;cp['first_unverified_step']='BATCH_193_STRICT_SPATIAL_BINDING_SOURCE_BYTES';cp['next_required_action']='Continue from batch 193 with unused bounded windows/source families; no nearest matching or fake data.'
+          st['next_batch_index']=193;st['first_unverified_step']='BATCH_193_STRICT_SPATIAL_BINDING_SOURCE_BYTES';st['note']=f'Batches 181-192 processed: before={before}, added={rep["new_added"]}, after={len(fs)}, dup=0.'
+          task['next_batch_index']=193;task['first_unverified_step']='BATCH_193_STRICT_SPATIAL_BINDING_SOURCE_BYTES'
+          counts(man,st,cp,task,rep,fs);man['last_strict_run_report']=str(REP);man['last_strict_run_before']=before;man['last_strict_run_added']=rep['new_added'];man['last_strict_run_after']=len(fs);man['duplicate_count']=rep['duplicate_count']
+          save(MAN,man);save(CP,cp);save(ST,st);save(TASK,task);save(REP,rep)
+          ok,rb=verify(len(fs))
+          if not ok or rb['dup']!=0:sys.exit('FINAL_LOCAL_READBACK_FAILED:'+json.dumps(rb))
+          print(json.dumps({'before':before,'added':rep['new_added'],'after':len(fs),'next_batch':193,'dup':0,'report':str(REP)},indent=2))
+          PY
+          python /tmp/bt9_181_192.py
+      - name: Commit exact BT9 paths and push canonical
+        shell: bash
+        run: |
+          set -euo pipefail
+          P=(england_map_web/data/building_type/shards/building_type_9_latest.geojson england_map_web/data/building_type/shards/building_type_9_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json)
+          git add -- "${P[@]}"
+          git diff --cached --quiet && { echo NO_BT9_CHANGES; exit 1; }
+          git commit -m 'aays: building_type_9 strict bounded batches 181-192'
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git rebase origin/codex/aays-single-runner-v5-20260706
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
+          echo "$(git rev-parse HEAD)" > /tmp/bt9_material_sha
+      - name: Verify remote snapshot and record readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json,subprocess,datetime
+          b='origin/codex/aays-single-runner-v5-20260706'
+          def j(p):return json.loads(subprocess.check_output(['git','show',f'{b}:{p}']))
+          rp='docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json';sp='docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json';cp='docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json';mp='england_map_web/data/building_type/shards/building_type_9_manifest_latest.json';gp='england_map_web/data/building_type/shards/building_type_9_latest.geojson'
+          r=j(rp);s=j(sp);c=j(cp);m=j(mp);g=j(gp);n=len(g.get('features') or []);v=[n,m.get('total_features'),c.get('feature_count_after'),s.get('total_elements'),r.get('feature_count_after')]
+          if len(set(v))!=1 or r.get('next_batch_index')!=193 or r.get('duplicate_count')!=0 or not all(x.get('readback_verified') and x.get('dup')==0 for x in r.get('batches',[])):raise SystemExit('REMOTE_READBACK_FAILED:'+repr(v))
+          stamp=datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z');sha=open('/tmp/bt9_material_sha').read().strip()
+          for p in (rp,sp,cp,mp):
+            o=json.load(open(p,encoding='utf-8'));o['remote_readback_verified']=True;o['last_material_commit_sha']=sha;o['remote_readback_at']=stamp
+            if p==rp:o['remote_readback_counts']={'shard':n,'manifest':v[1],'checkpoint':v[2],'status':v[3],'report':v[4],'dup':0}
+            with open(p,'w',encoding='utf-8',newline='\n') as f:json.dump(o,f,ensure_ascii=False,separators=(',',':'));f.write('\n')
+          PY
+          git add england_map_web/data/building_type/shards/building_type_9_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json
+          git commit -m 'aays: verify building_type_9 remote readback 181-192'
+          git fetch origin codex/aays-single-runner-v5-20260706
+          git rebase origin/codex/aays-single-runner-v5-20260706
+          git push origin HEAD:codex/aays-single-runner-v5-20260706
