@@ -9,7 +9,7 @@
   "region": "North West",
   "region_code": "NW",
   "task_id": "building-type-8-england-classification-v1-20260808",
-  "updated_at": "2026-08-18T02:06:00Z",
+  "updated_at": "2026-08-18T02:52:19Z",
   "owner": null,
   "final_ready": false,
   "classified_count": 7662,
@@ -18,7 +18,7 @@
   "confidence_distribution": {"1":338,"2":218,"3":7444,"4":0},
   "evidence_distribution": {"A":0,"B":7444,"C":193,"D":25,"U":338},
   "output_sha256": "2932061807bfd5a97bf10ecaee60b4dcfdc29fde45ef622c4901943ac9a3cbd5",
-  "note": "2026-08-18 deep continuation recovery recheck completed. Runtime DNS still cannot materialize public strict geometry; accessible repo/runtime still has no slot-local North West strict parcel geometry and the historical referenced OSM cache / north.pmtiles are unavailable. The 92,283-point repo security-centroid layer is not sufficient by itself for strict parcel/building binding. The canonical building_type_8 shard is about 13 MB and exceeds the connector 10 MiB full-blob response ceiling, preventing a safe full-shard append/rewrite from partial content. These are technical blockers, not zero-result source windows. Canonical shard/manifest remain unchanged; cursor remains batch 161; no nearest matching, synthetic data or new duplicate rows were written.",
+  "note": "2026-08-18 continuation recovery recheck completed for building_type_8. The exact Windows continuation file is not mounted and is not present in accessible repo search, so the accessible canonical slot continuation contract and latest slot state were applied. Runtime DNS still cannot materialize public strict geometry. A previously unused browser-visible ArcGIS FeatureServer source family, Land Registry INSPIRE Index Polygons layer 0, was discovered and verified as a polygon layer supporting JSON/GeoJSON/PBF queries, but bounded feature geometry could not be materialized into the execution runtime for strict centroid-within/exact-intersection binding. The canonical shard is 14,532,567 bytes; low-level Git create_blob/create_tree still requires complete replacement content and no verified full shard payload is available. Therefore no safe business append was possible. These are technical blockers, not zero-result source windows. Canonical shard/manifest remain unchanged; cursor remains batch 161; no nearest matching, fake data or new duplicate rows were written.",
   "continuation_key": "building-type-8-england-classification-v1-20260808",
   "production_merge": false,
   "fake_data": false,
@@ -30,11 +30,13 @@
     "feature_count_after": 8000,
     "business_batches_completed": 0,
     "candidate_batch_index": 161,
-    "source_index": "RUNTIME_DNS_LOCAL_FALLBACK_AND_SAFE_APPEND_DEEP_RECHECK_20260818",
+    "source_index": "ARCGIS_HMLR_BROWSER_SOURCE_AND_LARGE_SHARD_ATOMIC_WRITE_RECHECK_20260818",
+    "source_name": "Land Registry INSPIRE Index Polygons ArcGIS FeatureServer discovery plus runtime materialization and large-shard atomic-write recheck",
+    "source_url": "https://services2.arcgis.com/LrUbY6lLLgV3tEa5/ArcGIS/rest/services/Land_Registry_INSPIRE/FeatureServer/0",
     "source_result": "BLOCKED",
     "blocker_root_cause": "RUNTIME_DNS_UNAVAILABLE_FOR_PUBLIC_GEOMETRY_MATERIALIZATION",
     "secondary_blockers": [
-      "NO_NORTH_WEST_STRICT_PARCEL_GEOMETRY_OR_CENTROID_INPUT_MATERIALIZED",
+      "ARCGIS_FEATURE_GEOMETRY_NOT_MATERIALIZED_IN_RUNTIME",
       "CANONICAL_SHARD_FULL_CONTENT_UNAVAILABLE_FOR_SAFE_APPEND_IN_CONNECTOR"
     ],
     "strict_match_rule": "centroid_within_polygon_or_exact_intersection_only",
@@ -46,7 +48,7 @@
     "nearest_match_used": false
   },
   "previous_status_snapshot": {
-    "updated_at": "2026-08-18T01:13:00Z",
+    "updated_at": "2026-08-18T02:06:00Z",
     "classified_count": 7662,
     "unknown_count": 338,
     "total_elements": 8000,
