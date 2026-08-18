@@ -58,7 +58,7 @@ jobs:
               out.append(line)
           s='\n'.join(out)+'\n'
           if 'REC' in s: raise SystemExit('RECOVERY_WRITE_REFERENCE_REMAINS')
-          if "REPORT=REP" not in s: raise SystemExit('REPORT_OWNERSHIP_PATCH_FAILED')
+          if 'REPORT=REP' not in s: raise SystemExit('REPORT_OWNERSHIP_PATCH_FAILED')
           Path('/tmp/bt6_106_117.py').write_text(s,encoding='utf-8')
           print({'runner_lines':len(s.splitlines()),'ownership':'six exact BT6 paths','report':'classification_latest','nearest':False,'fake':False})
           PY
@@ -141,3 +141,4 @@ jobs:
           if not all(x.get('readback_verified') and x.get('shard_equals_checkpoint_equals_status_equals_manifest') and x.get('readback',{}).get('dup')==0 and not x.get('nearest_matching_used') and not x.get('fake_data') for x in bs): raise SystemExit('REMOTE_PER_BATCH_READBACK_FAILED')
           print({'report':rp,'before':r.get('feature_count_before'),'added':r.get('new_added'),'after':n,'next_batch':118,'dup':0,'zero_batches':[x.get('batch_index') for x in bs if (x.get('added_feature_count') or 0)==0],'remote_counts':vals})
           PY
+# trigger_nonce: 20260818T2035+0300
