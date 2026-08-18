@@ -1,0 +1,162 @@
+name: AAYS BT9 strict 229-240 observable run
+on:
+  pull_request:
+    branches:
+      - agent/aays-bt9-strict-12-20260818-0441
+    paths:
+      - 'docs/chatgpt_status/_shared/slots_21/building_type_9/actions_pr_trigger_229_240.txt'
+permissions:
+  contents: write
+concurrency:
+  group: aays-bt9-strict-229-240-20260818
+  cancel-in-progress: false
+jobs:
+  strict-spatial:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - name: Checkout trigger head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          path: trigger
+      - name: Extract verified parent runner and advance only to 229-240
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import re,subprocess,textwrap
+          p='.github/workflows/aays-bt9-strict-12batches-20260818-once.yml'
+          old=subprocess.check_output(['git','-C','trigger','show',f'434fa3dd744ccafb6c38aaeb6a849e90f8837bf2:{p}'],text=True)
+          m=re.search(r"cat > /tmp/bt9_181_192\\.py <<'PY'\n(.*?)\n\\s*PY\n\\s*python /tmp/bt9_181_192\\.py",old,re.S)
+          if not m: raise SystemExit('VERIFIED_PARENT_RUNNER_NOT_FOUND')
+          s=textwrap.dedent(m.group(1))
+          repl=[
+            ('W=[]; bi=181','W=[]; bi=229'),
+            ('for y in (575000,580000,585000):','for y in (635000,640000,645000):'),
+            ('if start!=181:','if start!=229:'),
+            ('if len(fs)!=7200:','if len(fs)!=7945:'),
+            ("'start_batch_index':181","'start_batch_index':229"),
+            ("'next_batch_index':181","'next_batch_index':229"),
+            ("rep['next_batch_index']=193","rep['next_batch_index']=241"),
+            ("cp['next_batch_index']=193","cp['next_batch_index']=241"),
+            ("st['next_batch_index']=193","st['next_batch_index']=241"),
+            ("task['next_batch_index']=193","task['next_batch_index']=241"),
+            ('BATCH_193_STRICT_SPATIAL_BINDING_SOURCE_BYTES','BATCH_241_STRICT_SPATIAL_BINDING_SOURCE_BYTES'),
+            ('Continue from batch 193','Continue from batch 241'),
+            ('Batches 181-192 processed','Batches 229-240 processed'),
+            ("'next_batch':193","'next_batch':241")]
+          for a,b in repl:
+            if a not in s: raise SystemExit('EXPECTED_PARENT_TOKEN_MISSING:'+a)
+            s=s.replace(a,b)
+          open('/tmp/bt9_229_240.py','w',encoding='utf-8').write(s)
+          PY
+      - name: Checkout canonical slot branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+          path: canonical
+      - name: Install runtime geometry helpers
+        run: python -m pip install --quiet requests shapely
+      - name: Preflight exact slot cursor ownership counts and contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json,subprocess
+          b='origin/codex/aays-single-runner-v5-20260706'
+          def j(p): return json.loads(subprocess.check_output(['git','show',f'{b}:{p}']))
+          c=j('docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json')
+          s=j('docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json')
+          m=j('england_map_web/data/building_type/shards/building_type_9_manifest_latest.json')
+          g=j('england_map_web/data/building_type/shards/building_type_9_latest.geojson')
+          r=j('docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json')
+          n=len(g.get('features') or [])
+          if c.get('slot_id')!='building_type_9' or c.get('continuation_key')!='building-type-9-england-classification-v1-20260808': raise SystemExit('SLOT_OR_CONTINUATION_CHANGED')
+          if s.get('owner') not in (None,''): raise SystemExit('LIVE_OWNER_PRESENT:'+repr(s.get('owner')))
+          if c.get('next_batch_index')!=229 or s.get('next_batch_index')!=229 or r.get('next_batch_index')!=229: raise SystemExit('PREFLIGHT_CURSOR_CHANGED')
+          vals=[n,c.get('feature_count_after'),s.get('total_elements'),m.get('total_features'),r.get('feature_count_after')]
+          if len(set(vals))!=1 or n!=7945: raise SystemExit('PREFLIGHT_COUNT_MISMATCH:'+repr(vals))
+          if r.get('source_contract')!='building_type_9_strict_spatial_binding_source_contract_v2': raise SystemExit('SOURCE_CONTRACT_CHANGED')
+          print({'slot':'building_type_9','before':n,'cursor':229,'owner':s.get('owner'),'source_contract':r.get('source_contract')})
+          PY
+      - name: Run exactly twelve new real strict bounded windows
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          python /tmp/bt9_229_240.py
+      - name: Package only owned BT9 paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          P=(england_map_web/data/building_type/shards/building_type_9_latest.geojson england_map_web/data/building_type/shards/building_type_9_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json)
+          rm -rf /tmp/bt9_payload && mkdir -p /tmp/bt9_payload
+          for p in "${P[@]}"; do mkdir -p "/tmp/bt9_payload/$(dirname "$p")"; cp "$p" "/tmp/bt9_payload/$p"; done
+      - name: Race-safe publish exact owned BT9 paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          git fetch origin codex/aays-single-runner-v5-20260706
+          rm -rf /tmp/bt9_publish
+          git worktree add --detach /tmp/bt9_publish origin/codex/aays-single-runner-v5-20260706
+          cd /tmp/bt9_publish
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          P=(england_map_web/data/building_type/shards/building_type_9_latest.geojson england_map_web/data/building_type/shards/building_type_9_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json)
+          ok=0
+          for attempt in 1 2 3; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            python - <<'PY'
+          import json,subprocess
+          b='origin/codex/aays-single-runner-v5-20260706'
+          p='docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json'
+          c=json.loads(subprocess.check_output(['git','show',f'{b}:{p}']))
+          if c.get('slot_id')!='building_type_9' or c.get('continuation_key')!='building-type-9-england-classification-v1-20260808' or c.get('next_batch_index')!=229:
+              raise SystemExit('REMOTE_BT9_MOVED_ABORT:'+repr((c.get('slot_id'),c.get('continuation_key'),c.get('next_batch_index'))))
+          PY
+            git reset --hard origin/codex/aays-single-runner-v5-20260706
+            for p in "${P[@]}"; do cp "/tmp/bt9_payload/$p" "$p"; done
+            git add -- "${P[@]}"
+            git diff --cached --quiet && { echo NO_BT9_CHANGES; exit 1; }
+            git commit -m 'aays: building_type_9 strict bounded batches 229-240'
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then ok=1; break; fi
+            echo "PUSH_RACE_RETRY=$attempt"
+          done
+          test "$ok" = 1
+      - name: Final remote readback equality duplicate and per-batch gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json,subprocess
+          b='origin/codex/aays-single-runner-v5-20260706'
+          def j(p): return json.loads(subprocess.check_output(['git','show',f'{b}:{p}']))
+          rp='docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json'
+          sp='docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json'
+          cp='docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json'
+          mp='england_map_web/data/building_type/shards/building_type_9_manifest_latest.json'
+          gp='england_map_web/data/building_type/shards/building_type_9_latest.geojson'
+          r,s,c,m,g=j(rp),j(sp),j(cp),j(mp),j(gp)
+          n=len(g.get('features') or [])
+          vals=[n,m.get('total_features'),c.get('feature_count_after'),s.get('total_elements'),r.get('feature_count_after')]
+          if len(set(vals))!=1: raise SystemExit('REMOTE_COUNT_MISMATCH:'+repr(vals))
+          if r.get('next_batch_index')!=241 or c.get('next_batch_index')!=241 or s.get('next_batch_index')!=241: raise SystemExit('REMOTE_CURSOR_FAILED')
+          if r.get('duplicate_count')!=0: raise SystemExit('REMOTE_DUP_FAILED:'+repr(r.get('duplicate_count')))
+          bs=r.get('batches') or []
+          if len(bs)!=12: raise SystemExit('REMOTE_BATCH_COUNT_FAILED:'+repr(len(bs)))
+          if [x.get('batch_index') for x in bs]!=list(range(229,241)): raise SystemExit('REMOTE_BATCH_RANGE_FAILED')
+          if not all(x.get('readback_verified') and x.get('dup')==0 and x.get('shard_equals_checkpoint_equals_status_equals_manifest') and not x.get('nearest_matching_used') and not x.get('fake_data') for x in bs): raise SystemExit('REMOTE_PER_BATCH_READBACK_FAILED')
+          z=[x.get('batch_index') for x in bs if (x.get('added_feature_count') or 0)==0]
+          print({'report':rp,'before':r.get('feature_count_before'),'added':r.get('new_added'),'after':n,'next_batch':241,'dup':0,'zero_batches':z,'remote_counts':vals})
+          PY
