@@ -1,0 +1,134 @@
+name: AAYS building_type_2 next 12 unused bounded windows
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-common-v3-next12-20260818.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-2-common-v3-next12-20260818
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 180
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-2-common-v2-b177-188-20260818.yml
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
+      - name: Select unused windows and execute inherited guarded driver
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          driver_path=Path('.github/workflows/aays-building-type-2-common-v2-b177-188-20260818.yml')
+          cp_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          st_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          geo_path=Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+
+          cp=json.loads(cp_path.read_text(encoding='utf-8'))
+          st=json.loads(st_path.read_text(encoding='utf-8'))
+          geo=json.loads(geo_path.read_text(encoding='utf-8'))
+          start_batch=int(cp.get('next_batch_index'))
+          start_count=len(geo.get('features') or [])
+          assert start_batch >= 189, start_batch
+          assert cp.get('current_feature_count')==start_count
+          assert st.get('total_elements')==start_count
+
+          candidates=[
+            ('Sidcup','Bexley',[0.08,51.41,0.15,51.45]),
+            ('Purley','Croydon',[-0.14,51.32,-0.08,51.36]),
+            ('Pinner','Harrow',[-0.40,51.57,-0.34,51.62]),
+            ('Southall','Ealing',[-0.39,51.49,-0.32,51.53]),
+            ('Uxbridge','Hillingdon',[-0.50,51.52,-0.42,51.57]),
+            ('Romford','Havering',[0.16,51.55,0.23,51.60]),
+            ('Hornchurch','Havering',[0.19,51.53,0.25,51.58]),
+            ('Woodford','Redbridge',[0.01,51.59,0.07,51.64]),
+            ('Chingford','Waltham Forest',[-0.03,51.62,0.03,51.68]),
+            ('New Malden','Kingston upon Thames',[-0.28,51.38,-0.22,51.42]),
+            ('Mitcham','Merton',[-0.19,51.38,-0.13,51.42]),
+            ('Catford','Lewisham',[-0.04,51.43,0.02,51.47]),
+            ('Dagenham','Barking and Dagenham',[0.12,51.52,0.19,51.57]),
+            ('Mill Hill','Barnet',[-0.27,51.60,-0.20,51.65]),
+            ('Wembley','Brent',[-0.31,51.53,-0.25,51.58]),
+            ('Eltham','Greenwich',[0.03,51.43,0.10,51.48]),
+            ('Muswell Hill','Haringey',[-0.17,51.58,-0.11,51.62]),
+            ('Upminster','Havering',[0.23,51.53,0.30,51.58]),
+            ('Feltham','Hounslow',[-0.43,51.43,-0.36,51.47]),
+            ('Surbiton','Kingston upon Thames',[-0.33,51.37,-0.27,51.41]),
+            ('Lee','Lewisham',[-0.02,51.44,0.04,51.48]),
+            ('East Ham','Newham',[0.03,51.51,0.09,51.56]),
+            ('Richmond','Richmond upon Thames',[-0.32,51.44,-0.26,51.48]),
+            ('Cheam','Sutton',[-0.24,51.34,-0.18,51.38]),
+            ('Barnet','Barnet',[-0.23,51.62,-0.16,51.67]),
+            ('Ealing','Ealing',[-0.33,51.50,-0.27,51.54]),
+            ('Hampton','Richmond upon Thames',[-0.39,51.40,-0.33,51.44]),
+            ('Beckenham','Bromley',[-0.05,51.39,0.02,51.43]),
+            ('Greenford','Ealing',[-0.37,51.52,-0.31,51.57]),
+            ('Northwood','Hillingdon',[-0.45,51.59,-0.38,51.64]),
+          ]
+
+          used_cities=set(str(x).strip().lower() for x in (cp.get('attempted_cities') or []) if x)
+          used_bboxes=set()
+          for obj in (cp,st):
+              for k in ('source_attempt_history','batch_attempt_history','zero_window_attempts'):
+                  for rec in obj.get(k) or []:
+                      if rec.get('city'): used_cities.add(str(rec['city']).strip().lower())
+                      b=rec.get('bbox_wgs84')
+                      if isinstance(b,list) and len(b)==4: used_bboxes.add(tuple(float(x) for x in b))
+              for k in ('last_bbox_wgs84','last_attempted_bbox_wgs84'):
+                  b=obj.get(k)
+                  if isinstance(b,list) and len(b)==4: used_bboxes.add(tuple(float(x) for x in b))
+              for k in ('last_city','last_attempted_city','last_batch_city'):
+                  if obj.get(k): used_cities.add(str(obj[k]).strip().lower())
+
+          selected=[]
+          for city,authority,bbox in candidates:
+              tb=tuple(float(x) for x in bbox)
+              if city.lower() in used_cities or tb in used_bboxes:
+                  print('SKIP_USED_WINDOW',city,bbox,flush=True)
+                  continue
+              selected.append((city,authority,bbox))
+              used_cities.add(city.lower()); used_bboxes.add(tb)
+              if len(selected)==12: break
+          if len(selected)<12:
+              raise SystemExit(f'only {len(selected)} unused windows available; refusing replay')
+
+          specs=[(start_batch+i,city,authority,bbox) for i,(city,authority,bbox) in enumerate(selected)]
+          print('SELECTED_UNUSED_WINDOWS',json.dumps(specs,ensure_ascii=False),flush=True)
+
+          yml=driver_path.read_text(encoding='utf-8')
+          marker="          python - <<'PY'\n"
+          start=yml.index(marker)+len(marker)
+          end=yml.rindex("\n          PY")
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in yml[start:end].splitlines())+'\n'
+          code=code.replace('START_COUNT = 8800',f'START_COUNT = {start_count}',1)
+          code=code.replace('START_BATCH = 177',f'START_BATCH = {start_batch}',1)
+          a=code.index('SPECS = [')
+          b=code.index('ENDPOINTS = [',a)
+          spec_text='SPECS = '+repr(specs)+'\n          '
+          code=code[:a]+spec_text+code[b:]
+          code=code.replace('next=189',f'next={start_batch+12}')
+          # v2 rollback gate is only relevant to the repaired 177->189 false cursor incident.
+          code=code.replace('''              if cp.get("next_batch_index") != 189:\n                  raise SystemExit(f"unexpected cursor before recovery: {cp.get('next_batch_index')}")''',
+                            '''              if cp.get("next_batch_index") != START_BATCH:\n                  raise SystemExit(f"unexpected cursor before run: {cp.get('next_batch_index')}")''')
+          compile(code,'<building_type_2-next12>','exec')
+          exec(compile(code,'<building_type_2-next12>','exec'),{})
+          PY
