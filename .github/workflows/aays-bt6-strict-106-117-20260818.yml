@@ -1,200 +1,220 @@
-# BT6 existing runner payload reused for continuation batches 118-129.
-# Deliberately not an independently-triggered workflow; canonical executor extracts the Python payload below.
+# BT6 existing runner payload reused for continuation batches 130-141.
+# Existing payload path retained; canonical executor extracts this Python body.
 cat > /tmp/bt6_106_117.py <<'PY'
-import os,re,json,time,hashlib,subprocess,zipfile,io,html,xml.etree.ElementTree as ET
+import os,re,json,time,hashlib,subprocess,datetime
 from pathlib import Path
-from urllib.parse import urljoin
 from collections import Counter
 import requests
-from shapely.geometry import Polygon,MultiPolygon,box,mapping
-from shapely.ops import transform as shp_transform,unary_union
+from shapely.geometry import shape,Polygon,mapping
+from shapely.ops import transform as shp_transform
 from pyproj import Transformer
-BR='codex/aays-single-runner-v5-20260706'; SLOT='building_type_6'; CONT='building-type-6-england-classification-v1-20260808'
-START=118; END=129; BEFORE=22250
-SHARD=Path('england_map_web/data/building_type/shards/building_type_6_latest.geojson'); MAN=Path('england_map_web/data/building_type/shards/building_type_6_manifest_latest.json'); REP=Path('docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json'); REPORT=REP
-ST=Path('docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json'); CP=Path('docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json'); TASK=Path('docs/chatgpt_status/_shared/slots_21/building_type_6/current_task_latest.json'); OWN=[SHARD,MAN,REP,ST,CP,TASK]
-PAGE='https://use-land-property-data.service.gov.uk/datasets/inspire/download'; AUTH='North West Leicestershire District Council'; OPS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']
-S=requests.Session(); S.headers.update({'User-Agent':'TerraYield-AAYS/1.0 evidence-collection'})
-TOWGS=Transformer.from_crs(27700,4326,always_xy=True); TOBNG=Transformer.from_crs(4326,27700,always_xy=True)
+
+BR='codex/aays-single-runner-v5-20260706'
+SLOT='building_type_6'
+CONT='building-type-6-england-classification-v1-20260808'
+START=130; END=141; BEFORE=22250
+SHARD=Path('england_map_web/data/building_type/shards/building_type_6_latest.geojson')
+MAN=Path('england_map_web/data/building_type/shards/building_type_6_manifest_latest.json')
+REP=Path('docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json')
+REPORT=REP
+ST=Path('docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json')
+CP=Path('docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json')
+TASK=Path('docs/chatgpt_status/_shared/slots_21/building_type_6/current_task_latest.json')
+OWN=[SHARD,MAN,REP,ST,CP,TASK]
+
+ARCGIS='https://maps164.nottinghamcity.gov.uk/server/rest/services/Core_services/Housing_and_Property/MapServer/22/query'
+ARCGIS_LAYER='Nottingham City Council Land Registry INSPIRE Index Polygons'
+OPS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']
+AUTH='Nottingham City Council'
+S=requests.Session()
+S.headers.update({'User-Agent':'TerraYield-AAYS-building_type_6/20260818 evidence-collection'})
+TOWGS=Transformer.from_crs(27700,4326,always_xy=True)
+TOBNG=Transformer.from_crs(4326,27700,always_xy=True)
+
 W=[]; n=START
-for y in (317000,318000,319000):
-  for x in (440000,441000,442000,443000): W.append((n,f'BT6_HMLR_NWL_E{x//1000:03d}_N{y//1000:03d}_1K_20260818',[x,y,x+1000,y+1000])); n+=1
+for y in (333000,334000,335000):
+    for x in (452000,453000,454000,455000):
+        W.append((n,f'BT6_NOTTM_ARCGIS_E{x//1000:03d}_N{y//1000:03d}_1K_20260818',[x,y,x+1000,y+1000]))
+        n+=1
 assert [a for a,_,_ in W]==list(range(START,END+1))
+
 def now():
- import datetime; return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+    return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
 def load(p): return json.load(open(p,encoding='utf-8'))
 def save(p,o):
- q=Path(str(p)+'.tmp'); q.parent.mkdir(parents=True,exist_ok=True)
- with open(q,'w',encoding='utf-8',newline='\n') as f: json.dump(o,f,ensure_ascii=False,separators=(',',':'));f.write('\n')
- os.replace(q,p)
+    q=Path(str(p)+'.tmp'); q.parent.mkdir(parents=True,exist_ok=True)
+    with open(q,'w',encoding='utf-8',newline='\n') as f:
+        json.dump(o,f,ensure_ascii=False,separators=(',',':')); f.write('\n')
+    os.replace(q,p)
 def cmd(a,check=True): return subprocess.run(a,text=True,check=check,capture_output=True)
 def gj(p,ref=None): return json.loads(subprocess.check_output(['git','show',f'{ref or "origin/"+BR}:{p}']))
 def dup(fs):
- d=0
- for ex in (lambda f:f.get('id'),lambda f:(f.get('properties') or {}).get('parcel_id')):
-  z=set()
-  for f in fs:
-   v=ex(f)
-   if v is None: continue
-   v=str(v); d+=v in z; z.add(v)
- return d
+    d=0
+    for ex in (lambda f:f.get('id'),lambda f:(f.get('properties') or {}).get('parcel_id')):
+        z=set()
+        for f in fs:
+            v=ex(f)
+            if v is None: continue
+            v=str(v); d += v in z; z.add(v)
+    return d
 def seen(fs):
- fi=set();pa=set();hi=set();oi=set()
- for f in fs:
-  if f.get('id') is not None: fi.add(str(f['id']))
-  p=f.get('properties') or {}; pa.add(str(p.get('parcel_id'))) if p.get('parcel_id') is not None else None
-  sr=str(p.get('source_ref') or ''); hi.add(sr.split(':',1)[1]) if sr.startswith('hmlr_inspire:') else None
-  oi.update(re.findall(r'\d{4,}',str(p.get('osm_id') or '')))
- return fi,pa,hi,oi
+    fi=set(); pa=set(); hi=set(); oi=set()
+    for f in fs:
+        if f.get('id') is not None: fi.add(str(f['id']))
+        p=f.get('properties') or {}
+        if p.get('parcel_id') is not None: pa.add(str(p['parcel_id']))
+        sr=str(p.get('source_ref') or '')
+        if sr.startswith('nottm_hmlr_inspire:'): hi.add(sr.split(':',1)[1])
+        if sr.startswith('hmlr_inspire:'): hi.add(sr.split(':',1)[1])
+        oi.update(re.findall(r'\d{4,}',str(p.get('osm_id') or '')))
+    return fi,pa,hi,oi
 def pre(cur,cnt):
- cmd(['git','fetch','origin',BR]);c=gj(CP);s=gj(ST);got=(c.get('slot_id'),c.get('continuation_key'),c.get('next_batch_index'),c.get('feature_count_after'),c.get('owner'),s.get('owner'));want=(SLOT,CONT,cur,cnt,None,None)
- if got!=want: raise RuntimeError(f'REMOTE_BT6_MOVED got={got!r} want={want!r}')
+    cmd(['git','fetch','origin',BR])
+    c=gj(CP); s=gj(ST)
+    got=(c.get('slot_id'),c.get('continuation_key'),c.get('next_batch_index'),c.get('feature_count_after'),c.get('owner'),s.get('owner'))
+    want=(SLOT,CONT,cur,cnt,None,None)
+    if got!=want: raise RuntimeError(f'REMOTE_BT6_MOVED got={got!r} want={want!r}')
 def push(msg,cur,cnt):
- pre(cur,cnt);cmd(['git','add','--']+[str(p) for p in OWN]);
- if cmd(['git','diff','--cached','--quiet'],False).returncode==0: raise RuntimeError('NO_BT6_CHANGES')
- cmd(['git','commit','-m',msg])
- for _ in range(4):
-  p=cmd(['git','push','origin',f'HEAD:{BR}'],False)
-  if p.returncode==0:return
-  cmd(['git','fetch','origin',BR]);c=gj(CP);s=gj(ST)
-  if (c.get('next_batch_index'),c.get('feature_count_after'),c.get('owner'),s.get('owner'))!=(cur,cnt,None,None): raise RuntimeError('PUSH_RACE_BT6_CHANGED')
-  if cmd(['git','rebase',f'origin/{BR}'],False).returncode: raise RuntimeError('REBASE_FAILED')
- raise RuntimeError('PUSH_FAILED')
+    pre(cur,cnt)
+    cmd(['git','add','--']+[str(p) for p in OWN])
+    if cmd(['git','diff','--cached','--quiet'],False).returncode==0: raise RuntimeError('NO_BT6_CHANGES')
+    cmd(['git','commit','-m',msg])
+    for _ in range(4):
+        p=cmd(['git','push','origin',f'HEAD:{BR}'],False)
+        if p.returncode==0:return
+        cmd(['git','fetch','origin',BR]); c=gj(CP); s=gj(ST)
+        if (c.get('next_batch_index'),c.get('feature_count_after'),c.get('owner'),s.get('owner'))!=(cur,cnt,None,None):
+            raise RuntimeError('PUSH_RACE_BT6_CHANGED')
+        if cmd(['git','rebase',f'origin/{BR}'],False).returncode:
+            raise RuntimeError('REBASE_FAILED')
+    raise RuntimeError('PUSH_FAILED')
 def rb(cur,cnt):
- cmd(['git','fetch','origin',BR]); c=gj(CP);s=gj(ST);m=gj(MAN);r=gj(REP);g=json.loads(subprocess.check_output(['git','show',f'origin/{BR}:{SHARD}']));fs=g.get('features') or []; vals=[len(fs),c.get('feature_count_after'),s.get('feature_count_after'),m.get('total_features'),r.get('feature_count_after')];d=dup(fs)
- if len(set(vals))!=1 or vals[0]!=cnt or d or c.get('next_batch_index')!=cur or s.get('next_batch_index')!=cur or r.get('next_batch_index')!=cur: raise RuntimeError(f'READBACK_FAIL {vals!r} dup={d} cursor={cur}')
- return {'shard':vals[0],'checkpoint':vals[1],'status':vals[2],'manifest':vals[3],'report':vals[4],'dup':d}
-def lname(t): return t.rsplit('}',1)[-1]
-def poly_from(pe):
- rings=[]
- for ringname in ('exterior','interior'):
-  for rr in [x for x in pe.iter() if lname(x.tag)==ringname]:
-   ps=next((x for x in rr.iter() if lname(x.tag)=='posList' and x.text),None)
-   if ps is None: continue
-   a=[float(v) for v in ps.text.split()];dim=int(ps.attrib.get('srsDimension','2'));pts=[tuple(a[i:i+dim][:2]) for i in range(0,len(a)-dim+1,dim)]
-   if len(pts)>=4:rings.append((ringname,pts))
- ex=[p for k,p in rings if k=='exterior'];holes=[p for k,p in rings if k=='interior']
- return Polygon(ex[0],holes) if ex else None
-def parse_gml(p):
- root=ET.parse(p).getroot(); feats=[]
- for e in root.iter():
-  if lname(e.tag) not in ('featureMember','featureMembers'): continue
-  children=list(e) if lname(e.tag)=='featureMembers' else list(e)[:1]
-  for f in children:
-   iid=next((str(x.text).strip() for x in f.iter() if lname(x.tag).upper()=='INSPIREID' and x.text),None)
-   if not iid: continue
-   ps=[]
-   for pe in f.iter():
-    if lname(pe.tag)=='Polygon':
-     try:
-      p0=poly_from(pe)
-      if p0 and not p0.is_empty: ps.append(p0 if p0.is_valid else p0.buffer(0))
-     except Exception: pass
-   if ps:
-    geom=unary_union(ps); feats.append((iid,geom))
- if not feats: raise RuntimeError('HMLR_GML_NO_INSPIRE_FEATURES')
- return feats
-def hmlr():
- cache=Path('/tmp/bt6_nwl_inspire.gml');meta=Path('/tmp/bt6_nwl_inspire_meta.json')
- if cache.exists() and meta.exists(): return parse_gml(cache),load(meta)
- r=S.get(PAGE,timeout=90,allow_redirects=True);r.raise_for_status();txt=html.unescape(r.text);i=txt.lower().find(AUTH.lower());
- if i<0:i=txt.lower().find('north west leicestershire')
- if i<0:raise RuntimeError('HMLR_AUTHORITY_NOT_ON_DOWNLOAD_PAGE')
- seg=txt[i:i+6000];hs=re.findall(r'href=["\']([^"\']+)["\']',seg,re.I)
- if not hs:raise RuntimeError('HMLR_DOWNLOAD_HREF_NOT_FOUND')
- urls=[urljoin(r.url,h) for h in hs];urls=sorted(set(urls),key=lambda u:(0 if '.gml' in u.lower() else 1,len(u)));last=None
- for u in urls[:8]:
-  try:
-   q=S.get(u,timeout=180,allow_redirects=True);q.raise_for_status();b=q.content
-   if b[:2]==b'PK':
-    z=zipfile.ZipFile(io.BytesIO(b));ns=[x for x in z.namelist() if x.lower().endswith('.gml')];b=z.read(ns[0]) if ns else (_ for _ in ()).throw(RuntimeError('ZIP_NO_GML'))
-   if not (b.lstrip().startswith(b'<?xml') or b'<gml' in b[:200000].lower()):raise RuntimeError('NOT_GML')
-   cache.write_bytes(b);mm={'authority':AUTH,'download_page':PAGE,'download_url':q.url,'page_sha256':hashlib.sha256(r.content).hexdigest(),'gml_sha256':hashlib.sha256(b).hexdigest(),'gml_bytes':len(b),'downloaded_at':now()};save(meta,mm);return parse_gml(cache),mm
-  except Exception as e:last=e
- raise RuntimeError('HMLR_DOWNLOAD_FAILED:'+repr(last))
+    cmd(['git','fetch','origin',BR])
+    c=gj(CP); s=gj(ST); m=gj(MAN); r=gj(REP)
+    g=json.loads(subprocess.check_output(['git','show',f'origin/{BR}:{SHARD}']))
+    fs=g.get('features') or []
+    vals=[len(fs),c.get('feature_count_after'),s.get('feature_count_after'),m.get('total_features'),r.get('feature_count_after')]
+    d=dup(fs)
+    if len(set(vals))!=1 or vals[0]!=cnt or d or c.get('next_batch_index')!=cur or s.get('next_batch_index')!=cur or r.get('next_batch_index')!=cur:
+        raise RuntimeError(f'READBACK_FAIL {vals!r} dup={d} cursor={cur}')
+    return {'shard':vals[0],'checkpoint':vals[1],'status':vals[2],'manifest':vals[3],'report':vals[4],'dup':d}
+
 def classify(t):
- b=str(t.get('building') or '').lower();M={'detached':('residential_detached','residential'),'semidetached_house':('residential_semidetached','residential'),'house':('residential_house','residential'),'terrace':('residential_terrace','residential'),'residential':('residential','residential'),'apartments':('residential_apartments','residential'),'industrial':('industrial','commercial'),'warehouse':('warehouse','commercial'),'commercial':('commercial','commercial'),'retail':('commercial_retail','commercial'),'office':('office','commercial'),'hotel':('hospitality','commercial'),'school':('education','institutional'),'college':('education','institutional'),'university':('education','institutional'),'hospital':('healthcare_care','institutional'),'church':('religious','institutional'),'chapel':('religious','institutional'),'mosque':('religious','institutional'),'temple':('religious','institutional'),'civic':('public_infrastructure','institutional'),'government':('public_infrastructure','institutional'),'public':('public_infrastructure','institutional'),'barn':('agricultural_outbuilding','agricultural'),'farm_auxiliary':('agricultural_outbuilding','agricultural'),'stable':('agricultural_outbuilding','agricultural')}
- if b in M:return M[b],'building='+b
- if b not in ('yes','service',''):return None
- a=str(t.get('amenity') or '').lower();q=str(t.get('tourism') or '').lower()
- if a in ('school','college','university','kindergarten'):return ('education','institutional'),f'building={b};amenity={a}'
- if a in ('hospital','clinic','doctors','nursing_home'):return ('healthcare_care','institutional'),f'building={b};amenity={a}'
- if a=='place_of_worship':return ('religious','institutional'),f'building={b};amenity={a}'
- if a in ('townhall','community_centre','fire_station','police','library','courthouse'):return ('public_infrastructure','institutional'),f'building={b};amenity={a}'
- if q in ('hotel','motel','hostel','guest_house'):return ('hospitality','commercial'),f'building={b};tourism={q}'
- if t.get('shop'):return ('commercial_retail','commercial'),f'building={b};shop={t.get("shop")}'
- if t.get('office'):return ('office','commercial'),f'building={b};office={t.get("office")}'
- return None
+    b=str(t.get('building') or '').lower()
+    M={'detached':('residential_detached','residential'),'semidetached_house':('residential_semidetached','residential'),'house':('residential_house','residential'),'terrace':('residential_terrace','residential'),'residential':('residential','residential'),'apartments':('residential_apartments','residential'),'industrial':('industrial','commercial'),'warehouse':('warehouse','commercial'),'commercial':('commercial','commercial'),'retail':('commercial_retail','commercial'),'office':('office','commercial'),'hotel':('hospitality','commercial'),'school':('education','institutional'),'college':('education','institutional'),'university':('education','institutional'),'hospital':('healthcare_care','institutional'),'church':('religious','institutional'),'chapel':('religious','institutional'),'mosque':('religious','institutional'),'temple':('religious','institutional'),'civic':('public_infrastructure','institutional'),'government':('public_infrastructure','institutional'),'public':('public_infrastructure','institutional'),'barn':('agricultural_outbuilding','agricultural'),'farm_auxiliary':('agricultural_outbuilding','agricultural'),'stable':('agricultural_outbuilding','agricultural')}
+    if b in M: return M[b],'building='+b
+    if b not in ('yes','service',''): return None
+    a=str(t.get('amenity') or '').lower(); q=str(t.get('tourism') or '').lower()
+    if a in ('school','college','university','kindergarten'): return ('education','institutional'),f'building={b};amenity={a}'
+    if a in ('hospital','clinic','doctors','nursing_home'): return ('healthcare_care','institutional'),f'building={b};amenity={a}'
+    if a=='place_of_worship': return ('religious','institutional'),f'building={b};amenity={a}'
+    if a in ('townhall','community_centre','fire_station','police','library','courthouse'): return ('public_infrastructure','institutional'),f'building={b};amenity={a}'
+    if q in ('hotel','motel','hostel','guest_house'): return ('hospitality','commercial'),f'building={b};tourism={q}'
+    if t.get('shop'): return ('commercial_retail','commercial'),f'building={b};shop={t.get("shop")}'
+    if t.get('office'): return ('office','commercial'),f'building={b};office={t.get("office")}'
+    return None
+
+def arcgis(tile):
+    x0,y0,x1,y1=tile
+    params={'f':'geojson','where':'1=1','outFields':'OBJECTID,INSPIRE_ID,WEBSITE','returnGeometry':'true','geometry':f'{x0},{y0},{x1},{y1}','geometryType':'esriGeometryEnvelope','inSR':'27700','outSR':'27700','spatialRel':'esriSpatialRelIntersects','resultRecordCount':'2000'}
+    r=S.get(ARCGIS,params=params,timeout=120); r.raise_for_status(); raw=r.content; j=r.json()
+    feats=j.get('features') or []
+    out=[]
+    for f in feats:
+        p=f.get('properties') or {}; iid=str(p.get('INSPIRE_ID') or '').strip()
+        if not iid or not f.get('geometry'): continue
+        try:
+            g=shape(f['geometry']); g=g if g.is_valid else g.buffer(0)
+            if not g.is_empty: out.append((iid,g,p))
+        except Exception: pass
+    return out,{'url':r.url,'http_status':r.status_code,'source_sha256':hashlib.sha256(raw).hexdigest(),'raw_feature_count':len(feats),'usable_polygon_count':len(out),'accessed_at':now()}
+
 def osm(tile):
- x0,y0,x1,y1=tile;w,s=TOWGS.transform(x0,y0);e,n=TOWGS.transform(x1,y1);q=f'[out:json][timeout:45];way["building"]({s},{w},{n},{e});out tags geom;';errs=[]
- for ep in OPS:
-  try:
-   r=S.post(ep,data={'data':q},timeout=100);r.raise_for_status();j=r.json();out=[]
-   for z in j.get('elements') or []:
-    geo=z.get('geometry') or []
-    if z.get('type')!='way' or len(geo)<4:continue
-    cl=classify(z.get('tags') or {})
-    if not cl:continue
-    try:
-     p=Polygon([(a['lon'],a['lat']) for a in geo]);p=p if p.is_valid else p.buffer(0)
-     if not p.is_empty:out.append((str(z['id']),shp_transform(TOBNG.transform,p),z.get('tags') or {},cl))
-    except Exception:pass
-   return out,{'endpoint':ep,'http_status':r.status_code,'source_sha256':hashlib.sha256(r.content).hexdigest(),'query_sha256':hashlib.sha256(q.encode()).hexdigest(),'raw_way_count':len(j.get('elements') or []),'classified_way_count':len(out)}
-  except Exception as e:errs.append(f'{ep}:{type(e).__name__}:{e}')
- raise RuntimeError('OVERPASS_ALL_FAILED|'+'|'.join(errs))
-def updman(m,fs,meta=None):
- ty=Counter();ev=Counter();cf=Counter();u=0
- for f in fs:
-  p=f.get('properties') or {};t=str(p.get('building_type_primary') or p.get('building_type') or 'unknown');ty[t]+=1;ev[str(p.get('evidence_level') or 'U')]+=1;cf[str(p.get('confidence_level_1_to_4') or p.get('confidence_level') or 1)]+=1;u+=t=='unknown'
- m.update({'generated_at':now(),'total_features':len(fs),'classified':len(fs)-u,'unknown':u,'type_distribution':dict(ty),'evidence_distribution':dict(ev),'confidence_level_distribution':dict(cf)})
- if meta and not any((x.get('name') or '').startswith('HM Land Registry INSPIRE + OpenStreetMap') for x in m.setdefault('sources',[]) if isinstance(x,dict)):m['sources'].append({'name':'HM Land Registry INSPIRE + OpenStreetMap Overpass API','url':PAGE,'license':'OGL v3.0 / ODbL 1.0','accessed_at':meta['downloaded_at'],'source_sha256':meta['gml_sha256'],'note':'Direct HMLR local-authority GML; strict centroid or >=85% exact building intersection only.'})
- return m
+    x0,y0,x1,y1=tile; w,s=TOWGS.transform(x0,y0); e,n=TOWGS.transform(x1,y1)
+    q=f'[out:json][timeout:45];way["building"]({s},{w},{n},{e});out tags geom;'; errs=[]
+    for ep in OPS:
+        try:
+            r=S.post(ep,data={'data':q},timeout=100); r.raise_for_status(); j=r.json(); out=[]
+            for z in j.get('elements') or []:
+                geo=z.get('geometry') or []
+                if z.get('type')!='way' or len(geo)<4: continue
+                cl=classify(z.get('tags') or {})
+                if not cl: continue
+                try:
+                    p=Polygon([(a['lon'],a['lat']) for a in geo]); p=p if p.is_valid else p.buffer(0)
+                    if not p.is_empty: out.append((str(z['id']),shp_transform(TOBNG.transform,p),z.get('tags') or {},cl))
+                except Exception: pass
+            return out,{'endpoint':ep,'http_status':r.status_code,'source_sha256':hashlib.sha256(r.content).hexdigest(),'query_sha256':hashlib.sha256(q.encode()).hexdigest(),'raw_way_count':len(j.get('elements') or []),'classified_way_count':len(out)}
+        except Exception as e: errs.append(f'{ep}:{type(e).__name__}:{e}')
+    raise RuntimeError('OVERPASS_ALL_FAILED|'+'|'.join(errs))
+
+def updman(m,fs,src=None):
+    ty=Counter(); ev=Counter(); cf=Counter(); u=0
+    for f in fs:
+        p=f.get('properties') or {}; t=str(p.get('building_type_primary') or p.get('building_type') or 'unknown')
+        ty[t]+=1; ev[str(p.get('evidence_level') or 'U')]+=1; cf[str(p.get('confidence_level_1_to_4') or p.get('confidence_level') or 1)]+=1; u+=t=='unknown'
+    m.update({'generated_at':now(),'total_features':len(fs),'classified':len(fs)-u,'unknown':u,'type_distribution':dict(ty),'evidence_distribution':dict(ev),'confidence_level_distribution':dict(cf)})
+    if src and not any((x.get('name') or '')==ARCGIS_LAYER+' + OpenStreetMap Overpass API' for x in m.setdefault('sources',[]) if isinstance(x,dict)):
+        m['sources'].append({'name':ARCGIS_LAYER+' + OpenStreetMap Overpass API','url':ARCGIS,'license':'HMLR OGL / OSM ODbL 1.0','accessed_at':src['accessed_at'],'source_sha256':src['source_sha256'],'note':'Nottingham City Council ArcGIS HMLR INSPIRE polygons; strict centroid or >=85% building intersection only.'})
+    return m
 def state(st,cp,task,after,nxt,added,res):
- t=now()
- for o in (st,cp):o.update({'slot_id':SLOT,'continuation_key':CONT,'owner':None,'state':'CONTINUE','updated_at':t,'final_ready':False,'fake_data':False,'production_merge':False,'feature_count_before':BEFORE,'feature_count_after':after,'current_feature_count':after,'new_features_added_this_attempt':added,'progress_counted':added>0,'next_batch_index':nxt,'canonical_manifest_feature_count':after,'last_attempt_result':res})
- task.update({'updated_at':t,'owner':None,'final_ready':False,'fake_data':False,'production_merge':False,'first_unverified_step':f'BATCH_{nxt}_STRICT_PARCEL_GEOMETRY_BINDING'});task.setdefault('progress',{})['completed_count']=after;rc=task.setdefault('resume_context',{});rc.update({'canonical_feature_count':after,'next_batch_index':nxt,'new_features_added_this_attempt':added});return st,cp,task
-cmd(['git','config','user.name','TerraYield AAYS Bot']);cmd(['git','config','user.email','aays-bot@users.noreply.github.com']);pre(START,BEFORE);cmd(['git','reset','--hard',f'origin/{BR}'])
-H=None;HM=None;HE=None
-try:H,HM=hmlr()
-except Exception as e:HE=f'{type(e).__name__}:{e}'
-R={'schema_version':3,'slot_id':SLOT,'continuation_key':CONT,'generated_at':now(),'run_mode':'STRICT_12_BOUNDED_BATCH_CONTINUATION','source_contract':'AAYS_CHATGPT_PLAN_00_23_SLOT_COMMON_CONTINUATION_20260818 + HMLR_INSPIRE_GML_OSM_STRICT_SPATIAL_V1','source_family':'HM_LAND_REGISTRY_INSPIRE_LOCAL_AUTHORITY_GML + OSM_OVERPASS_API','start_batch_index':START,'completed_bounded_batches':0,'next_batch_index':START,'feature_count_before':BEFORE,'feature_count_after':BEFORE,'new_added':0,'progress':False,'duplicate_count':0,'nearest_matching_used':False,'fake_data':False,'final_ready':False,'production_merge':False,'remote_readback_verified':False,'report_path':str(REP),'batches':[]}
-if HM:R['hmlr_source']=HM
-if HE:R['hmlr_source_error']=HE
-cnt=BEFORE
+    t=now()
+    for o in (st,cp):
+        o.update({'slot_id':SLOT,'continuation_key':CONT,'owner':None,'state':'CONTINUE','updated_at':t,'final_ready':False,'fake_data':False,'production_merge':False,'feature_count_before':BEFORE,'feature_count_after':after,'current_feature_count':after,'new_features_added_this_attempt':added,'progress_counted':added>0,'next_batch_index':nxt,'canonical_manifest_feature_count':after,'last_attempt_result':res})
+    task.update({'updated_at':t,'owner':None,'final_ready':False,'fake_data':False,'production_merge':False,'first_unverified_step':f'BATCH_{nxt}_STRICT_PARCEL_GEOMETRY_BINDING'})
+    task.setdefault('progress',{})['completed_count']=after; task.setdefault('resume_context',{}).update({'canonical_feature_count':after,'next_batch_index':nxt,'new_features_added_this_attempt':added})
+    return st,cp,task
+
+cmd(['git','config','user.name','TerraYield AAYS Bot']); cmd(['git','config','user.email','aays-bot@users.noreply.github.com'])
+pre(START,BEFORE); cmd(['git','reset','--hard',f'origin/{BR}'])
+g=load(SHARD); m=load(MAN); st=load(ST); cp=load(CP); task=load(TASK); fs=g.get('features') or []
+if len(fs)!=BEFORE or dup(fs): raise RuntimeError('BASELINE_COUNT_OR_DUP_FAILED')
+fi,pa,hi,oi=seen(fs); cnt=BEFORE
+R={'schema_version':3,'slot_id':SLOT,'continuation_key':CONT,'generated_at':now(),'run_mode':'STRICT_12_BOUNDED_BATCH_CONTINUATION','source_contract':'AAYS_CHATGPT_PLAN_00_23_SLOT_COMMON_CONTINUATION_20260818 + NOTTINGHAM_CITY_ARCGIS_HMLR_INSPIRE_OSM_STRICT_V1','source_family':'NOTTINGHAM_CITY_COUNCIL_ARCGIS_HMLR_INSPIRE + OSM_OVERPASS_API','start_batch_index':START,'completed_bounded_batches':0,'next_batch_index':START,'feature_count_before':BEFORE,'feature_count_after':BEFORE,'new_added':0,'progress':False,'duplicate_count':0,'nearest_matching_used':False,'fake_data':False,'final_ready':False,'production_merge':False,'remote_readback_verified':False,'report_path':str(REP),'batches':[]}
+save(REP,R)
+
 for bi,key,tile in W:
- cmd(['git','fetch','origin',BR]);pre(bi,cnt);cmd(['git','reset','--hard',f'origin/{BR}']);g=load(SHARD);fs=g.get('features') or [];m=load(MAN);st=load(ST);cp=load(CP);task=load(TASK)
- if len(fs)!=cnt or dup(fs):raise RuntimeError('LOCAL_PREFLIGHT_FAIL')
- fi,pa,hi,oi=seen(fs);b={'batch_index':bi,'window_key':key,'bbox_osgb27700':tile,'feature_count_before':cnt,'started_at':now(),'source_family':R['source_family'],'binding_method_used':'strict_centroid_within_polygon_or_exact_intersection_ge_85pct','nearest_matching_used':False,'fake_data':False,'added_feature_count':0,'strict_matches':0,'zero_result_window':False,'readback_verified':False,'shard_equals_checkpoint_equals_status_equals_manifest':False};new=[];res='ZERO_STRICT_MATCH_CHECKPOINTED';sm=None
- try:
-  if HE:raise RuntimeError(HE)
-  tg=box(*tile);sub=[(iid,p) for iid,p in H if p.intersects(tg)];b['hmlr_title_boundary_count_raw']=len(sub);b['hmlr_gml_sha256']=HM['gml_sha256'];b['hmlr_download_url']=HM['download_url'];obs,om=osm(tile);b['osm']=om;cand=[]
-  for iid,pg in sorted(sub,key=lambda z:z[0]):
-   pid='BT6_HMLR_'+re.sub(r'[^A-Za-z0-9_-]','_',iid)
-   if iid in hi or pid in fi or pid in pa:continue
-   mm=[]
-   for oid,bg,tags,cl in obs:
-    if oid in oi:continue
-    method='centroid_within_hmlr_inspire_polygon' if pg.covers(bg.centroid) else ('exact_intersection_ge_85pct_building_area' if pg.intersects(bg) and bg.area>0 and pg.intersection(bg).area/bg.area>=.85 else None)
-    if method:mm.append((oid,bg,tags,cl,method))
-   if len(mm)==1:cand.append((iid,pid,pg,mm[0]))
-  b['candidate_unique_bindings_before_cap']=len(cand)
-  for iid,pid,pg,(oid,bg,tags,cl,method) in cand[:50]:
-   (pt,cat),evid=cl;props={'slot_id':SLOT,'region':'East Midlands','local_authority':AUTH,'parcel_id':pid,'osm_id':'way/'+oid,'source_ref':'hmlr_inspire:'+iid,'building_type_primary':pt,'building_category':cat,'confidence_level_1_to_4':3,'confidence_score':.95,'evidence_level':'B','source_url':HM['download_url'],'source_path':PAGE,'fields_used':'INSPIREID;HMLR geometry;OSM '+evid,'match_method':method,'limitations':'HMLR INSPIRE polygon is indicative extent; explicit OSM building/use evidence only; no nearest match','needs_manual_review':False,'source_count':2,'source_name':'HM Land Registry INSPIRE + OpenStreetMap Overpass API','licence':'Open Government Licence v3.0; OpenStreetMap ODbL 1.0','accessed_at':now(),'fake_data':False,'updated_at':now()};new.append({'type':'Feature','id':pid,'properties':props,'geometry':mapping(shp_transform(TOWGS.transform,pg))});hi.add(iid);fi.add(pid);pa.add(pid);oi.add(oid)
-  if new:res='STRICT_MATCHES_APPENDED';sm=HM
-  else:b['zero_result_window']=True
- except Exception as e:b['zero_result_window']=True;res='SOURCE_READ_FAILED_CHECKPOINTED';b['source_error']=f'{type(e).__name__}:{e}'
- if new:g['features']=fs+new;save(SHARD,g);fs=g['features'];m=updman(m,fs,sm);m['output_sha256']=hashlib.sha256(SHARD.read_bytes()).hexdigest();save(MAN,m)
- after=len(fs);b.update({'result':res,'added_feature_count':len(new),'strict_matches':len(new),'feature_count_after':after,'finished_at':now()});st,cp,task=state(st,cp,task,after,bi+1,after-BEFORE,res);R['batches'].append(b);R.update({'completed_bounded_batches':len(R['batches']),'next_batch_index':bi+1,'feature_count_after':after,'new_added':after-BEFORE,'progress':after>BEFORE,'duplicate_count':0,'generated_at':now()});save(ST,st);save(CP,cp);save(TASK,task);save(REP,R);push(f'aays: building_type_6 HMLR strict batch {bi}',bi,cnt);b['readback']=rb(bi+1,after);b['readback_verified']=True;b['shard_equals_checkpoint_equals_status_equals_manifest']=True;cnt=after;time.sleep(1)
-cmd(['git','fetch','origin',BR]);cmd(['git','reset','--hard',f'origin/{BR}']);st=load(ST);cp=load(CP);task=load(TASK);R.update({'remote_readback_verified':True,'feature_count_after':cnt,'new_added':cnt-BEFORE,'progress':cnt>BEFORE,'duplicate_count':0,'next_batch_index':END+1,'generated_at':now()});
-if not all(x.get('readback_verified') and x.get('readback',{}).get('dup')==0 for x in R['batches']):raise RuntimeError('BATCH_READBACK_INCOMPLETE')
-st['remote_readback_verified']=True;cp['remote_readback_verified']=True;task['remote_readback_verified']=True;save(REP,R);save(ST,st);save(CP,cp);save(TASK,task);cmd(['git','add','--',str(REP),str(ST),str(CP),str(TASK)]);cmd(['git','commit','-m','aays: finalize building_type_6 HMLR 118-129 readback']);
-for _ in range(4):
- p=cmd(['git','push','origin',f'HEAD:{BR}'],False)
- if p.returncode==0:break
- cmd(['git','fetch','origin',BR]);c=gj(CP);s=gj(ST)
- if (c.get('next_batch_index'),c.get('feature_count_after'),c.get('owner'),s.get('owner'))!=(END+1,cnt,None,None):raise RuntimeError('FINAL_RACE')
- cmd(['git','rebase',f'origin/{BR}'])
-else:raise RuntimeError('FINAL_PUSH_FAILED')
-fr=rb(END+1,cnt);print(json.dumps({'report':str(REP),'before':BEFORE,'added':cnt-BEFORE,'after':cnt,'next_batch':END+1,'dup':fr['dup'],'remote_readback_verified':True,'zero_batches':[x['batch_index'] for x in R['batches'] if x.get('zero_result_window')],'source_family':R['source_family']},ensure_ascii=False))
-          PY
-          python /tmp/bt6_106_117.py
+    pre(bi,cnt)
+    b={'batch_index':bi,'window_key':key,'bbox_osgb27700':tile,'feature_count_before':cnt,'started_at':now(),'source_family':R['source_family'],'binding_method_used':'strict_centroid_within_polygon_or_exact_intersection_ge_85pct','nearest_matching_used':False,'fake_data':False,'added_feature_count':0,'strict_matches':0,'zero_result_window':False}
+    new=[]; res='ZERO_RESULT_CHECKPOINTED'; src=None
+    try:
+        pars,src=arcgis(tile); obs,om=osm(tile); b['arcgis_source']=src; b['osm_source']=om; b['parcel_polygon_count']=len(pars); cand=[]
+        for iid,pg,pp in pars:
+            pid='parcel_nottm_inspire_'+re.sub(r'[^A-Za-z0-9_.-]+','_',iid)
+            if iid in hi or pid in fi or pid in pa: continue
+            mm=[]
+            for oid,bg,tags,cl in obs:
+                if oid in oi: continue
+                method='centroid_within_hmlr_inspire_polygon' if pg.covers(bg.centroid) else ('exact_intersection_ge_85pct_building_area' if pg.intersects(bg) and bg.area>0 and pg.intersection(bg).area/bg.area>=.85 else None)
+                if method: mm.append((oid,bg,tags,cl,method))
+            if len(mm)==1: cand.append((iid,pid,pg,mm[0]))
+        b['candidate_unique_bindings_before_cap']=len(cand)
+        for iid,pid,pg,(oid,bg,tags,cl,method) in cand[:50]:
+            (pt,cat),evid=cl
+            props={'slot_id':SLOT,'region':'East Midlands','local_authority':AUTH,'parcel_id':pid,'osm_id':'way/'+oid,'source_ref':'nottm_hmlr_inspire:'+iid,'building_type_primary':pt,'building_category':cat,'confidence_level_1_to_4':3,'confidence_score':.95,'evidence_level':'B','source_url':ARCGIS,'source_path':ARCGIS,'fields_used':'INSPIRE_ID;ArcGIS HMLR geometry;OSM '+evid,'match_method':method,'limitations':'HMLR INSPIRE polygon is indicative extent; explicit OSM building/use evidence only; no nearest match','needs_manual_review':False,'source_count':2,'source_name':ARCGIS_LAYER+' + OpenStreetMap Overpass API','licence':'HM Land Registry OGL; OpenStreetMap ODbL 1.0','accessed_at':now(),'fake_data':False,'updated_at':now()}
+            new.append({'type':'Feature','id':pid,'properties':props,'geometry':mapping(shp_transform(TOWGS.transform,pg))}); hi.add(iid); fi.add(pid); pa.add(pid); oi.add(oid)
+        if new: res='STRICT_MATCHES_APPENDED'
+        else: b['zero_result_window']=True
+    except Exception as e:
+        b['zero_result_window']=True; res='SOURCE_READ_FAILED_CHECKPOINTED'; b['source_error']=f'{type(e).__name__}:{e}'
+    if new:
+        g['features']=fs+new; save(SHARD,g); fs=g['features']; m=updman(m,fs,src); m['output_sha256']=hashlib.sha256(SHARD.read_bytes()).hexdigest(); save(MAN,m)
+    after=len(fs); b.update({'result':res,'added_feature_count':len(new),'strict_matches':len(new),'feature_count_after':after,'finished_at':now()}); st,cp,task=state(st,cp,task,after,bi+1,after-BEFORE,res); R['batches'].append(b); R.update({'completed_bounded_batches':len(R['batches']),'next_batch_index':bi+1,'feature_count_after':after,'new_added':after-BEFORE,'progress':after>BEFORE,'duplicate_count':0,'generated_at':now()}); save(ST,st); save(CP,cp); save(TASK,task); save(REP,R)
+    push(f'aays: building_type_6 Nottingham ArcGIS strict batch {bi}',bi,cnt); b['readback']=rb(bi+1,after); b['readback_verified']=True; b['shard_equals_checkpoint_equals_status_equals_manifest']=True; save(REP,R)
+    pre(bi+1,after); cmd(['git','add','--',str(REP)])
+    if cmd(['git','diff','--cached','--quiet'],False).returncode!=0:
+        cmd(['git','commit','-m',f'aays: building_type_6 readback batch {bi}'])
+        for _ in range(4):
+            p=cmd(['git','push','origin',f'HEAD:{BR}'],False)
+            if p.returncode==0: break
+            cmd(['git','fetch','origin',BR])
+            if cmd(['git','rebase',f'origin/{BR}'],False).returncode: raise RuntimeError('READBACK_REPORT_REBASE_FAILED')
+        else: raise RuntimeError('READBACK_REPORT_PUSH_FAILED')
+    cnt=after; time.sleep(1)
+
+fr=rb(END+1,cnt); R['remote_readback_verified']=True; R['generated_at']=now(); save(REP,R); pre(END+1,cnt); cmd(['git','add','--',str(REP)])
+if cmd(['git','diff','--cached','--quiet'],False).returncode!=0:
+    cmd(['git','commit','-m','aays: building_type_6 final remote readback 130-141']); cmd(['git','push','origin',f'HEAD:{BR}'])
+print(json.dumps({'report':str(REP),'before':BEFORE,'added':cnt-BEFORE,'after':cnt,'next_batch':END+1,'dup':fr['dup'],'remote_readback_verified':True,'zero_batches':[x['batch_index'] for x in R['batches'] if x.get('zero_result_window')],'source_family':R['source_family']},ensure_ascii=False))
+PY
+python /tmp/bt6_106_117.py
