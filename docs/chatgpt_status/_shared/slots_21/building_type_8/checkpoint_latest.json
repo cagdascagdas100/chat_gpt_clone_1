@@ -3,7 +3,7 @@
   "slot_id": "building_type_8",
   "task_id": "building-type-8-england-classification-v1-20260808",
   "continuation_key": "building-type-8-england-classification-v1-20260808",
-  "updated_at": "2026-08-18T02:52:19Z",
+  "updated_at": "2026-08-18T03:28:00Z",
   "state": "NEW_PAGE_RESUME_RECOVERY_PARKED",
   "terminal_status": "BLOCKED",
   "final_ready": false,
@@ -12,19 +12,20 @@
   "feature_count_after": 8000,
   "new_features_added_this_attempt": 0,
   "business_batches_completed_this_turn": 0,
-  "diagnostic_recovery_attempts_this_turn": 2,
+  "diagnostic_recovery_attempts_this_turn": 1,
   "progress_counted": false,
   "next_batch_index": 161,
   "next_target_feature_count": 8050,
   "blocker": "BLOCKED",
-  "blocker_reason": "2026-08-18 continuation recheck: exact Windows continuation file is not mounted and is not present in accessible repo search, so the accessible canonical AAYS slot continuation contract and latest building_type_8 state were applied without pretending to read the missing file. Runtime DNS still cannot materialize HMLR/Overpass/OSM/Overture/EPC/VOA public inputs. A previously unused browser-visible ArcGIS FeatureServer source family, Land Registry INSPIRE Index Polygons layer 0, was discovered and its polygon/query metadata verified, but bounded feature geometry could not be materialized into the execution runtime for a strict join. The canonical building_type_8 shard is 14,532,567 bytes; low-level Git create_blob/create_tree exists but still requires complete new blob content, and no verified full canonical shard payload or mounted file is available. Partial content therefore cannot be safely appended/replaced. These are technical recovery blockers, not zero-result source windows; batch 161 and cursor remain fixed.",
+  "blocker_reason": "2026-08-18 state-change gate recheck. The exact Windows continuation file remains unavailable in this runtime, so the accessible canonical AAYS continuation contract and latest building_type_8 state were used. The official HM Land Registry INSPIRE download index published 2026-08-02 is live and lists Manchester City Council GML, confirming the source window is not empty. Runtime DNS/materialization still prevents obtaining strict public geometry bytes. A repo-wide 92,283-point parcel/security centroid layer exists, but without a materialized building/polygon source it cannot satisfy strict centroid-within-polygon or exact-intersection binding. The previously discovered ArcGIS HMLR polygon service was not reprocessed because its geometry materialization already failed in the prior recovery attempt. The canonical shard is 14,532,567 bytes and full safe replacement content is still unavailable through the connector. These are technical recovery blockers, not zero-result source windows; batch 161 and cursor remain fixed.",
   "blocker_root_cause": "RUNTIME_DNS_UNAVAILABLE_FOR_PUBLIC_GEOMETRY_MATERIALIZATION",
   "secondary_blockers": [
-    "ARCGIS_FEATURE_GEOMETRY_NOT_MATERIALIZED_IN_RUNTIME",
+    "PUBLIC_STRICT_GEOMETRY_BYTES_NOT_MATERIALIZED",
+    "REPO_WIDE_CENTROID_LAYER_NOT_STRICTLY_BOUND_TO_BUILDING_POLYGONS",
     "CANONICAL_SHARD_FULL_CONTENT_UNAVAILABLE_FOR_SAFE_APPEND_IN_CONNECTOR"
   ],
   "recovery_parked": true,
-  "next_required_action": "RESUME_BATCH_161_ONLY_AFTER_BOUNDED_STRICT_NORTH_WEST_GEOMETRY_CAN_BE_MATERIALIZED_AND_CANONICAL_SHARD_CAN_BE_SAFELY_READ_REWRITTEN; USE_STRICT_CENTROID_WITHIN_OR_EXACT_INTERSECTION_ONLY",
+  "next_required_action": "RESUME_BATCH_161_ONLY_AFTER_STRICT_NORTH_WEST_GEOMETRY_BYTES_CAN_BE_MATERIALIZED_AND_CANONICAL_SHARD_CAN_BE_SAFELY READ_REWRITTEN; USE STRICT_CENTROID_WITHIN_OR_EXACT_INTERSECTION_ONLY",
   "count_reconciliation": {
     "authoritative_source": "england_map_web/data/building_type/shards/building_type_8_manifest_latest.json",
     "authoritative_feature_count": 8000,
@@ -32,9 +33,9 @@
     "reconciled_at": "2026-08-16T15:24:36Z"
   },
   "source_attempt": {
-    "source_index": "ARCGIS_HMLR_BROWSER_SOURCE_AND_LARGE_SHARD_ATOMIC_WRITE_RECHECK_20260818",
-    "source_name": "Land Registry INSPIRE Index Polygons ArcGIS FeatureServer discovery plus runtime materialization and large-shard atomic-write recheck",
-    "source_url": "https://services2.arcgis.com/LrUbY6lLLgV3tEa5/ArcGIS/rest/services/Land_Registry_INSPIRE/FeatureServer/0",
+    "source_index": "HMLR_20260802_INDEX_REPO_CENTROID_AND_DNS_STATE_GATE_RECHECK_20260818",
+    "source_name": "Official HMLR 2026-08-02 INSPIRE index + repo-wide parcel centroid fallback + runtime materialization state-change gate",
+    "source_reference": "HM Land Registry INSPIRE Index Polygons download index, published 2026-08-02; Manchester City Council GML listed",
     "result": "BLOCKED",
     "strict_match_rule": "centroid_within_polygon_or_exact_intersection_only",
     "raw_source_committed": false,
@@ -57,7 +58,8 @@
     {"event":"NEW_PAGE_RESUME","next_batch_index":161,"at":"2026-08-17T05:08:00Z","source_index":"RUNTIME_DNS_STATE_CHANGE_GATE_RECHECK","result":"BLOCKED","feature_count_before":8000,"new_features_added":0,"feature_count_after":8000,"blocker_root_cause":"RUNTIME_DNS_UNAVAILABLE_FOR_PUBLIC_GEOMETRY_MATERIALIZATION","recovery_parked":true},
     {"event":"NEW_PAGE_RESUME","next_batch_index":161,"at":"2026-08-18T01:13:00Z","source_index":"RUNTIME_DNS_STATE_CHANGE_GATE_RECHECK_20260818","result":"BLOCKED","feature_count_before":8000,"new_features_added":0,"feature_count_after":8000,"blocker_root_cause":"RUNTIME_DNS_UNAVAILABLE_FOR_PUBLIC_GEOMETRY_MATERIALIZATION","recovery_parked":true,"zero_result_window":false},
     {"event":"NEW_PAGE_RESUME","next_batch_index":161,"at":"2026-08-18T02:06:00Z","source_index":"RUNTIME_DNS_LOCAL_FALLBACK_AND_SAFE_APPEND_DEEP_RECHECK_20260818","result":"BLOCKED","feature_count_before":8000,"new_features_added":0,"feature_count_after":8000,"blocker_root_cause":"RUNTIME_DNS_UNAVAILABLE_FOR_PUBLIC_GEOMETRY_MATERIALIZATION","secondary_blockers":["NO_NORTH_WEST_STRICT_PARCEL_GEOMETRY_OR_CENTROID_INPUT_MATERIALIZED","CANONICAL_SHARD_FULL_CONTENT_UNAVAILABLE_FOR_SAFE_APPEND_IN_CONNECTOR"],"recovery_parked":true,"zero_result_window":false,"new_write_duplicate_count":0},
-    {"event":"NEW_PAGE_RESUME","next_batch_index":161,"at":"2026-08-18T02:52:19Z","source_index":"ARCGIS_HMLR_BROWSER_SOURCE_AND_LARGE_SHARD_ATOMIC_WRITE_RECHECK_20260818","result":"BLOCKED","feature_count_before":8000,"new_features_added":0,"feature_count_after":8000,"blocker_root_cause":"RUNTIME_DNS_UNAVAILABLE_FOR_PUBLIC_GEOMETRY_MATERIALIZATION","secondary_blockers":["ARCGIS_FEATURE_GEOMETRY_NOT_MATERIALIZED_IN_RUNTIME","CANONICAL_SHARD_FULL_CONTENT_UNAVAILABLE_FOR_SAFE_APPEND_IN_CONNECTOR"],"recovery_parked":true,"zero_result_window":false,"new_write_duplicate_count":0}
+    {"event":"NEW_PAGE_RESUME","next_batch_index":161,"at":"2026-08-18T02:52:19Z","source_index":"ARCGIS_HMLR_BROWSER_SOURCE_AND_LARGE_SHARD_ATOMIC_WRITE_RECHECK_20260818","result":"BLOCKED","feature_count_before":8000,"new_features_added":0,"feature_count_after":8000,"blocker_root_cause":"RUNTIME_DNS_UNAVAILABLE_FOR_PUBLIC_GEOMETRY_MATERIALIZATION","secondary_blockers":["ARCGIS_FEATURE_GEOMETRY_NOT_MATERIALIZED_IN_RUNTIME","CANONICAL_SHARD_FULL_CONTENT_UNAVAILABLE_FOR_SAFE_APPEND_IN_CONNECTOR"],"recovery_parked":true,"zero_result_window":false,"new_write_duplicate_count":0},
+    {"event":"NEW_PAGE_RESUME","next_batch_index":161,"at":"2026-08-18T03:28:00Z","source_index":"HMLR_20260802_INDEX_REPO_CENTROID_AND_DNS_STATE_GATE_RECHECK_20260818","result":"BLOCKED","feature_count_before":8000,"new_features_added":0,"feature_count_after":8000,"blocker_root_cause":"RUNTIME_DNS_UNAVAILABLE_FOR_PUBLIC_GEOMETRY_MATERIALIZATION","secondary_blockers":["PUBLIC_STRICT_GEOMETRY_BYTES_NOT_MATERIALIZED","REPO_WIDE_CENTROID_LAYER_NOT_STRICTLY_BOUND_TO_BUILDING_POLYGONS","CANONICAL_SHARD_FULL_CONTENT_UNAVAILABLE_FOR_SAFE_APPEND_IN_CONNECTOR"],"recovery_parked":true,"zero_result_window":false,"new_write_duplicate_count":0}
   ],
   "fake_data": false,
   "production_merge": false
