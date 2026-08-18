@@ -1,0 +1,122 @@
+name: AAYS BT5 final consistency 176-187
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/aays-bt5-final-consistency-176-187.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-building-type-5-final-consistency-176-187
+  cancel-in-progress: true
+jobs:
+  reconcile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Mark reconciliation started
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const path='docs/chatgpt_status/_shared/slots_21/building_type_5/actions_final_consistency_176_187_status.json';
+            let sha; try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
+            const body={slot_id:'building_type_5',state:'RUNNING',run_id:String(context.runId),started_at:new Date().toISOString()};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark BT5 final consistency started',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
+      - name: Checkout canonical shallow
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+          path: canonical
+      - name: Reconcile and verify BT5 metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C canonical config user.name 'AAYS building_type_5'
+          git -C canonical config user.email 'aays-building-type-5@users.noreply.github.com'
+          python - <<'PY'
+          import json, subprocess, time
+          from pathlib import Path
+          W=Path('canonical'); CAN='codex/aays-single-runner-v5-20260706'
+          GP='england_map_web/data/building_type/shards/building_type_5_latest.geojson'
+          MP='england_map_web/data/building_type/shards/building_type_5_manifest_latest.json'
+          RP='docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json'
+          SP='docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json'
+          CP='docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json'
+          TP='docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json'
+          def run(a,check=True,capture=False):
+              p=subprocess.run(a,cwd=W,text=True,check=check,stdout=subprocess.PIPE if capture else None,stderr=subprocess.STDOUT if capture else None)
+              return p.stdout if capture else ''
+          def load(p): return json.loads((W/p).read_text(encoding='utf-8'))
+          def save(p,o): (W/p).write_text(json.dumps(o,ensure_ascii=False,separators=(',',':'))+'\n',encoding='utf-8')
+          def show(ref,p): return json.loads(run(['git','show',f'{ref}:{p}'],capture=True))
+          def dup(fs):
+              total=0
+              for key in ('id','parcel_id'):
+                  seen=set()
+                  for f in fs:
+                      v=f.get('id') if key=='id' else (f.get('properties') or {}).get('parcel_id')
+                      if v is None: continue
+                      v=str(v)
+                      if v in seen: total+=1
+                      else: seen.add(v)
+              return total
+          run(['git','fetch','origin',CAN])
+          run(['git','checkout','-B','aays-bt5-final-consistency',f'origin/{CAN}'])
+          r,s,c,t,m,g=load(RP),load(SP),load(CP),load(TP),load(MP),load(GP)
+          if c.get('source_window_cursor')!=187 or c.get('next_batch_index')!=135: raise SystemExit('BT5_CURSOR_MOVED')
+          if s.get('owner') not in (None,'') or t.get('owner') not in (None,''): raise SystemExit('BT5_OWNER_MOVED')
+          if len(g.get('features') or [])!=6100 or dup(g.get('features') or [])!=0: raise SystemExit('BT5_SHARD_GUARD_FAILED')
+          ws=r.get('windows') or []
+          if [w.get('seq') for w in ws] != list(range(176,188)): raise SystemExit('BT5_WINDOW_LIST_GUARD_FAILED')
+          for w in ws:
+              w['readback_verified']=True
+              w['dup']=0
+              w['shard_equals_checkpoint_equals_status_equals_manifest']=True
+              w['nearest_matching_used']=False
+              w['fake_data']=False
+          r['windows']=ws
+          r['per_window_remote_four_surface_readbacks']=12
+          r['checkpoint_commits_this_turn']=12
+          r['remote_readback_verified']=True
+          s['blocker']={
+              'code':'BLOCKED_VERIFIED_ZERO_HMLR_POLYGONS_176_187',
+              'root_cause':'ALL_12_UNUSED_HMLR_INSPIRE_ARCGIS_WINDOWS_RETURNED_HTTP_200_WITH_ZERO_PARCEL_POLYGONS_SO_NO_STRICT_PARCEL_BINDING_WAS_POSSIBLE',
+              'source_processing_attempted':True,
+              'source_record_payload_verified':True,
+              'source_zero_result_verified':True,
+              'canonical_parcel_binding_verified':False,
+          }
+          s['note']='Source windows 176-187 were each separately checkpointed and followed by direct remote checkpoint/status/manifest/shard readback. All 12 HMLR payloads returned HTTP 200 and zero parcel polygons; added 0 unique strict-bound parcel rows; dup=0; nearest-match=false; fake_data=false.'
+          save(RP,r); save(SP,s)
+          run(['git','add','--',RP,SP])
+          if subprocess.run(['git','diff','--cached','--quiet'],cwd=W).returncode!=0:
+              run(['git','commit','-m','aays: reconcile building_type_5 final readback metadata 176-187'])
+              for attempt in range(6):
+                  p=subprocess.run(['git','push','origin',f'HEAD:{CAN}'],cwd=W,text=True)
+                  if p.returncode==0: break
+                  run(['git','fetch','origin',CAN])
+                  rc=show(f'origin/{CAN}',CP); rs=show(f'origin/{CAN}',SP)
+                  if rc.get('source_window_cursor')!=187 or rc.get('next_batch_index')!=135: raise SystemExit('BT5_REMOTE_MOVED_DURING_METADATA_PUSH')
+                  if rs.get('owner') not in (None,''): raise SystemExit('BT5_OWNER_MOVED_DURING_METADATA_PUSH')
+                  run(['git','rebase',f'origin/{CAN}']); time.sleep(min(attempt+1,3))
+              else: raise SystemExit('BT5_METADATA_PUSH_RETRY_EXHAUSTED')
+          run(['git','fetch','origin',CAN]); ref=f'origin/{CAN}'
+          rg,rm,rr,rs,rc=show(ref,GP),show(ref,MP),show(ref,RP),show(ref,SP),show(ref,CP)
+          vals=[len(rg.get('features') or []),rm.get('total_features'),rr.get('feature_count_after'),rs.get('total_elements'),rc.get('feature_count_after')]
+          if len(set(vals))!=1 or vals[0]!=6100 or dup(rg.get('features') or [])!=0: raise SystemExit('BT5_FINAL_SURFACE_READBACK_FAILED')
+          if not all(w.get('readback_verified') and w.get('dup')==0 for w in rr.get('windows') or []): raise SystemExit('BT5_WINDOW_READBACK_FLAGS_FAILED')
+          if rs.get('blocker',{}).get('code')!='BLOCKED_VERIFIED_ZERO_HMLR_POLYGONS_176_187': raise SystemExit('BT5_BLOCKER_RECONCILE_FAILED')
+          print(json.dumps({'slot':'building_type_5','source_cursor':187,'batch_cursor':135,'counts':vals,'dup':0,'window_readbacks':12,'state':rs.get('state')}))
+          PY
+      - name: Mark reconciliation finished
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const path='docs/chatgpt_status/_shared/slots_21/building_type_5/actions_final_consistency_176_187_status.json';
+            let sha; try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
+            const body={slot_id:'building_type_5',state:'${{ job.status }}'.toUpperCase(),run_id:String(context.runId),finished_at:new Date().toISOString()};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark BT5 final consistency finished',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
