@@ -1,0 +1,36 @@
+name: AAYS BT9 strict 229-240 main one-shot
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/aays-bt9-strict-229-240-main-once.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-building-type-9-strict-main-once-229-240
+  cancel-in-progress: false
+jobs:
+  strict-spatial:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - name: Checkout verified BT9 executor
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aays-bt9-strict-12-20260818-0441
+          fetch-depth: 0
+          path: trigger
+      - name: Checkout canonical slot branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+          path: canonical
+      - name: Install strict spatial runtime
+        run: python -m pip install --quiet requests shapely
+      - name: Execute BT9 229-240 and verify remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          python trigger/docs/chatgpt_status/_shared/slots_21/building_type_9/automation/run_strict_229_240_20260818.py
