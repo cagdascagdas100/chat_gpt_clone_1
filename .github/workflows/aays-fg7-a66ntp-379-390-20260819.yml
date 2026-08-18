@@ -1,0 +1,23 @@
+name: AAYS FG7 A66 NTP 379-390 strict continuation
+on:
+  pull_request:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - 'ai-task-scripts/aays_fg7_a66ntp_379_390_20260819.py'
+      - '.github/workflows/aays-fg7-a66ntp-379-390-20260819.yml'
+permissions:
+  contents: write
+jobs:
+  run-fg7-a66ntp:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout orchestration branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aays-fg7-a66ntp-379-390-20260819-0203
+          fetch-depth: 1
+          persist-credentials: true
+      - name: Execute strict FG7 A66 NTP batches 379-390
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: python ai-task-scripts/aays_fg7_a66ntp_379_390_20260819.py
