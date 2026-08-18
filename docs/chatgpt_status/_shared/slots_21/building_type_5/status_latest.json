@@ -10,7 +10,7 @@
   "region_code": "EE",
   "task_id": "building-type-5-england-classification-v1-20260808",
   "continuation_key": "building-type-5-england-classification-v1-20260808",
-  "updated_at": "2026-08-18T03:25:00Z",
+  "updated_at": "2026-08-18T03:52:00Z",
   "owner": null,
   "owner_ignored_by_recovery": true,
   "final_ready": false,
@@ -33,21 +33,21 @@
   "next_batch_index": 123,
   "next_target_feature_count": 6150,
   "canonical_feature_cursor": 123,
-  "source_window_cursor": 48,
+  "source_window_cursor": 60,
   "latest_source_window_screening": {
     "screened_window_count": 12,
-    "screening_sequence_before": 36,
-    "screening_sequence_after": 48,
-    "source_family": "Planning Data title-boundary + OpenStreetMap Overpass strict spatial join",
-    "bounded_windows": ["Braintree District","Colchester City","Tendring District","Maldon District","Basildon District","Brentwood District","Epping Forest District","Harlow District","Uttlesford District","Broxbourne District","Hertsmere District","Welwyn Hatfield District"],
+    "screening_sequence_before": 48,
+    "screening_sequence_after": 60,
+    "source_family": "FSA FHRS geocoded premises-use + Planning Data HMLR title-boundary exact point-intersection",
+    "bounded_windows": ["Canvey Island","Rayleigh","Southend-on-Sea","Grays","Hemel Hempstead","Bishop's Stortford","Hitchin","Stevenage","Rickmansworth","Watford","Ware","Letchworth Garden City"],
     "source_payload_verified": false,
-    "result": "SOURCE_READ_FAILED_PREQUERY_DNS",
+    "result": "SOURCE_READ_FAILED_UNSUPPORTED_XML_TRANSPORT",
     "duplicate_count_after": 0
   },
-  "note": "Twelve new unused authority-bounded windows were screened under a new source-family pairing. Planning Data title-boundary and Overpass API semantics were verified from current public documentation, but direct runtime DNS could not resolve either dynamic endpoint. This is SOURCE_READ_FAILED, not verified NO_DATA. Canonical shard and manifest remain unchanged at 6100; no nearest matching, synthetic rows, fake data or replayed IDs were used.",
+  "note": "Twelve new unused town-bounded windows were screened under a new public source-family pairing. FSA confirms daily no-registration FHRS open data with BusinessType and geocoding, and the authority file URLs were resolved from the live open-data page. The available web transport rejected the XML feature payload as unsupported text/xml, so no FHRS coordinates were available for exact HMLR title-boundary intersection. This is SOURCE_READ_FAILED, not verified NO_DATA. Canonical shard and manifest remain unchanged at 6100; no nearest matching, synthetic rows, fake data or replayed IDs were used.",
   "blocker": {
     "code": "BLOCKED_NO_NEW_SOURCE_OR_BATCH",
-    "root_cause": "OPEN_SOURCE_FEATURE_PAYLOAD_UNRETRIEVABLE_FROM_AVAILABLE_RUNTIME",
+    "root_cause": "FHRS_XML_FEATURE_PAYLOAD_UNREADABLE_BY_AVAILABLE_TRANSPORT",
     "source_processing_attempted": true,
     "source_payload_verified": false
   },
@@ -64,6 +64,6 @@
     "batch_index": 123,
     "candidate_area": "UNUSED_NEXT_SOURCE_WINDOW",
     "preferred_source": "next unused allowed public no-auth parcel/building source family",
-    "matching_rule": "strict centroid-within-polygon or exact intersection only; nearest matching and inferred parcel assignment forbidden"
+    "matching_rule": "strict point/centroid-within-polygon or exact intersection only; nearest matching and inferred parcel assignment forbidden"
   }
 }
