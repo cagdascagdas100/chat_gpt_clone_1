@@ -1,0 +1,141 @@
+name: AAYS building_type_2 next 12 unused bounded windows v8
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-common-v8-next12-20260818.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-2-common-v8-next12-20260818
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 220
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-2-common-v2-b177-188-20260818.yml
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
+      - name: Select unused windows and execute proven v2 driver
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          driver_path=Path('.github/workflows/aays-building-type-2-common-v2-b177-188-20260818.yml')
+          cp_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          st_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          task_path=Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          geo_path=Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          cp=json.loads(cp_path.read_text(encoding='utf-8'))
+          st=json.loads(st_path.read_text(encoding='utf-8'))
+          task=json.loads(task_path.read_text(encoding='utf-8'))
+          geo=json.loads(geo_path.read_text(encoding='utf-8'))
+          start_batch=int(cp['next_batch_index'])
+          start_count=len(geo.get('features') or [])
+          assert start_batch >= 225, (start_batch, 'refusing stale/replayed cursor')
+          assert cp.get('current_feature_count')==start_count
+          assert st.get('total_elements')==start_count
+          assert task.get('owner') in (None,'')
+          assert (task.get('continuation_key') or '') == 'building-type-2-england-classification-v1-20260808'
+
+          candidates=[
+            ('Ilford South','Redbridge',[0.04,51.50,0.10,51.55]),
+            ('South Croydon','Croydon',[-0.12,51.33,-0.06,51.38]),
+            ('Harrow Weald','Harrow',[-0.37,51.59,-0.30,51.64]),
+            ('Penge','Bromley',[-0.07,51.40,-0.01,51.44]),
+            ('Erith West','Bexley',[0.10,51.46,0.16,51.50]),
+            ('Enfield Town','Enfield',[-0.10,51.64,-0.04,51.69]),
+            ('Edmonton East','Enfield',[-0.06,51.59,0.00,51.64]),
+            ('Hanwell','Ealing',[-0.36,51.49,-0.30,51.54]),
+            ('Acton','Ealing',[-0.29,51.49,-0.23,51.54]),
+            ('Northolt','Ealing',[-0.39,51.53,-0.33,51.58]),
+            ('Ruislip','Hillingdon',[-0.45,51.55,-0.38,51.60]),
+            ('Hayes Town','Hillingdon',[-0.44,51.49,-0.37,51.54]),
+            ('West Drayton','Hillingdon',[-0.49,51.47,-0.42,51.52]),
+            ('Hounslow West','Hounslow',[-0.41,51.45,-0.35,51.49]),
+            ('Isleworth East','Hounslow',[-0.33,51.45,-0.27,51.49]),
+            ('Kingston','Kingston upon Thames',[-0.32,51.39,-0.26,51.43]),
+            ('Norbiton','Kingston upon Thames',[-0.29,51.39,-0.23,51.43]),
+            ('Lewisham South','Lewisham',[-0.03,51.42,0.03,51.46]),
+            ('Sydenham','Lewisham',[-0.08,51.41,-0.02,51.45]),
+            ('Streatham','Lambeth',[-0.15,51.41,-0.09,51.45]),
+            ('Norbury','Croydon',[-0.14,51.39,-0.08,51.43]),
+            ('Chadwell Heath','Redbridge',[0.10,51.55,0.16,51.59]),
+            ('Gidea Park','Havering',[0.18,51.56,0.24,51.60]),
+            ('South Woodford','Redbridge',[0.00,51.56,0.06,51.60]),
+            ('Wanstead','Redbridge',[0.00,51.55,0.06,51.59]),
+            ('Leytonstone','Waltham Forest',[-0.02,51.55,0.04,51.59]),
+            ('Walthamstow North','Waltham Forest',[-0.05,51.59,0.01,51.64]),
+            ('Chingford South','Waltham Forest',[-0.04,51.60,0.02,51.65]),
+            ('Teddington','Richmond upon Thames',[-0.35,51.41,-0.29,51.45]),
+            ('Whitton','Richmond upon Thames',[-0.39,51.43,-0.33,51.47]),
+            ('Worcester Park','Sutton',[-0.27,51.36,-0.21,51.40]),
+            ('Carshalton South','Sutton',[-0.18,51.33,-0.12,51.37]),
+            ('Purley South','Croydon',[-0.13,51.29,-0.07,51.34]),
+            ('Orpington North','Bromley',[0.06,51.38,0.12,51.42]),
+            ('Sidcup South','Bexley',[0.08,51.39,0.14,51.43]),
+            ('Abbey Wood','Greenwich',[0.08,51.47,0.14,51.51]),
+            ('Woolwich','Greenwich',[0.03,51.47,0.09,51.51]),
+            ('Greenwich South','Greenwich',[-0.02,51.45,0.04,51.49]),
+            ('Catford South','Lewisham',[-0.05,51.40,0.01,51.44]),
+            ('Forest Hill','Lewisham',[-0.08,51.42,-0.02,51.46]),
+          ]
+          used_cities=set(str(x).strip().lower() for x in (cp.get('attempted_cities') or []) if x)
+          used_bboxes=set()
+          for obj in (cp,st):
+              for k in ('source_attempt_history','batch_attempt_history','zero_window_attempts'):
+                  for rec in obj.get(k) or []:
+                      if rec.get('city'): used_cities.add(str(rec['city']).strip().lower())
+                      b=rec.get('bbox_wgs84')
+                      if isinstance(b,list) and len(b)==4: used_bboxes.add(tuple(float(x) for x in b))
+              for k in ('last_bbox_wgs84','last_attempted_bbox_wgs84'):
+                  b=obj.get(k)
+                  if isinstance(b,list) and len(b)==4: used_bboxes.add(tuple(float(x) for x in b))
+              for k in ('last_city','last_attempted_city','last_batch_city'):
+                  if obj.get(k): used_cities.add(str(obj[k]).strip().lower())
+
+          selected=[]
+          for city,authority,bbox in candidates:
+              tb=tuple(float(x) for x in bbox)
+              if city.lower() in used_cities or tb in used_bboxes:
+                  print('SKIP_USED_WINDOW',city,bbox,flush=True)
+                  continue
+              selected.append((city,authority,bbox))
+              used_cities.add(city.lower()); used_bboxes.add(tb)
+              if len(selected)==12: break
+          if len(selected)<12:
+              raise SystemExit(f'only {len(selected)} unused windows available; refusing replay')
+          specs=[(start_batch+i,city,authority,bbox) for i,(city,authority,bbox) in enumerate(selected)]
+          print('SELECTED_UNUSED_WINDOWS',json.dumps(specs,ensure_ascii=False),flush=True)
+
+          yml=driver_path.read_text(encoding='utf-8')
+          marker="          python - <<'PY'\n"
+          begin=yml.index(marker)+len(marker)
+          end=yml.rindex("\n          PY")
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in yml[begin:end].splitlines())+'\n'
+          code=code.replace('START_COUNT = 8800',f'START_COUNT = {start_count}',1)
+          code=code.replace('START_BATCH = 177',f'START_BATCH = {start_batch}',1)
+          a=code.index('SPECS = [')
+          b=code.index('ENDPOINTS = [',a)
+          code=code[:a]+'SPECS = '+repr(specs)+'\n'+code[b:]
+          code=code.replace('next=189',f'next={start_batch+12}')
+          compile(code,'<building_type_2-next12-v8>','exec')
+          exec(compile(code,'<building_type_2-next12-v8>','exec'),{})
+          PY
