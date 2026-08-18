@@ -1,0 +1,25 @@
+name: AAYS FG7 A47 Tuddenham 391-402 strict continuation
+
+on:
+  pull_request:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  run-fg7-a47tud:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout orchestration branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aays-fg7-a47tud-391-402-20260819-0231
+          fetch-depth: 1
+          persist-credentials: true
+      - name: Execute strict FG7 A47 Tuddenham batches 391-402
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: python ai-task-scripts/aays_fg7_a47tud_391_402_20260819.py
