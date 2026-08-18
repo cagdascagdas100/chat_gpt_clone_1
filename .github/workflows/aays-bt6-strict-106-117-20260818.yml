@@ -1,0 +1,338 @@
+name: AAYS BT6 strict bounded batches 106-117 20260818
+on:
+  push:
+    branches:
+      - work/openai/agent-aays-bt6-strict-12-20260818-2018
+    paths:
+      - '.github/workflows/aays-bt6-strict-106-117-20260818.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-bt6-strict-106-117-20260818
+  cancel-in-progress: false
+jobs:
+  strict-spatial:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - name: Checkout canonical slot branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+          path: canonical
+      - name: Install geometry helpers
+        run: python -m pip install --quiet requests shapely pyproj
+      - name: Preflight exact BT6 cursor ownership and counts
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json,subprocess,re
+          b='origin/codex/aays-single-runner-v5-20260706'
+          def j(p): return json.loads(subprocess.check_output(['git','show',f'{b}:{p}']))
+          gp='england_map_web/data/building_type/shards/building_type_6_latest.geojson'
+          mp='england_map_web/data/building_type/shards/building_type_6_manifest_latest.json'
+          cp='docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json'
+          sp='docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json'
+          g,m,c,s=j(gp),j(mp),j(cp),j(sp)
+          fs=g.get('features') or []; n=len(fs)
+          if c.get('slot_id')!='building_type_6' or c.get('continuation_key')!='building-type-6-england-classification-v1-20260808': raise SystemExit('SLOT_OR_CONTINUATION_CHANGED')
+          if c.get('next_batch_index')!=106: raise SystemExit('PREFLIGHT_CURSOR_CHANGED:'+repr(c.get('next_batch_index')))
+          if s.get('owner') not in (None,'') or c.get('owner') not in (None,''): raise SystemExit('LIVE_OWNER_PRESENT')
+          vals=[n,m.get('total_features'),c.get('feature_count_after')]
+          if len(set(vals))!=1 or n!=22250: raise SystemExit('PREFLIGHT_COUNT_MISMATCH:'+repr(vals))
+          seen=set(); d=0
+          for f in fs:
+            p=f.get('properties') or {}
+            for k,v in [('id',f.get('id')),('parcel_id',p.get('parcel_id'))]:
+              if v is None: continue
+              z=(k,str(v)); d += z in seen; seen.add(z)
+          if d: raise SystemExit('PREFLIGHT_DUP_NONZERO:'+str(d))
+          print({'slot':'building_type_6','before':n,'cursor':106,'owner':s.get('owner'),'dup':0})
+          PY
+      - name: Run exactly twelve new strict bounded windows
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          cat > /tmp/bt6_106_117.py <<'PY'
+          import json,hashlib,datetime,collections,requests,sys,os,re,time
+          from pathlib import Path
+          from shapely.geometry import shape,Polygon,mapping
+          from shapely import wkt
+          from pyproj import Transformer
+
+          SLOT='building_type_6'; CONT='building-type-6-england-classification-v1-20260808'
+          SHARD=Path('england_map_web/data/building_type/shards/building_type_6_latest.geojson')
+          MAN=Path('england_map_web/data/building_type/shards/building_type_6_manifest_latest.json')
+          REP=Path('docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json')
+          ST=Path('docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json')
+          CP=Path('docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json')
+          TASK=Path('docs/chatgpt_status/_shared/slots_21/building_type_6/current_task_latest.json')
+          REC=Path('docs/chatgpt_status/_shared/slots_21/building_type_6/recovery_latest.json')
+          REPORT=Path('docs/chatgpt_status/_shared/slots_21/building_type_6/reports/20260818T2018Z_building_type_6_strict_b106_117.json')
+          PD='https://www.planning.data.gov.uk/entity.json'
+          OPS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']
+          # 12 exact, non-repeated 1 km British National Grid windows starting at the checkpointed Donington-le-Heath anchor.
+          W=[]; bi=106
+          for y in (314000,315000,316000):
+            for x in (440000,441000,442000,443000):
+              W.append((bi,f'BT6_NWL_E{x//1000:03d}_N{y//1000:03d}_1K_20260818',[x,y,x+1000,y+1000])); bi+=1
+          if [x[0] for x in W] != list(range(106,118)): raise SystemExit('WINDOW_RANGE_BUILD_FAILED')
+          tr=Transformer.from_crs(27700,4326,always_xy=True)
+          def now(): return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          def load(p): return json.load(open(p,encoding='utf-8'))
+          def save(p,o):
+            q=Path(str(p)+'.tmp'); q.parent.mkdir(parents=True,exist_ok=True)
+            with open(q,'w',encoding='utf-8',newline='\n') as f: json.dump(o,f,ensure_ascii=False,separators=(',',':')); f.write('\n')
+            os.replace(q,p)
+          def sha(b): return hashlib.sha256(b).hexdigest()
+          def osmnum(v):
+            if v is None:return None
+            m=re.search(r'(\d{4,})$',str(v)); return m.group(1) if m else None
+          def duplicate_count(fs):
+            d=0
+            for extractor in (lambda f:f.get('id'),lambda f:(f.get('properties') or {}).get('parcel_id'),lambda f:osmnum((f.get('properties') or {}).get('osm_id'))):
+              seen=set()
+              for f in fs:
+                v=extractor(f)
+                if v is None: continue
+                v=str(v)
+                if v in seen:d+=1
+                else:seen.add(v)
+            return d
+          def seen_ids(fs):
+            fi=set();pa=set();oi=set()
+            for f in fs:
+              if f.get('id') is not None:fi.add(str(f['id']))
+              p=f.get('properties') or {}
+              if p.get('parcel_id') is not None:pa.add(str(p['parcel_id']))
+              for k in ('osm_id','source_ref'):
+                z=osmnum(p.get(k))
+                if z:oi.add(z)
+            return fi,pa,oi
+          def classify(t):
+            b=(t.get('building') or '').strip().lower()
+            M={
+              'detached':('residential_detached','residential'),'semidetached_house':('residential_semidetached','residential'),
+              'house':('residential_house','residential'),'terrace':('residential_terrace','residential'),'residential':('residential','residential'),
+              'apartments':('residential_apartments','residential'),'industrial':('industrial','commercial'),'warehouse':('warehouse','commercial'),
+              'commercial':('commercial','commercial'),'retail':('commercial_retail','commercial'),'office':('office','commercial'),
+              'hotel':('hospitality','commercial'),'school':('education','institutional'),'college':('education','institutional'),
+              'university':('education','institutional'),'hospital':('healthcare_care','institutional'),'church':('religious','institutional'),
+              'chapel':('religious','institutional'),'mosque':('religious','institutional'),'temple':('religious','institutional'),
+              'civic':('public_infrastructure','institutional'),'government':('public_infrastructure','institutional'),'public':('public_infrastructure','institutional'),
+              'barn':('agricultural_outbuilding','agricultural'),'farm_auxiliary':('agricultural_outbuilding','agricultural'),
+              'stable':('agricultural_outbuilding','agricultural'),'shed':('agricultural_outbuilding','agricultural')}
+            if b in M:return M[b],f'building={b}'
+            if b not in ('yes','service','', 'roof'): return None
+            a=(t.get('amenity') or '').lower(); q=(t.get('tourism') or '').lower()
+            if a in ('school','college','university','kindergarten'):return ('education','institutional'),f'building={b or "unspecified"};amenity={a}'
+            if a in ('hospital','clinic','doctors','nursing_home'):return ('healthcare_care','institutional'),f'building={b or "unspecified"};amenity={a}'
+            if a=='place_of_worship':return ('religious','institutional'),f'building={b or "unspecified"};amenity={a}'
+            if a=='community_centre':return ('religious_or_community','institutional'),f'building={b or "unspecified"};amenity={a}'
+            if q in ('hotel','guest_house','hostel'):return ('hospitality','commercial'),f'building={b or "unspecified"};tourism={q}'
+            if t.get('shop'):return ('commercial_retail','commercial'),f'building={b or "unspecified"};shop={t.get("shop")}'
+            if t.get('office'):return ('office','commercial'),f'building={b or "unspecified"};office={t.get("office")}'
+            return None
+          def distributions(fs):
+            ty=collections.Counter();ev=collections.Counter();cf=collections.Counter();u=0
+            for f in fs:
+              p=f.get('properties') or {}; typ=str(p.get('building_type_primary') or 'unknown');ty[typ]+=1
+              ev[str(p.get('evidence_level') or 'U')]+=1
+              if p.get('confidence_level_1_to_4') is not None:cf[str(p.get('confidence_level_1_to_4'))]+=1
+              if typ=='unknown':u+=1
+            return ty,ev,cf,u
+          def update_counts(man,st,cp,task,rep,fs):
+            ty,ev,cf,u=distributions(fs);n=len(fs)
+            man['total_features']=n;man['classified']=n-u;man['unknown']=u;man['type_distribution']=dict(ty);man['evidence_distribution']=dict(ev);man['confidence_level_distribution']=dict(cf);man['generated_at']=now()
+            st['feature_count_after']=n;st['current_feature_count']=n;st['total_elements']=n;st['classified_count']=n-u;st['unknown_count']=u;st['evidence_distribution']=dict(ev);st['confidence_distribution']=dict(cf);st['updated_at']=now()
+            cp['feature_count_after']=n;cp['current_feature_count']=n;cp['classified_count_after']=n-u;cp['unknown_count_after']=u;cp['updated_at']=now()
+            task.setdefault('progress',{})['completed_count']=n;task['updated_at']=now()
+            rep['feature_count_after']=n
+            return n
+          def verify(expected):
+            g=load(SHARD);m=load(MAN);c=load(CP);s=load(ST);r=load(REP);n=len(g.get('features') or []);d=duplicate_count(g.get('features') or [])
+            vals=[n,m.get('total_features'),c.get('feature_count_after'),s.get('feature_count_after'),r.get('feature_count_after')]
+            return len(set(vals))==1 and n==expected and d==0,{'shard':n,'checkpoint':c.get('feature_count_after'),'status':s.get('feature_count_after'),'manifest':m.get('total_features'),'report':r.get('feature_count_after'),'dup':d}
+          def pd_entities(session,poly_wkt):
+            out=[]; meta=[]
+            for off in (0,100,200,300,400):
+              params=[('dataset','title-boundary'),('geometry',poly_wkt),('geometry_relation','intersects'),('limit','100'),('offset',str(off))]
+              r=session.get(PD,params=params,timeout=60);r.raise_for_status(); raw=r.content;j=r.json(); es=j.get('entities') or j.get('features') or []
+              meta.append({'url':r.url,'status':r.status_code,'sha256':sha(raw),'count':len(es),'offset':off})
+              out.extend(es)
+              if len(es)<100:break
+              time.sleep(.2)
+            return out,meta
+
+          sh=load(SHARD);man=load(MAN);st=load(ST);cp=load(CP);task=load(TASK);rec=load(REC);fs=sh.get('features') or []
+          for o in (st,cp,task,rec):
+            if o.get('slot_id')!=SLOT:raise SystemExit('SLOT_MISMATCH')
+            if o.get('continuation_key') and o.get('continuation_key')!=CONT:raise SystemExit('CONTINUATION_MISMATCH')
+          if st.get('owner') not in (None,'') or cp.get('owner') not in (None,''):raise SystemExit('LIVE_OWNER_PRESENT')
+          if cp.get('next_batch_index')!=106:raise SystemExit('CURSOR_CHANGED')
+          if len(fs)!=22250:raise SystemExit('COUNT_CHANGED')
+          if duplicate_count(fs):raise SystemExit('PREEXISTING_DUP_NONZERO')
+          fi,pa,oi=seen_ids(fs);before=len(fs);added_total=0;started=now()
+          rep={'schema_version':3,'slot_id':SLOT,'continuation_key':CONT,'generated_at':started,'run_mode':'STRICT_12_BOUNDED_BATCH_CONTINUATION','source_contract':'AAYS_CHATGPT_PLAN_00_23_SLOT_COMMON_CONTINUATION_20260818 + building_type_6_strict_spatial_binding_source_contract_v2','start_batch_index':106,'completed_bounded_batches':0,'next_batch_index':106,'feature_count_before':before,'feature_count_after':before,'new_added':0,'progress':False,'duplicate_count':0,'nearest_matching_used':False,'fake_data':False,'final_ready':False,'production_merge':False,'remote_readback_verified':False,'report_path':str(REPORT),'batches':[]}
+          save(REP,rep)
+          S=requests.Session();S.headers.update({'User-Agent':'TerraYield-AAYS-building_type_6/20260818'})
+          for idx,gid,bng in W:
+            x1,y1,x2,y2=bng; lon1,lat1=tr.transform(x1,y1); lon2,lat2=tr.transform(x2,y2)
+            west,east=min(lon1,lon2),max(lon1,lon2);south,north=min(lat1,lat2),max(lat1,lat2)
+            poly_wkt=f'POLYGON(({west} {south},{east} {south},{east} {north},{west} {north},{west} {south}))'
+            br={'batch_index':idx,'window_key':gid,'bbox_osgb27700':bng,'bbox_wgs84':[west,south,east,north],'feature_count_before':len(fs),'started_at':now(),'source_family':'PLANNING_DATA_TITLE_BOUNDARY_API + OSM_OVERPASS_API','binding_method_used':'strict_centroid_within_polygon','nearest_matching_used':False,'fake_data':False,'source_bytes_available':False,'added_feature_count':0,'strict_matches':0,'zero_result_window':False}
+            new=[]
+            try:
+              ents,pmeta=pd_entities(S,poly_wkt);br['planning_data_pages']=pmeta;br['planning_title_boundary_count_raw']=len(ents);br['source_bytes_available']=bool(pmeta)
+              titles=[]
+              for e in ents:
+                if e.get('type')=='Feature':
+                  prop=e.get('properties') or {}; raw=prop.get('reference') or prop.get('entity') or e.get('id'); geom=e.get('geometry')
+                  try: poly=shape(geom) if geom else None
+                  except Exception: poly=None
+                else:
+                  prop=e;raw=e.get('reference') or e.get('entity');gw=e.get('geometry')
+                  try: poly=wkt.loads(gw) if gw else None
+                  except Exception: poly=None
+                if raw is None or poly is None or poly.is_empty:continue
+                if not poly.is_valid:poly=poly.buffer(0)
+                if poly.is_empty:continue
+                titles.append((str(raw),poly,prop))
+              oq=f'[out:json][timeout:45];way["building"]({south},{west},{north},{east});out tags geom;';orx=None;last=''
+              for ep in OPS:
+                try:
+                  z=S.post(ep,data={'data':oq},timeout=70);z.raise_for_status();orx=z;break
+                except Exception as e:last=f'{type(e).__name__}:{e}'
+              if orx is None:raise RuntimeError('OVERPASS_ALL_FAILED:'+last)
+              ob=orx.content;oj=orx.json();els=oj.get('elements') or []
+              br.update({'osm_query_url':orx.url,'osm_http_status':orx.status_code,'osm_source_sha256':sha(ob),'osm_query_sha256':sha(oq.encode()),'osm_way_count_raw':len(els)})
+              cand=[]
+              for e in els:
+                oid=str(e.get('id'));cl=classify(e.get('tags') or {});geo=e.get('geometry') or []
+                if not cl or oid in oi or len(geo)<4:continue
+                xy=[(a.get('lon'),a.get('lat')) for a in geo if a.get('lon') is not None and a.get('lat') is not None]
+                if len(xy)<4:continue
+                try:pg=Polygon(xy)
+                except Exception:continue
+                if not pg.is_valid:pg=pg.buffer(0)
+                if pg.is_empty:continue
+                cand.append((oid,cl,pg.centroid,e.get('tags') or {}))
+              used=set()
+              for raw,poly,hp in sorted(titles,key=lambda x:x[0]):
+                if len(new)>=50:break
+                pid=f'PLANNING_DATA_TITLE_BOUNDARY_{raw}';fid=f'{SLOT}:{pid}'
+                if pid in pa or fid in fi:continue
+                ms=[c for c in cand if c[0] not in used and poly.covers(c[2])]
+                if len(ms)!=1:continue
+                oid,cl,cent,tags=ms[0]
+                if oid in oi:continue
+                stamp=now();used.add(oid)
+                purl=(pmeta[0]['url'] if pmeta else PD)
+                pr={'parcel_id':pid,'slot_id':SLOT,'region':'East Midlands','local_authority':'North West Leicestershire bounded grid','postcode':None,'building_type_primary':cl[0][0],'building_type_code':None,'building_category':cl[0][1],'confidence_score':0.92,'confidence_level_1_to_4':3,'evidence_level':'B','source_count':2,'osm_id':oid,'source_ref':'W'+oid,'sources':[{'source_name':'Planning Data title-boundary (HM Land Registry INSPIRE-derived)','url_or_local_path':purl,'accessed_at':br['started_at'],'sha256':pmeta[0]['sha256'] if pmeta else None,'licence':'Open Government Licence v3.0; HMLR/OS attribution required','granularity':'parcel_polygon','fields_used':['reference','geometry'],'supports_field':'parcel_id/geometry','match_method':'strict_centroid_within_polygon'},{'source_name':'OpenStreetMap Overpass API','url_or_local_path':orx.url,'accessed_at':br['started_at'],'sha256':br['osm_source_sha256'],'licence':'ODbL 1.0','granularity':'building_polygon','fields_used':[cl[1]],'supports_field':'building_type_primary','match_method':'direct_osm_building_tag'}],'geometry_model':'source-parcel-polygon','identity_match':True,'evidence_status':'verified','geometry_match_method':'strict_centroid_within_polygon','address_match_method':'none','limitations':'Title boundary is indicative freehold extent. Building type is accepted only when exactly one classifiable OSM building centroid falls within the title polygon; no nearest matching.','needs_manual_review':False,'nearest_matching_used':False,'fake_data':False,'updated_at':stamp,'source_window':gid,'source_bbox_osgb27700':bng}
+                new.append({'type':'Feature','id':fid,'geometry':mapping(poly),'properties':pr})
+              if new:
+                for f in new:
+                  fs.append(f);fi.add(str(f['id']));pa.add(str(f['properties']['parcel_id']));oi.add(str(f['properties']['osm_id']))
+                added_total+=len(new)
+              br['strict_matches']=len(new);br['added_feature_count']=len(new);br['zero_result_window']=len(new)==0;br['result']='SUCCESS_APPEND' if new else 'ZERO_STRICT_MATCH_CHECKPOINTED'
+            except Exception as e:
+              br['result']='SOURCE_READ_FAILED_CHECKPOINTED';br['source_error']=f'{type(e).__name__}:{e}';br['zero_result_window']=True
+            br['feature_count_after']=len(fs);br['finished_at']=now();rep['completed_bounded_batches']+=1;rep['next_batch_index']=idx+1;rep['new_added']=added_total;rep['feature_count_after']=len(fs);rep['batches'].append(br)
+            cp['next_batch_index']=idx+1;cp['last_processed_batch_index']=idx;cp['new_features_added_this_attempt']=added_total;cp['progress_counted']=added_total>0;cp['state']='CONTINUE';cp['owner']=None;cp['fake_data']=False;cp['nearest_matching_used']=False;cp['source_contract']='building_type_6_strict_spatial_binding_source_contract_v2';cp['bounded_run']={'requested':12,'completed':rep['completed_bounded_batches'],'start_batch_index':106,'next_batch_index':idx+1,'processed_windows':[x['window_key'] for x in rep['batches']],'source_families':['PLANNING_DATA_TITLE_BOUNDARY_API','OSM_OVERPASS_API'],'before':before,'added':added_total,'after':len(fs)}
+            st['next_batch_index']=idx+1;st['last_processed_batch_index']=idx;st['feature_count_before']=before;st['feature_count_added']=added_total;st['owner']=None;st['fake_data']=False;st['nearest_matching_used']=False;st['outcome']='CONTINUE';st['latest_report_path']=str(REPORT);st['source_contract']='building_type_6_strict_spatial_binding_source_contract_v2'
+            task['next_batch_index']=idx+1;task['owner']=None;task['source_contract']='building_type_6_strict_spatial_binding_source_contract_v2';task['next_actions']=['Continue from next unused strict bounded window; do not replay batches 106-117.','Require geometry_model=source-parcel-polygon, identity_match=true, evidence_status=verified; no nearest matching.']
+            rec['resume_cursor']={'next_batch_index':idx+1,'last_processed_batch_index':idx};rec['owner']=None;rec['current_blocker']=None if new else br.get('source_error') or 'ZERO_STRICT_MATCH_WINDOW';rec['source_contract']='building_type_6_strict_spatial_binding_source_contract_v2';rec['fake_data']=False;rec['nearest_matching_used']=False
+            update_counts(man,st,cp,task,rep,fs);sh['features']=fs
+            save(SHARD,sh);save(MAN,man);save(CP,cp);save(ST,st);save(TASK,task);save(REC,rec);save(REP,rep)
+            ok,rb=verify(len(fs));br['readback_verified']=ok;br['shard_equals_checkpoint_equals_status_equals_manifest']=ok;br['readback']=rb
+            if not ok:raise SystemExit('PER_BATCH_READBACK_FAILED:'+repr((idx,rb)))
+            # Persist the verified batch gate itself, without changing any count-bearing field.
+            save(REP,rep);cp['last_batch_readback']=rb;st['last_batch_readback']=rb;save(CP,cp);save(ST,st)
+            print({'batch':idx,'window':gid,'added':br['added_feature_count'],'after':len(fs),'dup':rb['dup'],'result':br['result']})
+          rep['progress']=added_total>0;rep['duplicate_count']=duplicate_count(fs);rep['nearest_matching_used']=False;rep['fake_data']=False;rep['run_finished_at']=now();rep['next_batch_index']=118
+          cp['next_batch_index']=118;st['next_batch_index']=118;task['next_batch_index']=118;rec['resume_cursor']={'next_batch_index':118,'last_processed_batch_index':117}
+          update_counts(man,st,cp,task,rep,fs);sh['features']=fs
+          save(SHARD,sh);save(MAN,man);save(CP,cp);save(ST,st);save(TASK,task);save(REC,rec);save(REP,rep);save(REPORT,rep)
+          ok,rb=verify(len(fs))
+          if not ok or rep['duplicate_count']!=0 or len(rep['batches'])!=12 or [b['batch_index'] for b in rep['batches']]!=list(range(106,118)) or not all(b.get('readback_verified') and b.get('shard_equals_checkpoint_equals_status_equals_manifest') and b.get('readback',{}).get('dup')==0 and not b.get('nearest_matching_used') and not b.get('fake_data') for b in rep['batches']):raise SystemExit('FINAL_LOCAL_GATE_FAILED:'+repr(rb))
+          print({'report':str(REPORT),'before':before,'added':added_total,'after':len(fs),'next_batch':118,'dup':0,'zero_batches':[b['batch_index'] for b in rep['batches'] if b.get('added_feature_count')==0],'local_counts':rb})
+          PY
+          python /tmp/bt6_106_117.py
+      - name: Package only owned BT6 paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          P=(england_map_web/data/building_type/shards/building_type_6_latest.geojson england_map_web/data/building_type/shards/building_type_6_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/current_task_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/recovery_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/reports/20260818T2018Z_building_type_6_strict_b106_117.json)
+          rm -rf /tmp/bt6_payload && mkdir -p /tmp/bt6_payload
+          for p in "${P[@]}"; do mkdir -p "/tmp/bt6_payload/$(dirname "$p")"; cp "$p" "/tmp/bt6_payload/$p"; done
+      - name: Race-safe publish exact owned BT6 paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          git fetch origin codex/aays-single-runner-v5-20260706
+          rm -rf /tmp/bt6_publish
+          git worktree add --detach /tmp/bt6_publish origin/codex/aays-single-runner-v5-20260706
+          cd /tmp/bt6_publish
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          P=(england_map_web/data/building_type/shards/building_type_6_latest.geojson england_map_web/data/building_type/shards/building_type_6_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/current_task_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/recovery_latest.json docs/chatgpt_status/_shared/slots_21/building_type_6/reports/20260818T2018Z_building_type_6_strict_b106_117.json)
+          ok=0
+          for attempt in 1 2 3; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            python - <<'PY'
+          import json,subprocess
+          b='origin/codex/aays-single-runner-v5-20260706'
+          c=json.loads(subprocess.check_output(['git','show',f'{b}:docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json']))
+          s=json.loads(subprocess.check_output(['git','show',f'{b}:docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json']))
+          if c.get('slot_id')!='building_type_6' or c.get('continuation_key')!='building-type-6-england-classification-v1-20260808' or c.get('next_batch_index')!=106 or c.get('feature_count_after')!=22250: raise SystemExit('REMOTE_BT6_MOVED_ABORT:'+repr((c.get('slot_id'),c.get('continuation_key'),c.get('next_batch_index'),c.get('feature_count_after'))))
+          if s.get('owner') not in (None,'') or c.get('owner') not in (None,''): raise SystemExit('REMOTE_OWNER_PRESENT')
+          PY
+            git reset --hard origin/codex/aays-single-runner-v5-20260706
+            for p in "${P[@]}"; do mkdir -p "$(dirname "$p")"; cp "/tmp/bt6_payload/$p" "$p"; done
+            git add -- "${P[@]}"
+            git diff --cached --quiet && { echo NO_BT6_CHANGES; exit 1; }
+            git commit -m 'aays: building_type_6 strict bounded batches 106-117'
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then ok=1; break; fi
+            echo "PUSH_RACE_RETRY=$attempt"
+          done
+          test "$ok" = 1
+      - name: Final remote readback equality duplicate and per-batch gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json,subprocess,re
+          b='origin/codex/aays-single-runner-v5-20260706'
+          def j(p): return json.loads(subprocess.check_output(['git','show',f'{b}:{p}']))
+          rp='docs/chatgpt_status/building_type/slots/building_type_6/runner_outputs/building_type_6_classification_latest.json'
+          sp='docs/chatgpt_status/_shared/slots_21/building_type_6/status_latest.json';cp='docs/chatgpt_status/_shared/slots_21/building_type_6/checkpoint_latest.json';mp='england_map_web/data/building_type/shards/building_type_6_manifest_latest.json';gp='england_map_web/data/building_type/shards/building_type_6_latest.geojson'
+          r,s,c,m,g=j(rp),j(sp),j(cp),j(mp),j(gp);fs=g.get('features') or [];n=len(fs)
+          vals=[n,m.get('total_features'),c.get('feature_count_after'),s.get('feature_count_after'),r.get('feature_count_after')]
+          if len(set(vals))!=1: raise SystemExit('REMOTE_COUNT_MISMATCH:'+repr(vals))
+          if r.get('next_batch_index')!=118 or c.get('next_batch_index')!=118 or s.get('next_batch_index')!=118: raise SystemExit('REMOTE_CURSOR_FAILED')
+          d=0
+          for ext in (lambda f:f.get('id'),lambda f:(f.get('properties') or {}).get('parcel_id'),lambda f:re.search(r'(\d{4,})$',str((f.get('properties') or {}).get('osm_id') or '')) and re.search(r'(\d{4,})$',str((f.get('properties') or {}).get('osm_id') or '')).group(1)):
+            seen=set()
+            for f in fs:
+              v=ext(f)
+              if v is None:continue
+              v=str(v);d += v in seen;seen.add(v)
+          if d!=0 or r.get('duplicate_count')!=0: raise SystemExit('REMOTE_DUP_FAILED:'+repr((d,r.get('duplicate_count'))))
+          bs=r.get('batches') or []
+          if len(bs)!=12 or [x.get('batch_index') for x in bs]!=list(range(106,118)): raise SystemExit('REMOTE_BATCH_RANGE_FAILED')
+          if not all(x.get('readback_verified') and x.get('shard_equals_checkpoint_equals_status_equals_manifest') and x.get('readback',{}).get('dup')==0 and not x.get('nearest_matching_used') and not x.get('fake_data') for x in bs): raise SystemExit('REMOTE_PER_BATCH_READBACK_FAILED')
+          report='docs/chatgpt_status/_shared/slots_21/building_type_6/reports/20260818T2018Z_building_type_6_strict_b106_117.json';rr=j(report)
+          if rr.get('feature_count_after')!=n or rr.get('new_added')!=r.get('new_added'): raise SystemExit('REMOTE_REPORT_MISMATCH')
+          print({'report':report,'before':r.get('feature_count_before'),'added':r.get('new_added'),'after':n,'next_batch':118,'dup':0,'zero_batches':[x.get('batch_index') for x in bs if (x.get('added_feature_count') or 0)==0],'remote_counts':vals})
+          PY
