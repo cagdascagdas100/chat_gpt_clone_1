@@ -43,19 +43,11 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
+          import re
           from pathlib import Path
           src=Path('trigger/ai-task-scripts/aays_fg7_batches_271_282_20260818.py').read_text(encoding='utf-8')
-          old='''plan_path = pathlib.Path(os.environ["AAYS_CONTINUATION_PATH"])
-          if not plan_path.is_file():
-              raise SystemExit(f"COMMON_CONTINUATION_FILE_MISSING:{plan_path}")
-          plan_text = plan_path.read_text(encoding="utf-8-sig")
-          if not plan_text.strip():
-              raise SystemExit("COMMON_CONTINUATION_FILE_EMPTY")
-          plan_bytes = plan_path.read_bytes()
-          plan_sha256 = hashlib.sha256(plan_bytes).hexdigest()
-          plan_lines = plan_text.count("\\n") + (1 if plan_text else 0)
-          '''
-          new='''plan_path = pathlib.Path(os.environ["AAYS_CONTINUATION_PATH"])
+          pattern=r'''plan_path = pathlib\.Path\(os\.environ\["AAYS_CONTINUATION_PATH"\]\)\nif not plan_path\.is_file\(\):\n    raise SystemExit\(f"COMMON_CONTINUATION_FILE_MISSING:\{plan_path\}"\)\nplan_text = plan_path\.read_text\(encoding="utf-8-sig"\)\nif not plan_text\.strip\(\):\n    raise SystemExit\("COMMON_CONTINUATION_FILE_EMPTY"\)\nplan_bytes = plan_path\.read_bytes\(\)\nplan_sha256 = hashlib\.sha256\(plan_bytes\)\.hexdigest\(\)\nplan_lines = plan_text\.count\("\\\\n"\) \+ \(1 if plan_text else 0\)'''
+          replacement='''plan_path = pathlib.Path(os.environ["AAYS_CONTINUATION_PATH"])
           plan_file_read = plan_path.is_file()
           if plan_file_read:
               plan_text = plan_path.read_text(encoding="utf-8-sig")
@@ -68,15 +60,14 @@ jobs:
               plan_text = ""
               plan_bytes = b""
               plan_sha256 = None
-              plan_lines = 0
-          '''
-          if old not in src:
-              raise SystemExit('HOSTED_PATCH_PLAN_BLOCK_NOT_FOUND')
-          src=src.replace(old,new,1)
-          src=src.replace('"requested_common_continuation_file_read": True,','"requested_common_continuation_file_read": plan_file_read,',1)
-          src=src.replace('"common_continuation_file_read_full": True,','"common_continuation_file_read_full": plan_file_read,',1)
+              plan_lines = 0'''
+          src2,n=re.subn(pattern,replacement,src,count=1)
+          if n != 1:
+              raise SystemExit(f'HOSTED_PATCH_PLAN_BLOCK_COUNT:{n}')
+          src2=src2.replace('"requested_common_continuation_file_read": True,','"requested_common_continuation_file_read": plan_file_read,',1)
+          src2=src2.replace('"common_continuation_file_read_full": True,','"common_continuation_file_read_full": plan_file_read,',1)
           out=Path('canonical/.fg7_271_282_hosted.py')
-          out.write_text(src,encoding='utf-8')
+          out.write_text(src2,encoding='utf-8')
           PY
           cd canonical
           python .fg7_271_282_hosted.py
