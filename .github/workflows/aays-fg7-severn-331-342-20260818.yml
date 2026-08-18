@@ -1,0 +1,24 @@
+name: AAYS FG7 Severn 331-342 strict continuation
+on:
+  pull_request:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - 'ai-task-scripts/aays_fg7_severn_331_342_20260818.py'
+      - '.github/workflows/aays-fg7-severn-331-342-20260818.yml'
+permissions:
+  contents: write
+jobs:
+  run-fg7-severn:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout orchestration branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aays-fg7-severn-331-342-20260818-2351
+          fetch-depth: 1
+          persist-credentials: true
+      - name: Execute strict FG7 Severn batches 331-342
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: python ai-task-scripts/aays_fg7_severn_331_342_20260818.py
