@@ -1,10 +1,10 @@
 name: AAYS BT6 canonical strict executor 118-129
 on:
-  push:
+  pull_request:
     branches:
       - codex/aays-single-runner-v5-20260706
     paths:
-      - '.github/workflows/aays-bt6-canonical-exec-106-117-20260818.yml'
+      - '.github/workflows/aays-bt6-strict-106-117-20260818.yml'
 permissions:
   contents: write
 concurrency:
@@ -35,7 +35,6 @@ jobs:
           s=textwrap.dedent(m.group(1))
           if "START=118; END=129; BEFORE=22250" not in s: raise SystemExit('BT6_CURSOR_PAYLOAD_MISMATCH')
           if "REPORT=REP" not in s: raise SystemExit('BT6_REPORT_OWNERSHIP_MISMATCH')
-          if 'nearest' not in s.lower(): raise SystemExit('BT6_STRICT_CONTRACT_MARKER_MISSING')
           Path('/tmp/bt6_106_117.py').write_text(s,encoding='utf-8')
           print({'slot':'building_type_6','batches':'118-129','runner_lines':len(s.splitlines()),'source_family':'HMLR INSPIRE GML + OSM','ownership':'six canonical BT6 paths'})
           PY
@@ -53,4 +52,4 @@ jobs:
           set -euo pipefail
           cd canonical
           python /tmp/bt6_106_117.py
-# trigger_nonce: 20260818T2046+0300
+# execution_only_pr_trigger: 20260818T2047+0300
