@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: aays-building-type-2-common-v8-next12-20260818
+  group: aays-building-type-2-common-v10-next12-20260818
   cancel-in-progress: false
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: codex/aays-single-runner-v5-20260706
-          fetch-depth: 280
+          fetch-depth: 340
           clean: false
           sparse-checkout-cone-mode: false
           sparse-checkout: |
@@ -49,43 +49,53 @@ jobs:
           geo=json.loads(geo_path.read_text(encoding='utf-8'))
           start_batch=int(cp['next_batch_index'])
           start_count=len(geo.get('features') or [])
-          assert start_batch >= 237, (start_batch, 'refusing stale/replayed cursor')
+          assert start_batch >= 261, (start_batch, 'refusing stale/replayed cursor')
           assert cp.get('current_feature_count')==start_count
           assert st.get('total_elements')==start_count
           assert task.get('owner') in (None,'')
           assert (task.get('continuation_key') or '') == 'building-type-2-england-classification-v1-20260808'
 
           candidates=[
-            ('West Drayton','Hillingdon',[-0.49,51.47,-0.42,51.52]),
-            ('Hounslow West','Hounslow',[-0.41,51.45,-0.35,51.49]),
-            ('Isleworth East','Hounslow',[-0.33,51.45,-0.27,51.49]),
-            ('Kingston','Kingston upon Thames',[-0.32,51.39,-0.26,51.43]),
-            ('Norbiton','Kingston upon Thames',[-0.29,51.39,-0.23,51.43]),
-            ('Lewisham South','Lewisham',[-0.03,51.42,0.03,51.46]),
-            ('Sydenham','Lewisham',[-0.08,51.41,-0.02,51.45]),
-            ('Norbury','Croydon',[-0.14,51.39,-0.08,51.43]),
-            ('Chadwell Heath','Redbridge',[0.10,51.55,0.16,51.59]),
-            ('Gidea Park','Havering',[0.18,51.56,0.24,51.60]),
-            ('South Woodford','Redbridge',[0.00,51.56,0.06,51.60]),
-            ('Wanstead','Redbridge',[0.00,51.55,0.06,51.59]),
-            ('Leytonstone','Waltham Forest',[-0.02,51.55,0.04,51.59]),
-            ('Walthamstow North','Waltham Forest',[-0.05,51.59,0.01,51.64]),
-            ('Chingford South','Waltham Forest',[-0.04,51.60,0.02,51.65]),
-            ('Teddington','Richmond upon Thames',[-0.35,51.41,-0.29,51.45]),
-            ('Whitton','Richmond upon Thames',[-0.39,51.43,-0.33,51.47]),
-            ('Worcester Park','Sutton',[-0.27,51.36,-0.21,51.40]),
-            ('Carshalton South','Sutton',[-0.18,51.33,-0.12,51.37]),
-            ('Purley South','Croydon',[-0.13,51.29,-0.07,51.34]),
-            ('Orpington North','Bromley',[0.06,51.38,0.12,51.42]),
-            ('Sidcup South','Bexley',[0.08,51.39,0.14,51.43]),
-            ('Abbey Wood','Greenwich',[0.08,51.47,0.14,51.51]),
-            ('Woolwich','Greenwich',[0.03,51.47,0.09,51.51]),
             ('Greenwich South','Greenwich',[-0.02,51.45,0.04,51.49]),
             ('Catford South','Lewisham',[-0.05,51.40,0.01,51.44]),
             ('Forest Hill','Lewisham',[-0.08,51.42,-0.02,51.46]),
-            ('Wimbledon','Merton',[-0.23,51.40,-0.17,51.45]),
+            ('Plumstead','Greenwich',[0.06,51.47,0.12,51.50]),
+            ('Bexleyheath','Bexley',[0.11,51.44,0.17,51.48]),
+            ('Welling','Bexley',[0.08,51.44,0.14,51.48]),
+            ('Crayford','Bexley',[0.16,51.44,0.22,51.49]),
+            ('Petts Wood','Bromley',[0.05,51.38,0.11,51.42]),
+            ('Locksbottom','Bromley',[0.03,51.34,0.09,51.38]),
+            ('Barkingside','Redbridge',[0.08,51.57,0.14,51.61]),
+            ('Clayhall','Redbridge',[0.05,51.57,0.11,51.61]),
+            ('Palmers Green','Enfield',[-0.13,51.60,-0.07,51.64]),
+            ('Southgate','Enfield',[-0.15,51.62,-0.09,51.66]),
+            ('Hendon','Barnet',[-0.25,51.56,-0.19,51.61]),
+            ('Finchley','Barnet',[-0.20,51.58,-0.14,51.63]),
+            ('Kenton','Harrow',[-0.32,51.57,-0.26,51.61]),
+            ('Pinner North','Harrow',[-0.40,51.59,-0.34,51.63]),
+            ('Tolworth','Kingston upon Thames',[-0.30,51.36,-0.24,51.40]),
+            ('Chessington','Kingston upon Thames',[-0.34,51.34,-0.27,51.38]),
+            ('New Malden South','Kingston upon Thames',[-0.28,51.37,-0.22,51.41]),
             ('Morden','Merton',[-0.23,51.37,-0.17,51.41]),
-            ('New Addington','Croydon',[-0.04,51.33,0.02,51.38]),
+            ('Wimbledon South','Merton',[-0.23,51.39,-0.17,51.43]),
+            ('Raynes Park','Merton',[-0.25,51.39,-0.19,51.43]),
+            ('Sutton South','Sutton',[-0.21,51.33,-0.15,51.37]),
+            ('Cheam South','Sutton',[-0.24,51.33,-0.18,51.37]),
+            ('Romford South','Havering',[0.16,51.54,0.22,51.58]),
+            ('Hornchurch South','Havering',[0.20,51.54,0.26,51.58]),
+            ('Upminster South','Havering',[0.23,51.52,0.29,51.56]),
+            ('Dagenham North','Barking and Dagenham',[0.11,51.55,0.17,51.59]),
+            ('Barking East','Barking and Dagenham',[0.09,51.52,0.15,51.56]),
+            ('East Ham North','Newham',[0.02,51.54,0.08,51.58]),
+            ('Plaistow East','Newham',[0.01,51.51,0.07,51.55]),
+            ('Eltham South','Greenwich',[0.02,51.42,0.08,51.46]),
+            ('Charlton','Greenwich',[0.01,51.47,0.07,51.51]),
+            ('Lee South','Lewisham',[-0.02,51.43,0.04,51.47]),
+            ('Hither Green','Lewisham',[-0.04,51.43,0.02,51.47]),
+            ('Beckenham South','Bromley',[-0.04,51.37,0.02,51.41]),
+            ('West Wickham South','Bromley',[-0.04,51.34,0.02,51.38]),
+            ('Coulsdon South','Croydon',[-0.16,51.27,-0.10,51.31]),
+            ('Thornton Heath East','Croydon',[-0.10,51.38,-0.04,51.42]),
           ]
           used_cities=set(str(x).strip().lower() for x in (cp.get('attempted_cities') or []) if x)
           used_bboxes=set()
