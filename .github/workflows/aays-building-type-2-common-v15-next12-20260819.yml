@@ -1,0 +1,49 @@
+name: AAYS building_type_2 next 12 unused bounded windows v15
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-common-v15-next12-20260819.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-2-common-v15-next12-20260819
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 460
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-2-common-v2-b177-188-20260818.yml
+            .github/workflows/aays-building-type-2-common-v14-next12-20260819.yml
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
+      - name: Reuse proven selector with stricter live cursor guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('.github/workflows/aays-building-type-2-common-v14-next12-20260819.yml').read_text(encoding='utf-8')
+          marker="          python - <<'PY'\n"
+          begin=src.index(marker)+len(marker)
+          end=src.rindex("\n          PY")
+          code='\n'.join(line[10:] if line.startswith('          ') else line for line in src[begin:end].splitlines())+'\n'
+          code=code.replace("assert start_batch >= 309, (start_batch, 'refusing stale/replayed cursor')","assert start_batch >= 321, (start_batch, 'refusing stale/replayed cursor')",1)
+          code=code.replace('<building_type_2-next12-v14>','<building_type_2-next12-v15>')
+          compile(code,'<building_type_2-next12-v15-wrapper>','exec')
+          exec(compile(code,'<building_type_2-next12-v15-wrapper>','exec'),{})
+          PY
