@@ -1,0 +1,70 @@
+name: AAYS BT9 strict 241-252 one-shot
+on:
+  push:
+    branches:
+      - agent/aays-bt9-strict-12-20260818-241-252-trigger
+    paths:
+      - '.github/workflows/aays-bt9-strict-241-252-trigger-once.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-building-type-9-strict-once-241-252
+  cancel-in-progress: false
+jobs:
+  strict-spatial:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - name: Checkout verified BT9 executor
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aays-bt9-strict-12-20260818-0441
+          fetch-depth: 0
+          path: trigger
+      - name: Checkout canonical slot branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+          path: canonical
+      - name: Install strict spatial runtime
+        run: python -m pip install --quiet requests shapely
+      - name: Execute BT9 241-252 with guarded continuation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('trigger/docs/chatgpt_status/_shared/slots_21/building_type_9/automation/run_strict_229_240_20260818.py')
+          s=src.read_text(encoding='utf-8')
+          repl=[
+            ('START=229','START=241'),
+            ('NEXT=241','NEXT=253'),
+            ('BEFORE=7945','BEFORE=8343'),
+            ("('W=[]; bi=181','W=[]; bi=229')","('W=[]; bi=181','W=[]; bi=241')"),
+            ("('for y in (575000,580000,585000):','for y in (635000,640000,645000):')","('for y in (575000,580000,585000):','for y in (650000,655000,660000):')"),
+            ("('if start!=181:','if start!=229:')","('if start!=181:','if start!=241:')"),
+            ("('if len(fs)!=7200:','if len(fs)!=7945:')","('if len(fs)!=7200:','if len(fs)!=8343:')"),
+            ("(\"'start_batch_index':181\",\"'start_batch_index':229\")","(\"'start_batch_index':181\",\"'start_batch_index':241\")"),
+            ("(\"'next_batch_index':181\",\"'next_batch_index':229\")","(\"'next_batch_index':181\",\"'next_batch_index':241\")"),
+            ("(\"rep['next_batch_index']=193\",\"rep['next_batch_index']=241\")","(\"rep['next_batch_index']=193\",\"rep['next_batch_index']=253\")"),
+            ("(\"cp['next_batch_index']=193\",\"cp['next_batch_index']=241\")","(\"cp['next_batch_index']=193\",\"cp['next_batch_index']=253\")"),
+            ("(\"st['next_batch_index']=193\",\"st['next_batch_index']=241\")","(\"st['next_batch_index']=193\",\"st['next_batch_index']=253\")"),
+            ("(\"task['next_batch_index']=193\",\"task['next_batch_index']=241\")","(\"task['next_batch_index']=193\",\"task['next_batch_index']=253\")"),
+            ("('BATCH_193_STRICT_SPATIAL_BINDING_SOURCE_BYTES','BATCH_241_STRICT_SPATIAL_BINDING_SOURCE_BYTES')","('BATCH_193_STRICT_SPATIAL_BINDING_SOURCE_BYTES','BATCH_253_STRICT_SPATIAL_BINDING_SOURCE_BYTES')"),
+            ("('Continue from batch 193','Continue from batch 241')","('Continue from batch 193','Continue from batch 253')"),
+            ("('Batches 181-192 processed','Batches 229-240 processed')","('Batches 181-192 processed','Batches 241-252 processed')"),
+            ("(\"'next_batch':193\",\"'next_batch':241\")","(\"'next_batch':193\",\"'next_batch':253\")"),
+            ("Path('/tmp/bt9_229_240.py')","Path('/tmp/bt9_241_252.py')"),
+            ('strict bounded batches 229-240','strict bounded batches 241-252'),
+            ('remote readback 229-240','remote readback 241-252'),
+          ]
+          for a,b in repl:
+              if a not in s:
+                  raise SystemExit('ADAPTER_TOKEN_MISSING:'+a)
+              s=s.replace(a,b)
+          out=Path('/tmp/run_strict_241_252_20260818.py')
+          out.write_text(s,encoding='utf-8')
+          print('ADAPTED_EXECUTOR',out)
+          PY
+          python /tmp/run_strict_241_252_20260818.py
