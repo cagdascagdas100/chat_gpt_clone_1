@@ -1,0 +1,88 @@
+name: AAYS FG7 strict 271-282 PR trigger 20260818
+
+on:
+  pull_request:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - '.github/workflows/aays-fg7-b271-282-pr-trigger-20260818.yml'
+      - 'ai-task-scripts/aays_fg7_batches_271_282_20260818.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-fg7-strict-271-282-pr-trigger-20260818
+  cancel-in-progress: false
+
+jobs:
+  run-fg7:
+    runs-on: [self-hosted, Windows]
+    timeout-minutes: 110
+    env:
+      AAYS_CONTINUATION_PATH: 'F:\TerraYield_AAYS_Portable\docs\deepseek_prompts\AAYS_CHATGPT_PLAN_00_23_SLOT_COMMON_CONTINUATION_20260818.md'
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout trigger branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aays-fg7-strict-12-20260818-271-282-2009
+          path: trigger
+          fetch-depth: 1
+
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          path: canonical
+          fetch-depth: 50
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Execute strict FG7 continuation on F-drive host
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Push-Location canonical
+          try {
+            git config user.name 'TerraYield AAYS Bot'
+            git config user.email 'aays-bot@users.noreply.github.com'
+            python ..\trigger\ai-task-scripts\aays_fg7_batches_271_282_20260818.py
+            if ($LASTEXITCODE -ne 0) { throw 'FG7_EXECUTOR_FAILED' }
+
+            git add -- state/slots/future_growth_7/checkpoint_latest.json state/slots/future_growth_7/status_latest.json state/slots/future_growth_7/evidence_manifest_latest.json state/slots/future_growth_7/report_latest.json
+            $staged = @(git diff --cached --name-only)
+            if ($staged.Count -eq 0) { throw 'NO_STAGED_STATE' }
+            $bad = @($staged | Where-Object { $_ -notlike 'state/slots/future_growth_7/*' })
+            if ($bad.Count -gt 0) { throw ('CROSS_SLOT_STAGED:' + ($bad -join ',')) }
+            git commit -m 'future_growth_7: process strict batches 271-282'
+            if ($LASTEXITCODE -ne 0) { throw 'COMMIT_FAILED' }
+
+            $pushed = $false
+            for ($i=1; $i -le 4; $i++) {
+              git push origin HEAD:codex/aays-single-runner-v5-20260706
+              if ($LASTEXITCODE -eq 0) { $pushed = $true; break }
+              git fetch origin codex/aays-single-runner-v5-20260706
+              if ($LASTEXITCODE -ne 0) { throw 'FETCH_AFTER_PUSH_REJECT_FAILED' }
+              git rebase origin/codex/aays-single-runner-v5-20260706
+              if ($LASTEXITCODE -ne 0) {
+                git rebase --abort 2>$null
+                throw 'REBASE_CONFLICT_OR_FAILURE_FAIL_CLOSED'
+              }
+              Start-Sleep -Seconds (2 * $i)
+            }
+            if (-not $pushed) { throw 'PUSH_FAILED_AFTER_RETRIES' }
+
+            git fetch origin codex/aays-single-runner-v5-20260706 --depth=1
+            if ($LASTEXITCODE -ne 0) { throw 'REMOTE_READBACK_FETCH_FAILED' }
+            $remote = git show origin/codex/aays-single-runner-v5-20260706:state/slots/future_growth_7/report_latest.json
+            if ($LASTEXITCODE -ne 0 -or -not ($remote -match 'common_continuation_20260818_batches_271_282_self_hosted')) { throw 'REMOTE_REPORT_READBACK_FAIL' }
+            Write-Host 'REMOTE_READBACK_PASS future_growth_7 batches 271-282'
+          }
+          finally {
+            Pop-Location
+          }
