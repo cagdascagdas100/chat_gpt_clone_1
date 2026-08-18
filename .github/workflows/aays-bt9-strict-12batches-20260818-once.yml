@@ -1,15 +1,10 @@
-name: AAYS building_type_9 strict bounded batches 205-216 recovery
+name: AAYS building_type_9 strict bounded batches 217-228 recovery
 on:
   push:
     branches:
       - agent/aays-bt9-strict-12-20260818-0441
     paths:
       - '.github/workflows/aays-bt9-strict-12batches-20260818-once.yml'
-  pull_request:
-    branches:
-      - agent/aays-bt9-strict-12-20260818-0441
-    paths:
-      - 'docs/chatgpt_status/_shared/slots_21/building_type_9/actions_pr_trigger_193_204.txt'
 permissions:
   contents: write
 concurrency:
@@ -25,7 +20,7 @@ jobs:
           ref: agent/aays-bt9-strict-12-20260818-0441
           fetch-depth: 0
           path: trigger
-      - name: Extract verified parent runner for cursor 205
+      - name: Extract verified parent runner for cursor 217
         shell: bash
         run: |
           set -euo pipefail
@@ -33,41 +28,29 @@ jobs:
           import re,subprocess,textwrap
           p='.github/workflows/aays-bt9-strict-12batches-20260818-once.yml'
           old=subprocess.check_output(['git','-C','trigger','show',f'434fa3dd744ccafb6c38aaeb6a849e90f8837bf2:{p}'],text=True)
-          m=re.search(r"cat > /tmp/bt9_181_192\.py <<'PY'\n(.*?)\n\s*PY\n\s*python /tmp/bt9_181_192\.py",old,re.S)
+          m=re.search(r"cat > /tmp/bt9_181_192\\.py <<'PY'\\n(.*?)\\n\\s*PY\\n\\s*python /tmp/bt9_181_192\\.py",old,re.S)
           if not m: raise SystemExit('VERIFIED_PARENT_RUNNER_NOT_FOUND')
           s=textwrap.dedent(m.group(1))
           repl=[
-            ('W=[]; bi=181','W=[]; bi=205'),
-            ('for y in (575000,580000,585000):','for y in (605000,610000,615000):'),
-            ('if start!=181:','if start!=205:'),
-            ('if len(fs)!=7200:','if len(fs)!=7748:'),
-            ("'start_batch_index':181","'start_batch_index':205"),
-            ("'next_batch_index':181","'next_batch_index':205"),
-            ("rep['next_batch_index']=193","rep['next_batch_index']=217"),
-            ("cp['next_batch_index']=193","cp['next_batch_index']=217"),
-            ("st['next_batch_index']=193","st['next_batch_index']=217"),
-            ("task['next_batch_index']=193","task['next_batch_index']=217"),
-            ('BATCH_193_STRICT_SPATIAL_BINDING_SOURCE_BYTES','BATCH_217_STRICT_SPATIAL_BINDING_SOURCE_BYTES'),
-            ('Continue from batch 193','Continue from batch 217'),
-            ('Batches 181-192 processed','Batches 205-216 processed'),
-            ("'next_batch':193","'next_batch':217")]
+            ('W=[]; bi=181','W=[]; bi=217'),
+            ('for y in (575000,580000,585000):','for y in (620000,625000,630000):'),
+            ('if start!=181:','if start!=217:'),
+            ('if len(fs)!=7200:','if len(fs)!=7824:'),
+            ("'start_batch_index':181","'start_batch_index':217"),
+            ("'next_batch_index':181","'next_batch_index':217"),
+            ("rep['next_batch_index']=193","rep['next_batch_index']=229"),
+            ("cp['next_batch_index']=193","cp['next_batch_index']=229"),
+            ("st['next_batch_index']=193","st['next_batch_index']=229"),
+            ("task['next_batch_index']=193","task['next_batch_index']=229"),
+            ('BATCH_193_STRICT_SPATIAL_BINDING_SOURCE_BYTES','BATCH_229_STRICT_SPATIAL_BINDING_SOURCE_BYTES'),
+            ('Continue from batch 193','Continue from batch 229'),
+            ('Batches 181-192 processed','Batches 217-228 processed'),
+            ("'next_batch':193","'next_batch':229")]
           for a,b in repl:
             if a not in s: raise SystemExit('EXPECTED_PARENT_TOKEN_MISSING:'+a)
             s=s.replace(a,b)
-          open('/tmp/bt9_205_216.py','w',encoding='utf-8').write(s)
+          open('/tmp/bt9_217_228.py','w',encoding='utf-8').write(s)
           PY
-      - name: Record recovery start marker on owned slot branch
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd trigger
-          git config user.name 'TerraYield AAYS Bot'
-          git config user.email 'aays-bot@users.noreply.github.com'
-          mkdir -p docs/chatgpt_status/_shared/slots_21/building_type_9
-          printf '{"slot_id":"building_type_9","continuation_key":"building-type-9-england-classification-v1-20260808","requested_batches":"205-216","state":"RUN_STARTED","fake_data":false,"nearest_matching_used":false}\n' > docs/chatgpt_status/_shared/slots_21/building_type_9/actions_recovery_marker.json
-          git add docs/chatgpt_status/_shared/slots_21/building_type_9/actions_recovery_marker.json
-          git commit -m 'bt9: mark strict 205-216 recovery run started' || true
-          git push origin HEAD:agent/aays-bt9-strict-12-20260818-0441
       - uses: actions/checkout@v4
         with:
           ref: codex/aays-single-runner-v5-20260706
@@ -75,6 +58,27 @@ jobs:
           path: canonical
       - name: Install runtime geometry helpers
         run: python -m pip install --quiet requests shapely
+      - name: Preflight remote cursor and ownership gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          git fetch origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json,subprocess
+          b='origin/codex/aays-single-runner-v5-20260706'
+          def j(p): return json.loads(subprocess.check_output(['git','show',f'{b}:{p}']))
+          c=j('docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json')
+          s=j('docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json')
+          m=j('england_map_web/data/building_type/shards/building_type_9_manifest_latest.json')
+          g=j('england_map_web/data/building_type/shards/building_type_9_latest.geojson')
+          n=len(g.get('features') or [])
+          if c.get('slot_id')!='building_type_9' or c.get('continuation_key')!='building-type-9-england-classification-v1-20260808': raise SystemExit('SLOT_OR_CONTINUATION_CHANGED')
+          if s.get('owner') not in (None,''): raise SystemExit('LIVE_OWNER_PRESENT:'+repr(s.get('owner')))
+          vals=[n,c.get('feature_count_after'),s.get('total_elements'),m.get('total_features')]
+          if len(set(vals))!=1 or n!=7824: raise SystemExit('PREFLIGHT_COUNT_MISMATCH:'+repr(vals))
+          if c.get('next_batch_index')!=217 or s.get('next_batch_index')!=217: raise SystemExit('PREFLIGHT_CURSOR_CHANGED')
+          PY
       - name: Run twelve new strict bounded windows
         shell: bash
         run: |
@@ -82,7 +86,7 @@ jobs:
           cd canonical
           git config user.name 'TerraYield AAYS Bot'
           git config user.email 'aays-bot@users.noreply.github.com'
-          python /tmp/bt9_205_216.py
+          python /tmp/bt9_217_228.py
       - name: Remote cursor guard before canonical write
         shell: bash
         run: |
@@ -95,7 +99,7 @@ jobs:
           o=json.loads(subprocess.check_output(['git','show',f'origin/codex/aays-single-runner-v5-20260706:{p}']))
           if o.get('slot_id')!='building_type_9': raise SystemExit('REMOTE_SLOT_CHANGED')
           if o.get('continuation_key')!='building-type-9-england-classification-v1-20260808': raise SystemExit('REMOTE_CONTINUATION_CHANGED')
-          if o.get('next_batch_index')!=205: raise SystemExit('REMOTE_CURSOR_CHANGED:'+repr(o.get('next_batch_index')))
+          if o.get('next_batch_index')!=217: raise SystemExit('REMOTE_CURSOR_CHANGED:'+repr(o.get('next_batch_index')))
           PY
       - name: Commit exact BT9 paths and push canonical
         shell: bash
@@ -105,7 +109,7 @@ jobs:
           P=(england_map_web/data/building_type/shards/building_type_9_latest.geojson england_map_web/data/building_type/shards/building_type_9_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/current_task_latest.json)
           git add -- "${P[@]}"
           git diff --cached --quiet && { echo NO_BT9_CHANGES; exit 1; }
-          git commit -m 'aays: building_type_9 strict bounded batches 205-216'
+          git commit -m 'aays: building_type_9 strict bounded batches 217-228'
           git fetch origin codex/aays-single-runner-v5-20260706
           git rebase origin/codex/aays-single-runner-v5-20260706
           git push origin HEAD:codex/aays-single-runner-v5-20260706
@@ -128,7 +132,7 @@ jobs:
           r,s,c,m,g=j(rp),j(sp),j(cp),j(mp),j(gp); n=len(g.get('features') or [])
           vals=[n,m.get('total_features'),c.get('feature_count_after'),s.get('total_elements'),r.get('feature_count_after')]
           if len(set(vals))!=1: raise SystemExit('REMOTE_COUNT_MISMATCH:'+repr(vals))
-          if r.get('next_batch_index')!=217 or r.get('duplicate_count')!=0: raise SystemExit('REMOTE_CURSOR_OR_DUP_FAILED')
+          if r.get('next_batch_index')!=229 or r.get('duplicate_count')!=0: raise SystemExit('REMOTE_CURSOR_OR_DUP_FAILED')
           bs=r.get('batches') or []
           if len(bs)!=12 or not all(x.get('readback_verified') and x.get('dup')==0 and x.get('shard_equals_checkpoint_equals_status_equals_manifest') for x in bs): raise SystemExit('REMOTE_PER_BATCH_READBACK_FAILED')
           stamp=datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z'); sha=open('/tmp/bt9_material_sha').read().strip()
@@ -136,10 +140,9 @@ jobs:
             o=json.load(open(p,encoding='utf-8')); o['remote_readback_verified']=True; o['last_material_commit_sha']=sha; o['remote_readback_at']=stamp
             if p==rp:o['remote_readback_counts']={'shard':n,'manifest':vals[1],'checkpoint':vals[2],'status':vals[3],'report':vals[4],'dup':0}
             with open(p,'w',encoding='utf-8',newline='\n') as f: json.dump(o,f,ensure_ascii=False,separators=(',',':'));f.write('\n')
-          with open('/tmp/bt9_final.json','w') as f: json.dump({'before':r.get('feature_count_before'),'added':r.get('new_added'),'after':n,'next_batch':217,'dup':0,'remote_readback':True},f)
           PY
           git add england_map_web/data/building_type/shards/building_type_9_manifest_latest.json docs/chatgpt_status/building_type/slots/building_type_9/runner_outputs/building_type_9_classification_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/status_latest.json docs/chatgpt_status/_shared/slots_21/building_type_9/checkpoint_latest.json
-          git commit -m 'aays: verify building_type_9 remote readback 205-216'
+          git commit -m 'aays: verify building_type_9 remote readback 217-228'
           git fetch origin codex/aays-single-runner-v5-20260706
           git rebase origin/codex/aays-single-runner-v5-20260706
           git push origin HEAD:codex/aays-single-runner-v5-20260706
@@ -159,24 +162,6 @@ jobs:
           m=j('england_map_web/data/building_type/shards/building_type_9_manifest_latest.json')
           g=j('england_map_web/data/building_type/shards/building_type_9_latest.geojson')
           n=len(g.get('features') or []); vals=[n,m.get('total_features'),c.get('feature_count_after'),s.get('total_elements'),r.get('feature_count_after')]
-          if len(set(vals))!=1 or not r.get('remote_readback_verified') or r.get('next_batch_index')!=217 or r.get('duplicate_count')!=0: raise SystemExit('FINAL_REMOTE_READBACK_GATE_FAILED:'+repr(vals))
-          print({'before':r.get('feature_count_before'),'added':r.get('new_added'),'after':n,'next_batch':217,'dup':0})
+          if len(set(vals))!=1 or not r.get('remote_readback_verified') or r.get('next_batch_index')!=229 or r.get('duplicate_count')!=0: raise SystemExit('FINAL_REMOTE_READBACK_GATE_FAILED:'+repr(vals))
+          print({'before':r.get('feature_count_before'),'added':r.get('new_added'),'after':n,'next_batch':229,'dup':0})
           PY
-      - name: Record recovery completion marker
-        if: success()
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd trigger
-          git fetch origin agent/aays-bt9-strict-12-20260818-0441
-          git reset --hard origin/agent/aays-bt9-strict-12-20260818-0441
-          python - <<'PY'
-          import json
-          o=json.load(open('/tmp/bt9_final.json'))
-          o.update({'slot_id':'building_type_9','continuation_key':'building-type-9-england-classification-v1-20260808','requested_batches':'205-216','state':'RUN_COMPLETED'})
-          p='docs/chatgpt_status/_shared/slots_21/building_type_9/actions_recovery_marker.json'
-          with open(p,'w') as f: json.dump(o,f,separators=(',',':'));f.write('\n')
-          PY
-          git add docs/chatgpt_status/_shared/slots_21/building_type_9/actions_recovery_marker.json
-          git commit -m 'bt9: mark strict 205-216 recovery run completed'
-          git push origin HEAD:agent/aays-bt9-strict-12-20260818-0441
