@@ -1,0 +1,53 @@
+name: AAYS FG6 strict 301-312 isolated one-shot
+on:
+  push:
+    branches:
+      - agent/aays-fg6-b301-312-brownfield-pmtiles-20260818-2034
+    paths:
+      - '.github/workflows/aays-fg6-strict-301-312-isolated-once.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-future-growth-6-strict-301-312
+  cancel-in-progress: false
+jobs:
+  strict-source-expansion:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - name: Checkout FG6 executor branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aays-fg6-b301-312-brownfield-pmtiles-20260818-2034
+          fetch-depth: 0
+          path: trigger
+      - name: Checkout canonical slot branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+          persist-credentials: true
+          path: canonical
+      - name: Prepare spatial runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd trigger
+          npm install --no-save --no-package-lock --silent pmtiles @mapbox/vector-tile pbf @turf/boolean-point-in-polygon @turf/helpers
+          cat \
+            docs/chatgpt_status/_shared/slots_21/future_growth_6/automation/run_strict_301_312_20260818.part1.mjs \
+            docs/chatgpt_status/_shared/slots_21/future_growth_6/automation/run_strict_301_312_20260818.part2.mjs \
+            docs/chatgpt_status/_shared/slots_21/future_growth_6/automation/run_strict_301_312_20260818.part3.mjs \
+            docs/chatgpt_status/_shared/slots_21/future_growth_6/automation/run_strict_301_312_20260818.part4a.mjs \
+            docs/chatgpt_status/_shared/slots_21/future_growth_6/automation/run_strict_301_312_20260818.part4b.mjs \
+            > docs/chatgpt_status/_shared/slots_21/future_growth_6/automation/run_strict_301_312_20260818.mjs
+          node --check docs/chatgpt_status/_shared/slots_21/future_growth_6/automation/run_strict_301_312_20260818.mjs
+      - name: Execute FG6 strict 301-312 with per-batch remote readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          node ../trigger/docs/chatgpt_status/_shared/slots_21/future_growth_6/automation/run_strict_301_312_20260818.mjs
+          test -z "$(git status --porcelain)"
