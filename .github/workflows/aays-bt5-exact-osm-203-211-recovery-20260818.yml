@@ -1,0 +1,215 @@
+name: AAYS BT5 exact OSM 203-211 recovery 20260818
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/aays-bt5-exact-osm-203-211-recovery-20260818.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-building-type-5-exact-203-211-recovery
+  cancel-in-progress: true
+jobs:
+  exact-osm-recovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - name: Mark BT5 203-211 recovery started
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const path='docs/chatgpt_status/_shared/slots_21/building_type_5/actions_exact_osm_203_211_recovery_status.json';
+            let sha; try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
+            const body={slot_id:'building_type_5',source_windows:'203-211',state:'RUNNING',mode:'EXACT_OSM_NODE_IDENTITY_REFRESH_PHASE2_RECOVERY',run_id:String(context.runId),head_sha:context.sha,started_at:new Date().toISOString()};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark BT5 exact 203-211 recovery started',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
+      - name: Checkout canonical shallow
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+          path: canonical
+      - name: Configure runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C canonical config user.name 'AAYS building_type_5'
+          git -C canonical config user.email 'aays-building-type-5@users.noreply.github.com'
+          python -m pip install --quiet requests
+      - name: Resume exact OSM windows 203-211
+        shell: bash
+        env:
+          CANONICAL_BRANCH: codex/aays-single-runner-v5-20260706
+        run: |
+          set -euo pipefail
+          cat > /tmp/bt5_exact_203_211_recovery.py <<'PY'
+          import json, hashlib, os, subprocess, time
+          from collections import Counter
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import requests
+
+          WORK=Path('canonical'); BRANCH=os.environ['CANONICAL_BRANCH']; SLOT='building_type_5'
+          SHARD=Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson')
+          MANIFEST=Path('england_map_web/data/building_type/shards/building_type_5_manifest_latest.json')
+          CHECKPOINT=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json')
+          STATUS=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json')
+          CURRENT=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json')
+          REPORT=Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json')
+          EXACT=[
+            (203,150,66556231,'public_infrastructure','amenity=post_box'),
+            (204,151,66560273,'public_infrastructure','amenity=post_box'),
+            (205,152,291993232,'public_infrastructure','amenity=post_box'),
+            (206,153,300452939,'public_infrastructure','amenity=post_box'),
+            (207,154,365567616,'public_infrastructure','amenity=post_box'),
+            (208,155,365568437,'public_infrastructure','amenity=post_box'),
+            (209,156,472647140,'public_infrastructure','amenity=toilets'),
+            (210,157,32832211,'public_infrastructure','amenity=toilets'),
+            (211,158,315098555,'public_infrastructure','amenity=telephone'),
+          ]
+          SOURCE_FAMILY='OpenStreetMap API 0.6 exact node identity refresh phase2'
+          START_FEATURES=6100
+          TURN_START_EVIDENCE=5928; TURN_START_U=172; TURN_START_SOURCE=199; TURN_START_FEATURE=147
+          RESUME_EVIDENCE=5931; RESUME_U=169; RESUME_SOURCE=202; RESUME_FEATURE=150
+          UA='TerraYield-AAYS-building_type_5/20260818 exact-node-verification-phase2-recovery'
+
+          def utc(): return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          def run(cmd, check=True):
+              p=subprocess.run(cmd,cwd=WORK,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+              if check and p.returncode:
+                  print(p.stdout); raise RuntimeError('command failed: '+' '.join(cmd))
+              return p
+          def load(rel): return json.loads((WORK/rel).read_text(encoding='utf-8'))
+          def dump(rel,obj):
+              p=WORK/rel; p.parent.mkdir(parents=True,exist_ok=True); p.write_text(json.dumps(obj,ensure_ascii=False,separators=(',',':'))+'\n',encoding='utf-8')
+          def props(f): return f.get('properties') or {}
+          def dup_count(fs):
+              ids=[str(props(f).get('parcel_id','')) for f in fs if str(props(f).get('parcel_id',''))]
+              return len(ids)-len(set(ids))
+          def counts(fs):
+              ev=Counter(str(props(f).get('evidence_level','')) for f in fs)
+              types=Counter(str(props(f).get('building_type_primary','unknown')) for f in fs)
+              conf=Counter(str(props(f).get('confidence_level_1_to_4','')) for f in fs)
+              unknown=sum(1 for f in fs if props(f).get('evidence_level')=='U' or props(f).get('building_type_primary')=='unknown')
+              return {'total':len(fs),'unknown':unknown,'classified':len(fs)-unknown,'evidence':dict(ev),'types':dict(types),'confidence':dict(conf)}
+          def template(fs,target):
+              rows=[props(f) for f in fs if props(f).get('building_type_primary')==target and props(f).get('evidence_level')=='B']
+              if not rows: raise RuntimeError('NO_CANONICAL_B_TEMPLATE:'+target)
+              def mode(key, default=None):
+                  vals=[r.get(key) for r in rows if r.get(key) not in (None,'')]
+                  return Counter(vals).most_common(1)[0][0] if vals else default
+              return {'building_category':mode('building_category',target),'building_type_code':mode('building_type_code',target.upper()),'confidence_level_1_to_4':mode('confidence_level_1_to_4',3),'confidence_score':mode('confidence_score',0.85)}
+          def fetch_node(node_id):
+              url=f'https://api.openstreetmap.org/api/0.6/node/{node_id}.json'
+              try: r=requests.get(url,headers={'User-Agent':UA,'Accept':'application/json'},timeout=30)
+              except Exception as e: return {'ok':False,'url':url,'status':None,'sha256':None,'tags':{},'id':None,'fetch_error':type(e).__name__+':'+str(e)}
+              raw=r.content; sha=hashlib.sha256(raw).hexdigest()
+              if r.status_code!=200: return {'ok':False,'url':url,'status':r.status_code,'sha256':sha,'tags':{},'id':None}
+              try: data=r.json()
+              except Exception: return {'ok':False,'url':url,'status':r.status_code,'sha256':sha,'tags':{},'id':None,'parse_error':True}
+              exact=[e for e in (data.get('elements') or []) if e.get('type')=='node' and int(e.get('id',-1))==int(node_id)]
+              if len(exact)!=1: return {'ok':False,'url':url,'status':r.status_code,'sha256':sha,'tags':{},'id':None,'identity_count':len(exact)}
+              e=exact[0]; return {'ok':True,'url':url,'status':r.status_code,'sha256':sha,'tags':e.get('tags') or {},'id':int(e['id']),'lat':e.get('lat'),'lon':e.get('lon'),'version':e.get('version'),'timestamp':e.get('timestamp')}
+          def rule_ok(tags,rule):
+              k,v=rule.split('=',1); return str(tags.get(k,''))==v
+          def evidence_excerpt(tags):
+              keep=['building','amenity','shop','office','tourism','healthcare','railway','landuse','leisure','craft','public_transport','name','operator','brand']
+              out={k:tags[k] for k in keep if k in tags}
+              for k in sorted(tags):
+                  if len(out)>=6: break
+                  if k not in out: out[k]=tags[k]
+              return out
+          def update_manifest(man,fs,used_count,now):
+              c=counts(fs); man['generated_at']=now; man['total_features']=c['total']; man['classified']=c['classified']; man['unknown']=c['unknown']; man['evidence_distribution']=c['evidence']; man['type_distribution']=c['types']; man['confidence_level_distribution']=c['confidence']
+              srcs=[s for s in (man.get('sources') or []) if s.get('name')!='OpenStreetMap API 0.6 exact node identity refresh 200-211']
+              srcs.append({'name':'OpenStreetMap API 0.6 exact node identity refresh 200-211','url':'https://api.openstreetmap.org/api/0.6/node/{id}.json','license':'ODbL 1.0','features_used':used_count,'accessed_at':now,'match_method':'exact_osm_element_id','nearest_matching':False}); man['sources']=srcs
+              return c
+          def checkpoint(old,seq,bidx,c,w,now,final):
+              x=dict(old); x.update({'updated_at':now,'state':'BLOCKED' if final else 'RUNNING','final_ready':False,'fake_data':False,'production_merge':False,'feature_count_before':START_FEATURES,'feature_count_after':c['total'],'current_feature_count':c['total'],'new_features_appended':0,'next_batch_index':bidx+1,'canonical_feature_cursor':bidx+1,'source_window_cursor':seq,'terminal_no_replay_through_cursor':seq,'state_readback':{'shard_feature_count':c['total'],'checkpoint_feature_count':c['total'],'status_feature_count':c['total'],'manifest_feature_count':c['total'],'duplicate_count':0},'latest_source_window':w,'next_required_action':f'Do not replay source-window sequences 1-{seq}. Continue at source-window {seq+1} / feature batch {bidx+1} with an unused authoritative exact-id or strict spatial source window; nearest match and fake data remain forbidden.'}); return x
+          def status(old,seq,bidx,c,windows,now,final):
+              x=dict(old); verified=sum(bool(w.get('source_payload_verified')) for w in windows); zero=sum(bool(w.get('source_zero_result_verified')) for w in windows); bound=sum(bool(w.get('parcel_binding_verified')) for w in windows); added=c['classified']-TURN_START_EVIDENCE
+              x.update({'state':'BLOCKED' if final else 'RUNNING','updated_at':now,'owner':None,'final_ready':False,'production_merge':False,'fake_data':False,'total_elements':c['total'],'classified_count':c['classified'],'unknown_count':c['unknown'],'feature_count_before':START_FEATURES,'feature_count_after':c['total'],'new_features_appended':0,'evidence_bearing_unique_parcels_before':TURN_START_EVIDENCE,'evidence_bearing_unique_parcels_after':c['classified'],'evidence_bearing_unique_parcels_added':added,'next_batch_index':bidx+1,'canonical_feature_cursor':bidx+1,'source_window_cursor':seq,'terminal_no_replay_through_cursor':seq,'latest_source_window_screening':{'screening_sequence_before':TURN_START_SOURCE,'screening_sequence_after':seq,'screened_window_count':len(windows),'source_family':SOURCE_FAMILY,'window_keys':[w['window_key'] for w in windows],'source_payload_verified_count':verified,'source_zero_result_verified_count':zero,'parcel_binding_verified_count':bound,'duplicate_count_after':0},'readback_contract':{'shard_feature_count':c['total'],'checkpoint_feature_count':c['total'],'status_feature_count':c['total'],'manifest_feature_count':c['total'],'duplicate_count':0,'per_window_checkpoint_commits':len(windows),'per_window_remote_four_surface_readbacks':len(windows)},'evidence_distribution':c['evidence'],'confidence_distribution':c['confidence'],'blocker':{'code':'BOUNDED_TURN_COMPLETE_MORE_U_REMAIN' if final else 'RUNNING_EXACT_OSM_WINDOWS','root_cause':f'{c["unknown"]}_EVIDENCE_U_ROWS_REMAIN_AFTER_EXACT_ID_REFRESH' if final else 'EXACT_OSM_REFRESH_IN_PROGRESS','source_processing_attempted':True,'source_record_payload_verified':verified>0,'source_zero_result_verified':zero>0,'canonical_parcel_binding_verified':bound>0},'note':f'Exact OSM node identity source windows 200-{seq}; added {added} evidence-bearing unique existing point parcels; dup=0; nearest-match=false; fake_data=false.'}); return x
+          def report(seq,bidx,c,windows,now,final):
+              verified=sum(bool(w.get('source_payload_verified')) for w in windows); zero=sum(bool(w.get('source_zero_result_verified')) for w in windows); bound=sum(bool(w.get('parcel_binding_verified')) for w in windows)
+              return {'schema_version':3,'slot_id':SLOT,'task_id':'building-type-5-england-classification-v1-20260808','continuation_key':'building-type-5-england-classification-v1-20260808','generated_at':now,'state':'COMPLETED_BOUNDED_TURN' if final else 'RUNNING','result_kind':'twelve_bounded_exact_osm_node_identity_source_windows_200_211','source_contract':'AAYS_CHATGPT_PLAN_00_23_SLOT_COMMON_CONTINUATION_20260818 + canonical detailed continuation contract + source_contract_v2','feature_count_before':START_FEATURES,'new_feature_count':0,'feature_count_after':c['total'],'evidence_bearing_unique_parcels_before':TURN_START_EVIDENCE,'evidence_bearing_unique_parcels_added':c['classified']-TURN_START_EVIDENCE,'evidence_bearing_unique_parcels_after':c['classified'],'unknown_count_before':TURN_START_U,'unknown_count_after':c['unknown'],'canonical_feature_cursor_before':TURN_START_FEATURE,'canonical_feature_cursor_after':bidx+1,'source_window_cursor_before':TURN_START_SOURCE,'source_window_cursor_after':seq,'source_family':SOURCE_FAMILY,'source_url':'https://api.openstreetmap.org/api/0.6/node/{id}.json','windows':windows,'screened_window_count_this_turn':len(windows),'parcel_rows_appended':0,'existing_rows_upgraded':c['classified']-TURN_START_EVIDENCE,'completed_feature_batches_this_turn':len(windows),'duplicate_count_after':0,'nearest_match':False,'fake_data':False,'final_ready':False,'production_merge':False,'remote_readback_verified':True,'verified_source_record_count_this_turn':verified,'source_payload_verified_count':verified,'source_zero_result_verified_count':zero,'parcel_binding_verified_count':bound,'checkpoint_commits_this_turn':len(windows),'per_window_remote_four_surface_readbacks':len(windows),'business_files_changed':c['classified']>TURN_START_EVIDENCE,'remote_readback_at':now,'remote_readback_counts':{'shard':c['total'],'manifest':c['total'],'checkpoint':c['total'],'status':c['total'],'report':c['total'],'dup':0},'next_required_action':f'Do not replay source-window sequences 1-{seq}. Continue at source-window {seq+1} / feature batch {bidx+1} with an unused authoritative exact-id or strict spatial source window; nearest match and fake data remain forbidden.'}
+          def read_remote(rel): return json.loads(run(['git','show',f'origin/{BRANCH}:{rel.as_posix()}']).stdout)
+          def remote_counts():
+              rd=read_remote(SHARD); fs=rd['features']; c=counts(fs); cp=read_remote(CHECKPOINT); st=read_remote(STATUS); man=read_remote(MANIFEST); rep=read_remote(REPORT)
+              return {'shard':c['total'],'checkpoint':int(cp.get('current_feature_count',-1)),'status':int(st.get('total_elements',-1)),'manifest':int(man.get('total_features',-1)),'report':int(rep.get('feature_count_after',-1)),'dup':dup_count(fs),'source_cursor':int(cp.get('source_window_cursor',-1)),'feature_cursor':int(cp.get('canonical_feature_cursor',-1)),'unknown':c['unknown'],'classified':c['classified']}
+          def sync_expected(expected_prev):
+              run(['git','fetch','origin',BRANCH]); rcp=read_remote(CHECKPOINT); rc=int(rcp.get('source_window_cursor',-1))
+              if rc!=expected_prev: raise RuntimeError(f'BT5_CURSOR_CHANGED remote={rc} expected={expected_prev}')
+              rb=run(['git','rebase',f'origin/{BRANCH}'],check=False)
+              if rb.returncode!=0: run(['git','rebase','--abort'],check=False); raise RuntimeError('REBASE_CONFLICT_OTHER_OR_BT5_SLOT')
+          def contention_safe_push(expected_prev):
+              for attempt in range(1,31):
+                  sync_expected(expected_prev)
+                  p=run(['git','push','origin',f'HEAD:{BRANCH}'],check=False)
+                  if p.returncode==0: return attempt
+                  print('PUSH_RACE',attempt,p.stdout[-1000:]); time.sleep(1+(attempt%4))
+              raise RuntimeError('PUSH_RETRY_EXHAUSTED_30')
+
+          run(['git','fetch','origin',BRANCH]); run(['git','checkout','-B','aays-bt5-exact-203-211-recovery',f'origin/{BRANCH}'])
+          cp=load(CHECKPOINT); st=load(STATUS); cur=load(CURRENT); shard=load(SHARD); man=load(MANIFEST); oldrep=load(REPORT); fs=shard['features']; c0=counts(fs)
+          if int(cp.get('source_window_cursor',-1))!=RESUME_SOURCE or int(cp.get('canonical_feature_cursor',-1))!=RESUME_FEATURE: raise SystemExit('PRECHECK_CURSOR_CHANGED:'+json.dumps({'source':cp.get('source_window_cursor'),'feature':cp.get('canonical_feature_cursor')}))
+          if c0['total']!=START_FEATURES or c0['classified']!=RESUME_EVIDENCE or c0['unknown']!=RESUME_U or dup_count(fs)!=0: raise SystemExit('PRECHECK_COUNTS_UNEXPECTED:'+json.dumps(c0,sort_keys=True))
+          if st.get('owner') not in (None,'',False) or cur.get('owner') not in (None,'',False): raise SystemExit('LIVE_OWNER_PRESENT')
+          windows=list(oldrep.get('windows') or [])
+          if [int(w.get('seq',-1)) for w in windows] != [200,201,202]: raise SystemExit('PRECHECK_REPORT_WINDOWS_UNEXPECTED:'+json.dumps([w.get('seq') for w in windows]))
+          templates={'public_infrastructure':template(fs,'public_infrastructure')}
+          print('RECOVERY_PRECHECK',json.dumps({'counts':c0,'existing_windows':[w.get('seq') for w in windows],'owner_status':st.get('owner'),'owner_current':cur.get('owner')},sort_keys=True))
+
+          for seq,bidx,node_id,target,rule in EXACT:
+              expected_prev=seq-1; sync_expected(expected_prev)
+              shard=load(SHARD); fs=shard['features']; man=load(MANIFEST); cp=load(CHECKPOINT); st=load(STATUS)
+              pid=f'ENG_OSM_node_{node_id}'; matches=[f for f in fs if str(props(f).get('parcel_id'))==pid]
+              if len(matches)!=1: raise RuntimeError(f'EXACT_PARCEL_ID_COUNT_{pid}:{len(matches)}')
+              f=matches[0]; p=props(f)
+              if p.get('evidence_level')!='U' or p.get('building_type_primary')!='unknown': raise RuntimeError(f'TARGET_NOT_U_{pid}:{p.get("evidence_level")}:{p.get("building_type_primary")}')
+              src=fetch_node(node_id); now=utc(); changed=False
+              w={'seq':seq,'batch_index':bidx,'window_key':f'osm_api_exact_node_ee_20260818_phase2::{node_id}','node_id':node_id,'parcel_id':pid,'area':p.get('area'),'source_family':SOURCE_FAMILY,'source_url':src['url'],'started_at':now,'feature_count_before':len(fs),'evidence_bearing_before':counts(fs)['classified'],'allowed_binding_methods':['exact_osm_element_id'],'binding_method_used':'exact_osm_element_id','nearest_matching_used':False,'fake_data':False,'source_http_status':src.get('status'),'source_sha256':src.get('sha256'),'source_payload_verified':bool(src.get('ok')),'source_zero_result_verified':not bool(src.get('ok')),'parcel_binding_verified':bool(src.get('ok') and src.get('id')==node_id),'taxonomy_rule':rule,'target_building_type_primary':target}
+              if src.get('ok') and rule_ok(src.get('tags') or {},rule):
+                  t=templates[target]; p['building_category']=t['building_category']; p['building_type_code']=t['building_type_code']; p['building_type_primary']=target; p['building_type_secondary']=''; p['evidence_level']='B'; p['confidence_level_1_to_4']=t['confidence_level_1_to_4']; p['confidence_score']=t['confidence_score']; p['match_method']='exact_osm_element_id'; p['geometry_match_method']='exact_osm_element_identity'; p['source']='OpenStreetMap API 0.6 exact node identity'; p['source_url']=src['url']; p['osm_tags_summary']=src['tags']; p['source_evidence_excerpt']=evidence_excerpt(src['tags']); p['updated_at']=now; p['fake_data']=False; p['final_ready']=False; p['needs_manual_review']=False; p['limitations']='Exact OSM node identity with explicit current amenity tag; point-level classification, no nearest matching.'
+                  sources=[s for s in (p.get('sources') or []) if not (s.get('source_name')=='OpenStreetMap API 0.6 exact node identity' and s.get('url')==src['url'])]; sources.append({'source_name':'OpenStreetMap API 0.6 exact node identity','url':src['url'],'accessed_at':now,'source_sha256':src['sha256'],'fields_used':['id','lat','lon','tags'],'granularity':'exact_osm_node','licence':'ODbL 1.0','match_method':'exact_element_id','match_score':1.0,'supports_field':'building_type_primary','node_version':src.get('version'),'node_timestamp':src.get('timestamp')}); p['sources']=sources; p['source_count']=len(sources); es=p.get('evidence_summary') or {}; es['osm_exact_node']=True; es['total_sources']=len(sources); p['evidence_summary']=es; changed=True; w.update({'result':'EXACT_OSM_IDENTITY_CLASSIFICATION_UPGRADE','classification_update':True,'added_evidence_parcel_count':1,'source_tags':src['tags']})
+              else:
+                  w.update({'result':'VERIFIED_NO_CLASSIFIABLE_EXACT_OSM_TAG_NO_CHANGE' if src.get('ok') else 'SOURCE_FETCH_OR_IDENTITY_NO_DATA_NO_CHANGE','classification_update':False,'added_evidence_parcel_count':0,'source_tags':src.get('tags') or {},'fetch_error':src.get('fetch_error')})
+              c=update_manifest(man,fs,sum(int(x.get('classification_update',False)) for x in windows)+int(changed),now)
+              if dup_count(fs)!=0: raise RuntimeError('DUPLICATE_AFTER_UPDATE')
+              w['feature_count_after']=c['total']; w['evidence_bearing_after']=c['classified']; w['unknown_after']=c['unknown']; w['completed_at']=now; windows.append(w); final=(seq==211)
+              dump(SHARD,shard); dump(MANIFEST,man); dump(CHECKPOINT,checkpoint(cp,seq,bidx,c,w,now,final)); dump(STATUS,status(st,seq,bidx,c,windows,now,final)); dump(REPORT,report(seq,bidx,c,windows,now,final))
+              if final:
+                  cur=load(CURRENT); cur['updated_at']=now; cur['owner']=None; cur['status']='blocked'; cur['panel_status']='BLOCKED'; cur['final_ready']=False; nr=cur.get('new_page_resume') or {}; nr.update({'canonical_feature_count':c['total'],'feature_count_before':START_FEATURES,'feature_count_after':c['total'],'new_features_appended':0,'next_batch_index':bidx+1,'canonical_feature_cursor':bidx+1,'source_window_cursor':seq,'terminal_no_replay_through_cursor':seq,'blocker_code':'BOUNDED_TURN_COMPLETE_MORE_U_REMAIN','blocker_root_cause':f'{c["unknown"]}_EVIDENCE_U_ROWS_REMAIN_AFTER_EXACT_ID_REFRESH','source_processing_attempted':True,'source_payload_verified':sum(bool(x.get('source_payload_verified')) for x in windows)>0,'latest_attempted_at':now,'duplicate_policy':'parcel_id/source_ref/project_ref/osm_id in existing shard are terminal already_processed_ids; no replay','matching_policy':'nearest matching forbidden; exact OSM element identity or strict approved spatial binding only'}); cur['new_page_resume']=nr; dump(CURRENT,cur)
+              stage=[SHARD,MANIFEST,CHECKPOINT,STATUS,REPORT]+([CURRENT] if final else []); run(['git','add','--']+[x.as_posix() for x in stage]); run(['git','commit','-m',f'aays: building_type_5 exact OSM source window {seq} batch {bidx}'])
+              attempts=contention_safe_push(expected_prev); run(['git','fetch','origin',BRANCH]); rb=remote_counts()
+              if not (rb['source_cursor']==seq and rb['feature_cursor']==bidx+1 and rb['shard']==rb['checkpoint']==rb['status']==rb['manifest']==rb['report']==START_FEATURES and rb['dup']==0): raise RuntimeError('REMOTE_READBACK_MISMATCH:'+json.dumps(rb,sort_keys=True))
+              print('BATCH_READBACK',json.dumps({'seq':seq,'batch_index':bidx,'node_id':node_id,'classification_update':changed,'push_attempts':attempts,'counts':rb,'invariant':'shard=checkpoint=status=manifest=report=6100;dup=0'},sort_keys=True))
+
+          run(['git','fetch','origin',BRANCH]); final_rb=remote_counts()
+          if final_rb['source_cursor']!=211 or final_rb['feature_cursor']!=159 or final_rb['dup']!=0: raise RuntimeError('FINAL_READBACK_BAD:'+json.dumps(final_rb,sort_keys=True))
+          print('FINAL_READBACK',json.dumps(final_rb,sort_keys=True))
+          shard_sha=run(['git','rev-parse',f'origin/{BRANCH}:{SHARD.as_posix()}']).stdout.strip(); manifest_sha=run(['git','rev-parse',f'origin/{BRANCH}:{MANIFEST.as_posix()}']).stdout.strip(); run(['git','reset','--hard',f'origin/{BRANCH}'])
+          cur=load(CURRENT); now=utc(); nr=cur.get('new_page_resume') or {}; nr.update({'canonical_manifest_sha':manifest_sha,'canonical_shard_blob_sha':shard_sha,'canonical_feature_count':final_rb['shard'],'next_batch_index':159,'canonical_feature_cursor':159,'source_window_cursor':211,'terminal_no_replay_through_cursor':211,'source_processing_attempted':True,'source_payload_verified':True,'latest_attempted_at':now}); cur['new_page_resume']=nr; cur['updated_at']=now; cur['owner']=None; cur['status']='blocked'; cur['panel_status']='BLOCKED'; dump(CURRENT,cur); run(['git','add','--',CURRENT.as_posix()]); run(['git','commit','-m','aays: reconcile building_type_5 continuation metadata after 200-211'])
+          for attempt in range(1,31):
+              run(['git','fetch','origin',BRANCH]); rcp=read_remote(CHECKPOINT)
+              if int(rcp.get('source_window_cursor',-1))!=211: raise RuntimeError('FINAL_META_BT5_CURSOR_CHANGED')
+              rb=run(['git','rebase',f'origin/{BRANCH}'],check=False)
+              if rb.returncode!=0: run(['git','rebase','--abort'],check=False); raise RuntimeError('FINAL_METADATA_REBASE_CONFLICT')
+              p=run(['git','push','origin',f'HEAD:{BRANCH}'],check=False)
+              if p.returncode==0: break
+              print('FINAL_META_PUSH_RACE',attempt,p.stdout[-800:]); time.sleep(1+(attempt%4))
+          else: raise RuntimeError('FINAL_METADATA_PUSH_RETRY_EXHAUSTED_30')
+          run(['git','fetch','origin',BRANCH]); rcur=read_remote(CURRENT); rnr=rcur.get('new_page_resume') or {}
+          if int(rnr.get('source_window_cursor',-1))!=211 or rnr.get('canonical_shard_blob_sha')!=shard_sha or rnr.get('canonical_manifest_sha')!=manifest_sha: raise RuntimeError('FINAL_CURRENT_TASK_READBACK_BAD')
+          print('FINAL_CURRENT_TASK_READBACK',json.dumps({'source_cursor':rnr.get('source_window_cursor'),'feature_cursor':rnr.get('canonical_feature_cursor'),'shard_sha':rnr.get('canonical_shard_blob_sha'),'manifest_sha':rnr.get('canonical_manifest_sha'),'owner':rcur.get('owner')},sort_keys=True))
+          PY
+          python /tmp/bt5_exact_203_211_recovery.py
+      - name: Mark BT5 203-211 recovery finished
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const path='docs/chatgpt_status/_shared/slots_21/building_type_5/actions_exact_osm_203_211_recovery_status.json';
+            let sha; try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
+            const body={slot_id:'building_type_5',source_windows:'203-211',state:'${{ job.status }}'.toUpperCase(),mode:'EXACT_OSM_NODE_IDENTITY_REFRESH_PHASE2_RECOVERY',run_id:String(context.runId),head_sha:context.sha,finished_at:new Date().toISOString()};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark BT5 exact 203-211 recovery finished',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
