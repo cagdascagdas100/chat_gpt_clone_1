@@ -3,7 +3,7 @@
   "slot_id": "building_type_8",
   "task_id": "building-type-8-england-classification-v1-20260808",
   "continuation_key": "building-type-8-england-classification-v1-20260808",
-  "updated_at": "2026-08-18T02:06:00Z",
+  "updated_at": "2026-08-18T02:52:19Z",
   "state": "NEW_PAGE_RESUME_RECOVERY_PARKED",
   "terminal_status": "BLOCKED",
   "final_ready": false,
@@ -12,19 +12,19 @@
   "feature_count_after": 8000,
   "new_features_added_this_attempt": 0,
   "business_batches_completed_this_turn": 0,
-  "diagnostic_recovery_attempts_this_turn": 1,
+  "diagnostic_recovery_attempts_this_turn": 2,
   "progress_counted": false,
   "next_batch_index": 161,
   "next_target_feature_count": 8050,
   "blocker": "BLOCKED",
-  "blocker_reason": "2026-08-18 deep continuation recheck: runtime DNS still cannot materialize HMLR/Overpass/OSM/Overture/EPC/VOA public inputs. The canonical repo still lacks a slot-local North West strict parcel polygon/centroid artefact and the historical referenced osm_cache_england_884d5092.json / north.pmtiles are not present in the accessible repo/runtime. A repo-wide 92,283-point security centroid layer was inspected but does not by itself provide the required strict parcel/building binding. The canonical building_type_8 GeoJSON blob is about 13 MB and exceeds the connector's 10 MiB full-blob response ceiling, so a safe full-shard append/rewrite cannot be performed from partial content. These are technical recovery blockers, not zero-result source windows; batch 161 and cursor therefore remain fixed.",
+  "blocker_reason": "2026-08-18 continuation recheck: exact Windows continuation file is not mounted and is not present in accessible repo search, so the accessible canonical AAYS slot continuation contract and latest building_type_8 state were applied without pretending to read the missing file. Runtime DNS still cannot materialize HMLR/Overpass/OSM/Overture/EPC/VOA public inputs. A previously unused browser-visible ArcGIS FeatureServer source family, Land Registry INSPIRE Index Polygons layer 0, was discovered and its polygon/query metadata verified, but bounded feature geometry could not be materialized into the execution runtime for a strict join. The canonical building_type_8 shard is 14,532,567 bytes; low-level Git create_blob/create_tree exists but still requires complete new blob content, and no verified full canonical shard payload or mounted file is available. Partial content therefore cannot be safely appended/replaced. These are technical recovery blockers, not zero-result source windows; batch 161 and cursor remain fixed.",
   "blocker_root_cause": "RUNTIME_DNS_UNAVAILABLE_FOR_PUBLIC_GEOMETRY_MATERIALIZATION",
   "secondary_blockers": [
-    "NO_NORTH_WEST_STRICT_PARCEL_GEOMETRY_OR_CENTROID_INPUT_MATERIALIZED",
+    "ARCGIS_FEATURE_GEOMETRY_NOT_MATERIALIZED_IN_RUNTIME",
     "CANONICAL_SHARD_FULL_CONTENT_UNAVAILABLE_FOR_SAFE_APPEND_IN_CONNECTOR"
   ],
   "recovery_parked": true,
-  "next_required_action": "RESUME_BATCH_161_ONLY_AFTER_RUNTIME_CAN_MATERIALIZE_STRICT_NORTH_WEST_GEOMETRY_AND_CANONICAL_SHARD_CAN_BE_SAFELY_READ_REWRITTEN; USE_STRICT_CENTROID_WITHIN_OR_EXACT_INTERSECTION_ONLY",
+  "next_required_action": "RESUME_BATCH_161_ONLY_AFTER_BOUNDED_STRICT_NORTH_WEST_GEOMETRY_CAN_BE_MATERIALIZED_AND_CANONICAL_SHARD_CAN_BE_SAFELY_READ_REWRITTEN; USE_STRICT_CENTROID_WITHIN_OR_EXACT_INTERSECTION_ONLY",
   "count_reconciliation": {
     "authoritative_source": "england_map_web/data/building_type/shards/building_type_8_manifest_latest.json",
     "authoritative_feature_count": 8000,
@@ -32,8 +32,9 @@
     "reconciled_at": "2026-08-16T15:24:36Z"
   },
   "source_attempt": {
-    "source_index": "RUNTIME_DNS_LOCAL_FALLBACK_AND_SAFE_APPEND_DEEP_RECHECK_20260818",
-    "source_name": "Runtime DNS gate + repo/local strict-geometry fallback + canonical shard safe-append capability recheck",
+    "source_index": "ARCGIS_HMLR_BROWSER_SOURCE_AND_LARGE_SHARD_ATOMIC_WRITE_RECHECK_20260818",
+    "source_name": "Land Registry INSPIRE Index Polygons ArcGIS FeatureServer discovery plus runtime materialization and large-shard atomic-write recheck",
+    "source_url": "https://services2.arcgis.com/LrUbY6lLLgV3tEa5/ArcGIS/rest/services/Land_Registry_INSPIRE/FeatureServer/0",
     "result": "BLOCKED",
     "strict_match_rule": "centroid_within_polygon_or_exact_intersection_only",
     "raw_source_committed": false,
@@ -55,7 +56,8 @@
     {"event":"NEW_PAGE_RESUME","next_batch_index":161,"at":"2026-08-17T04:40:50Z","source_index":"RUNTIME_DNS_STATE_CHANGE_GATE_RECHECK","result":"BLOCKED","feature_count_before":8000,"new_features_added":0,"feature_count_after":8000,"blocker_root_cause":"RUNTIME_DNS_UNAVAILABLE_FOR_PUBLIC_GEOMETRY_MATERIALIZATION","recovery_parked":true},
     {"event":"NEW_PAGE_RESUME","next_batch_index":161,"at":"2026-08-17T05:08:00Z","source_index":"RUNTIME_DNS_STATE_CHANGE_GATE_RECHECK","result":"BLOCKED","feature_count_before":8000,"new_features_added":0,"feature_count_after":8000,"blocker_root_cause":"RUNTIME_DNS_UNAVAILABLE_FOR_PUBLIC_GEOMETRY_MATERIALIZATION","recovery_parked":true},
     {"event":"NEW_PAGE_RESUME","next_batch_index":161,"at":"2026-08-18T01:13:00Z","source_index":"RUNTIME_DNS_STATE_CHANGE_GATE_RECHECK_20260818","result":"BLOCKED","feature_count_before":8000,"new_features_added":0,"feature_count_after":8000,"blocker_root_cause":"RUNTIME_DNS_UNAVAILABLE_FOR_PUBLIC_GEOMETRY_MATERIALIZATION","recovery_parked":true,"zero_result_window":false},
-    {"event":"NEW_PAGE_RESUME","next_batch_index":161,"at":"2026-08-18T02:06:00Z","source_index":"RUNTIME_DNS_LOCAL_FALLBACK_AND_SAFE_APPEND_DEEP_RECHECK_20260818","result":"BLOCKED","feature_count_before":8000,"new_features_added":0,"feature_count_after":8000,"blocker_root_cause":"RUNTIME_DNS_UNAVAILABLE_FOR_PUBLIC_GEOMETRY_MATERIALIZATION","secondary_blockers":["NO_NORTH_WEST_STRICT_PARCEL_GEOMETRY_OR_CENTROID_INPUT_MATERIALIZED","CANONICAL_SHARD_FULL_CONTENT_UNAVAILABLE_FOR_SAFE_APPEND_IN_CONNECTOR"],"recovery_parked":true,"zero_result_window":false,"new_write_duplicate_count":0}
+    {"event":"NEW_PAGE_RESUME","next_batch_index":161,"at":"2026-08-18T02:06:00Z","source_index":"RUNTIME_DNS_LOCAL_FALLBACK_AND_SAFE_APPEND_DEEP_RECHECK_20260818","result":"BLOCKED","feature_count_before":8000,"new_features_added":0,"feature_count_after":8000,"blocker_root_cause":"RUNTIME_DNS_UNAVAILABLE_FOR_PUBLIC_GEOMETRY_MATERIALIZATION","secondary_blockers":["NO_NORTH_WEST_STRICT_PARCEL_GEOMETRY_OR_CENTROID_INPUT_MATERIALIZED","CANONICAL_SHARD_FULL_CONTENT_UNAVAILABLE_FOR_SAFE_APPEND_IN_CONNECTOR"],"recovery_parked":true,"zero_result_window":false,"new_write_duplicate_count":0},
+    {"event":"NEW_PAGE_RESUME","next_batch_index":161,"at":"2026-08-18T02:52:19Z","source_index":"ARCGIS_HMLR_BROWSER_SOURCE_AND_LARGE_SHARD_ATOMIC_WRITE_RECHECK_20260818","result":"BLOCKED","feature_count_before":8000,"new_features_added":0,"feature_count_after":8000,"blocker_root_cause":"RUNTIME_DNS_UNAVAILABLE_FOR_PUBLIC_GEOMETRY_MATERIALIZATION","secondary_blockers":["ARCGIS_FEATURE_GEOMETRY_NOT_MATERIALIZED_IN_RUNTIME","CANONICAL_SHARD_FULL_CONTENT_UNAVAILABLE_FOR_SAFE_APPEND_IN_CONNECTOR"],"recovery_parked":true,"zero_result_window":false,"new_write_duplicate_count":0}
   ],
   "fake_data": false,
   "production_merge": false
