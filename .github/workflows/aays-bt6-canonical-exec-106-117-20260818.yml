@@ -1,4 +1,4 @@
-name: AAYS BT6 canonical strict executor 214-225
+name: AAYS BT6 canonical strict executor 226-237
 on:
   pull_request:
     branches: [main]
@@ -7,7 +7,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: aays-bt6-canonical-exec-214-225-20260819
+  group: aays-bt6-canonical-exec-226-237-20260819
   cancel-in-progress: true
 jobs:
   strict-bt6:
@@ -33,7 +33,7 @@ jobs:
           if not m: raise SystemExit('BT6_RUNNER_EXTRACTION_FAILED')
           s=textwrap.dedent(m.group(1))
           old="START=154; END=165; INITIAL=22401; OVERALL_BEFORE=22401"
-          new="START=214; END=225; INITIAL=24188; OVERALL_BEFORE=24188"
+          new="START=226; END=237; INITIAL=24788; OVERALL_BEFORE=24788"
           if old not in s: raise SystemExit('BT6_SOURCE_CURSOR_PAYLOAD_MISMATCH')
           s=s.replace(old,new,1)
           oldx="for x in (456000,457000,458000,459000):"
@@ -41,17 +41,17 @@ jobs:
           if oldx not in s: raise SystemExit('BT6_SOURCE_X_WINDOW_PAYLOAD_MISMATCH')
           s=s.replace(oldx,newx,1)
           oldy="for y in (336000,337000,338000):"
-          newy="for y in (339000,340000,341000):"
+          newy="for y in (342000,343000,344000):"
           if oldy not in s: raise SystemExit('BT6_SOURCE_Y_WINDOW_PAYLOAD_MISMATCH')
           s=s.replace(oldy,newy,1)
-          s=s.replace("initialize strict report 154-165","initialize strict report 214-225")
+          s=s.replace("initialize strict report 154-165","initialize strict report 226-237")
           if new not in s: raise SystemExit('BT6_CURSOR_RETARGET_FAILED')
           if newx not in s or newy not in s: raise SystemExit('BT6_WINDOW_RETARGET_FAILED')
           if "NOTTINGHAM_CITY_COUNCIL_ARCGIS_HMLR_INSPIRE" not in s: raise SystemExit('BT6_SOURCE_FAMILY_MISMATCH')
           if "REPORT=REP" not in s: raise SystemExit('BT6_REPORT_OWNERSHIP_MISMATCH')
           if "strict_centroid_within_polygon_or_full_building_within_polygon" not in s: raise SystemExit('BT6_STRICT_BINDING_MISMATCH')
           Path('/tmp/bt6_106_117.py').write_text(s,encoding='utf-8')
-          print({'slot':'building_type_6','batches':'214-225','baseline':24188,'windows':'E456-459/N339-341','source_family':'Nottingham City ArcGIS HMLR INSPIRE + OSM','ownership':'six canonical BT6 paths'})
+          print({'slot':'building_type_6','batches':'226-237','baseline':24788,'windows':'E456-459/N342-344','source_family':'Nottingham City ArcGIS HMLR INSPIRE + OSM','ownership':'six canonical BT6 paths'})
           PY
       - name: Checkout canonical branch
         uses: actions/checkout@v4
