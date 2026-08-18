@@ -1,4 +1,4 @@
-name: AAYS BT6 canonical strict executor 154-165
+name: AAYS BT6 canonical strict executor 166-177
 on:
   pull_request:
     branches: [main]
@@ -7,7 +7,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: aays-bt6-canonical-exec-154-165-20260819
+  group: aays-bt6-canonical-exec-166-177-20260819
   cancel-in-progress: true
 jobs:
   strict-bt6:
@@ -20,7 +20,7 @@ jobs:
           ref: work/openai/agent-aays-bt6-strict-12-20260818-2018
           fetch-depth: 1
           path: trigger
-      - name: Extract existing BT6 continuation payload
+      - name: Extract and retarget existing BT6 continuation payload
         shell: bash
         run: |
           set -euo pipefail
@@ -28,16 +28,26 @@ jobs:
           from pathlib import Path
           import re,textwrap
           p=Path('trigger/.github/workflows/aays-bt6-strict-106-117-20260818.yml')
-          s=p.read_text(encoding='utf-8')
-          m=re.search(r"cat > /tmp/bt6_106_117\.py <<'PY'\n(.*?)\nPY\npython /tmp/bt6_106_117\.py",s,re.S)
+          raw=p.read_text(encoding='utf-8')
+          m=re.search(r"cat > /tmp/bt6_106_117\.py <<'PY'\n(.*?)\nPY\npython /tmp/bt6_106_117\.py",raw,re.S)
           if not m: raise SystemExit('BT6_RUNNER_EXTRACTION_FAILED')
           s=textwrap.dedent(m.group(1))
-          if "START=154; END=165; INITIAL=22401; OVERALL_BEFORE=22401" not in s: raise SystemExit('BT6_CURSOR_PAYLOAD_MISMATCH')
+          old="START=154; END=165; INITIAL=22401; OVERALL_BEFORE=22401"
+          new="START=166; END=177; INITIAL=22521; OVERALL_BEFORE=22521"
+          if old not in s: raise SystemExit('BT6_SOURCE_CURSOR_PAYLOAD_MISMATCH')
+          s=s.replace(old,new,1)
+          oldx="for x in (456000,457000,458000,459000):"
+          newx="for x in (452000,453000,454000,455000):"
+          if oldx not in s: raise SystemExit('BT6_SOURCE_WINDOW_PAYLOAD_MISMATCH')
+          s=s.replace(oldx,newx,1)
+          s=s.replace("initialize strict report 154-165","initialize strict report 166-177")
+          if new not in s: raise SystemExit('BT6_CURSOR_RETARGET_FAILED')
+          if newx not in s: raise SystemExit('BT6_WINDOW_RETARGET_FAILED')
           if "NOTTINGHAM_CITY_COUNCIL_ARCGIS_HMLR_INSPIRE" not in s: raise SystemExit('BT6_SOURCE_FAMILY_MISMATCH')
           if "REPORT=REP" not in s: raise SystemExit('BT6_REPORT_OWNERSHIP_MISMATCH')
           if "strict_centroid_within_polygon_or_full_building_within_polygon" not in s: raise SystemExit('BT6_STRICT_BINDING_MISMATCH')
           Path('/tmp/bt6_106_117.py').write_text(s,encoding='utf-8')
-          print({'slot':'building_type_6','batches':'154-165','baseline':22401,'source_family':'Nottingham City ArcGIS HMLR INSPIRE + OSM','ownership':'six canonical BT6 paths'})
+          print({'slot':'building_type_6','batches':'166-177','baseline':22521,'windows':'E452-455/N336-338','source_family':'Nottingham City ArcGIS HMLR INSPIRE + OSM','ownership':'six canonical BT6 paths'})
           PY
       - name: Checkout canonical branch
         uses: actions/checkout@v4
