@@ -1,0 +1,24 @@
+name: AAYS FG7 Regional 331-342 strict continuation
+on:
+  pull_request:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths:
+      - 'ai-task-scripts/aays_fg7_regional_331_342_20260819.py'
+      - '.github/workflows/aays-fg7-regional-331-342-20260819.yml'
+permissions:
+  contents: write
+jobs:
+  run-fg7-regional:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout orchestration branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aays-fg7-regional-331-342-20260819-0011
+          fetch-depth: 1
+          persist-credentials: true
+      - name: Execute strict FG7 regional batches 331-342
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: python ai-task-scripts/aays_fg7_regional_331_342_20260819.py
