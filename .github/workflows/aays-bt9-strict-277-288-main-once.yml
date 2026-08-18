@@ -1,0 +1,114 @@
+name: AAYS BT9 strict 277-288 main one-shot
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/aays-bt9-strict-277-288-main-once.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-building-type-9-strict-main-once-277-288
+  cancel-in-progress: true
+jobs:
+  strict-spatial:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - name: Mark run started
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const path='docs/chatgpt_status/_shared/slots_21/building_type_9/actions_main_run_277_288_status.json';
+            async function write(body,message) {
+              for (let i=0;i<5;i++) {
+                let sha;
+                try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
+                try {
+                  await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message,content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
+                  return;
+                } catch(e) {
+                  if(e.status!==409 || i===4) throw e;
+                  await new Promise(r=>setTimeout(r,1000*(i+1)));
+                }
+              }
+            }
+            await write({slot_id:'building_type_9',batches:'277-288',state:'RUNNING',run_id:String(context.runId),run_attempt:String(process.env.GITHUB_RUN_ATTEMPT||''),head_sha:context.sha,started_at:new Date().toISOString()},'aays: mark BT9 277-288 run started');
+      - name: Checkout verified BT9 executor
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aays-bt9-strict-12-20260818-0441
+          fetch-depth: 0
+          path: trigger
+      - name: Checkout canonical slot branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+          path: canonical
+      - name: Install strict spatial runtime
+        run: python -m pip install --quiet requests shapely
+      - name: Execute BT9 277-288 with guarded continuation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('trigger/docs/chatgpt_status/_shared/slots_21/building_type_9/automation/run_strict_229_240_20260818.py')
+          s=src.read_text(encoding='utf-8')
+          repl=[
+            ('START=229','START=277'),
+            ('NEXT=241','NEXT=289'),
+            ('BEFORE=7945','BEFORE=8452'),
+            ("('W=[]; bi=181','W=[]; bi=229')","('W=[]; bi=181','W=[]; bi=277')"),
+            ("('if start!=181:','if start!=229:')","('if start!=181:','if start!=277:')"),
+            ("('if len(fs)!=7200:','if len(fs)!=7945:')","('if len(fs)!=7200:','if len(fs)!=8452:')"),
+            ("(\"'start_batch_index':181\",\"'start_batch_index':229\")","(\"'start_batch_index':181\",\"'start_batch_index':277\")"),
+            ("(\"'next_batch_index':181\",\"'next_batch_index':229\")","(\"'next_batch_index':181\",\"'next_batch_index':277\")"),
+            ("(\"rep['next_batch_index']=193\",\"rep['next_batch_index']=241\")","(\"rep['next_batch_index']=193\",\"rep['next_batch_index']=289\")"),
+            ("(\"cp['next_batch_index']=193\",\"cp['next_batch_index']=241\")","(\"cp['next_batch_index']=193\",\"cp['next_batch_index']=289\")"),
+            ("(\"st['next_batch_index']=193\",\"st['next_batch_index']=241\")","(\"st['next_batch_index']=193\",\"st['next_batch_index']=289\")"),
+            ("(\"task['next_batch_index']=193\",\"task['next_batch_index']=241\")","(\"task['next_batch_index']=193\",\"task['next_batch_index']=289\")"),
+            ("('BATCH_193_STRICT_SPATIAL_BINDING_SOURCE_BYTES','BATCH_241_STRICT_SPATIAL_BINDING_SOURCE_BYTES')","('BATCH_193_STRICT_SPATIAL_BINDING_SOURCE_BYTES','BATCH_289_STRICT_SPATIAL_BINDING_SOURCE_BYTES')"),
+            ("('Continue from batch 193','Continue from batch 241')","('Continue from batch 193','Continue from batch 289')"),
+            ("('Batches 181-192 processed','Batches 229-240 processed')","('Batches 181-192 processed','Batches 277-288 processed')"),
+            ("(\"'next_batch':193\",\"'next_batch':241\")","(\"'next_batch':193\",\"'next_batch':289\")"),
+            ("Path('/tmp/bt9_229_240.py')","Path('/tmp/bt9_277_288.py')"),
+            ('strict bounded batches 229-240','strict bounded batches 277-288'),
+            ('remote readback 229-240','remote readback 277-288'),
+          ]
+          for a,b in repl:
+              if a not in s:
+                  raise SystemExit('ADAPTER_TOKEN_MISSING:'+a)
+              s=s.replace(a,b)
+          anchor="      ('for y in (575000,580000,585000):','for y in (635000,640000,645000):'),"
+          if anchor not in s:
+              raise SystemExit('EAST_BAND_ANCHOR_MISSING')
+          s=s.replace(anchor, anchor+"\n      ('for x in (380000,385000,390000,395000):','for x in (400000,405000,410000,415000):'),")
+          out=Path('/tmp/run_strict_277_288_20260818.py')
+          out.write_text(s,encoding='utf-8')
+          print('ADAPTED_EXECUTOR',out)
+          PY
+          python /tmp/run_strict_277_288_20260818.py
+      - name: Mark run finished
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const path='docs/chatgpt_status/_shared/slots_21/building_type_9/actions_main_run_277_288_status.json';
+            async function write(body,message) {
+              for (let i=0;i<5;i++) {
+                let sha;
+                try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
+                try {
+                  await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message,content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
+                  return;
+                } catch(e) {
+                  if(e.status!==409 || i===4) throw e;
+                  await new Promise(r=>setTimeout(r,1000*(i+1)));
+                }
+              }
+            }
+            await write({slot_id:'building_type_9',batches:'277-288',state:'${{ job.status }}'.toUpperCase(),run_id:String(context.runId),run_attempt:String(process.env.GITHUB_RUN_ATTEMPT||''),head_sha:context.sha,finished_at:new Date().toISOString()},'aays: mark BT9 277-288 run finished');
