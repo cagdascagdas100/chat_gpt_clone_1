@@ -1,0 +1,67 @@
+name: AAYS FG6 strict 301-312 main one-shot
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/aays-fg6-strict-301-312-main-once.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-future-growth-6-strict-301-312
+  cancel-in-progress: false
+jobs:
+  strict-source-expansion:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - name: Checkout FG6 executor branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/aays-fg6-b301-312-brownfield-pmtiles-20260818-2034
+          fetch-depth: 0
+          path: trigger
+      - name: Checkout canonical slot branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+          persist-credentials: true
+          path: canonical
+      - name: Cursor collision gate
+        id: gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          NEXT=$(node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync('canonical/state/slots/future_growth_6/status_latest.json','utf8')); process.stdout.write(String(j.next_batch_index))")
+          if [ "$NEXT" = "301" ]; then
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+          else
+            echo "FG6 cursor is $NEXT; 301-312 already started/completed elsewhere. No replay."
+            echo 'run=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Prepare spatial runtime
+        if: steps.gate.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd trigger
+          npm install --no-save --no-package-lock --silent pmtiles @mapbox/vector-tile pbf @turf/boolean-point-in-polygon @turf/helpers
+          cat \
+            docs/chatgpt_status/_shared/slots_21/future_growth_6/automation/run_strict_301_312_20260818.part1.mjs \
+            docs/chatgpt_status/_shared/slots_21/future_growth_6/automation/run_strict_301_312_20260818.part2.mjs \
+            docs/chatgpt_status/_shared/slots_21/future_growth_6/automation/run_strict_301_312_20260818.part3.mjs \
+            docs/chatgpt_status/_shared/slots_21/future_growth_6/automation/run_strict_301_312_20260818.part4a.mjs \
+            docs/chatgpt_status/_shared/slots_21/future_growth_6/automation/run_strict_301_312_20260818.part4b.mjs \
+            > docs/chatgpt_status/_shared/slots_21/future_growth_6/automation/run_strict_301_312_20260818.mjs
+          node --check docs/chatgpt_status/_shared/slots_21/future_growth_6/automation/run_strict_301_312_20260818.mjs
+      - name: Execute FG6 strict 301-312 with per-batch remote readback
+        if: steps.gate.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd canonical
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          node ../trigger/docs/chatgpt_status/_shared/slots_21/future_growth_6/automation/run_strict_301_312_20260818.mjs
+          test -z "$(git status --porcelain)"
