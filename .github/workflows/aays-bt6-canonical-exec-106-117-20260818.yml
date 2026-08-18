@@ -29,7 +29,7 @@ jobs:
           import re,textwrap
           p=Path('trigger/.github/workflows/aays-bt6-strict-106-117-20260818.yml')
           raw=p.read_text(encoding='utf-8')
-          m=re.search(r"cat > /tmp/bt6_106_117\\.py <<'PY'\\n(.*?)\\nPY\\npython /tmp/bt6_106_117\\.py",raw,re.S)
+          m=re.search(r"cat > /tmp/bt6_106_117\.py <<'PY'\n(.*?)\nPY\npython /tmp/bt6_106_117\.py",raw,re.S)
           if not m: raise SystemExit('BT6_RUNNER_EXTRACTION_FAILED')
           s=textwrap.dedent(m.group(1))
           old="START=154; END=165; INITIAL=22401; OVERALL_BEFORE=22401"
@@ -67,4 +67,4 @@ jobs:
           set -euo pipefail
           cd canonical
           python /tmp/bt6_106_117.py
-# execution-trigger: bt6-178-189-20260819-0054
+# execution-trigger: bt6-178-189-20260819-0059
