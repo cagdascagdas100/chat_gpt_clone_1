@@ -1,4 +1,4 @@
-name: AAYS BT6 canonical strict executor 238-249
+name: AAYS BT6 canonical strict executor 250-261
 on:
   pull_request:
     branches: [main]
@@ -7,7 +7,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: aays-bt6-canonical-exec-238-249-20260819
+  group: aays-bt6-canonical-exec-250-261-20260819
   cancel-in-progress: true
 jobs:
   strict-bt6:
@@ -33,25 +33,25 @@ jobs:
           if not m: raise SystemExit('BT6_RUNNER_EXTRACTION_FAILED')
           s=textwrap.dedent(m.group(1))
           old="START=154; END=165; INITIAL=22401; OVERALL_BEFORE=22401"
-          new="START=238; END=249; INITIAL=25162; OVERALL_BEFORE=25162"
+          new="START=250; END=261; INITIAL=25317; OVERALL_BEFORE=25317"
           if old not in s: raise SystemExit('BT6_SOURCE_CURSOR_PAYLOAD_MISMATCH')
           s=s.replace(old,new,1)
           oldx="for x in (456000,457000,458000,459000):"
-          newx="for x in (456000,457000,458000,459000):"
+          newx="for x in (452000,453000,454000,455000):"
           if oldx not in s: raise SystemExit('BT6_SOURCE_X_WINDOW_PAYLOAD_MISMATCH')
           s=s.replace(oldx,newx,1)
           oldy="for y in (336000,337000,338000):"
-          newy="for y in (345000,346000,347000):"
+          newy="for y in (330000,331000,332000):"
           if oldy not in s: raise SystemExit('BT6_SOURCE_Y_WINDOW_PAYLOAD_MISMATCH')
           s=s.replace(oldy,newy,1)
-          s=s.replace("initialize strict report 154-165","initialize strict report 238-249")
+          s=s.replace("initialize strict report 154-165","initialize strict report 250-261")
           if new not in s: raise SystemExit('BT6_CURSOR_RETARGET_FAILED')
           if newx not in s or newy not in s: raise SystemExit('BT6_WINDOW_RETARGET_FAILED')
           if "NOTTINGHAM_CITY_COUNCIL_ARCGIS_HMLR_INSPIRE" not in s: raise SystemExit('BT6_SOURCE_FAMILY_MISMATCH')
           if "REPORT=REP" not in s: raise SystemExit('BT6_REPORT_OWNERSHIP_MISMATCH')
           if "strict_centroid_within_polygon_or_full_building_within_polygon" not in s: raise SystemExit('BT6_STRICT_BINDING_MISMATCH')
           Path('/tmp/bt6_106_117.py').write_text(s,encoding='utf-8')
-          print({'slot':'building_type_6','batches':'238-249','baseline':25162,'windows':'E456-459/N345-347','source_family':'Nottingham City ArcGIS HMLR INSPIRE + OSM','ownership':'six canonical BT6 paths'})
+          print({'slot':'building_type_6','batches':'250-261','baseline':25317,'windows':'E452-455/N330-332','source_family':'Nottingham City ArcGIS HMLR INSPIRE + OSM','ownership':'six canonical BT6 paths'})
           PY
       - name: Checkout canonical branch
         uses: actions/checkout@v4
