@@ -1,0 +1,54 @@
+name: AAYS BT5 diagnostic U candidates after 235
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/aays-bt5-diagnostic-u-candidates-after-235-20260819.yml'
+permissions:
+  contents: write
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout canonical
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+          path: canonical
+      - name: Scan remaining exact-id candidates
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          shard=json.loads(Path('canonical/england_map_web/data/building_type/shards/building_type_5_latest.geojson').read_text())
+          cp=json.loads(Path('canonical/docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json').read_text())
+          out=[]; u=0
+          for f in shard.get('features',[]):
+              p=f.get('properties') or {}
+              if p.get('evidence_level')!='U' or p.get('building_type_primary')!='unknown': continue
+              u+=1
+              pid=str(p.get('parcel_id','')); m=re.fullmatch(r'ENG_OSM_node_(\d+)',pid)
+              if not m: continue
+              tags={}
+              for key in ('osm_tags_summary','source_evidence_excerpt'):
+                  v=p.get(key)
+                  if isinstance(v,dict): tags.update(v)
+              keep={k:tags[k] for k in sorted(tags) if k in {'building','amenity','shop','office','tourism','healthcare','railway','landuse','leisure','craft','public_transport','name','operator','brand','postal_code','ref','post_box:type','post_box:design','royal_cypher'}}
+              if not any(k in keep for k in ('building','amenity','shop','office','tourism','healthcare','railway','landuse','leisure','craft','public_transport')): continue
+              out.append({'node_id':int(m.group(1)),'parcel_id':pid,'area':p.get('area'),'tags':keep})
+          result={'slot_id':'building_type_5','source_cursor':cp.get('source_window_cursor'),'feature_cursor':cp.get('canonical_feature_cursor'),'remaining_u':u,'eligible_count':len(out),'candidates':out[:120]}
+          Path('/tmp/bt5_candidates.json').write_text(json.dumps(result,separators=(',',':')))
+          print(json.dumps(result,indent=2))
+          PY
+      - name: Publish diagnostic snapshot to main
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs=require('fs'); const owner=context.repo.owner, repo=context.repo.repo;
+            const path='docs/chatgpt_status/_shared/slots_21/building_type_5/diagnostic_u_candidates_after_235.json';
+            const content=fs.readFileSync('/tmp/bt5_candidates.json','utf8');
+            let sha; try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: publish BT5 post-235 candidate diagnostic',content:Buffer.from(content).toString('base64'),...(sha?{sha}:{})});
