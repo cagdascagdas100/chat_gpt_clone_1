@@ -1,0 +1,181 @@
+name: AAYS building_type_2 final audit v17 345-356
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-final-audit-v17-345-356-20260819.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-2-common-v17-next12-20260819
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 200
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json
+      - name: Audit 345-356 and publish runner report
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          SHARD='england_map_web/data/building_type/shards/building_type_2_latest.geojson'
+          MANIFEST='england_map_web/data/building_type/shards/building_type_2_manifest_latest.json'
+          CP='docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json'
+          STATUS='docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json'
+          TASK='docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json'
+          RUNNER='docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json'
+          git pull --ff-only origin "$BRANCH"
+          python - <<'PY'
+          import hashlib, json, pathlib
+          SHARD=pathlib.Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          MANIFEST=pathlib.Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          CP=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          STATUS=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          TASK=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          RUNNER=pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          shard=json.loads(SHARD.read_text())
+          manifest=json.loads(MANIFEST.read_text())
+          cp=json.loads(CP.read_text())
+          status=json.loads(STATUS.read_text())
+          task=json.loads(TASK.read_text())
+          runner=json.loads(RUNNER.read_text())
+          features=shard.get('features', [])
+          expected=17150
+          assert len(features)==expected, len(features)
+          assert int(cp.get('current_feature_count'))==expected, cp.get('current_feature_count')
+          assert int(status.get('current_feature_count', status.get('total_elements')))==expected
+          assert int(manifest.get('total_features'))==expected
+          assert int(cp.get('next_batch_index'))==357
+          assert int(status.get('next_batch_index'))==357
+          assert int(runner.get('batch_index'))==356
+          assert int(runner.get('feature_count_after'))==expected
+          assert task.get('owner') is None
+          assert task.get('continuation_key')=='building-type-2-england-classification-v1-20260808'
+          hist=status.get('batch_attempt_history', [])
+          latest={}
+          for e in hist:
+              try: idx=int(e.get('batch_index'))
+              except Exception: continue
+              if 345 <= idx <= 356:
+                  latest[idx]=e
+          assert sorted(latest)==list(range(345,357)), sorted(latest)
+          attempts=[latest[i] for i in range(345,357)]
+          for e in attempts:
+              assert e.get('result')=='PROGRESS', e
+              assert int(e.get('added_feature_count', e.get('new_feature_count', -1)))==50, e
+              assert int(e.get('feature_count_after'))-int(e.get('feature_count_before'))==50, e
+              for k,v in e.items():
+                  lk=str(k).lower()
+                  if ('fake' in lk or 'duplicate' in lk or 'nearest' in lk) and isinstance(v,bool):
+                      assert v is False, (k,e)
+          assert int(attempts[0].get('feature_count_before'))==16550
+          assert int(attempts[-1].get('feature_count_after'))==17150
+          cities=[e.get('city') for e in attempts]
+          bboxes=[e.get('bbox_wgs84') for e in attempts]
+          assert all(cities) and len(set(cities))==12, cities
+          bbox_keys=[json.dumps(b,separators=(',',':')) for b in bboxes]
+          assert all(bboxes) and len(set(bbox_keys))==12, bboxes
+          seen=set(); dups=[]
+          fake=False; nearest=False
+          for f in features:
+              p=f.get('properties') or {}
+              vals={
+                  'feature.id': f.get('id') or p.get('feature_id'),
+                  'parcel_id': p.get('parcel_id'),
+                  'osm_id': p.get('osm_id'),
+                  'source_ref': p.get('source_ref'),
+              }
+              for ns,val in vals.items():
+                  if val in (None,''): continue
+                  key=(ns,str(val))
+                  if key in seen: dups.append(key)
+                  else: seen.add(key)
+              if p.get('fake_data') is True: fake=True
+              stack=p.get('sources') or []
+              for s in stack if isinstance(stack,list) else []:
+                  mm=str((s or {}).get('match_method','')).lower()
+                  if 'nearest' in mm and 'no nearest' not in mm:
+                      nearest=True
+          assert not dups, dups[:10]
+          assert fake is False
+          assert nearest is False
+          digest=hashlib.sha256(SHARD.read_bytes()).hexdigest()
+          report={
+              'slot_id':'building_type_2',
+              'batch_range':[345,356],
+              'batches_processed':12,
+              'feature_count_before':16550,
+              'added_feature_count':600,
+              'feature_count_after':17150,
+              'next_batch_index':357,
+              'shard_feature_count':len(features),
+              'checkpoint_feature_count':int(cp.get('current_feature_count')),
+              'status_feature_count':int(status.get('current_feature_count', status.get('total_elements'))),
+              'manifest_feature_count':int(manifest.get('total_features')),
+              'unique_key_count':len(seen),
+              'duplicate_key_count':0,
+              'fake_data_generated':False,
+              'nearest_match_used':False,
+              'progress_batches':12,
+              'zero_addition_batches':0,
+              'zero_batches':[],
+              'cities':cities,
+              'bboxes_wgs84':bboxes,
+              'source_family':'OpenStreetMap Overpass API',
+              'parcel_id_semantics':'stable OSM element-derived slot identifier; not a cadastral parcel ID',
+              'geojson_sha256':digest,
+              'final_ready':False,
+              'production_merge':False,
+          }
+          runner['continuation_report_20260819_v17']=report
+          RUNNER.write_text(json.dumps(runner,ensure_ascii=False,indent=2)+'\n')
+          print(json.dumps(report,ensure_ascii=False,indent=2))
+          PY
+          git config user.name 'aays-building-type-2-audit'
+          git config user.email 'aays-building-type-2-audit@users.noreply.github.com'
+          git add "$RUNNER"
+          git diff --cached --quiet && { echo 'runner report unchanged'; exit 1; }
+          git commit -m 'audit building_type_2 batches 345-356 report v17'
+          ok=0
+          for i in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            if ! git rebase "origin/$BRANCH"; then git rebase --abort || true; sleep 3; continue; fi
+            if git push origin "HEAD:$BRANCH"; then ok=1; break; fi
+            sleep 3
+          done
+          test "$ok" = 1
+          git fetch origin "$BRANCH"
+          python - <<'PY'
+          import json, subprocess
+          branch='origin/codex/aays-single-runner-v5-20260706'
+          path='docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json'
+          raw=subprocess.check_output(['git','show',f'{branch}:{path}'])
+          obj=json.loads(raw)
+          r=obj['continuation_report_20260819_v17']
+          assert r['feature_count_before']==16550
+          assert r['added_feature_count']==600
+          assert r['feature_count_after']==17150
+          assert r['next_batch_index']==357
+          assert r['shard_feature_count']==r['checkpoint_feature_count']==r['status_feature_count']==r['manifest_feature_count']==17150
+          assert r['duplicate_key_count']==0
+          assert r['progress_batches']==12 and r['zero_addition_batches']==0
+          assert r['fake_data_generated'] is False and r['nearest_match_used'] is False
+          print('REMOTE_AUDIT_READBACK_OK', json.dumps(r,ensure_ascii=False))
+          PY
