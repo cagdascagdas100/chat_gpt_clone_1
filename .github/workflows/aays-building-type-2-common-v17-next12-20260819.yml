@@ -30,13 +30,13 @@ jobs:
             england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
             docs/chatgpt_status/_shared/slots_21/building_type_2
             docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
-      - name: Reuse proven v16 selector from canonical cursor 345
+      - name: Reuse proven v16 selector and execute generated driver from cursor 345
         shell: bash
         run: |
           set -euo pipefail
           git pull --ff-only origin codex/aays-single-runner-v5-20260706
           python - <<'PY'
-          import pathlib, textwrap
+          import pathlib, runpy, textwrap
           src = pathlib.Path('.github/workflows/aays-building-type-2-common-v16-next12-20260819.yml')
           raw = src.read_text(encoding='utf-8')
           marker = "python - <<'PY'\n"
@@ -48,4 +48,7 @@ jobs:
           assert 'START_COUNT = 16550' in code
           assert 'START_BATCH = 345' in code
           exec(compile(code, str(src), 'exec'), {'__name__': '__main__'})
+          generated = pathlib.Path('/tmp/bt2_v16_run.py')
+          assert generated.exists() and generated.stat().st_size > 0
+          runpy.run_path(str(generated), run_name='__main__')
           PY
