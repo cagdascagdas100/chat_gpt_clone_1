@@ -1,0 +1,166 @@
+name: AAYS building_type_2 final audit v16 recovery
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-final-audit-v16-recovery-20260819.yml]
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: aays-building-type-2-final-audit-v16-recovery-20260819
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 200
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
+      - name: Cancel stale predecessor audit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          OLD_SHA='b019c3956dc4ddd90778ee8a40e0769cae546af3'
+          ids=$(gh api -H 'Accept: application/vnd.github+json' "/repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${OLD_SHA}&per_page=20" --jq '.workflow_runs[] | select(.status=="queued" or .status=="in_progress" or .status=="waiting" or .status=="requested" or .status=="pending") | .id' || true)
+          for id in $ids; do
+            echo "Cancelling stale audit run $id"
+            gh api --method POST -H 'Accept: application/vnd.github+json' "/repos/${GITHUB_REPOSITORY}/actions/runs/${id}/cancel" || true
+          done
+          sleep 5
+      - name: Derive audit and publish report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import datetime as dt, hashlib, json, pathlib, subprocess
+
+          BRANCH='codex/aays-single-runner-v5-20260706'
+          SLOT='building_type_2'; TASK='building-type-2-england-classification-v1-20260808'; CONT=TASK
+          START=333; END=344; BEFORE=16050; AFTER=16550; NEXT=345
+          KEY='continuation_report_20260819_v16'
+          SEM='stable OSM element-derived slot identifier; not a cadastral parcel ID'
+          G=pathlib.Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          M=pathlib.Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          C=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          S=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          R=pathlib.Path('docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs/building_type_2_classification_latest.json')
+          T=pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+
+          def load(p): return json.loads(p.read_text(encoding='utf-8'))
+          def now(): return dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          def key_state(geo):
+              seen=set(); dup=[]
+              for f in geo.get('features') or []:
+                  p=f.get('properties') or {}
+                  vals={str(v) for v in (f.get('id'),p.get('parcel_id'),p.get('osm_id'),p.get('source_ref')) if v not in (None,'')}
+                  hit=seen & vals
+                  if hit: dup.extend(sorted(hit))
+                  seen.update(vals)
+              return seen,dup
+
+          geo,man,cp,st,rep,task=map(load,(G,M,C,S,R,T))
+          seen,dup=key_state(geo)
+          assert not dup, dup[:10]
+          assert len(geo.get('features') or [])==AFTER
+          assert man.get('total_features')==AFTER
+          assert cp.get('current_feature_count')==AFTER
+          assert st.get('total_elements')==AFTER
+          assert cp.get('next_batch_index')==NEXT and st.get('next_batch_index')==NEXT
+          assert task.get('slot_id')==SLOT and task.get('task_id')==TASK
+          assert task.get('owner') in (None,'') and (task.get('continuation_key') or '')==CONT
+          h=hashlib.sha256(G.read_bytes()).hexdigest()
+          assert st.get('output_sha256')==h and man.get('geojson_sha256')==h
+
+          all_attempts=[x for x in st.get('batch_attempt_history') or [] if START <= int(x.get('batch_index',-1)) <= END]
+          by_batch={}
+          for x in all_attempts:
+              by_batch[int(x.get('batch_index'))]=x
+          attempts=[by_batch[i] for i in range(START,END+1)]
+          assert len(by_batch)==12
+          cities=[str(x.get('city')) for x in attempts]
+          bboxes=[x.get('bbox_wgs84') for x in attempts]
+          assert len(set(cities))==12
+          assert len({tuple(float(v) for v in b) for b in bboxes})==12
+          assert all(not bool(x.get('fake_data_generated',False)) for x in attempts)
+          assert all(not bool(x.get('duplicate_features_generated',False)) for x in attempts)
+          assert all(not bool(x.get('nearest_match_used',False)) for x in attempts)
+          added=sum(int(x.get('added_feature_count',0)) for x in attempts)
+          progress=[x for x in attempts if int(x.get('added_feature_count',0))>0]
+          zeros=[x for x in attempts if int(x.get('added_feature_count',0))==0]
+          assert AFTER-BEFORE==added
+          assert all(int(x.get('added_feature_count',0))==50 for x in progress)
+
+          zero_rows=[{
+              'batch_index':int(x.get('batch_index')),
+              'city':x.get('city'),
+              'result':x.get('result'),
+              'root_cause':x.get('root_cause'),
+              'source_url':x.get('source_url'),
+              'feature_count_before':x.get('feature_count_before'),
+              'feature_count_after':x.get('feature_count_after')
+          } for x in zeros]
+
+          report={
+              'slot_id':SLOT,'batch_range':[START,END],'batches_processed':12,
+              'feature_count_before':BEFORE,'added_feature_count':added,'feature_count_after':AFTER,
+              'next_batch_index':NEXT,'shard_feature_count':AFTER,'checkpoint_feature_count':AFTER,
+              'status_feature_count':AFTER,'manifest_feature_count':AFTER,
+              'unique_key_count':len(seen),'duplicate_key_count':0,
+              'fake_data_generated':False,'nearest_match_used':False,
+              'progress_batches':len(progress),'zero_addition_batches':len(zeros),'zero_batches':zero_rows,
+              'cities':cities,'bboxes_wgs84':bboxes,'source_family':'OpenStreetMap Overpass API',
+              'parcel_id_semantics':SEM,'geojson_sha256':h,'audited_at':now(),
+              'audit_recovery':True,'raw_attempt_count':len(all_attempts),
+              'final_ready':False,'production_merge':False
+          }
+          rep[KEY]=report
+          R.write_text(json.dumps(rep,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
+          subprocess.run(['git','config','user.name','github-actions[bot]'],check=True)
+          subprocess.run(['git','config','user.email','41898282+github-actions[bot]@users.noreply.github.com'],check=True)
+          subprocess.run(['git','add',str(R)],check=True)
+          if subprocess.run(['git','diff','--cached','--quiet']).returncode!=0:
+              subprocess.run(['git','commit','-m',f'audit(building_type_2): recovered continuation {START}-{END} v16'],check=True)
+              for _ in range(5):
+                  p=subprocess.run(['git','push','origin',f'HEAD:{BRANCH}'],text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+                  if p.returncode==0:
+                      print(p.stdout,flush=True); break
+                  print(p.stdout,flush=True)
+                  subprocess.run(['git','fetch','origin',BRANCH,'--depth=200'],check=True)
+                  m=subprocess.run(['git','merge','--no-edit',f'origin/{BRANCH}'],text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+                  if m.returncode!=0:
+                      print(m.stdout,flush=True)
+                      subprocess.run(['git','merge','--abort'])
+                      raise SystemExit('audit recovery publish merge conflict')
+              else:
+                  raise SystemExit('audit recovery publish retry limit exceeded')
+          else:
+              print('report already present; verifying remote',flush=True)
+
+          subprocess.run(['git','fetch','origin',BRANCH,'--depth=200'],check=True)
+          remote=json.loads(subprocess.check_output(['git','show',f'origin/{BRANCH}:{R}']))
+          rr=remote.get(KEY) or {}
+          assert rr.get('feature_count_before')==BEFORE
+          assert rr.get('feature_count_after')==AFTER
+          assert rr.get('added_feature_count')==added
+          assert rr.get('next_batch_index')==NEXT
+          assert rr.get('duplicate_key_count')==0
+          assert rr.get('geojson_sha256')==h
+          print('FINAL_AUDIT_RECOVERY_REMOTE_READBACK_OK',json.dumps(rr,ensure_ascii=False),flush=True)
+          PY
