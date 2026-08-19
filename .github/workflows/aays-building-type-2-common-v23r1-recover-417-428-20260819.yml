@@ -1,0 +1,75 @@
+name: AAYS building_type_2 common v23r1 recover 417-428
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-common-v23r1-recover-417-428-20260819.yml]
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: aays-building-type-2-v23r1-recovery-20260819
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 200
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-2-common-v16-next12-20260819.yml
+            .github/workflows/aays-building-type-2-common-v2-b177-188-20260818.yml
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
+      - name: Cancel stale v23 predecessor after 15m no canonical progress
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          OLD_SHA='fa7573e2aea3c0db422b3dba513e3032781b4421'
+          runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$OLD_SHA&per_page=100")"
+          echo "$runs" | jq -r '.workflow_runs[] | [.id,.status,.name] | @tsv'
+          echo "$runs" | jq -r '.workflow_runs[] | select(.status=="queued" or .status=="in_progress" or .status=="waiting" or .status=="pending") | .id' | while read -r id; do
+            [ -n "$id" ] || continue
+            gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$id/cancel" || true
+          done
+          for n in $(seq 1 30); do
+            active="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$OLD_SHA&per_page=100" | jq '[.workflow_runs[] | select(.status=="queued" or .status=="in_progress" or .status=="waiting" or .status=="pending")] | length')"
+            [ "$active" = 0 ] && exit 0
+            sleep 5
+          done
+          echo 'stale predecessor did not stop' >&2
+          exit 1
+      - name: Reuse proven selector and driver only if live guard is still 20150 cursor 417
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import pathlib, runpy, textwrap
+          src = pathlib.Path('.github/workflows/aays-building-type-2-common-v16-next12-20260819.yml')
+          raw = src.read_text(encoding='utf-8')
+          marker = "python - <<'PY'\n"
+          assert marker in raw
+          code = raw.split(marker, 1)[1].rsplit('\n          PY', 1)[0]
+          code = textwrap.dedent(code)
+          code = code.replace('START_COUNT = 16050', 'START_COUNT = 20150')
+          code = code.replace('START_BATCH = 333', 'START_BATCH = 417')
+          assert 'START_COUNT = 20150' in code
+          assert 'START_BATCH = 417' in code
+          exec(compile(code, str(src), 'exec'), {'__name__': '__main__'})
+          generated = pathlib.Path('/tmp/bt2_v16_run.py')
+          assert generated.exists() and generated.stat().st_size > 0
+          runpy.run_path(str(generated), run_name='__main__')
+          PY
