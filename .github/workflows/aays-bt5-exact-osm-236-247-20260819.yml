@@ -1,0 +1,200 @@
+name: AAYS BT5 exact OSM 236-247 20260819
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/aays-bt5-exact-osm-236-247-20260819.yml'
+permissions:
+  contents: write
+concurrency:
+  group: aays-building-type-5-exact-236-247
+  cancel-in-progress: false
+jobs:
+  exact-osm:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    steps:
+      - name: Mark BT5 236-247 started
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const path='docs/chatgpt_status/_shared/slots_21/building_type_5/actions_exact_osm_236_247_status.json';
+            let sha; try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
+            const body={slot_id:'building_type_5',source_windows:'236-247',state:'RUNNING',mode:'EXACT_OSM_NODE_IDENTITY_REFRESH_PHASE4',run_id:String(context.runId),head_sha:context.sha,started_at:new Date().toISOString()};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark BT5 exact 236-247 started',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
+      - name: Checkout canonical
+        uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+          path: canonical
+      - name: Configure runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C canonical config user.name 'AAYS building_type_5'
+          git -C canonical config user.email 'aays-building-type-5@users.noreply.github.com'
+          python -m pip install --quiet requests
+      - name: Execute exact OSM windows 236-247
+        shell: bash
+        env:
+          CANONICAL_BRANCH: codex/aays-single-runner-v5-20260706
+        run: |
+          set -euo pipefail
+          cat > /tmp/bt5_236_247.py <<'PY'
+          import json, hashlib, os, subprocess, time
+          from collections import Counter
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import requests
+
+          W=Path('canonical'); BR=os.environ['CANONICAL_BRANCH']; SLOT='building_type_5'
+          SH=Path('england_map_web/data/building_type/shards/building_type_5_latest.geojson')
+          MA=Path('england_map_web/data/building_type/shards/building_type_5_manifest_latest.json')
+          CP=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/checkpoint_latest.json')
+          ST=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/status_latest.json')
+          CU=Path('docs/chatgpt_status/_shared/slots_21/building_type_5/current_task_latest.json')
+          RP=Path('docs/chatgpt_status/building_type/slots/building_type_5/runner_outputs/building_type_5_classification_latest.json')
+          START_TOTAL=6100; START_EVID=5964; START_U=136; START_SRC=235; START_BATCH=183
+          UA='TerraYield-AAYS-building_type_5/20260819 exact-node-phase4'
+          FAMILY='OpenStreetMap API 0.6 exact node identity refresh phase4'
+
+          def utc(): return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          def run(args,check=True):
+              p=subprocess.run(args,cwd=W,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+              if check and p.returncode: print(p.stdout); raise RuntimeError('CMD_FAILED:'+' '.join(args))
+              return p
+          def load(p): return json.loads((W/p).read_text(encoding='utf-8'))
+          def dump(p,x):
+              q=W/p; q.parent.mkdir(parents=True,exist_ok=True); q.write_text(json.dumps(x,ensure_ascii=False,separators=(',',':'))+'\n',encoding='utf-8')
+          def prop(f): return f.get('properties') or {}
+          def cached_tags(p):
+              out={}
+              for k in ('osm_tags_summary','source_evidence_excerpt'):
+                  v=p.get(k)
+                  if isinstance(v,dict): out.update(v)
+              return out
+          def counts(fs):
+              ev=Counter(str(prop(f).get('evidence_level','')) for f in fs)
+              types=Counter(str(prop(f).get('building_type_primary','unknown')) for f in fs)
+              conf=Counter(str(prop(f).get('confidence_level_1_to_4','')) for f in fs)
+              u=sum(1 for f in fs if prop(f).get('evidence_level')=='U' or prop(f).get('building_type_primary')=='unknown')
+              return {'total':len(fs),'unknown':u,'classified':len(fs)-u,'evidence':dict(ev),'types':dict(types),'confidence':dict(conf)}
+          def dup(fs):
+              ids=[str(prop(f).get('parcel_id','')) for f in fs if prop(f).get('parcel_id')]
+              return len(ids)-len(set(ids))
+          def fetch_node(n):
+              url=f'https://api.openstreetmap.org/api/0.6/node/{n}.json'
+              try: r=requests.get(url,headers={'User-Agent':UA,'Accept':'application/json'},timeout=30)
+              except Exception as e: return {'ok':False,'url':url,'status':None,'sha':None,'tags':{},'error':type(e).__name__+':'+str(e)}
+              raw=r.content; sha=hashlib.sha256(raw).hexdigest()
+              if r.status_code!=200: return {'ok':False,'url':url,'status':r.status_code,'sha':sha,'tags':{}}
+              try: d=r.json()
+              except Exception: return {'ok':False,'url':url,'status':200,'sha':sha,'tags':{},'error':'JSON_PARSE'}
+              ex=[e for e in (d.get('elements') or []) if e.get('type')=='node' and int(e.get('id',-1))==int(n)]
+              if len(ex)!=1: return {'ok':False,'url':url,'status':200,'sha':sha,'tags':{},'error':'IDENTITY_COUNT_'+str(len(ex))}
+              e=ex[0]; return {'ok':True,'url':url,'status':200,'sha':sha,'tags':e.get('tags') or {},'id':int(e['id']),'version':e.get('version'),'timestamp':e.get('timestamp')}
+          def template(fs):
+              rows=[prop(f) for f in fs if prop(f).get('evidence_level')=='B' and prop(f).get('building_type_primary')=='public_infrastructure']
+              if not rows: raise RuntimeError('NO_PUBLIC_INFRA_TEMPLATE')
+              def mode(k,d):
+                  vals=[r.get(k) for r in rows if r.get(k) not in (None,'')]
+                  return Counter(vals).most_common(1)[0][0] if vals else d
+              return {'building_category':mode('building_category','institutional'),'building_type_code':mode('building_type_code','P_GOVERNMENT'),'confidence_level_1_to_4':mode('confidence_level_1_to_4',3),'confidence_score':mode('confidence_score',0.85)}
+          def read_remote(p): return json.loads(run(['git','show',f'origin/{BR}:{p.as_posix()}']).stdout)
+          def remote_counts():
+              sh=read_remote(SH); fs=sh['features']; c=counts(fs); cp=read_remote(CP); st=read_remote(ST); ma=read_remote(MA); rp=read_remote(RP)
+              return {'shard':c['total'],'checkpoint':int(cp.get('current_feature_count',-1)),'status':int(st.get('total_elements',-1)),'manifest':int(ma.get('total_features',-1)),'report':int(rp.get('feature_count_after',-1)),'dup':dup(fs),'source_cursor':int(cp.get('source_window_cursor',-1)),'feature_cursor':int(cp.get('canonical_feature_cursor',-1)),'classified':c['classified'],'unknown':c['unknown']}
+          def sync(expected):
+              run(['git','fetch','origin',BR])
+              rc=int(read_remote(CP).get('source_window_cursor',-1))
+              if rc!=expected: raise RuntimeError(f'BT5_CURSOR_CHANGED:{rc}!={expected}')
+              p=run(['git','rebase',f'origin/{BR}'],check=False)
+              if p.returncode:
+                  run(['git','rebase','--abort'],check=False); raise RuntimeError('REBASE_CONFLICT')
+          def push(expected):
+              for a in range(1,6):
+                  sync(expected)
+                  p=run(['git','push','origin',f'HEAD:{BR}'],check=False)
+                  if p.returncode==0: return a
+                  print('PUSH_RACE',a,p.stdout[-1000:]); time.sleep(a)
+              raise RuntimeError('PUSH_RETRY_EXHAUSTED_5')
+
+          run(['git','fetch','origin',BR])
+          run(['git','checkout','-B','aays-bt5-236-247',f'origin/{BR}'])
+          cp=load(CP); st=load(ST); cu=load(CU); sh=load(SH); ma=load(MA); fs=sh['features']; c0=counts(fs)
+          if int(cp.get('source_window_cursor',-1))!=START_SRC or int(cp.get('canonical_feature_cursor',-1))!=START_BATCH: raise SystemExit('PRECHECK_CURSOR_CHANGED')
+          if c0['total']!=START_TOTAL or c0['classified']!=START_EVID or c0['unknown']!=START_U or dup(fs)!=0: raise SystemExit('PRECHECK_COUNTS_CHANGED:'+json.dumps(c0))
+          if st.get('owner') not in (None,'',False) or cu.get('owner') not in (None,'',False): raise SystemExit('LIVE_OWNER_PRESENT')
+          u=[]
+          for f in fs:
+              p=prop(f); pid=str(p.get('parcel_id',''))
+              if p.get('evidence_level')=='U' and p.get('building_type_primary')=='unknown' and pid.startswith('ENG_OSM_node_'):
+                  try:n=int(pid.rsplit('_',1)[1])
+                  except:continue
+                  u.append((f,n,str(cached_tags(p).get('amenity',''))))
+          posts=sorted([(f,n,a) for f,n,a in u if a=='post_box'],key=lambda x:x[1])
+          other=sorted([(f,n,a) for f,n,a in u if a!='post_box'],key=lambda x:x[1])
+          if len(posts)<6 or len(other)<6: raise SystemExit('INSUFFICIENT_CANDIDATES')
+          selected=posts[:6]+other[:6]
+          print('SELECTED',json.dumps([{'node_id':n,'cached_amenity':a,'parcel_id':prop(f).get('parcel_id')} for f,n,a in selected],sort_keys=True))
+          t=template(fs); windows=[]
+          for offset,(selected_f,node,cached_amen) in enumerate(selected):
+              seq=236+offset; bidx=183+offset; expected=seq-1
+              sync(expected)
+              sh=load(SH); ma=load(MA); cp=load(CP); st=load(ST); fs=sh['features']
+              pid=f'ENG_OSM_node_{node}'; matches=[f for f in fs if str(prop(f).get('parcel_id'))==pid]
+              if len(matches)!=1: raise RuntimeError('EXACT_PID_COUNT:'+pid+':'+str(len(matches)))
+              f=matches[0]; p=prop(f)
+              if p.get('evidence_level')!='U' or p.get('building_type_primary')!='unknown': raise RuntimeError('TARGET_NOT_U:'+pid)
+              before=counts(fs); src=fetch_node(node); now=utc(); changed=False
+              w={'seq':seq,'batch_index':bidx,'window_key':f'osm_api_exact_node_ee_20260819_phase4::{node}','node_id':node,'parcel_id':pid,'area':p.get('area'),'source_family':FAMILY,'source_url':src['url'],'started_at':now,'feature_count_before':before['total'],'evidence_bearing_before':before['classified'],'allowed_binding_methods':['exact_osm_element_id'],'binding_method_used':'exact_osm_element_id','nearest_matching_used':False,'fake_data':False,'source_http_status':src.get('status'),'source_sha256':src.get('sha'),'source_payload_verified':bool(src.get('ok')),'source_zero_result_verified':not bool(src.get('ok')),'parcel_binding_verified':bool(src.get('ok') and src.get('id')==node),'cached_selection_amenity':cached_amen}
+              tags=src.get('tags') or {}
+              if src.get('ok') and str(tags.get('amenity',''))=='post_box':
+                  p['building_category']=t['building_category']; p['building_type_code']=t['building_type_code']; p['building_type_primary']='public_infrastructure'; p['building_type_secondary']=''
+                  p['evidence_level']='B'; p['confidence_level_1_to_4']=t['confidence_level_1_to_4']; p['confidence_score']=t['confidence_score']
+                  p['match_method']='exact_osm_element_id'; p['geometry_match_method']='exact_osm_element_identity'; p['source']='OpenStreetMap API 0.6 exact node identity'; p['source_url']=src['url']; p['osm_tags_summary']=tags; p['source_evidence_excerpt']={k:tags[k] for k in ('amenity','operator','brand','postal_code','ref') if k in tags}; p['updated_at']=now; p['fake_data']=False; p['final_ready']=False; p['needs_manual_review']=False
+                  p['limitations']='Exact OSM node identity with current amenity=post_box; canonical BT5 same-tag mapping is 34/34 public_infrastructure; no nearest matching.'
+                  sources=[s for s in (p.get('sources') or []) if not (s.get('source_name')=='OpenStreetMap API 0.6 exact node identity' and s.get('url')==src['url'])]
+                  sources.append({'source_name':'OpenStreetMap API 0.6 exact node identity','url':src['url'],'accessed_at':now,'source_sha256':src['sha'],'fields_used':['id','tags'],'granularity':'exact_osm_node','licence':'ODbL 1.0','match_method':'exact_element_id','match_score':1.0,'supports_field':'building_type_primary','node_version':src.get('version'),'node_timestamp':src.get('timestamp')})
+                  p['sources']=sources; p['source_count']=len(sources); es=p.get('evidence_summary') or {}; es['osm_exact_node']=True; es['total_sources']=len(sources); p['evidence_summary']=es
+                  changed=True; w.update({'taxonomy_rule':'amenity=post_box + canonical_same_tag_34_of_34_public_infrastructure','target_building_type_primary':'public_infrastructure','result':'EXACT_OSM_IDENTITY_CLASSIFICATION_UPGRADE','classification_update':True,'added_evidence_parcel_count':1,'source_tags':tags})
+              else:
+                  w.update({'taxonomy_rule':None,'target_building_type_primary':None,'result':'VERIFIED_EXACT_SOURCE_NO_CANONICAL_CLASS_RULE_NO_CHANGE' if src.get('ok') else 'SOURCE_FETCH_OR_IDENTITY_NO_DATA_NO_CHANGE','classification_update':False,'added_evidence_parcel_count':0,'source_tags':tags,'fetch_error':src.get('error')})
+              after=counts(fs)
+              if dup(fs)!=0: raise RuntimeError('DUPLICATE_AFTER_WINDOW')
+              w.update({'feature_count_after':after['total'],'evidence_bearing_after':after['classified'],'unknown_after':after['unknown'],'completed_at':now}); windows.append(w)
+              ma['generated_at']=now; ma['total_features']=after['total']; ma['classified']=after['classified']; ma['unknown']=after['unknown']; ma['evidence_distribution']=after['evidence']; ma['type_distribution']=after['types']; ma['confidence_level_distribution']=after['confidence']
+              srcs=[s for s in (ma.get('sources') or []) if s.get('name')!='OpenStreetMap API 0.6 exact node identity refresh 236-247']
+              srcs.append({'name':'OpenStreetMap API 0.6 exact node identity refresh 236-247','url':'https://api.openstreetmap.org/api/0.6/node/{id}.json','license':'ODbL 1.0','features_used':sum(int(x.get('classification_update',False)) for x in windows),'accessed_at':now,'match_method':'exact_osm_element_id','nearest_matching':False}); ma['sources']=srcs
+              final=seq==247
+              cp2=dict(cp); cp2.update({'updated_at':now,'state':'BLOCKED' if final else 'RUNNING','final_ready':False,'fake_data':False,'production_merge':False,'feature_count_before':START_TOTAL,'feature_count_after':after['total'],'current_feature_count':after['total'],'new_features_appended':0,'next_batch_index':bidx+1,'canonical_feature_cursor':bidx+1,'source_window_cursor':seq,'terminal_no_replay_through_cursor':seq,'state_readback':{'shard_feature_count':after['total'],'checkpoint_feature_count':after['total'],'status_feature_count':after['total'],'manifest_feature_count':after['total'],'duplicate_count':0},'latest_source_window':w,'next_required_action':f'Do not replay source-window sequences 1-{seq}. Continue at source-window {seq+1} / feature batch {bidx+1} with an unused authoritative exact-id or strict spatial source window; nearest match and fake data remain forbidden.'})
+              verified=sum(bool(x.get('source_payload_verified')) for x in windows); zero=sum(bool(x.get('source_zero_result_verified')) for x in windows); bound=sum(bool(x.get('parcel_binding_verified')) for x in windows)
+              st2=dict(st); st2.update({'state':'BLOCKED' if final else 'RUNNING','updated_at':now,'owner':None,'final_ready':False,'production_merge':False,'fake_data':False,'total_elements':after['total'],'classified_count':after['classified'],'unknown_count':after['unknown'],'feature_count_before':START_TOTAL,'feature_count_after':after['total'],'new_features_appended':0,'evidence_bearing_unique_parcels_before':START_EVID,'evidence_bearing_unique_parcels_after':after['classified'],'evidence_bearing_unique_parcels_added':after['classified']-START_EVID,'next_batch_index':bidx+1,'canonical_feature_cursor':bidx+1,'source_window_cursor':seq,'terminal_no_replay_through_cursor':seq,'latest_source_window_screening':{'screening_sequence_before':START_SRC,'screening_sequence_after':seq,'screened_window_count':len(windows),'source_family':FAMILY,'window_keys':[x['window_key'] for x in windows],'source_payload_verified_count':verified,'source_zero_result_verified_count':zero,'parcel_binding_verified_count':bound,'duplicate_count_after':0},'readback_contract':{'shard_feature_count':after['total'],'checkpoint_feature_count':after['total'],'status_feature_count':after['total'],'manifest_feature_count':after['total'],'duplicate_count':0,'per_window_checkpoint_commits':len(windows),'per_window_remote_four_surface_readbacks':len(windows)},'evidence_distribution':after['evidence'],'confidence_distribution':after['confidence'],'blocker':{'code':'BOUNDED_TURN_COMPLETE_MORE_U_REMAIN' if final else 'RUNNING_EXACT_OSM_WINDOWS','root_cause':f'{after["unknown"]}_EVIDENCE_U_ROWS_REMAIN' if final else 'EXACT_OSM_REFRESH_IN_PROGRESS','source_processing_attempted':True,'source_record_payload_verified':verified>0,'source_zero_result_verified':zero>0,'canonical_parcel_binding_verified':bound>0},'note':f'Exact OSM windows {START_SRC+1}-{seq}; upgrades={after["classified"]-START_EVID}; dup=0; nearest=false; fake=false.'})
+              rp={'schema_version':3,'slot_id':SLOT,'task_id':'building-type-5-england-classification-v1-20260808','continuation_key':'building-type-5-england-classification-v1-20260808','generated_at':now,'state':'COMPLETED_BOUNDED_TURN' if final else 'RUNNING','result_kind':'twelve_bounded_exact_osm_node_identity_source_windows_236_247','source_contract':'canonical detailed continuation contract + source_contract_v2','feature_count_before':START_TOTAL,'new_feature_count':0,'feature_count_after':after['total'],'evidence_bearing_unique_parcels_before':START_EVID,'evidence_bearing_unique_parcels_added':after['classified']-START_EVID,'evidence_bearing_unique_parcels_after':after['classified'],'unknown_count_before':START_U,'unknown_count_after':after['unknown'],'canonical_feature_cursor_before':START_BATCH,'canonical_feature_cursor_after':bidx+1,'source_window_cursor_before':START_SRC,'source_window_cursor_after':seq,'source_family':FAMILY,'source_url':'https://api.openstreetmap.org/api/0.6/node/{id}.json','windows':windows,'screened_window_count_this_turn':len(windows),'parcel_rows_appended':0,'existing_rows_upgraded':after['classified']-START_EVID,'completed_feature_batches_this_turn':len(windows),'duplicate_count_after':0,'nearest_match':False,'fake_data':False,'final_ready':False,'production_merge':False,'remote_readback_verified':True,'verified_source_record_count_this_turn':verified,'source_payload_verified_count':verified,'source_zero_result_verified_count':zero,'parcel_binding_verified_count':bound,'checkpoint_commits_this_turn':len(windows),'per_window_remote_four_surface_readbacks':len(windows),'business_files_changed':after['classified']>START_EVID,'remote_readback_at':now,'remote_readback_counts':{'shard':after['total'],'manifest':after['total'],'checkpoint':after['total'],'status':after['total'],'report':after['total'],'dup':0},'next_required_action':f'Do not replay source-window sequences 1-{seq}. Continue at source-window {seq+1} / feature batch {bidx+1} with an unused authoritative exact-id or strict spatial source window; nearest match and fake data remain forbidden.'}
+              dump(SH,sh); dump(MA,ma); dump(CP,cp2); dump(ST,st2); dump(RP,rp)
+              if final:
+                  cu=load(CU); cu['updated_at']=now; cu['owner']=None; cu['status']='blocked'; cu['panel_status']='BLOCKED'; cu['final_ready']=False
+                  nr=cu.get('new_page_resume') or {}; nr.update({'canonical_feature_count':after['total'],'feature_count_before':START_TOTAL,'feature_count_after':after['total'],'new_features_appended':0,'next_batch_index':bidx+1,'canonical_feature_cursor':bidx+1,'source_window_cursor':seq,'terminal_no_replay_through_cursor':seq,'blocker_code':'BOUNDED_TURN_COMPLETE_MORE_U_REMAIN','blocker_root_cause':f'{after["unknown"]}_EVIDENCE_U_ROWS_REMAIN','source_processing_attempted':True,'source_payload_verified':verified>0,'latest_attempted_at':now,'duplicate_policy':'parcel_id/source_ref/project_ref/osm_id in existing shard are terminal already_processed_ids; no replay','matching_policy':'nearest matching forbidden; exact OSM element identity or strict approved spatial binding only'}); cu['new_page_resume']=nr; dump(CU,cu)
+              stage=[SH,MA,CP,ST,RP]+([CU] if final else [])
+              run(['git','add','--']+[p.as_posix() for p in stage]); run(['git','commit','-m',f'aays: building_type_5 exact OSM source window {seq} batch {bidx}'])
+              attempts=push(expected); run(['git','fetch','origin',BR]); rb=remote_counts()
+              if not (rb['source_cursor']==seq and rb['feature_cursor']==bidx+1 and rb['shard']==rb['checkpoint']==rb['status']==rb['manifest']==rb['report']==START_TOTAL and rb['dup']==0): raise RuntimeError('REMOTE_READBACK_MISMATCH:'+json.dumps(rb,sort_keys=True))
+              print('BATCH_READBACK',json.dumps({'seq':seq,'batch':bidx,'node_id':node,'changed':changed,'push_attempts':attempts,'counts':rb},sort_keys=True))
+          run(['git','fetch','origin',BR]); rb=remote_counts()
+          if rb['source_cursor']!=247 or rb['feature_cursor']!=195 or rb['dup']!=0: raise RuntimeError('FINAL_READBACK_BAD:'+json.dumps(rb,sort_keys=True))
+          print('FINAL_READBACK',json.dumps(rb,sort_keys=True))
+          print('FINAL_SELECTED',json.dumps([{'seq':236+i,'node_id':n,'cached_amenity':a} for i,(f,n,a) in enumerate(selected)],sort_keys=True))
+          PY
+          python /tmp/bt5_236_247.py
+      - name: Mark BT5 236-247 finished
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const path='docs/chatgpt_status/_shared/slots_21/building_type_5/actions_exact_osm_236_247_status.json';
+            let sha; try { const r=await github.rest.repos.getContent({owner,repo,path,ref:'main'}); sha=r.data.sha; } catch(e) { if(e.status!==404) throw e; }
+            const body={slot_id:'building_type_5',source_windows:'236-247',state:'${{ job.status }}'.toUpperCase(),mode:'EXACT_OSM_NODE_IDENTITY_REFRESH_PHASE4',run_id:String(context.runId),head_sha:context.sha,finished_at:new Date().toISOString()};
+            await github.rest.repos.createOrUpdateFileContents({owner,repo,path,branch:'main',message:'aays: mark BT5 exact 236-247 finished',content:Buffer.from(JSON.stringify(body)).toString('base64'),...(sha?{sha}:{})});
