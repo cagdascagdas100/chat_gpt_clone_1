@@ -1,0 +1,54 @@
+name: AAYS building_type_2 common continuation v23 next12
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-common-v23-next12-20260819.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-2-common-v23-next12-20260819
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 200
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-2-common-v16-next12-20260819.yml
+            .github/workflows/aays-building-type-2-common-v2-b177-188-20260818.yml
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
+      - name: Reuse proven v16 selector and execute generated driver from cursor 417
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import pathlib, runpy, textwrap
+          src = pathlib.Path('.github/workflows/aays-building-type-2-common-v16-next12-20260819.yml')
+          raw = src.read_text(encoding='utf-8')
+          marker = "python - <<'PY'\n"
+          assert marker in raw
+          code = raw.split(marker, 1)[1].rsplit('\n          PY', 1)[0]
+          code = textwrap.dedent(code)
+          code = code.replace('START_COUNT = 16050', 'START_COUNT = 20150')
+          code = code.replace('START_BATCH = 333', 'START_BATCH = 417')
+          assert 'START_COUNT = 20150' in code
+          assert 'START_BATCH = 417' in code
+          exec(compile(code, str(src), 'exec'), {'__name__': '__main__'})
+          generated = pathlib.Path('/tmp/bt2_v16_run.py')
+          assert generated.exists() and generated.stat().st_size > 0
+          runpy.run_path(str(generated), run_name='__main__')
+          PY
