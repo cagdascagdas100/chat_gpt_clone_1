@@ -1,0 +1,72 @@
+name: AAYS building_type_2 common v23 extended pool 405-416
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-common-v23-extended-pool-405-416-20260819.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-2-common-v18-next12-20260819
+  cancel-in-progress: true
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 200
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-2-common-v16-next12-20260819.yml
+            .github/workflows/aays-building-type-2-common-v2-b177-188-20260818.yml
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
+      - name: Extend unused-window pool and execute proven driver from cursor 405
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import pathlib, runpy, textwrap
+          src = pathlib.Path('.github/workflows/aays-building-type-2-common-v16-next12-20260819.yml')
+          raw = src.read_text(encoding='utf-8')
+          marker = "python - <<'PY'\n"
+          assert marker in raw
+          code = raw.split(marker, 1)[1].rsplit('\n          PY', 1)[0]
+          code = textwrap.dedent(code)
+          code = code.replace('START_COUNT = 16050', 'START_COUNT = 19550')
+          code = code.replace('START_BATCH = 333', 'START_BATCH = 405')
+          assert 'START_COUNT = 19550' in code
+          assert 'START_BATCH = 405' in code
+
+          extras = [
+              ('East Sheen','Richmond upon Thames',[-0.30,51.45,-0.26,51.48]),
+              ('Strawberry Hill','Richmond upon Thames',[-0.36,51.42,-0.32,51.45]),
+              ('Kew South','Richmond upon Thames',[-0.30,51.47,-0.26,51.50]),
+              ('Carshalton Beeches','Sutton',[-0.19,51.34,-0.15,51.37]),
+              ('Worcester Park North','Sutton',[-0.26,51.37,-0.22,51.40]),
+              ('Coulsdon East','Croydon',[-0.13,51.30,-0.09,51.33]),
+              ('Shirley Oaks','Croydon',[-0.07,51.36,-0.03,51.39]),
+              ('Elmers End','Bromley',[-0.06,51.39,-0.02,51.42]),
+              ('Welling East','Bexley',[0.12,51.45,0.16,51.48]),
+              ('Bexleyheath South','Bexley',[0.12,51.44,0.16,51.47]),
+              ('Falconwood','Greenwich',[0.07,51.45,0.11,51.48]),
+              ('Abbey Wood South','Greenwich',[0.10,51.47,0.14,51.50]),
+          ]
+          select_marker = '\nselected = []\n'
+          assert select_marker in code
+          code = code.replace(select_marker, '\npool.extend(' + repr(extras) + ')\n\nselected = []\n', 1)
+          exec(compile(code, str(src), 'exec'), {'__name__': '__main__'})
+          generated = pathlib.Path('/tmp/bt2_v16_run.py')
+          assert generated.exists() and generated.stat().st_size > 0
+          runpy.run_path(str(generated), run_name='__main__')
+          PY
