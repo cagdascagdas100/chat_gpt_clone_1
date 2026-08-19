@@ -1,0 +1,209 @@
+name: AAYS building_type_2 common continuation v16 next12
+
+on:
+  push:
+    branches: [codex/aays-single-runner-v5-20260706]
+    paths: [.github/workflows/aays-building-type-2-common-v16-next12-20260819.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aays-building-type-2-common-v16-next12-20260819
+  cancel-in-progress: false
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 200
+          clean: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            .github/workflows/aays-building-type-2-common-v2-b177-188-20260818.yml
+            england_map_web/data/building_type/shards/building_type_2_latest.geojson
+            england_map_web/data/building_type/shards/building_type_2_manifest_latest.json
+            docs/chatgpt_status/_shared/slots_21/building_type_2
+            docs/chatgpt_status/building_type/slots/building_type_2/runner_outputs
+      - name: Select 12 unused windows and execute proven driver
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          python - <<'PY'
+          import json, pathlib, re, textwrap
+
+          BRANCH = 'codex/aays-single-runner-v5-20260706'
+          START_COUNT = 16050
+          START_BATCH = 333
+          SLOT = 'building_type_2'
+          TASK = 'building-type-2-england-classification-v1-20260808'
+          CONT = TASK
+          G = pathlib.Path('england_map_web/data/building_type/shards/building_type_2_latest.geojson')
+          M = pathlib.Path('england_map_web/data/building_type/shards/building_type_2_manifest_latest.json')
+          C = pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/checkpoint_latest.json')
+          S = pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/status_latest.json')
+          T = pathlib.Path('docs/chatgpt_status/_shared/slots_21/building_type_2/current_task_latest.json')
+          DRIVER = pathlib.Path('.github/workflows/aays-building-type-2-common-v2-b177-188-20260818.yml')
+
+          def load(p): return json.loads(p.read_text(encoding='utf-8'))
+          geo, man, cp, st, task = map(load, (G,M,C,S,T))
+          assert task.get('slot_id') == SLOT and task.get('task_id') == TASK
+          assert task.get('owner') in (None, '')
+          assert (task.get('continuation_key') or '') == CONT
+          assert len(geo.get('features') or []) == START_COUNT
+          assert man.get('total_features') == START_COUNT
+          assert cp.get('current_feature_count') == START_COUNT
+          assert st.get('total_elements') == START_COUNT
+          assert cp.get('next_batch_index') == START_BATCH
+          assert st.get('next_batch_index') == START_BATCH
+
+          used_cities = set(cp.get('attempted_cities') or [])
+          used_bboxes = set()
+          for x in st.get('batch_attempt_history') or []:
+              city = x.get('city')
+              bbox = x.get('bbox_wgs84')
+              if city: used_cities.add(str(city))
+              if isinstance(bbox, list) and len(bbox) == 4:
+                  used_bboxes.add(tuple(float(v) for v in bbox))
+          lb = cp.get('last_bbox_wgs84')
+          if isinstance(lb, list) and len(lb)==4:
+              used_bboxes.add(tuple(float(v) for v in lb))
+
+          pool = [
+            ('Becontree Heath','Barking & Dagenham',[0.11,51.55,0.15,51.58]),
+            ('Dagenham East','Barking & Dagenham',[0.14,51.53,0.19,51.56]),
+            ('Rush Green','Barking & Dagenham',[0.14,51.56,0.18,51.59]),
+            ('Marks Gate','Barking & Dagenham',[0.14,51.58,0.18,51.61]),
+            ('Thames View','Barking & Dagenham',[0.10,51.52,0.15,51.55]),
+            ('Edgware South','Barnet',[-0.29,51.60,-0.25,51.63]),
+            ('Childs Hill','Barnet',[-0.22,51.55,-0.18,51.58]),
+            ('East Finchley','Barnet',[-0.18,51.58,-0.14,51.61]),
+            ('Totteridge','Barnet',[-0.22,51.62,-0.17,51.65]),
+            ('Whetstone','Barnet',[-0.18,51.62,-0.13,51.65]),
+            ('Brunswick Park','Barnet',[-0.16,51.62,-0.12,51.65]),
+            ('East Barnet','Barnet',[-0.17,51.63,-0.12,51.66]),
+            ('Slade Green','Bexley',[0.18,51.46,0.22,51.49]),
+            ('Belvedere','Bexley',[0.13,51.48,0.17,51.51]),
+            ('Northumberland Heath','Bexley',[0.15,51.46,0.19,51.49]),
+            ('Barnehurst','Bexley',[0.15,51.45,0.19,51.48]),
+            ('Blackfen','Bexley',[0.09,51.43,0.13,51.46]),
+            ('Albany Park','Bexley',[0.11,51.42,0.15,51.45]),
+            ('Queens Park Brent','Brent',[-0.22,51.53,-0.18,51.56]),
+            ('Harlesden','Brent',[-0.27,51.52,-0.23,51.55]),
+            ('Kensal Green','Brent',[-0.24,51.52,-0.20,51.55]),
+            ('Neasden','Brent',[-0.27,51.55,-0.23,51.58]),
+            ('Kingsbury','Brent',[-0.30,51.57,-0.26,51.60]),
+            ('Sudbury Brent','Brent',[-0.33,51.54,-0.29,51.57]),
+            ('Mottingham','Bromley',[0.02,51.42,0.06,51.45]),
+            ('Bickley','Bromley',[0.02,51.39,0.06,51.42]),
+            ('West Wickham','Bromley',[-0.03,51.36,0.02,51.40]),
+            ('Shortlands','Bromley',[-0.01,51.39,0.03,51.42]),
+            ('Penge South','Bromley',[-0.07,51.40,-0.03,51.43]),
+            ('Anerley','Bromley',[-0.08,51.40,-0.04,51.43]),
+            ('Sanderstead','Croydon',[-0.10,51.32,-0.06,51.35]),
+            ('Selsdon','Croydon',[-0.08,51.33,-0.04,51.36]),
+            ('Shirley Croydon','Croydon',[-0.07,51.36,-0.03,51.39]),
+            ('Addiscombe','Croydon',[-0.09,51.37,-0.05,51.40]),
+            ('Perivale','Ealing',[-0.34,51.53,-0.30,51.56]),
+            ('Greenford South','Ealing',[-0.36,51.50,-0.32,51.54]),
+            ('Northolt South','Ealing',[-0.39,51.52,-0.35,51.55]),
+            ('Southall East','Ealing',[-0.36,51.50,-0.32,51.52]),
+            ('Hanwell South','Ealing',[-0.35,51.49,-0.31,51.52]),
+            ('North Acton','Ealing',[-0.27,51.51,-0.23,51.54]),
+            ('Bush Hill Park','Enfield',[-0.10,51.63,-0.06,51.66]),
+            ('Winchmore Hill','Enfield',[-0.12,51.62,-0.08,51.65]),
+            ('Cockfosters','Enfield',[-0.16,51.64,-0.12,51.67]),
+            ('Oakwood Enfield','Enfield',[-0.14,51.64,-0.10,51.67]),
+            ('Enfield Highway','Enfield',[-0.05,51.65,-0.01,51.68]),
+            ('Enfield Lock','Enfield',[-0.04,51.66,0.00,51.69]),
+            ('Ponders End','Enfield',[-0.06,51.63,-0.02,51.66]),
+            ('Eltham North','Greenwich',[0.03,51.45,0.07,51.48]),
+            ('Eltham South','Greenwich',[0.03,51.43,0.07,51.46]),
+            ('Kidbrooke','Greenwich',[0.01,51.45,0.05,51.48]),
+            ('Charlton South','Greenwich',[0.02,51.47,0.06,51.50]),
+            ('Muswell Hill','Haringey',[-0.17,51.58,-0.13,51.61]),
+            ('Wood Green West','Haringey',[-0.13,51.59,-0.09,51.62]),
+            ('Tottenham Hale','Haringey',[-0.08,51.57,-0.04,51.60]),
+            ('North Harrow','Harrow',[-0.37,51.57,-0.33,51.60]),
+            ('South Harrow','Harrow',[-0.37,51.55,-0.33,51.58]),
+            ('Rayners Lane','Harrow',[-0.39,51.56,-0.35,51.59]),
+            ('Queensbury Harrow','Harrow',[-0.31,51.58,-0.27,51.61]),
+            ('Hornchurch North','Havering',[0.20,51.56,0.24,51.59]),
+            ('Rainham South','Havering',[0.17,51.50,0.21,51.53]),
+            ('Romford East','Havering',[0.20,51.57,0.24,51.60]),
+            ('Gidea Park','Havering',[0.19,51.57,0.23,51.60]),
+            ('Collier Row','Havering',[0.16,51.59,0.20,51.62]),
+            ('Ickenham','Hillingdon',[-0.46,51.55,-0.42,51.58]),
+            ('Eastcote','Hillingdon',[-0.41,51.56,-0.37,51.59]),
+            ('South Ruislip','Hillingdon',[-0.41,51.54,-0.37,51.57]),
+            ('Cowley Hillingdon','Hillingdon',[-0.49,51.50,-0.45,51.53]),
+            ('Yiewsley','Hillingdon',[-0.49,51.50,-0.45,51.52]),
+            ('Bedfont','Hounslow',[-0.45,51.44,-0.41,51.47]),
+            ('Cranford','Hounslow',[-0.42,51.46,-0.38,51.49]),
+            ('Feltham North','Hounslow',[-0.42,51.45,-0.38,51.48]),
+            ('Hounslow East','Hounslow',[-0.34,51.46,-0.30,51.49]),
+            ('Osterley','Hounslow',[-0.36,51.47,-0.32,51.50]),
+            ('Chessington','Kingston upon Thames',[-0.32,51.35,-0.28,51.38]),
+            ('Hook Kingston','Kingston upon Thames',[-0.31,51.36,-0.27,51.39]),
+            ('Surbiton South','Kingston upon Thames',[-0.31,51.37,-0.27,51.40]),
+            ('New Malden South','Kingston upon Thames',[-0.27,51.38,-0.23,51.41]),
+            ('Sydenham South','Lewisham',[-0.07,51.41,-0.03,51.44]),
+            ('Grove Park','Lewisham',[-0.04,51.43,0.00,51.46]),
+            ('Hither Green','Lewisham',[-0.02,51.44,0.02,51.47]),
+            ('Mitcham East','Merton',[-0.17,51.39,-0.13,51.42]),
+            ('Morden South','Merton',[-0.21,51.38,-0.17,51.41]),
+            ('Raynes Park','Merton',[-0.25,51.40,-0.21,51.43]),
+            ('West Barnes','Merton',[-0.25,51.39,-0.21,51.42]),
+            ('East Ham North','Newham',[0.03,51.53,0.07,51.56]),
+            ('Manor Park','Newham',[0.03,51.54,0.07,51.57]),
+            ('Plaistow','Newham',[0.01,51.52,0.05,51.55]),
+            ('Canning Town North','Newham',[0.00,51.51,0.04,51.54]),
+            ('Seven Kings','Redbridge',[0.08,51.56,0.12,51.59]),
+            ('Hainault South','Redbridge',[0.08,51.59,0.12,51.62]),
+            ('Wanstead North','Redbridge',[0.01,51.57,0.05,51.60]),
+            ('South Woodford','Redbridge',[0.01,51.58,0.05,51.61]),
+            ('Hampton','Richmond upon Thames',[-0.38,51.40,-0.34,51.43]),
+            ('Hampton Hill','Richmond upon Thames',[-0.37,51.41,-0.33,51.44]),
+            ('Ham Richmond','Richmond upon Thames',[-0.33,51.42,-0.29,51.45]),
+            ('Petersham','Richmond upon Thames',[-0.32,51.43,-0.28,51.46]),
+            ('Mortlake','Richmond upon Thames',[-0.27,51.46,-0.23,51.49]),
+            ('Cheam','Sutton',[-0.23,51.34,-0.19,51.37]),
+            ('Belmont Sutton','Sutton',[-0.22,51.33,-0.18,51.36]),
+            ('Wallington','Sutton',[-0.17,51.35,-0.13,51.38]),
+            ('Beddington','Sutton',[-0.16,51.36,-0.12,51.39]),
+            ('Hackbridge','Sutton',[-0.17,51.37,-0.13,51.40]),
+            ('Chingford North','Waltham Forest',[-0.03,51.62,0.01,51.65]),
+            ('Leyton East','Waltham Forest',[-0.02,51.55,0.02,51.58]),
+          ]
+
+          selected = []
+          for city, auth, bbox in pool:
+              bt = tuple(float(v) for v in bbox)
+              if city in used_cities or bt in used_bboxes:
+                  continue
+              selected.append((START_BATCH + len(selected), city, auth, bbox))
+              if len(selected) == 12: break
+          assert len(selected) == 12, f'only {len(selected)} unused windows remain'
+          assert len({x[1] for x in selected}) == 12
+          assert len({tuple(x[3]) for x in selected}) == 12
+          print('SELECTED_SPECS', json.dumps(selected, ensure_ascii=False), flush=True)
+
+          raw = DRIVER.read_text(encoding='utf-8')
+          marker = "python - <<'PY'\n"
+          assert marker in raw
+          code = raw.split(marker,1)[1].rsplit('\n          PY',1)[0]
+          code = textwrap.dedent(code)
+          code = code.replace('START_COUNT = 8800', f'START_COUNT = {START_COUNT}')
+          code = code.replace('START_BATCH = 177', f'START_BATCH = {START_BATCH}')
+          specs_repr = repr(selected)
+          code, n = re.subn(r'SPECS = \[\n.*?\n\]\nENDPOINTS =', 'SPECS = ' + specs_repr + '\nENDPOINTS =', code, count=1, flags=re.S)
+          assert n == 1
+          code = code.replace('next=189', f'next={START_BATCH+12}')
+          pathlib.Path('/tmp/bt2_v16_run.py').write_text(code, encoding='utf-8')
+          PY
+          python /tmp/bt2_v16_run.py
