@@ -1,0 +1,17 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_2 — Increment 222</title><style>
+body{font-family:system-ui;margin:24px;background:#f6f7f9;color:#16181d}h1{margin:0 0 8px}.meta{margin-bottom:18px;color:#4b5563}
+table{width:100%;border-collapse:collapse;background:white;font-size:13px}th,td{padding:8px;border:1px solid #d8dde5;text-align:left;vertical-align:top}
+th{position:sticky;top:0;background:#eef2f7}.completed{background:#eefaf2}.blocked{background:#fff1f1}</style></head><body>
+<h1>height_difference_2 — Increment 222</h1><div class="meta">İşlemler 4597–4676 · resmî OS format enum düzeltmesi · satır bazlı görünüm</div>
+<table><thead><tr><th>No</th><th>Durum</th><th>Aşama</th><th>Kontrol</th><th>Aday</th><th>Özet</th><th>Doğruluk</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+const esc=(s)=>String(s??''); const all=[];
+Promise.all(['operations_increment_222_a.json','operations_increment_222_b.json','operations_increment_222_c.json'].map(f=>fetch(f).then(r=>r.json()))).then(([a,b,c])=>{
+ all.push(...a.operations); let no=b.operation_start;
+ b.candidates.forEach(x=>b.checks.forEach(k=>{let d=k.details_template.replaceAll('{tile}',x.tile).replaceAll('{xmin}',x.xmin).replaceAll('{ymin}',x.ymin).replaceAll('{xmax}',x.xmin+10000).replaceAll('{ymax}',x.ymin+10000).replace('{height:.3f}',Number(x.height).toFixed(3));
+ all.push({operation_no:no++,status:'completed',stage:b.stage,operation_type:k.operation_type,candidate_row:x.row,details_summary:d,accuracy_score_4:b.accuracy_score_4})}));
+ all.push(...c.operations); all.sort((x,y)=>x.operation_no-y.operation_no);
+ const t=document.getElementById('rows'); all.forEach(o=>{const tr=document.createElement('tr');tr.className=o.status;
+ [o.operation_no,o.status,o.stage,o.operation_type,o.candidate_row??'',o.details_summary,o.accuracy_score_4??''].forEach(v=>{const td=document.createElement('td');td.textContent=esc(v);tr.appendChild(td)});t.appendChild(tr)})
+}).catch(e=>document.body.insertAdjacentHTML('beforeend','<p>JSON yüklenemedi: '+esc(e)+'</p>'));</script></body></html>
