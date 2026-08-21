@@ -1,0 +1,33 @@
+name: AAYS FG7 continuation F-drive read-only preflight
+
+on:
+  pull_request:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - '.github/workflows/aays-fg7-common-continuation-fdrive-readonly-20260818.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  read-plan:
+    runs-on: [self-hosted, Windows]
+    timeout-minutes: 30
+    steps:
+      - name: Read exact continuation file fully without writes
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $path = 'F:\TerraYield_AAYS_Portable\docs\deepseek_prompts\AAYS_CHATGPT_PLAN_00_23_SLOT_COMMON_CONTINUATION_20260818.md'
+          if (-not (Test-Path -LiteralPath $path)) {
+            Write-Error "AAYS_CONTINUATION_FILE_NOT_FOUND:$path"
+            exit 2
+          }
+          $bytes = [System.IO.File]::ReadAllBytes($path)
+          $text = [System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8)
+          $null = $text.Length
+          $lineCount = if ($text.Length -eq 0) { 0 } else { ($text -split "`r?`n").Count }
+          $sha = [System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash($bytes)).Replace('-','').ToLowerInvariant()
+          Write-Host "AAYS_CONTINUATION_FULL_READ_OK bytes=$($bytes.Length) lines=$lineCount sha256=$sha"
+          Write-Host "AAYS_CONTINUATION_READONLY_NO_REPO_WRITES=true"
