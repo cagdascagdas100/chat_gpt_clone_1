@@ -1,0 +1,161 @@
+name: AAYS bt3 Plan0 exact polygon evidence 20260902
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - '.github/workflows/aays-bt3-plan0-polygon-fetch-20260902.yml'
+permissions:
+  contents: read
+jobs:
+  fetch-evidence:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fetch exact open building and HMLR parcel evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import urllib.request, urllib.parse, urllib.error, json, hashlib, re, os, xml.etree.ElementTree as ET
+          from html.parser import HTMLParser
+          from urllib.parse import urljoin
+
+          UA='TerraYield-AAYS-ChatGPT/1.0 building_type_3 Plan0 evidence'
+          candidates=[
+            {'fid':'ENG_OSM_way_253977368','osm':'way/253977368','address':'6 White House Close, Wooburn Green, High Wycombe, HP10 0NU','lon':-0.6827255,'lat':51.60297445,'E':491326.95,'N':190170.00,'type':'residential_detached'},
+            {'fid':'ENG_OSM_way_253977373','osm':'way/253977373','address':'9 White House Close, Wooburn Green, High Wycombe, HP10 0NU','lon':-0.683280925,'lat':51.603070325,'E':491288.29,'N':190179.97,'type':'residential_detached'},
+          ]
+          def get(url, timeout=180):
+              req=urllib.request.Request(url, headers={'User-Agent':UA,'Accept':'*/*'})
+              with urllib.request.urlopen(req, timeout=timeout) as r:
+                  data=r.read(); status=getattr(r,'status',None); final=r.geturl(); ctype=r.headers.get('Content-Type')
+              return status, final, ctype, data
+
+          print('BT3_EVIDENCE_RUN_START')
+          # 1) OS OpenMap Local exact building polygons
+          os_base='https://services.arcgis.com/qHLhLQrcvEnxjtPr/arcgis/rest/services/OS_OpenMap_Local_Buildings/FeatureServer/1/query'
+          for c in candidates:
+              params={
+                'f':'geojson','geometry':f"{c['lon']},{c['lat']}",'geometryType':'esriGeometryPoint',
+                'inSR':'4326','outFields':'*','outSR':'4326','returnGeometry':'true',
+                'spatialRel':'esriSpatialRelIntersects','where':'1=1'
+              }
+              url=os_base+'?'+urllib.parse.urlencode(params)
+              try:
+                  status,final,ctype,data=get(url)
+                  sha=hashlib.sha256(data).hexdigest()
+                  obj=json.loads(data.decode('utf-8'))
+                  feats=obj.get('features') or []
+                  print('BT3_OS_QUERY_META '+json.dumps({'fid':c['fid'],'url':url,'http_status':status,'final_url':final,'content_type':ctype,'sha256':sha,'bytes':len(data),'feature_count':len(feats)},separators=(',',':')))
+                  for i,f in enumerate(feats[:10]):
+                      geom=f.get('geometry'); props=f.get('properties') or {}
+                      print('BT3_OS_FEATURE '+json.dumps({'fid':c['fid'],'index':i,'geometry':geom,'properties':props},separators=(',',':')))
+              except Exception as e:
+                  print('BT3_OS_ERROR '+json.dumps({'fid':c['fid'],'type':type(e).__name__,'error':str(e)},separators=(',',':')))
+
+          # 2) Current HMLR catalogue: discover exact Buckinghamshire GML href
+          catalogue='https://use-land-property-data.service.gov.uk/datasets/inspire/download'
+          try:
+              status,final,ctype,html=get(catalogue)
+              hsha=hashlib.sha256(html).hexdigest()
+              text=html.decode('utf-8','replace')
+              print('BT3_HMLR_CATALOGUE '+json.dumps({'url':catalogue,'http_status':status,'final_url':final,'content_type':ctype,'sha256':hsha,'bytes':len(html)},separators=(',',':')))
+
+              class AParser(HTMLParser):
+                  def __init__(self):
+                      super().__init__(); self.stack=[]; self.links=[]; self.current_href=None; self.current_text=[]
+                  def handle_starttag(self,tag,attrs):
+                      if tag=='a':
+                          self.current_href=dict(attrs).get('href'); self.current_text=[]
+                  def handle_data(self,data):
+                      if self.current_href is not None: self.current_text.append(data)
+                  def handle_endtag(self,tag):
+                      if tag=='a' and self.current_href is not None:
+                          self.links.append((self.current_href,''.join(self.current_text).strip()))
+                          self.current_href=None; self.current_text=[]
+              p=AParser(); p.feed(text)
+              # Find hrefs in a window around Buckinghamshire Council, then score .gml/download links.
+              idx=text.lower().find('buckinghamshire council')
+              window=text[max(0,idx-3000):idx+5000] if idx>=0 else ''
+              hrefs=re.findall(r'href=[\"\']([^\"\']+)[\"\']',window,re.I)
+              hrefs=[urljoin(final,h) for h in hrefs]
+              scored=[]
+              for h in hrefs:
+                  score=(5 if '.gml' in h.lower() else 0)+(2 if 'download' in h.lower() else 0)+(1 if 'inspire' in h.lower() else 0)
+                  scored.append((score,h))
+              scored=sorted(set(scored), reverse=True)
+              print('BT3_HMLR_BUCK_HREF_CANDIDATES '+json.dumps([h for s,h in scored[:20]],separators=(',',':')))
+              gml_url=None
+              for s,h in scored:
+                  if s>=5:
+                      gml_url=h; break
+              if not gml_url:
+                  # fallback: links whose anchor appears soon after local-authority text in raw HTML
+                  m=re.search(r'Buckinghamshire Council.{0,2500}?href=[\"\']([^\"\']+)[\"\']',text,re.I|re.S)
+                  if m: gml_url=urljoin(final,m.group(1))
+              if not gml_url:
+                  raise RuntimeError('Buckinghamshire GML href not found in current catalogue HTML')
+              print('BT3_HMLR_BUCK_URL '+json.dumps({'url':gml_url},separators=(',',':')))
+
+              gstatus,gfinal,gctype,gml=get(gml_url,timeout=600)
+              gsha=hashlib.sha256(gml).hexdigest()
+              gpath='/tmp/buckinghamshire-inspire.gml'; open(gpath,'wb').write(gml)
+              print('BT3_HMLR_GML_META '+json.dumps({'url':gml_url,'http_status':gstatus,'final_url':gfinal,'content_type':gctype,'sha256':gsha,'bytes':len(gml)},separators=(',',':')))
+
+              def local(tag): return tag.split('}',1)[-1]
+              def pairs_from_poslist(txt):
+                  vals=[float(x) for x in re.split(r'\s+',txt.strip()) if x]
+                  if len(vals)<6: return []
+                  pts=[]
+                  for i in range(0,len(vals)-1,2):
+                      a,b=vals[i],vals[i+1]
+                      # BNG eastings typically > northings here; detect obvious reversed local pair.
+                      if 450000 <= a <= 550000 and 150000 <= b <= 250000: pts.append((a,b))
+                      elif 450000 <= b <= 550000 and 150000 <= a <= 250000: pts.append((b,a))
+                      else: pts.append((a,b))
+                  return pts
+              def point_in_poly(x,y,poly):
+                  inside=False
+                  n=len(poly)
+                  if n<3: return False
+                  j=n-1
+                  for i in range(n):
+                      xi,yi=poly[i]; xj,yj=poly[j]
+                      if ((yi>y)!=(yj>y)):
+                          xin=(xj-xi)*(y-yi)/(yj-yi)+xi
+                          if x < xin: inside=not inside
+                      j=i
+                  return inside
+              found={c['fid']:[] for c in candidates}
+              # Stream parse candidate parcel features. Keep only feature elements containing posList.
+              for ev,elem in ET.iterparse(gpath,events=('end',)):
+                  lname=local(elem.tag)
+                  if lname.lower() not in ('cadastralparcel','parcel'):
+                      continue
+                  poslists=[]
+                  for sub in elem.iter():
+                      if local(sub.tag)=='posList' and sub.text:
+                          poly=pairs_from_poslist(sub.text)
+                          if poly: poslists.append(poly)
+                  if not poslists:
+                      elem.clear(); continue
+                  attrs={'gml_id': elem.attrib.get('{http://www.opengis.net/gml/3.2}id') or elem.attrib.get('{http://www.opengis.net/gml}id') or elem.attrib.get('id')}
+                  for sub in elem.iter():
+                      ln=local(sub.tag)
+                      if ln.lower() in ('inspireid','label','nationalcadastralreference','localid','namespace','beginlifespanversion') and sub.text and len(sub.text.strip())<300:
+                          attrs[ln]=sub.text.strip()
+                  for c in candidates:
+                      for poly in poslists:
+                          if point_in_poly(c['E'],c['N'],poly):
+                              found[c['fid']].append({'attributes':attrs,'polygon':poly})
+                              break
+                  elem.clear()
+              for c in candidates:
+                  matches=found[c['fid']]
+                  print('BT3_HMLR_MATCH_META '+json.dumps({'fid':c['fid'],'E':c['E'],'N':c['N'],'match_count':len(matches)},separators=(',',':')))
+                  for i,m in enumerate(matches[:5]):
+                      print('BT3_HMLR_PARCEL '+json.dumps({'fid':c['fid'],'index':i,'attributes':m['attributes'],'polygon':m['polygon']},separators=(',',':')))
+          except Exception as e:
+              print('BT3_HMLR_ERROR '+json.dumps({'type':type(e).__name__,'error':str(e)},separators=(',',':')))
+          print('BT3_EVIDENCE_RUN_END')
+          PY
