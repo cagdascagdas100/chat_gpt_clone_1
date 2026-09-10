@@ -1,0 +1,92 @@
+name: AAYS PB4 V6 HMLR parcel probe5 20260910
+on:
+  push:
+    branches:
+      - agent/aays-pb4-v6-probe-20260910
+    paths:
+      - '.github/workflows/aays-pb4-v6-hmlr-parcel-probe5-20260910.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fetch City of London HMLR INSPIRE and bind parcel
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import urllib.request,urllib.parse,json,hashlib,pathlib,zipfile,io,time,xml.etree.ElementTree as ET
+          O=pathlib.Path('out'); O.mkdir()
+          UA='TerraYield-AAYS/PLAN0-V6 planned_buildings_4 hmlr-parcel-probe5'
+          u='https://use-land-property-data.service.gov.uk/datasets/inspire/download/City_of_London_Corporation.zip'
+          fp=[[532047.358,181333.363],[532060.945,181331.78],[532060.116,181324.67],[532069.037,181323.633],[532076.098,181322.804],[532075.224,181315.293],[532075.464,181312.228],[532076.294,181310.48],[532078.526,181309.024],[532082.033,181308.192],[532105.159,181305.811],[532107.958,181305.795],[532110.468,181306.694],[532112.614,181308.553],[532114.107,181310.673],[532114.929,181313.509],[532115.262,181316.478],[532119.016,181351.261],[532118.745,181353.157],[532117.688,181355.055],[532116.375,181356.189],[532112.984,181357.336],[532113.219,181359.79],[532113.46,181362.267],[532115.687,181362.08],[532117.92,181362.449],[532119.966,181364.372],[532121.041,181367.115],[532122.365,181381.071],[532122.048,181384.178],[532119.646,181387.654],[532116.357,181389.972],[532053.634,181396.699],[532050.424,181396.515],[532048.007,181395.485],[532046.125,181393.9],[532044.682,181391.715],[532043.435,181383.615],[532043.557,181380.78],[532044.44,181378.066],[532045.542,181376.781],[532047.111,181375.976],[532051.813,181374.608],[532051.409,181369.567],[532049.523,181368.684],[532048.216,181367.147],[532047.585,181365.517],[532044.583,181338.9],[532044.86,181336.793],[532046.073,181334.732],[532047.358,181333.363]]
+          bx=[p[0] for p in fp]; by=[p[1] for p in fp]; bb=[min(bx),min(by),max(bx),max(by)]
+          cx=sum(p[0] for p in fp[:-1])/len(fp[:-1]); cy=sum(p[1] for p in fp[:-1])/len(fp[:-1])
+          req=urllib.request.Request(u,headers={'User-Agent':UA,'Accept':'application/zip,application/octet-stream,*/*'})
+          meta={'schema':'pb4_v6_hmlr_parcel_probe5_v1','fetched_at_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'source_url':u,'footprint_bng':fp,'footprint_bbox_bng':bb,'footprint_centroid_bng':[cx,cy]}
+          try:
+            with urllib.request.urlopen(req,timeout=240) as r:
+              data=r.read(); meta.update(http_status=getattr(r,'status',None),content_type=r.headers.get('Content-Type'),final_host=urllib.parse.urlparse(r.geturl()).netloc)
+            meta.update(download_bytes=len(data),download_sha256=hashlib.sha256(data).hexdigest()); (O/'City_of_London_Corporation.zip').write_bytes(data)
+          except Exception as e:
+            meta['download_error']=repr(e); (O/'summary.json').write_text(json.dumps(meta,indent=2)); raise
+          src=[]
+          try:
+            z=zipfile.ZipFile(io.BytesIO(data)); meta['zip_members']=z.namelist()
+            for n in z.namelist():
+              if n.lower().endswith(('.gml','.xml')):
+                b=z.read(n); fn=pathlib.Path(n).name; (O/fn).write_bytes(b); src.append((fn,b))
+          except zipfile.BadZipFile:
+            if data.lstrip().startswith(b'<'):
+              (O/'City_of_London_Corporation.gml').write_bytes(data); src=[('City_of_London_Corporation.gml',data)]
+            else: raise
+          def ln(t): return t.rsplit('}',1)[-1].split(':')[-1]
+          def inside(x,y,r):
+            c=False; j=len(r)-1
+            for i,(xi,yi) in enumerate(r):
+              xj,yj=r[j]
+              if (yi>y)!=(yj>y) and x < (xj-xi)*(y-yi)/(yj-yi+1e-30)+xi: c=not c
+              j=i
+            return c
+          def ov(a,b): return not(a[2]<b[0] or a[0]>b[2] or a[3]<b[1] or a[1]>b[3])
+          matches=[]; members=0; geom_members=0
+          for fn,b in src:
+            for _,el in ET.iterparse(O/fn,events=('end',)):
+              if ln(el.tag).lower() not in ('featuremember','member'): continue
+              members+=1; rings=[]; props={}
+              for d in el.iter():
+                k=ln(d.tag); t=(d.text or '').strip()
+                if t and len(list(d))==0 and len(t)<500: props.setdefault(k,t)
+                if k.lower()=='poslist' and t:
+                  try: nums=[float(x) for x in t.replace(',',' ').split()]
+                  except: continue
+                  dim=int(d.attrib.get('srsDimension','2') or 2); pts=[(nums[i],nums[i+1]) for i in range(0,len(nums)-1,max(2,dim))]
+                  if len(pts)>=4: rings.append(pts)
+              if rings:
+                geom_members+=1
+                for ri,r in enumerate(rings):
+                  xs=[x for x,y in r]; ys=[y for x,y in r]; rb=[min(xs),min(ys),max(xs),max(ys)]
+                  cc=inside(cx,cy,r); n=sum(inside(x,y,r) for x,y in fp[:-1]); bi=ov(rb,bb)
+                  if cc or n or bi:
+                    keep={k:v for k,v in props.items() if k.lower() in ('inspireid','label','nationalcadastralreference','validfrom','beginlifespanversion','localid','namespace') or 'inspire' in k.lower() or 'cadastral' in k.lower()}
+                    gid=None
+                    for d in el.iter():
+                      for ak,av in d.attrib.items():
+                        if ln(ak).lower()=='id': gid=av; break
+                      if gid: break
+                    matches.append({'source_file':fn,'ring_index':ri,'ring_vertex_count':len(r),'ring_bbox':rb,'centroid_contained':cc,'footprint_vertices_contained':n,'footprint_vertex_denominator':len(fp)-1,'bbox_intersects':bi,'properties':keep,'gml_id':gid,'ring':r})
+              el.clear()
+          matches.sort(key=lambda m:(m['centroid_contained'],m['footprint_vertices_contained'],m['bbox_intersects']),reverse=True)
+          meta.update(feature_member_count=members,poslist_feature_count=geom_members,match_count=len(matches),matches=matches[:30],extracted_sources=[{'file':fn,'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest()} for fn,b in src])
+          for i,m in enumerate(matches[:10]): (O/f'match_{i+1:02d}.json').write_text(json.dumps(m,indent=2))
+          (O/'summary.json').write_text(json.dumps(meta,indent=2))
+          print(json.dumps({'http_status':meta.get('http_status'),'download_bytes':meta.get('download_bytes'),'download_sha256':meta.get('download_sha256'),'match_count':len(matches),'top':matches[:3]},separators=(',',':')))
+          PY
+      - name: Upload HMLR parcel probe5
+        uses: actions/upload-artifact@v4
+        with:
+          name: pb4-v6-hmlr-parcel-probe5-20260910
+          path: out/
+          if-no-files-found: error
+          retention-days: 7
