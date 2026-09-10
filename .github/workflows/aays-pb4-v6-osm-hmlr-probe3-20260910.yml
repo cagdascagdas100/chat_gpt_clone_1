@@ -1,0 +1,98 @@
+name: AAYS PB4 V6 OSM HMLR probe3 20260910
+on:
+  push:
+    branches:
+      - agent/aays-pb4-v6-probe-20260910
+    paths:
+      - '.github/workflows/aays-pb4-v6-osm-hmlr-probe3-20260910.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fetch OSM exact geometry and HMLR bulk GML
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import urllib.request, urllib.parse, urllib.error, json, hashlib, pathlib, time, re, html, zipfile, io, math
+          O=pathlib.Path('out'); O.mkdir()
+          UA='TerraYield-AAYS/PLAN0-V6 planned_buildings_4 osm-hmlr-probe3'
+          def fetch(url, fn, data=None, headers=None, timeout=240):
+            h={'User-Agent':UA,'Accept':'*/*'}; h.update(headers or {})
+            req=urllib.request.Request(url,data=data,headers=h)
+            try:
+              with urllib.request.urlopen(req,timeout=timeout) as r: b=r.read(); st=r.status; ct=r.headers.get('Content-Type'); final=r.geturl()
+            except urllib.error.HTTPError as e:
+              b=e.read(); st=e.code; ct=e.headers.get('Content-Type') if e.headers else None; final=getattr(e,'url',url)
+            (O/fn).write_bytes(b)
+            return {'url':url,'final_url':final,'http_status':st,'content_type':ct,'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest(),'file':fn,'body':b}
+          result={'schema':'pb4_v6_osm_hmlr_probe3_v1','fetched_at_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}
+          # City of London bbox: south,west,north,east. Require ways/relations that look like buildings under construction/proposed or named target towers.
+          q='''[out:json][timeout:120];(way["building"="construction"](51.505,-0.105,51.525,-0.070);relation["building"="construction"](51.505,-0.105,51.525,-0.070);way["construction"="building"](51.505,-0.105,51.525,-0.070);relation["construction"="building"](51.505,-0.105,51.525,-0.070);way["name"~"1 Undershaft|55 Bishopsgate|99 Bishopsgate",i](51.505,-0.105,51.525,-0.070);relation["name"~"1 Undershaft|55 Bishopsgate|99 Bishopsgate",i](51.505,-0.105,51.525,-0.070););out tags geom;'''
+          ov=fetch('https://overpass-api.de/api/interpreter','overpass_city_buildings.json',data=q.encode(),headers={'Content-Type':'application/x-www-form-urlencoded'})
+          result['overpass']={k:v for k,v in ov.items() if k!='body'}
+          try:
+            oj=json.loads(ov['body']); els=oj.get('elements',[])
+          except Exception as e: els=[]; result['overpass_parse_error']=repr(e)
+          compact=[]
+          for e in els:
+            tags=e.get('tags',{}); geom=e.get('geometry') or []
+            compact.append({'type':e.get('type'),'id':e.get('id'),'tags':tags,'geometry_vertex_count':len(geom),'geometry':geom})
+          result['osm_candidates']=compact
+          # Scrape current HMLR download page and locate City of London Corporation GML href.
+          dp=fetch('https://use-land-property-data.service.gov.uk/datasets/inspire/download','hmlr_download_page.html')
+          result['hmlr_download_page']={k:v for k,v in dp.items() if k!='body'}
+          txt=dp['body'].decode('utf-8','replace')
+          hrefs=[]
+          for m in re.finditer(r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>',txt,re.I|re.S):
+            href=html.unescape(m.group(1)); label=re.sub('<[^>]+>',' ',m.group(2)); label=' '.join(html.unescape(label).split())
+            if 'City of London Corporation' in label or ('City of London' in label and 'Download' in label): hrefs.append({'label':label,'href':href})
+          # fallback: capture href near text occurrence
+          if not hrefs:
+            for mm in re.finditer('City of London Corporation',txt,re.I):
+              chunk=txt[max(0,mm.start()-1000):mm.end()+1000]
+              for h in re.findall(r'href=["\']([^"\']+)["\']',chunk,re.I): hrefs.append({'label':'near City of London Corporation','href':html.unescape(h)})
+          # normalize likely GML URLs, newest first
+          uniq=[]; seen=set()
+          for x in hrefs:
+            u=urllib.parse.urljoin(dp['final_url'],x['href'])
+            if u not in seen: seen.add(u); uniq.append({'label':x['label'],'url':u})
+          result['hmlr_city_links']=uniq[:20]
+          gmlrec=None
+          for idx,x in enumerate(uniq[:20]):
+            if any(s in x['url'].lower() for s in ['gml','download','inspire']):
+              try:
+                rr=fetch(x['url'],f'hmlr_city_candidate_{idx}.dat')
+                if rr['http_status']==200 and rr['bytes']>1000:
+                  gmlrec=rr; break
+              except Exception: pass
+          if gmlrec:
+            result['hmlr_city_download']={k:v for k,v in gmlrec.items() if k!='body'}
+            b=gmlrec['body']
+            # if zip, extract first GML; otherwise retain directly
+            if b[:2]==b'PK':
+              z=zipfile.ZipFile(io.BytesIO(b)); names=z.namelist(); result['hmlr_zip_names']=names[:50]
+              gn=next((n for n in names if n.lower().endswith(('.gml','.xml'))),None)
+              if gn:
+                gb=z.read(gn); (O/'hmlr_city.gml').write_bytes(gb); result['hmlr_gml']={'inner_name':gn,'bytes':len(gb),'sha256':hashlib.sha256(gb).hexdigest(),'file':'hmlr_city.gml'}
+            else:
+              (O/'hmlr_city.gml').write_bytes(b); result['hmlr_gml']={'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest(),'file':'hmlr_city.gml'}
+          # lightweight GML metadata/geometry scan; full spatial binding deferred to local postprocess if parser deps absent
+          gp=O/'hmlr_city.gml'
+          if gp.exists():
+            gt=gp.read_text(errors='replace')
+            ids=list(dict.fromkeys(re.findall(r'<(?:\w+:)?(?:INSPIREID|localId|nationalCadastralReference)[^>]*>([^<]+)',gt,re.I)))
+            pos=re.findall(r'<(?:\w+:)?posList[^>]*>([^<]+)</(?:\w+:)?posList>',gt,re.I)
+            result['hmlr_scan']={'identifier_count':len(ids),'identifier_samples':ids[:20],'poslist_count':len(pos),'poslist_samples':pos[:3]}
+          (O/'summary.json').write_text(json.dumps(result,indent=2,ensure_ascii=False),encoding='utf-8')
+          print(json.dumps(result,separators=(',',':'),ensure_ascii=False))
+          PY
+      - name: Upload probe3
+        uses: actions/upload-artifact@v4
+        with:
+          name: pb4-v6-osm-hmlr-probe3-20260910
+          path: out/
+          if-no-files-found: error
+          retention-days: 7
