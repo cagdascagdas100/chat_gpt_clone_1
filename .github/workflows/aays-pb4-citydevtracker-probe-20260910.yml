@@ -1,0 +1,95 @@
+name: AAYS pb4 City Development Tracker probe 20260910
+on:
+  push:
+    branches:
+      - agent/aays-pb4-citydevtracker-probe-20260910
+    paths:
+      - '.github/workflows/aays-pb4-citydevtracker-probe-20260910.yml'
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/aays-pb4-citydevtracker-probe-20260910
+      - name: Fetch public City Development Tracker polygons and HMLR parcel probes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence/probes/pb4_citydevtracker
+          python - <<'PY'
+          import json, urllib.request, urllib.parse, urllib.error, hashlib, re, pathlib, math, datetime
+          OUT=pathlib.Path('evidence/probes/pb4_citydevtracker')
+          UA='TerraYield-AAYS-ChatGPT/1.0 planned_buildings_4 City Development Tracker probe'
+          def get(url, timeout=180):
+              req=urllib.request.Request(url,headers={'User-Agent':UA,'Accept':'*/*'})
+              try:
+                  with urllib.request.urlopen(req,timeout=timeout) as r:
+                      d=r.read(); return {'status':getattr(r,'status',None),'url':r.geturl(),'content_type':r.headers.get('Content-Type'),'data':d}
+              except urllib.error.HTTPError as e:
+                  return {'status':e.code,'url':getattr(e,'url',url),'content_type':e.headers.get('Content-Type') if e.headers else None,'data':e.read(),'error':str(e)}
+              except Exception as e:
+                  return {'status':None,'url':url,'content_type':None,'data':b'','error':f'{type(e).__name__}: {e}'}
+          city_base='https://www.mapping.cityoflondon.gov.uk/arcgis/rest/services/INSPIRE/MapServer/61/query'
+          params={'where':'1=1','outFields':'*','returnGeometry':'true','outSR':'27700','f':'json'}
+          city_url=city_base+'?'+urllib.parse.urlencode(params)
+          city=get(city_url)
+          raw=city.pop('data')
+          (OUT/'city_development_tracker_raw.json').write_bytes(raw)
+          city_sha=hashlib.sha256(raw).hexdigest()
+          try: obj=json.loads(raw)
+          except Exception: obj={}
+          feats=obj.get('features') or []
+          statuses={}
+          for f in feats:
+              s=str((f.get('attributes') or {}).get('CPAT_STATUS') or '')
+              statuses[s]=statuses.get(s,0)+1
+          def is_planned(a):
+              s=str(a.get('CPAT_STATUS') or '').lower()
+              bad=('complete','demol','withdraw','refus','supersed')
+              good=('future','pre application','application submitted','permission','approved','under construction','commenced','construction')
+              return bool(s) and not any(x in s for x in bad) and any(x in s for x in good)
+          selected=[]
+          for f in feats:
+              a=f.get('attributes') or {}; g=f.get('geometry') or {}
+              rings=g.get('rings') or []
+              if not rings or not is_planned(a): continue
+              if not a.get('BUILDING_NAME') or not a.get('PLANNING_REF_NUMBER') or not a.get('UPRN'): continue
+              # polygon centroid proxy from first ring vertices, exact geometry retained separately
+              pts=rings[0]
+              if len(pts)<4: continue
+              xs=[p[0] for p in pts]; ys=[p[1] for p in pts]
+              E=sum(xs)/len(xs); N=sum(ys)/len(ys)
+              selected.append({'objectid':a.get('OBJECTID'),'attributes':a,'geometry':g,'probe_E':E,'probe_N':N})
+              if len(selected)>=10: break
+          hmlr_base='https://inspire.landregistry.gov.uk/inspire/ows'
+          cap_url=hmlr_base+'?'+urllib.parse.urlencode({'service':'WMS','version':'1.3.0','request':'GetCapabilities'})
+          cap=get(cap_url); cap_raw=cap.pop('data'); (OUT/'hmlr_capabilities.xml').write_bytes(cap_raw)
+          cap_text=cap_raw.decode('utf-8','replace')
+          names=re.findall(r'<Name>([^<]*CadastralParcel[^<]*)</Name>',cap_text,re.I)
+          names=list(dict.fromkeys(names)) or ['inspire:CP.CadastralParcel']
+          hmlr=[]
+          for c in selected:
+              E,N=c['probe_E'],c['probe_N']; half=80.0
+              bbox=(E-half,N-half,E+half,N+half); width=600; height=600; i=j=300
+              attempts=[]
+              for layer in names[:4]:
+                  params={'SERVICE':'WMS','VERSION':'1.3.0','REQUEST':'GetFeatureInfo','LAYERS':layer,'QUERY_LAYERS':layer,'STYLES':'','CRS':'EPSG:27700','BBOX':','.join(f'{x:.3f}' for x in bbox),'WIDTH':str(width),'HEIGHT':str(height),'I':str(i),'J':str(j),'FEATURE_COUNT':'10','INFO_FORMAT':'application/vnd.ogc.gml'}
+                  u=hmlr_base+'?'+urllib.parse.urlencode(params)
+                  r=get(u); d=r.pop('data'); t=d.decode('utf-8','replace')
+                  rec={**r,'url':u,'sha256':hashlib.sha256(d).hexdigest(),'bytes':len(d),'layer':layer,'poslists':re.findall(r'<(?:\\w+:)?posList[^>]*>([^<]+)</(?:\\w+:)?posList>',t,re.I)[:8],'local_ids':re.findall(r'<(?:\\w+:)?localId[^>]*>([^<]+)</(?:\\w+:)?localId>',t,re.I)[:8],'preview':t[:12000]}
+                  attempts.append(rec)
+                  if r.get('status')==200 and (rec['poslists'] or rec['local_ids']): break
+              hmlr.append({'objectid':c['objectid'],'E':E,'N':N,'attempts':attempts})
+          summary={'schema':'pb4_citydevtracker_hmlr_probe_v1','generated_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z'),'city_query':{**city,'sha256':city_sha,'bytes':len(raw),'feature_count':len(feats),'status_counts':statuses},'selected_count':len(selected),'selected':selected,'hmlr_capabilities':{**cap,'sha256':hashlib.sha256(cap_raw).hexdigest(),'bytes':len(cap_raw),'layers':names},'hmlr':hmlr}
+          (OUT/'probe_summary.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps({'city_status':city.get('status'),'city_sha256':city_sha,'feature_count':len(feats),'selected_count':len(selected),'status_counts':statuses},ensure_ascii=False))
+          PY
+          sha256sum evidence/probes/pb4_citydevtracker/* > evidence/probes/pb4_citydevtracker/SHA256SUMS.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add evidence/probes/pb4_citydevtracker
+          git commit -m 'chore(aays): save pb4 City Development Tracker probe evidence' || true
+          git push origin HEAD:agent/aays-pb4-citydevtracker-probe-20260910
