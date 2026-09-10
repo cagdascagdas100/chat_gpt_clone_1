@@ -1,0 +1,54 @@
+name: AAYS PB4 V6 OSM CPAT probe4 20260910
+on:
+  push:
+    branches:
+      - agent/aays-pb4-v6-probe-20260910
+    paths:
+      - '.github/workflows/aays-pb4-v6-osm-cpat-probe4-20260910.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Crossread construction footprints
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import urllib.request, urllib.parse, json, hashlib, pathlib, time
+          O=pathlib.Path('out'); O.mkdir()
+          UA='TerraYield-AAYS/PLAN0-V6 planned_buildings_4 osm-cpat-probe4'
+          def get(url,fn):
+            req=urllib.request.Request(url,headers={'User-Agent':UA,'Accept':'*/*'})
+            with urllib.request.urlopen(req,timeout=180) as r:b=r.read(); st=r.status; ct=r.headers.get('Content-Type')
+            (O/fn).write_bytes(b); return {'url':url,'http_status':st,'content_type':ct,'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest(),'file':fn,'body':b}
+          # refetch exact OSM window so this probe is self-contained
+          q='''[out:json][timeout:120];(way["building"="construction"](51.505,-0.105,51.525,-0.070);relation["building"="construction"](51.505,-0.105,51.525,-0.070);way["construction"="building"](51.505,-0.105,51.525,-0.070);relation["construction"="building"](51.505,-0.105,51.525,-0.070););out tags geom;'''
+          ovurl='https://overpass-api.de/api/interpreter'; req=urllib.request.Request(ovurl,data=q.encode(),headers={'User-Agent':UA,'Content-Type':'application/x-www-form-urlencoded','Accept':'application/json'})
+          with urllib.request.urlopen(req,timeout=180) as r: ob=r.read(); ost=r.status; oct=r.headers.get('Content-Type')
+          (O/'overpass_construction.json').write_bytes(ob)
+          oj=json.loads(ob); base61='https://www.mapping.cityoflondon.gov.uk/arcgis/rest/services/INSPIRE/MapServer/61/query'; base150='https://www.mapping.cityoflondon.gov.uk/arcgis/rest/services/INSPIRE/MapServer/150/query'
+          result={'schema':'pb4_v6_osm_cpat_probe4_v1','fetched_at_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'overpass':{'url':ovurl,'http_status':ost,'content_type':oct,'bytes':len(ob),'sha256':hashlib.sha256(ob).hexdigest(),'file':'overpass_construction.json'},'candidates':[]}
+          for e in oj.get('elements',[]):
+            g=e.get('geometry') or []
+            if len(g)<4: continue
+            lon=sum(p['lon'] for p in g)/len(g); lat=sum(p['lat'] for p in g)/len(g)
+            rec={'osm_type':e.get('type'),'osm_id':e.get('id'),'osm_tags':e.get('tags',{}),'geometry_vertex_count':len(g),'geometry':g,'centroid':[lon,lat],'queries':{}}
+            for label,base in [('layer61',base61),('layer150',base150)]:
+              params={'geometry':f'{lon},{lat}','geometryType':'esriGeometryPoint','inSR':'4326','spatialRel':'esriSpatialRelIntersects','outFields':'*','returnGeometry':'true','outSR':'4326','f':'json'}
+              url=base+'?'+urllib.parse.urlencode(params); fn=f"osm_{e.get('type')}_{e.get('id')}_{label}.json"; rr=get(url,fn)
+              try: j=json.loads(rr['body']); fs=j.get('features',[])
+              except Exception: fs=[]
+              rec['queries'][label]={**{k:v for k,v in rr.items() if k!='body'},'feature_count':len(fs),'attributes':[f.get('attributes',{}) for f in fs[:10]]}
+            result['candidates'].append(rec)
+          (O/'summary.json').write_text(json.dumps(result,indent=2,ensure_ascii=False),encoding='utf-8')
+          print(json.dumps(result,separators=(',',':'),ensure_ascii=False))
+          PY
+      - name: Upload probe4
+        uses: actions/upload-artifact@v4
+        with:
+          name: pb4-v6-osm-cpat-probe4-20260910
+          path: out/
+          if-no-files-found: error
+          retention-days: 7
