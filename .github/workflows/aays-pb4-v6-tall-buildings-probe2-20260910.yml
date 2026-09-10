@@ -1,0 +1,59 @@
+name: AAYS PB4 V6 tall buildings probe2 20260910
+on:
+  push:
+    branches:
+      - agent/aays-pb4-v6-probe-20260910
+    paths:
+      - '.github/workflows/aays-pb4-v6-tall-buildings-probe2-20260910.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fetch current tall-building and planning polygons
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import urllib.request, urllib.parse, json, hashlib, pathlib, time
+          O=pathlib.Path('out'); O.mkdir()
+          UA='TerraYield-AAYS/PLAN0-V6 planned_buildings_4 tall-buildings-probe2'
+          def get(url,fn):
+            req=urllib.request.Request(url,headers={'User-Agent':UA,'Accept':'*/*'})
+            with urllib.request.urlopen(req,timeout=180) as r: b=r.read(); st=r.status; ct=r.headers.get('Content-Type')
+            (O/fn).write_bytes(b)
+            return {'url':url,'http_status':st,'content_type':ct,'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest(),'file':fn,'body':b}
+          def query(base,where,fn,fmt='geojson',outsr='4326'):
+            q=urllib.parse.urlencode({'where':where,'outFields':'*','returnGeometry':'true','outSR':outsr,'f':fmt})
+            return get(base+'/query?'+q,fn)
+          l150='https://www.mapping.cityoflondon.gov.uk/arcgis/rest/services/INSPIRE/MapServer/150'
+          pa='https://www.mapping.cityoflondon.gov.uk/arcgis/rest/services/COMPASS_Planning_Planning_Applications/MapServer/0'
+          a=query(l150,'1=1','layer150_all_wgs84.geojson','geojson','4326')
+          aj=json.loads(a['body'])
+          summary={'schema':'pb4_tall_buildings_probe2_v1','fetched_at_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'layer150':{k:v for k,v in a.items() if k!='body'},'feature_count':len(aj.get('features',[])),'status_counts':{},'planned_like':[],'targets':[]}
+          for f in aj.get('features',[]):
+            p=f.get('properties',{}); st=str(p.get('STATUS') or '')
+            summary['status_counts'][st]=summary['status_counts'].get(st,0)+1
+            if any(x in st.lower() for x in ['permit','construct','propos','application','resolution','commenc']):
+              summary['planned_like'].append({'properties':p,'geometry_type':(f.get('geometry') or {}).get('type'),'vertex_count':sum(len(r) for r in ((f.get('geometry') or {}).get('coordinates') or [[]])) if (f.get('geometry') or {}).get('type')=='Polygon' else None})
+          refs=['23/01423/FULEIA','22/00981/FULEIA','24/00836/FULEIA']
+          for ref in refs:
+            # layer schema may use NAME for ref; fetch all records matching any text-like ref field through broad WHERE probes
+            rec={'ref':ref,'queries':[]}
+            for field in ['NAME','APPLICATION_NUMBER','PLANNING_REF_NUMBER','APPLICATION_NO','REFERENCE']:
+              try:
+                q=query(pa,field+"='"+ref.replace("'","''")+"'",'planning_'+ref.replace('/','_')+'_'+field+'.json','json','27700')
+                body=json.loads(q['body']); rec['queries'].append({'field':field,**{k:v for k,v in q.items() if k!='body'},'feature_count':len(body.get('features',[])),'attributes':[x.get('attributes',{}) for x in body.get('features',[])[:5]]})
+              except Exception as e: rec['queries'].append({'field':field,'error':repr(e)})
+            summary['targets'].append(rec)
+          (O/'summary.json').write_text(json.dumps(summary,indent=2,ensure_ascii=False),encoding='utf-8')
+          print(json.dumps(summary,separators=(',',':'),ensure_ascii=False))
+          PY
+      - name: Upload probe2
+        uses: actions/upload-artifact@v4
+        with:
+          name: pb4-v6-tall-buildings-probe2-20260910
+          path: out/
+          if-no-files-found: error
+          retention-days: 7
