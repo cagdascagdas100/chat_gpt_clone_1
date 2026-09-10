@@ -1,50 +1,78 @@
-name: AAYS building_type_2 common driver escape fix
-
+name: AAYS pb4 City Development Tracker registered-path probe
 on:
   push:
-    branches: [codex/aays-single-runner-v5-20260706]
+    branches: [agent/aays-pb4-citydevtracker-probe-20260910]
     paths: [.github/workflows/aays-building-type-2-common-driver-fix-once.yml]
-
 permissions:
   contents: write
-
 jobs:
-  fix:
-    runs-on: ubuntu-latest
+  probe:
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: codex/aays-single-runner-v5-20260706
-          fetch-depth: 120
-      - name: Patch continuation workflow escape block
+          ref: agent/aays-pb4-citydevtracker-probe-20260910
+      - name: Fetch City Development Tracker and HMLR evidence
         shell: bash
         run: |
           set -euo pipefail
-          git pull --ff-only origin codex/aays-single-runner-v5-20260706
+          mkdir -p evidence/probes/pb4_citydevtracker
           python - <<'PY'
-          from pathlib import Path
-          import re
-          p=Path('.github/workflows/aays-building-type-2-common-b177-188-20260818.yml')
-          text=p.read_text(encoding='utf-8')
-          pattern=r"              if 'p\.write_text\(code\)' in script:\n                  inject = \(\n.*?                  script=script\.replace\('p\.write_text\(code\)',inject\+'p\.write_text\(code\)',1\)\n"
-          replacement=r'''              if 'p.write_text(code)' in script:
-                  inject = f"""
-owner_old='if task.get("owner") not in (None, "") or status.get("owner") not in (None, ""):\n    raise SystemExit("live owner; refusing second owner")'
-owner_new='if task.get("owner") not in (None, ""):\n    raise SystemExit("live current_task owner; refusing second owner")'
-if owner_old in code:
-    code=code.replace(owner_old,owner_new,1)
-code=code.replace('CONT = ""','CONT = "{CONT}"',1)
-"""
-                  script=script.replace('p.write_text(code)',inject+'p.write_text(code)',1)
-'''
-          new,n=re.subn(pattern,lambda m:replacement,text,count=1,flags=re.S)
-          if n!=1:
-              raise SystemExit(f'expected one escape block, replaced {n}')
-          compile('\n'.join(line[10:] if line.startswith('          ') else line for line in new.split("          python - <<'PY'\n",1)[1].rsplit('\n          PY',1)[0].splitlines()),'<driver>','exec')
-          p.write_text(new,encoding='utf-8')
+          import json, urllib.request, urllib.parse, urllib.error, hashlib, re, pathlib, datetime
+          OUT=pathlib.Path('evidence/probes/pb4_citydevtracker')
+          UA='TerraYield-AAYS-ChatGPT/1.0 planned_buildings_4 probe'
+          def get(url, timeout=180):
+              req=urllib.request.Request(url,headers={'User-Agent':UA,'Accept':'*/*'})
+              try:
+                  with urllib.request.urlopen(req,timeout=timeout) as r:
+                      return {'status':getattr(r,'status',None),'url':r.geturl(),'content_type':r.headers.get('Content-Type'),'data':r.read()}
+              except urllib.error.HTTPError as e:
+                  return {'status':e.code,'url':getattr(e,'url',url),'content_type':e.headers.get('Content-Type') if e.headers else None,'data':e.read(),'error':str(e)}
+              except Exception as e:
+                  return {'status':None,'url':url,'content_type':None,'data':b'','error':f'{type(e).__name__}: {e}'}
+          city_base='https://www.mapping.cityoflondon.gov.uk/arcgis/rest/services/INSPIRE/MapServer/61/query'
+          city_url=city_base+'?'+urllib.parse.urlencode({'where':'1=1','outFields':'*','returnGeometry':'true','outSR':'27700','f':'json'})
+          city=get(city_url); raw=city.pop('data'); (OUT/'city_development_tracker_raw.json').write_bytes(raw)
+          sha=hashlib.sha256(raw).hexdigest()
+          try: obj=json.loads(raw)
+          except Exception: obj={}
+          feats=obj.get('features') or []; statuses={}
+          for f in feats:
+              s=str((f.get('attributes') or {}).get('CPAT_STATUS') or ''); statuses[s]=statuses.get(s,0)+1
+          def planned(a):
+              s=str(a.get('CPAT_STATUS') or '').lower()
+              return bool(s) and not any(x in s for x in ('complete','demol','withdraw','refus','supersed')) and any(x in s for x in ('future','pre application','application submitted','permission','approved','under construction','commenced','construction'))
+          selected=[]
+          for f in feats:
+              a=f.get('attributes') or {}; g=f.get('geometry') or {}; rings=g.get('rings') or []
+              if not rings or not planned(a): continue
+              if not a.get('BUILDING_NAME') or not a.get('PLANNING_REF_NUMBER') or not a.get('UPRN'): continue
+              pts=rings[0]
+              if len(pts)<4: continue
+              E=sum(float(p[0]) for p in pts)/len(pts); N=sum(float(p[1]) for p in pts)/len(pts)
+              selected.append({'objectid':a.get('OBJECTID'),'attributes':a,'geometry':g,'probe_E':E,'probe_N':N})
+              if len(selected)>=10: break
+          hbase='https://inspire.landregistry.gov.uk/inspire/ows'
+          cap_url=hbase+'?'+urllib.parse.urlencode({'service':'WMS','version':'1.3.0','request':'GetCapabilities'})
+          cap=get(cap_url); cap_raw=cap.pop('data'); (OUT/'hmlr_capabilities.xml').write_bytes(cap_raw)
+          ct=cap_raw.decode('utf-8','replace'); names=list(dict.fromkeys(re.findall(r'<Name>([^<]*CadastralParcel[^<]*)</Name>',ct,re.I))) or ['inspire:CP.CadastralParcel']
+          hmlr=[]
+          for c in selected:
+              E,N=c['probe_E'],c['probe_N']; bbox=(E-60,N-60,E+60,N+60); attempts=[]
+              for layer in names[:4]:
+                  u=hbase+'?'+urllib.parse.urlencode({'SERVICE':'WMS','VERSION':'1.3.0','REQUEST':'GetFeatureInfo','LAYERS':layer,'QUERY_LAYERS':layer,'STYLES':'','CRS':'EPSG:27700','BBOX':','.join(f'{x:.3f}' for x in bbox),'WIDTH':'600','HEIGHT':'600','I':'300','J':'300','FEATURE_COUNT':'10','INFO_FORMAT':'application/vnd.ogc.gml'})
+                  r=get(u); d=r.pop('data'); t=d.decode('utf-8','replace')
+                  rec={**r,'url':u,'sha256':hashlib.sha256(d).hexdigest(),'bytes':len(d),'layer':layer,'local_ids':re.findall(r'<(?:\\w+:)?localId[^>]*>([^<]+)</(?:\\w+:)?localId>',t,re.I)[:10],'poslists':re.findall(r'<(?:\\w+:)?posList[^>]*>([^<]+)</(?:\\w+:)?posList>',t,re.I)[:10],'preview':t[:14000]}
+                  attempts.append(rec)
+                  if r.get('status')==200 and (rec['local_ids'] or rec['poslists']): break
+              hmlr.append({'objectid':c['objectid'],'E':E,'N':N,'attempts':attempts})
+          out={'schema':'pb4_citydevtracker_hmlr_probe_v2','generated_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z'),'city_query':{**city,'sha256':sha,'bytes':len(raw),'feature_count':len(feats),'status_counts':statuses},'selected_count':len(selected),'selected':selected,'hmlr_capabilities':{**cap,'sha256':hashlib.sha256(cap_raw).hexdigest(),'bytes':len(cap_raw),'layers':names},'hmlr':hmlr}
+          (OUT/'probe_summary.json').write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps({'city_status':city.get('status'),'city_sha256':sha,'feature_count':len(feats),'selected_count':len(selected),'status_counts':statuses},ensure_ascii=False))
           PY
+          sha256sum evidence/probes/pb4_citydevtracker/* > evidence/probes/pb4_citydevtracker/SHA256SUMS.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/workflows/aays-building-type-2-common-b177-188-20260818.yml
-          git commit -m 'ci(building_type_2): fix continuation driver escape block'
-          git push origin HEAD:codex/aays-single-runner-v5-20260706
+          git add evidence/probes/pb4_citydevtracker
+          git commit -m 'chore(aays): save pb4 City Development Tracker evidence' || true
+          git push origin HEAD:agent/aays-pb4-citydevtracker-probe-20260910
