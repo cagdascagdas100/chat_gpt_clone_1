@@ -1,0 +1,147 @@
+name: AAYS FG3 HMLR Camden INSPIRE GML binding probe 20260912
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - '.github/workflows/aays-fg3-plan0-hmlr-camden-gml-bind-20260912.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Install dependencies
+        run: python -m pip install --quiet requests beautifulsoup4 shapely pyproj lxml
+      - name: Fetch Camden INSPIRE GML and bind first FG3 matches
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/fg3_hmlr
+          python - <<'PY'
+          from pathlib import Path
+          import requests, hashlib, json, re, zipfile, io, datetime
+          from bs4 import BeautifulSoup
+          from shapely.geometry import Point, Polygon, MultiPolygon, mapping
+          from shapely.ops import transform
+          from pyproj import Transformer
+          from lxml import etree
+
+          out=Path('/tmp/fg3_hmlr')
+          observed=datetime.datetime.now(datetime.timezone.utc).isoformat()
+          points=[
+            ('parcel_18509',-0.1245163,51.5341387),('parcel_18510',-0.1236621,51.5341287),
+            ('parcel_18533',-0.1098545,51.5187881),('parcel_18537',-0.1151634,51.5186147),
+            ('parcel_18538',-0.1145465,51.5186305),('parcel_18539',-0.1110141,51.5185677),
+            ('parcel_18540',-0.1119518,51.5185796),('parcel_18541',-0.1126459,51.5186658),
+            ('parcel_18544',-0.1161413,51.5184866),('parcel_18545',-0.1155329,51.5176297)
+          ]
+          s=requests.Session(); s.headers.update({'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3/1.0'})
+          landing='https://use-land-property-data.service.gov.uk/datasets/inspire/download'
+          r=s.get(landing,timeout=60,allow_redirects=True)
+          (out/'hmlr_download_landing.html').write_bytes(r.content)
+          landing_meta={'observed_at_utc':observed,'url':landing,'final_url':r.url,'http_status':r.status_code,
+                        'content_type':r.headers.get('content-type'),'bytes':len(r.content),
+                        'sha256':hashlib.sha256(r.content).hexdigest(),'redirect_history':[x.status_code for x in r.history]}
+          (out/'hmlr_download_landing.meta.json').write_text(json.dumps(landing_meta,indent=2)+'\n')
+          soup=BeautifulSoup(r.text,'html.parser')
+          candidates=[]
+          for a in soup.find_all('a',href=True):
+              txt=' '.join(a.stripped_strings)
+              href=requests.compat.urljoin(r.url,a['href'])
+              blob=(txt+' '+href).lower()
+              if 'camden' in blob:
+                  candidates.append({'text':txt,'href':href})
+          # Also retain links that look like GML/ZIP downloads in case authority name is in nearby markup.
+          if not candidates:
+              for a in soup.find_all('a',href=True):
+                  href=requests.compat.urljoin(r.url,a['href'])
+                  txt=' '.join(a.stripped_strings)
+                  if re.search(r'\.(?:gml|zip)(?:\?|$)',href,re.I):
+                      parent=' '.join(a.parent.stripped_strings) if a.parent else txt
+                      if 'camden' in parent.lower(): candidates.append({'text':parent,'href':href})
+          (out/'camden_download_link_candidates.json').write_text(json.dumps(candidates,ensure_ascii=False,indent=2)+'\n')
+          if not candidates:
+              raise SystemExit('No Camden download link found on HMLR INSPIRE download page')
+          url=candidates[0]['href']
+          dr=s.get(url,timeout=180,allow_redirects=True)
+          raw=dr.content
+          (out/'camden_download_payload.bin').write_bytes(raw)
+          dmeta={'observed_at_utc':observed,'url':url,'final_url':dr.url,'http_status':dr.status_code,
+                 'content_type':dr.headers.get('content-type'),'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),
+                 'link_text':candidates[0]['text']}
+          (out/'camden_download_payload.meta.json').write_text(json.dumps(dmeta,ensure_ascii=False,indent=2)+'\n')
+
+          files=[]
+          if raw[:2]==b'PK':
+              z=zipfile.ZipFile(io.BytesIO(raw))
+              for n in z.namelist():
+                  if n.lower().endswith(('.gml','.xml')):
+                      b=z.read(n); files.append((n,b)); (out/Path(n).name).write_bytes(b)
+          else:
+              files=[('camden_inspire.gml',raw)]; (out/'camden_inspire.gml').write_bytes(raw)
+          if not files: raise SystemExit('No GML/XML found in Camden download payload')
+
+          to_bng=Transformer.from_crs('EPSG:4326','EPSG:27700',always_xy=True)
+          to_wgs=Transformer.from_crs('EPSG:27700','EPSG:4326',always_xy=True)
+          targets={pid:(Point(*to_bng.transform(lon,lat)),lon,lat) for pid,lon,lat in points}
+          found={}
+          scanned=0
+          id_tags=('inspireId','localId','nationalCadastralReference','label','identifier')
+          for fname,b in files:
+              root=etree.fromstring(b)
+              # Iterate any feature element that has a posList descendant; robust to namespace variations.
+              for elem in root.iter():
+                  pos=elem.xpath('.//*[local-name()="posList"]')
+                  if not pos: continue
+                  rings=[]
+                  for p in pos:
+                      try:
+                          vals=[float(v) for v in (p.text or '').split()]
+                      except Exception: continue
+                      if len(vals)<8 or len(vals)%2: continue
+                      ring=[(vals[i],vals[i+1]) for i in range(0,len(vals),2)]
+                      try:
+                          pg=Polygon(ring)
+                          if pg.is_valid and not pg.is_empty: rings.append(pg)
+                      except Exception: pass
+                  if not rings: continue
+                  scanned+=1
+                  # INSPIRE index polygons are expected as individual polygon features; choose largest valid ring as exterior.
+                  poly=max(rings,key=lambda x:x.area)
+                  hit=[pid for pid,(pt,_,__) in targets.items() if pid not in found and poly.covers(pt)]
+                  if not hit: continue
+                  ident={}
+                  for t in id_tags:
+                      nodes=elem.xpath('.//*[local-name()=$n]',n=t)
+                      vals=[' '.join((n.text or '').split()) for n in nodes if (n.text or '').strip()]
+                      if vals: ident[t]=vals[:5]
+                  geom_wgs=mapping(transform(to_wgs.transform,poly))
+                  for pid in hit:
+                      found[pid]={'security_parcel_id':pid,'source_file':fname,'identifier_fields':ident,
+                                  'geometry_bng':mapping(poly),'geometry_wgs84':geom_wgs,'area_bng_m2':poly.area}
+                  if len(found)==len(targets): break
+              if len(found)==len(targets): break
+          result={'slot_id':'future_growth_3','observed_at_utc':observed,'download_meta':dmeta,
+                  'target_count':len(targets),'scanned_polygon_features':scanned,'matched_count':len(found),
+                  'matches':[found[k] for k in targets if k in found]}
+          (out/'hmlr_camden_polygon_matches.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
+          fc={'type':'FeatureCollection','features':[]}
+          for pid in targets:
+              if pid not in found: continue
+              fc['features'].append({'type':'Feature','id':f'hmlr_{pid}','geometry':found[pid]['geometry_wgs84'],
+                                     'properties':{'security_parcel_id':pid,'hmlr_identifiers':found[pid]['identifier_fields'],
+                                                   'source_sha256':dmeta['sha256'],'source_url':dmeta['final_url']}})
+          (out/'hmlr_camden_matched_polygons.geojson').write_text(json.dumps(fc,ensure_ascii=False,indent=2)+'\n')
+          (out/'summary.json').write_text(json.dumps({'slot_id':'future_growth_3','observed_at_utc':observed,
+                 'camden_link_count':len(candidates),'download_http_status':dr.status_code,'download_bytes':len(raw),
+                 'download_sha256':dmeta['sha256'],'target_count':len(targets),'matched_polygon_count':len(found)},indent=2)+'\n')
+          print((out/'summary.json').read_text())
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fg3-hmlr-camden-gml-bind-20260912
+          path: /tmp/fg3_hmlr
+          if-no-files-found: always
+          retention-days: 3
