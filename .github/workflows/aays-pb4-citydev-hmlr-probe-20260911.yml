@@ -1,0 +1,141 @@
+name: AAYS PB4 City Development Tracker HMLR probe 20260911
+on:
+  push:
+    branches:
+      - 'agent/aays-pb4-probe-20260911'
+    paths:
+      - '.github/workflows/aays-pb4-citydev-hmlr-probe-20260911.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fetch public City Development Tracker and HMLR parcel evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p pb4_probe/hmlr
+          python - <<'PY'
+          import urllib.request, urllib.parse, urllib.error, json, hashlib, re, os, math, datetime
+          UA='TerraYield-AAYS-ChatGPT/1.0 planned_buildings_4 evidence probe'
+          OUT='pb4_probe'
+          def fetch(url, timeout=180):
+              req=urllib.request.Request(url, headers={'User-Agent':UA,'Accept':'*/*'})
+              try:
+                  with urllib.request.urlopen(req, timeout=timeout) as r:
+                      d=r.read()
+                      return {'ok':True,'http_status':getattr(r,'status',None),'final_url':r.geturl(),'content_type':r.headers.get('Content-Type'),'sha256':hashlib.sha256(d).hexdigest(),'bytes':len(d),'data':d}
+              except urllib.error.HTTPError as e:
+                  d=e.read()
+                  return {'ok':False,'http_status':e.code,'final_url':getattr(e,'url',url),'content_type':e.headers.get('Content-Type') if e.headers else None,'sha256':hashlib.sha256(d).hexdigest(),'bytes':len(d),'data':d,'error':str(e)}
+              except Exception as e:
+                  return {'ok':False,'http_status':None,'error_type':type(e).__name__,'error':str(e),'bytes':0,'data':b''}
+          def write_bytes(path,data):
+              os.makedirs(os.path.dirname(path),exist_ok=True)
+              open(path,'wb').write(data)
+              return hashlib.sha256(data).hexdigest()
+          base='https://www.mapping.cityoflondon.gov.uk/arcgis/rest/services/INSPIRE/MapServer/61/query'
+          fields=['OBJECTID','BUILDING_NAME','BUILDING_NUMBER','POSTCODE','PLANNING_AUTHORITY','CPAT_STATUS','DEVELOPMENT_TYPE','MARKETING_WEBSITE','EARLIEST_START_YEAR','EARLIEST_COMPLETION_YEAR','STREET','ADDRESS','UPRN','OWNER_WEBSITE','BUILDING_SIZE','NEW_SCHEME_FLOORSPACE','FREEHOLDER','PLANNING_REF_NUMBER']
+          common={'where':'1=1','outFields':','.join(fields),'returnGeometry':'true','resultRecordCount':'1000'}
+          p277={**common,'outSR':'27700','f':'json'}
+          u277=base+'?'+urllib.parse.urlencode(p277)
+          r277=fetch(u277); d277=r277.pop('data')
+          write_bytes(OUT+'/city_development_tracker_27700.raw.json',d277)
+          p4326={**common,'outSR':'4326','f':'geojson'}
+          u4326=base+'?'+urllib.parse.urlencode(p4326)
+          r4326=fetch(u4326); d4326=r4326.pop('data')
+          write_bytes(OUT+'/city_development_tracker_4326.raw.geojson',d4326)
+          summary={'schema':'pb4_citydev_hmlr_probe_v1','generated_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z'),'city_tracker':{'url_27700':u277,'response_27700':r277,'url_4326':u4326,'response_4326':r4326},'status_counts':{},'selected':[],'hmlr':{'base':'https://inspire.landregistry.gov.uk/inspire/ows'}}
+          js277=json.loads(d277.decode('utf-8')) if d277 else {}
+          gj=json.loads(d4326.decode('utf-8')) if d4326 else {}
+          feats277=js277.get('features') or []
+          byid4326={str((f.get('properties') or {}).get('OBJECTID')):f for f in (gj.get('features') or [])}
+          def status_ok(s):
+              x=(s or '').strip().lower()
+              bad=('complete','completed','demolished','withdrawn','refused','superseded')
+              return x and not any(b in x for b in bad)
+          for f in feats277:
+              a=f.get('attributes') or {}
+              s=a.get('CPAT_STATUS') or ''
+              summary['status_counts'][s]=summary['status_counts'].get(s,0)+1
+          def ring_centroid(ring):
+              pts=[p[:2] for p in ring if isinstance(p,list) and len(p)>=2]
+              if len(pts)<3:return None
+              if pts[0]!=pts[-1]:pts=pts+[pts[0]]
+              A=Cx=Cy=0.0
+              for (x0,y0),(x1,y1) in zip(pts,pts[1:]):
+                  c=x0*y1-x1*y0; A+=c; Cx+=(x0+x1)*c; Cy+=(y0+y1)*c
+              if abs(A)<1e-9:
+                  return [sum(p[0] for p in pts[:-1])/max(1,len(pts)-1),sum(p[1] for p in pts[:-1])/max(1,len(pts)-1)]
+              A*=0.5
+              return [Cx/(6*A),Cy/(6*A)]
+          candidates=[]
+          for f in feats277:
+              a=f.get('attributes') or {}; g=f.get('geometry') or {}
+              oid=str(a.get('OBJECTID'))
+              if not a.get('PLANNING_REF_NUMBER') or not a.get('BUILDING_NAME') or not status_ok(a.get('CPAT_STATUS')): continue
+              rings=g.get('rings') or []
+              if not rings: continue
+              g4326=byid4326.get(oid)
+              if not g4326 or (g4326.get('geometry') or {}).get('type') not in ('Polygon','MultiPolygon'): continue
+              c=ring_centroid(rings[0])
+              if not c: continue
+              candidates.append((oid,a,g,g4326,c))
+          # deterministic: prefer permission/submitted/construction then by OBJECTID
+          pri={'under construction':0,'planning permission granted':1,'application submitted':2,'pre application':3,'potential future scheme':4}
+          candidates.sort(key=lambda x:(pri.get((x[1].get('CPAT_STATUS') or '').strip().lower(),9),int(x[0]) if x[0].isdigit() else 999999999))
+          selected=candidates[:10]
+          selected_geo={'type':'FeatureCollection','features':[x[3] for x in selected]}
+          open(OUT+'/selected_city_development_tracker_4326.geojson','w',encoding='utf-8').write(json.dumps(selected_geo,separators=(',',':'),ensure_ascii=False))
+          hbase='https://inspire.landregistry.gov.uk/inspire/ows'
+          capu=hbase+'?'+urllib.parse.urlencode({'service':'WMS','version':'1.3.0','request':'GetCapabilities'})
+          cap=fetch(capu); capdata=cap.pop('data'); write_bytes(OUT+'/hmlr/GetCapabilities.raw',capdata)
+          capt=capdata.decode('utf-8','replace')
+          names=re.findall(r'<Name>([^<]*CadastralParcel[^<]*)</Name>',capt,re.I)
+          names=list(dict.fromkeys(names)) or ['inspire:CP.CadastralParcel']
+          summary['hmlr']['capabilities']={**cap,'url':capu,'layer_names':names}
+          for oid,a,g,g4326,c in selected:
+              E,N=c; bbox=(E-80,N-80,E+80,N+80); width=640; height=640; i=j=320
+              hrec=None
+              attempts=[]
+              for layer in names[:4]:
+                  for info in ('application/vnd.ogc.gml','text/xml','application/json'):
+                      params={'SERVICE':'WMS','VERSION':'1.3.0','REQUEST':'GetFeatureInfo','LAYERS':layer,'QUERY_LAYERS':layer,'STYLES':'','CRS':'EPSG:27700','BBOX':','.join(f'{v:.3f}' for v in bbox),'WIDTH':str(width),'HEIGHT':str(height),'I':str(i),'J':str(j),'FEATURE_COUNT':'10','INFO_FORMAT':info}
+                      u=hbase+'?'+urllib.parse.urlencode(params)
+                      rr=fetch(u); data=rr.pop('data'); text=data.decode('utf-8','replace')
+                      poslists=re.findall(r'<(?:\\w+:)?posList[^>]*>([^<]+)</(?:\\w+:)?posList>',text,re.I)
+                      ids=[]
+                      for pat in [r'<(?:\\w+:)?inspireId[^>]*>(.*?)</(?:\\w+:)?inspireId>',r'<(?:\\w+:)?localId[^>]*>([^<]+)</(?:\\w+:)?localId>',r'<(?:\\w+:)?identifier[^>]*>([^<]+)</(?:\\w+:)?identifier>',r'CP\\.CadastralParcel[^>]*gml:id="([^"]+)"']:
+                          ids.extend(re.findall(pat,text,re.I|re.S))
+                      safe_oid=re.sub(r'[^A-Za-z0-9_.-]+','_',oid)
+                      ext='json' if 'json' in info else 'xml'
+                      fn=f'{OUT}/hmlr/object_{safe_oid}_{len(attempts)+1}.{ext}'
+                      write_bytes(fn,data)
+                      rec={**rr,'url':u,'layer':layer,'info_format':info,'i':i,'j':j,'bbox':bbox,'raw_path':fn,'poslist_count':len(poslists),'poslist_samples':poslists[:3],'identifier_candidates':[re.sub(r'<[^>]+>',' ',x).strip() for x in ids[:10]],'preview':text[:3000]}
+                      attempts.append(rec)
+                      if rr.get('http_status')==200 and poslists:
+                          hrec=rec; break
+                  if hrec: break
+              item={'OBJECTID':oid,'attributes':a,'geometry_27700':g,'geometry_4326':g4326.get('geometry'),'centroid_27700':[E,N],'tracker_raw_sha256_27700':r277.get('sha256'),'tracker_raw_sha256_4326':r4326.get('sha256'),'hmlr_selected':hrec,'hmlr_attempts':attempts}
+              summary['selected'].append(item)
+          open(OUT+'/probe_summary.json','w',encoding='utf-8').write(json.dumps(summary,indent=2,ensure_ascii=False))
+          inv=[]
+          for root,dirs,files in os.walk(OUT):
+              for fn in sorted(files):
+                  p=os.path.join(root,fn); d=open(p,'rb').read(); inv.append({'path':p,'bytes':len(d),'sha256':hashlib.sha256(d).hexdigest()})
+          open(OUT+'/inventory.json','w',encoding='utf-8').write(json.dumps(inv,indent=2))
+          print('TRACKER_HTTP',r277.get('http_status'),r4326.get('http_status'))
+          print('TRACKER_BYTES',r277.get('bytes'),r4326.get('bytes'))
+          print('STATUS_COUNTS',json.dumps(summary['status_counts'],sort_keys=True))
+          print('SELECTED_COUNT',len(summary['selected']))
+          for x in summary['selected']:
+              print('SELECTED',x['OBJECTID'],x['attributes'].get('BUILDING_NAME'),x['attributes'].get('CPAT_STATUS'),x['attributes'].get('PLANNING_REF_NUMBER'),'HMLR_POS', (x['hmlr_selected'] or {}).get('poslist_count',0))
+          PY
+      - name: Upload probe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pb4-citydev-hmlr-probe
+          path: pb4_probe
+          if-no-files-found: error
+          retention-days: 7
