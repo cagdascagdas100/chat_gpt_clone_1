@@ -1,0 +1,107 @@
+name: AAYS PB4 City high-buildings HMLR GML probe 20260911
+on:
+  push:
+    branches:
+      - 'agent/aays-pb4-probe-20260911'
+    paths:
+      - '.github/workflows/aays-pb4-city-highbuildings-hmlr-gml-20260911.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fetch official City high-building polygons and HMLR downloadable GML
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p pb4_city_hmlr_gml
+          python - <<'PY'
+          import urllib.request,urllib.parse,urllib.error,hashlib,json,os,datetime,re
+          from html.parser import HTMLParser
+          from urllib.parse import urljoin
+          UA='TerraYield-AAYS-ChatGPT/1.0 planned_buildings_4 public evidence'
+          OUT='pb4_city_hmlr_gml'
+          def get(url,timeout=240):
+            req=urllib.request.Request(url,headers={'User-Agent':UA,'Accept':'*/*'})
+            try:
+              with urllib.request.urlopen(req,timeout=timeout) as r:
+                d=r.read(); return {'ok':True,'http_status':getattr(r,'status',None),'final_url':r.geturl(),'content_type':r.headers.get('Content-Type'),'content_disposition':r.headers.get('Content-Disposition'),'sha256':hashlib.sha256(d).hexdigest(),'bytes':len(d),'data':d}
+            except urllib.error.HTTPError as e:
+              d=e.read(); return {'ok':False,'http_status':e.code,'final_url':getattr(e,'url',url),'content_type':e.headers.get('Content-Type') if e.headers else None,'sha256':hashlib.sha256(d).hexdigest(),'bytes':len(d),'data':d,'error':str(e)}
+            except Exception as e:
+              return {'ok':False,'http_status':None,'error_type':type(e).__name__,'error':str(e),'bytes':0,'data':b''}
+          def save(fn,d):
+            p=os.path.join(OUT,fn); open(p,'wb').write(d); return p
+          summary={'schema':'pb4_city_highbuildings_hmlr_gml_v1','generated_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z')}
+          # City High Buildings: official actual building polygon layer with planning-derived attributes
+          hb='https://www.mapping.cityoflondon.gov.uk/arcgis/rest/services/INSPIRE/MapServer/94/query'
+          fields='OBJECTID,ADDRESS,HT_ALGL,HT_AOD,STATUS,NO_FLRS,CMENCED,CMPLETED,BUILDING_NAME,BUILDING_USE'
+          for sr,fmt,fn in [('27700','json','city_high_buildings_27700.raw.json'),('4326','geojson','city_high_buildings_4326.raw.geojson')]:
+            u=hb+'?'+urllib.parse.urlencode({'where':'1=1','outFields':fields,'returnGeometry':'true','resultRecordCount':'1000','outSR':sr,'f':fmt})
+            r=get(u); d=r.pop('data'); save(fn,d); summary.setdefault('high_buildings',[]).append({**r,'url':u,'path':fn})
+          # City Development Tracker again in same probe for exact-name/status/ref joins under one timestamp
+          tr='https://www.mapping.cityoflondon.gov.uk/arcgis/rest/services/INSPIRE/MapServer/61/query'
+          tf='OBJECTID,BUILDING_NAME,BUILDING_NUMBER,POSTCODE,PLANNING_AUTHORITY,CPAT_STATUS,DEVELOPMENT_TYPE,EARLIEST_START_YEAR,EARLIEST_COMPLETION_YEAR,STREET,ADDRESS,UPRN,BUILDING_SIZE,NEW_SCHEME_FLOORSPACE,PLANNING_REF_NUMBER'
+          u=tr+'?'+urllib.parse.urlencode({'where':'1=1','outFields':tf,'returnGeometry':'true','resultRecordCount':'1000','outSR':'4326','f':'geojson'})
+          r=get(u); d=r.pop('data'); save('city_development_tracker_4326.raw.geojson',d); summary['tracker']={**r,'url':u,'path':'city_development_tracker_4326.raw.geojson'}
+          # HMLR official current download page and City of London Corporation GML
+          pageurl='https://use-land-property-data.service.gov.uk/datasets/inspire/download'
+          r=get(pageurl); d=r.pop('data'); save('hmlr_inspire_download_page.raw.html',d); summary['hmlr_download_page']={**r,'url':pageurl,'path':'hmlr_inspire_download_page.raw.html'}
+          text=d.decode('utf-8','replace')
+          class P(HTMLParser):
+            def __init__(self): super().__init__(); self.cur=None; self.buf=[]; self.a=[]
+            def handle_starttag(self,tag,attrs):
+              if tag.lower()=='a': self.cur=dict(attrs).get('href'); self.buf=[]
+            def handle_data(self,data):
+              if self.cur is not None:self.buf.append(data)
+            def handle_endtag(self,tag):
+              if tag.lower()=='a' and self.cur is not None:
+                self.a.append((self.cur,' '.join(''.join(self.buf).split()))); self.cur=None; self.buf=[]
+          p=P(); p.feed(text)
+          anchors=[(h,t) for h,t in p.a if 'City of London Corporation' in t]
+          summary['city_london_anchor_matches']=anchors
+          if not anchors:
+            # capture likely adjacent href when page markup nests council name outside anchor
+            idx=text.find('City of London Corporation')
+            if idx>=0:
+              s=text[max(0,idx-2500):idx+2500]
+              hs=re.findall(r'href=["\']([^"\']+)["\']',s,re.I)
+              anchors=[(h,'nearby City of London Corporation') for h in hs]
+              summary['city_london_nearby_hrefs']=anchors
+          candidates=[]
+          for h,t in anchors:
+            full=urljoin(pageurl,h)
+            if full not in [x[0] for x in candidates]: candidates.append((full,t))
+          # Prefer links indicating download/gml/city
+          candidates.sort(key=lambda x:(0 if any(k in x[0].lower() for k in ('gml','download','inspire')) else 1,len(x[0])))
+          attempts=[]; selected=None
+          for full,t in candidates[:12]:
+            rr=get(full); dd=rr.pop('data'); preview=dd[:500].decode('utf-8','replace')
+            rec={**rr,'url':full,'anchor_text':t,'preview':preview}
+            attempts.append(rec)
+            ct=(rec.get('content_type') or '').lower(); cd=(rec.get('content_disposition') or '').lower()
+            looks_gml=(b'<wfs:FeatureCollection' in dd[:10000] or b'<gml:FeatureCollection' in dd[:10000] or b'INSPIREID' in dd[:20000] or 'gml' in ct or '.gml' in cd)
+            if rr.get('http_status')==200 and looks_gml and len(dd)>1000:
+              save('hmlr_city_of_london.raw.gml',dd); selected={**rec,'path':'hmlr_city_of_london.raw.gml'}; break
+          summary['hmlr_gml_attempts']=attempts; summary['hmlr_city_of_london_gml']=selected
+          open(os.path.join(OUT,'summary.json'),'w',encoding='utf-8').write(json.dumps(summary,indent=2,ensure_ascii=False))
+          inv=[]
+          for fn in sorted(os.listdir(OUT)):
+            pth=os.path.join(OUT,fn)
+            if os.path.isfile(pth):
+              bb=open(pth,'rb').read(); inv.append({'path':pth,'bytes':len(bb),'sha256':hashlib.sha256(bb).hexdigest()})
+          open(os.path.join(OUT,'inventory.json'),'w').write(json.dumps(inv,indent=2))
+          print('HIGH_BUILDINGS',[(x['http_status'],x['bytes'],x['sha256']) for x in summary['high_buildings']])
+          print('TRACKER',summary['tracker']['http_status'],summary['tracker']['bytes'],summary['tracker']['sha256'])
+          print('DOWNLOAD_PAGE',summary['hmlr_download_page']['http_status'],summary['hmlr_download_page']['bytes'],summary['hmlr_download_page']['sha256'])
+          print('ANCHORS',anchors[:5])
+          print('GML_SELECTED', bool(selected), selected and (selected['http_status'],selected['bytes'],selected['sha256'],selected['url']))
+          PY
+      - name: Upload official-source artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pb4-city-highbuildings-hmlr-gml
+          path: pb4_city_hmlr_gml
+          if-no-files-found: error
+          retention-days: 7
