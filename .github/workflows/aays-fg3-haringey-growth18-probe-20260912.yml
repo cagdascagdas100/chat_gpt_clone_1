@@ -1,0 +1,157 @@
+name: AAYS FG3 Haringey Growth Areas layer18 probe 20260912
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - '.github/workflows/aays-fg3-haringey-growth18-probe-20260912.yml'
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Fetch official Haringey Growth Areas and bind canonical parcel points
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, pathlib, urllib.request, urllib.parse, hashlib, datetime, math
+
+          root=pathlib.Path('.')
+          slot='future_growth_3'
+          probe_dir=root/'state/slots/future_growth_3/probes'
+          probe_dir.mkdir(parents=True, exist_ok=True)
+          canonical_candidates=[
+              root/'england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson',
+              root/'AAYS/england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson'
+          ]
+          canonical_path=next((p for p in canonical_candidates if p.exists()), None)
+          if canonical_path is None:
+              raise SystemExit('canonical parcel security point GeoJSON not found')
+          canon_raw=canonical_path.read_bytes()
+          canon_sha=hashlib.sha256(canon_raw).hexdigest()
+          canon=json.loads(canon_raw)
+          cfeatures=canon.get('features') or []
+          points=[]
+          for f in cfeatures:
+              g=f.get('geometry') or {}
+              if g.get('type')!='Point':
+                  continue
+              coords=g.get('coordinates') or []
+              props=f.get('properties') or {}
+              pid=props.get('security_parcel_id') or props.get('parcel_id')
+              if pid not in (None,'') and len(coords)>=2:
+                  try: points.append((float(coords[0]),float(coords[1]),str(pid),props))
+                  except Exception: pass
+          if not points:
+              raise SystemExit('canonical point set empty or missing security_parcel_id')
+          sx,sy=points[0][0],points[0][1]
+          out_sr=4326 if abs(sx)<=180 and abs(sy)<=90 else 27700
+
+          base='https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_14/FeatureServer/18/query'
+          params={
+              'where':'1=1','outFields':'*','returnGeometry':'true','outSR':str(out_sr),'f':'geojson'
+          }
+          url=base+'?'+urllib.parse.urlencode(params)
+          req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3/1.0','Accept':'application/geo+json,application/json'})
+          with urllib.request.urlopen(req,timeout=180) as r:
+              raw=r.read(); http_status=getattr(r,'status',None); final_url=r.geturl(); ctype=r.headers.get('Content-Type')
+          source_sha=hashlib.sha256(raw).hexdigest()
+          src=json.loads(raw)
+          sfeatures=src.get('features') or []
+          if not sfeatures:
+              raise SystemExit('Haringey Growth Areas layer 18 returned zero features')
+          geom_types=sorted({(f.get('geometry') or {}).get('type') for f in sfeatures})
+          if not set(geom_types).issubset({'Polygon','MultiPolygon'}):
+              raise SystemExit('Unexpected geometry types: '+repr(geom_types))
+
+          def in_ring(x,y,ring):
+              inside=False
+              n=len(ring)
+              if n<3: return False
+              j=n-1
+              for i in range(n):
+                  xi,yi=ring[i][0],ring[i][1]; xj,yj=ring[j][0],ring[j][1]
+                  if ((yi>y)!=(yj>y)):
+                      den=(yj-yi)
+                      xcross=(xj-xi)*(y-yi)/(den if den else 1e-300)+xi
+                      if x < xcross: inside=not inside
+                  j=i
+              return inside
+          def in_polygon(x,y,poly):
+              if not poly or not in_ring(x,y,poly[0]): return False
+              return not any(in_ring(x,y,h) for h in poly[1:])
+          def in_geom(x,y,g):
+              t=g.get('type'); c=g.get('coordinates') or []
+              if t=='Polygon': return in_polygon(x,y,c)
+              if t=='MultiPolygon': return any(in_polygon(x,y,p) for p in c)
+              return False
+          def bbox_geom(g):
+              vals=[]
+              def walk(v):
+                  if isinstance(v,(list,tuple)):
+                      if len(v)>=2 and isinstance(v[0],(int,float)) and isinstance(v[1],(int,float)):
+                          vals.append((float(v[0]),float(v[1])))
+                      else:
+                          for q in v: walk(q)
+              walk(g.get('coordinates') or [])
+              xs=[p[0] for p in vals]; ys=[p[1] for p in vals]
+              return (min(xs),min(ys),max(xs),max(ys)) if vals else None
+
+          matches=[]
+          per_growth=[]
+          for sf in sfeatures:
+              g=sf.get('geometry') or {}; b=bbox_geom(g); props=sf.get('properties') or {}
+              oid=props.get('objectid', props.get('OBJECTID', sf.get('id')))
+              local=[]
+              if b:
+                  minx,miny,maxx,maxy=b
+                  for x,y,pid,pp in points:
+                      if x<minx or x>maxx or y<miny or y>maxy: continue
+                      if in_geom(x,y,g):
+                          rec={'parcel_id':pid,'point':[x,y],'growth_objectid':oid,'growth_properties':props}
+                          local.append(rec); matches.append(rec)
+              per_growth.append({'growth_objectid':oid,'growth_properties':props,'geometry_type':g.get('type'),'bbox':b,'matched_parcel_count':len(local),'matched_parcels':local[:25]})
+
+          raw_path=probe_dir/'haringey_growth_areas_layer18_raw.geojson'
+          raw_path.write_bytes(raw)
+          report={
+              'schema':'fg3_haringey_growth18_probe_v1','slot_id':slot,
+              'observed_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              'source_family':'london_datastore_local_plan_arcgis',
+              'region':'Haringey','service':'planning_local_plan_data_14','layer_id':18,'layer_name':'Growth Areas',
+              'source_url':url,'final_url':final_url,'http_status':http_status,'content_type':ctype,
+              'licence':'Open Government Licence v3','licence_basis':'London Datastore Planning Local Plan Data dataset page',
+              'source_sha256':source_sha,'source_bytes':len(raw),'source_feature_count':len(sfeatures),'source_geometry_types':geom_types,
+              'canonical_path':str(canonical_path).replace('\\','/'),'canonical_sha256':canon_sha,
+              'canonical_feature_count':len(cfeatures),'canonical_explicit_parcel_point_count':len(points),'canonical_coordinate_system_inferred':out_sr,
+              'binding_method':'explicit security_parcel_id canonical point-within-official-growth-polygon; bbox prefilter then ray-casting polygon test; holes excluded',
+              'matched_relation_count':len(matches),'per_growth_area':per_growth,
+              'first_matches':matches[:100],
+              'candidate_promotion_status':'PROBE_ONLY_NOT_PUBLISHED',
+              'notes':'No counters, canonical output, inbox, receipt, or status files were modified by this probe.'
+          }
+          report_path=probe_dir/'haringey_growth_areas_layer18_probe.json'
+          report_path.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps({k:report[k] for k in ['http_status','source_sha256','source_feature_count','source_geometry_types','canonical_explicit_parcel_point_count','matched_relation_count']},indent=2))
+          PY
+          git config user.name 'TerraYield AAYS Bot'
+          git config user.email 'aays-bot@users.noreply.github.com'
+          git add state/slots/future_growth_3/probes/haringey_growth_areas_layer18_raw.geojson state/slots/future_growth_3/probes/haringey_growth_areas_layer18_probe.json
+          test -n "$(git diff --cached --name-only)"
+          test "$(git diff --cached --name-only | grep -vc '^state/slots/future_growth_3/probes/' || true)" = 0
+          git commit -m 'future_growth_3: probe Haringey Growth Areas layer 18'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin codex/aays-single-runner-v5-20260706
+            if ! git merge-base --is-ancestor origin/codex/aays-single-runner-v5-20260706 HEAD; then git rebase origin/codex/aays-single-runner-v5-20260706; fi
+            if git push origin HEAD:codex/aays-single-runner-v5-20260706; then exit 0; fi
+            test "$attempt" != 5
+            sleep $((attempt*3))
+          done
