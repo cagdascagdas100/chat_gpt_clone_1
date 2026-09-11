@@ -1,0 +1,61 @@
+name: AAYS PB4 HMLR City redirect resolver 20260911
+on:
+  push:
+    branches:
+      - 'agent/aays-pb4-probe-20260911'
+    paths:
+      - '.github/workflows/aays-pb4-hmlr-city-redirect-resolve-20260911.yml'
+permissions:
+  contents: read
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Resolve and download HMLR City of London INSPIRE ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p pb4_hmlr_city_resolved
+          python - <<'PY'
+          import urllib.request,urllib.error,hashlib,json,zipfile,io,os,datetime,http.cookiejar
+          url='https://use-land-property-data.service.gov.uk/datasets/inspire/download/City_of_London_Corporation.zip'
+          UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140.0 Safari/537.36'
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+            def redirect_request(self,req,fp,code,msg,headers,newurl): return None
+          opener=urllib.request.build_opener(NoRedirect)
+          req=urllib.request.Request(url,headers={'User-Agent':UA,'Accept':'text/html,application/xhtml+xml,application/zip,*/*','Referer':'https://use-land-property-data.service.gov.uk/datasets/inspire/download'})
+          out={'schema':'pb4_hmlr_city_redirect_v1','generated_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z'),'url':url}
+          loc=None; cookies=[]
+          try:
+            with opener.open(req,timeout=120) as r:
+              d=r.read(); out['initial']={'status':r.status,'headers':dict(r.headers),'sha256':hashlib.sha256(d).hexdigest(),'bytes':len(d)}; loc=r.headers.get('Location')
+          except urllib.error.HTTPError as e:
+            d=e.read(); out['initial']={'status':e.code,'headers':dict(e.headers or {}),'sha256':hashlib.sha256(d).hexdigest(),'bytes':len(d),'preview':d[:1000].decode('utf-8','replace')}; loc=(e.headers or {}).get('Location')
+          out['location']=loc
+          if loc:
+            target=urllib.parse.urljoin(url,loc)
+            out['target']=target
+            req2=urllib.request.Request(target,headers={'User-Agent':UA,'Accept':'application/zip,*/*','Referer':url})
+            try:
+              with urllib.request.urlopen(req2,timeout=300) as r2:
+                b=r2.read(); out['target_response']={'status':getattr(r2,'status',None),'final_url':r2.geturl(),'headers':dict(r2.headers),'sha256':hashlib.sha256(b).hexdigest(),'bytes':len(b)}
+              open('pb4_hmlr_city_resolved/City_of_London_Corporation.zip','wb').write(b)
+              try:
+                z=zipfile.ZipFile(io.BytesIO(b)); out['members']=[]
+                for zi in z.infolist():
+                  if zi.is_dir(): continue
+                  bb=z.read(zi.filename); fn=os.path.basename(zi.filename); open('pb4_hmlr_city_resolved/'+fn,'wb').write(bb); out['members'].append({'original_name':zi.filename,'path':fn,'bytes':len(bb),'sha256':hashlib.sha256(bb).hexdigest()})
+              except Exception as ze: out['zip_error']=repr(ze)
+            except urllib.error.HTTPError as e2:
+              bb=e2.read(); out['target_response']={'status':e2.code,'headers':dict(e2.headers or {}),'sha256':hashlib.sha256(bb).hexdigest(),'bytes':len(bb),'preview':bb[:2000].decode('utf-8','replace'),'error':str(e2)}; open('pb4_hmlr_city_resolved/target_error.raw','wb').write(bb)
+            except Exception as e2: out['target_response']={'error_type':type(e2).__name__,'error':str(e2)}
+          open('pb4_hmlr_city_resolved/summary.json','w').write(json.dumps(out,indent=2))
+          print(json.dumps(out,indent=2)[:20000])
+          PY
+      - name: Upload resolved HMLR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pb4-hmlr-city-resolved
+          path: pb4_hmlr_city_resolved
+          if-no-files-found: error
+          retention-days: 7
