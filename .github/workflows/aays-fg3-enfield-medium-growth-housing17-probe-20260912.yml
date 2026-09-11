@@ -1,0 +1,143 @@
+name: AAYS FG3 Enfield Medium Growth Housing layer17 probe 20260912
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - '.github/workflows/aays-fg3-enfield-medium-growth-housing17-probe-20260912.yml'
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Fetch Enfield growth polygons, bind canonical points, persist probe without checkout
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          GH_BRANCH: codex/aays-single-runner-v5-20260706
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os, json, urllib.request, urllib.parse, urllib.error, hashlib, datetime, base64
+
+          token=os.environ['GH_TOKEN']; repo=os.environ['GH_REPO']; branch=os.environ['GH_BRANCH']
+          ua='TerraYield-AAYS-Plan0-future_growth_3/1.0'
+          def get_bytes(url, accept='*/*', auth=False, timeout=240):
+              h={'User-Agent':ua,'Accept':accept}
+              if auth: h['Authorization']='Bearer '+token
+              req=urllib.request.Request(url,headers=h)
+              with urllib.request.urlopen(req,timeout=timeout) as r:
+                  return r.read(), getattr(r,'status',None), r.geturl(), r.headers.get('Content-Type')
+          def api_json(url, method='GET', payload=None):
+              h={'User-Agent':ua,'Accept':'application/vnd.github+json','Authorization':'Bearer '+token,'X-GitHub-Api-Version':'2022-11-28'}
+              data=None
+              if payload is not None:
+                  data=json.dumps(payload).encode(); h['Content-Type']='application/json'
+              req=urllib.request.Request(url,headers=h,data=data,method=method)
+              try:
+                  with urllib.request.urlopen(req,timeout=120) as r:
+                      return json.loads(r.read().decode()), getattr(r,'status',None)
+              except urllib.error.HTTPError as e:
+                  body=e.read().decode('utf-8','replace')
+                  if e.code==404: return None,404
+                  raise RuntimeError(f'GitHub API {e.code}: {body[:2000]}')
+          def put_content(path, content_bytes, message):
+              enc_path='/'.join(urllib.parse.quote(x,safe='') for x in path.split('/'))
+              base=f'https://api.github.com/repos/{repo}/contents/{enc_path}'
+              current,status=api_json(base+'?ref='+urllib.parse.quote(branch,safe=''))
+              payload={'message':message,'content':base64.b64encode(content_bytes).decode(),'branch':branch}
+              if current and isinstance(current,dict) and current.get('sha'): payload['sha']=current['sha']
+              res,st=api_json(base,'PUT',payload)
+              return {'status':st,'content_sha':((res or {}).get('content') or {}).get('sha'),'commit_sha':((res or {}).get('commit') or {}).get('sha')}
+
+          canon_url=f'https://raw.githubusercontent.com/{repo}/{branch}/england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson'
+          canon_raw,canon_http,canon_final,canon_type=get_bytes(canon_url,'application/geo+json,application/json')
+          canon_sha=hashlib.sha256(canon_raw).hexdigest(); canon=json.loads(canon_raw)
+          cfeatures=canon.get('features') or []
+          points=[]
+          for f in cfeatures:
+              g=f.get('geometry') or {}; p=f.get('properties') or {}; c=g.get('coordinates') or []
+              pid=p.get('security_parcel_id') or p.get('parcel_id')
+              if g.get('type')=='Point' and pid not in (None,'') and len(c)>=2:
+                  try: points.append((float(c[0]),float(c[1]),str(pid),p))
+                  except Exception: pass
+          if not points: raise SystemExit('No explicit canonical parcel points')
+          sx,sy=points[0][0],points[0][1]; out_sr=4326 if abs(sx)<=180 and abs(sy)<=90 else 27700
+
+          query_base='https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_10/FeatureServer/17/query'
+          q={'where':'1=1','outFields':'*','returnGeometry':'true','outSR':str(out_sr),'f':'geojson'}
+          source_url=query_base+'?'+urllib.parse.urlencode(q)
+          raw,http_status,final_url,ctype=get_bytes(source_url,'application/geo+json,application/json')
+          source_sha=hashlib.sha256(raw).hexdigest(); src=json.loads(raw)
+          if src.get('type')!='FeatureCollection':
+              raise SystemExit('ArcGIS response was not GeoJSON FeatureCollection: '+json.dumps(src)[:1500])
+          sfeatures=src.get('features') or []
+          if not sfeatures: raise SystemExit('Enfield layer17 returned zero features')
+          gtypes=sorted({(f.get('geometry') or {}).get('type') for f in sfeatures})
+          if not set(gtypes).issubset({'Polygon','MultiPolygon'}): raise SystemExit('Unexpected geometry types '+repr(gtypes))
+
+          def in_ring(x,y,ring):
+              inside=False; n=len(ring)
+              if n<3:return False
+              j=n-1
+              for i in range(n):
+                  xi,yi=ring[i][0],ring[i][1]; xj,yj=ring[j][0],ring[j][1]
+                  if (yi>y)!=(yj>y):
+                      den=yj-yi
+                      if den and x < (xj-xi)*(y-yi)/den+xi: inside=not inside
+                  j=i
+              return inside
+          def in_poly(x,y,p):
+              return bool(p) and in_ring(x,y,p[0]) and not any(in_ring(x,y,h) for h in p[1:])
+          def in_geom(x,y,g):
+              c=g.get('coordinates') or []; t=g.get('type')
+              return in_poly(x,y,c) if t=='Polygon' else (any(in_poly(x,y,p) for p in c) if t=='MultiPolygon' else False)
+          def bbox(g):
+              pts=[]
+              def walk(v):
+                  if isinstance(v,(list,tuple)):
+                      if len(v)>=2 and isinstance(v[0],(int,float)) and isinstance(v[1],(int,float)): pts.append((float(v[0]),float(v[1])))
+                      else:
+                          for z in v: walk(z)
+              walk(g.get('coordinates') or [])
+              if not pts:return None
+              xs=[p[0] for p in pts];ys=[p[1] for p in pts];return min(xs),min(ys),max(xs),max(ys)
+
+          matches=[]; per=[]
+          for sf in sfeatures:
+              g=sf.get('geometry') or {}; b=bbox(g); props=sf.get('properties') or {}
+              oid=props.get('objectid',props.get('OBJECTID',sf.get('id'))); local=[]
+              if b:
+                  minx,miny,maxx,maxy=b
+                  for x,y,pid,pp in points:
+                      if minx<=x<=maxx and miny<=y<=maxy and in_geom(x,y,g):
+                          rec={'parcel_id':pid,'point':[x,y],'growth_objectid':oid,'growth_properties':props}
+                          local.append(rec);matches.append(rec)
+              per.append({'growth_objectid':oid,'growth_properties':props,'geometry_type':g.get('type'),'bbox':b,'matched_parcel_count':len(local),'matched_parcels':local[:50]})
+
+          observed=datetime.datetime.now(datetime.timezone.utc).isoformat()
+          report={
+              'schema':'fg3_enfield_medium_growth_housing17_probe_v1','slot_id':'future_growth_3','observed_at_utc':observed,
+              'source_family':'london_datastore_local_plan_arcgis','region':'Enfield','service':'planning_local_plan_data_10','layer_id':17,
+              'layer_name':'Medium Growth Housing','source_url':source_url,'final_url':final_url,'http_status':http_status,'content_type':ctype,
+              'licence':'Open Government Licence v3','licence_basis':'London Datastore Planning Local Plan Data dataset page',
+              'source_sha256':source_sha,'source_bytes':len(raw),'source_feature_count':len(sfeatures),'source_geometry_types':gtypes,
+              'canonical_url':canon_url,'canonical_http_status':canon_http,'canonical_sha256':canon_sha,'canonical_feature_count':len(cfeatures),
+              'canonical_explicit_parcel_point_count':len(points),'coordinate_system_used':out_sr,
+              'binding_method':'explicit security_parcel_id canonical point-within-official growth polygon; bbox prefilter + ray casting; holes excluded',
+              'matched_relation_count':len(matches),'per_growth_area':per,'first_matches':matches[:100],
+              'growth_type_source_language':'Housing (from official layer name Medium Growth Housing)',
+              'growth_status_source_language':'Medium Growth (from official layer name Medium Growth Housing)',
+              'candidate_promotion_status':'PROBE_ONLY_NOT_PUBLISHED',
+              'notes':'No Plan-0 counter, canonical output, inbox, receipt or category status file modified.'
+          }
+          raw_path='state/slots/future_growth_3/probes/enfield_medium_growth_housing17_raw.geojson'
+          rep_path='state/slots/future_growth_3/probes/enfield_medium_growth_housing17_probe.json'
+          r1=put_content(raw_path,raw,'future_growth_3: persist Enfield Medium Growth Housing layer17 raw evidence')
+          rb=(json.dumps(report,ensure_ascii=False,indent=2)+'\n').encode()
+          r2=put_content(rep_path,rb,'future_growth_3: persist Enfield Medium Growth Housing layer17 probe')
+          print(json.dumps({'source_http':http_status,'source_sha256':source_sha,'source_feature_count':len(sfeatures),'geometry_types':gtypes,'canonical_sha256':canon_sha,'canonical_points':len(points),'matches':len(matches),'raw_write':r1,'report_write':r2},indent=2))
+          PY
