@@ -1,0 +1,184 @@
+name: AAYS FG3 Plan0 Camden growth binding probe 20260912
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - '.github/workflows/aays-fg3-plan0-camden-growth-bind-20260912.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+      - name: Install geometry dependencies
+        run: python -m pip install --quiet shapely pyproj
+      - name: Acquire Camden growth polygons and bind canonical centroids
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/fg3_probe
+          python - <<'PY'
+          from pathlib import Path
+          import json, hashlib, urllib.request, datetime, subprocess, re
+          from shapely.geometry import shape, Point, Polygon, MultiPolygon, mapping
+          from shapely.ops import transform
+          from pyproj import Transformer
+
+          out=Path('/tmp/fg3_probe')
+          slot='future_growth_3'
+          canon=Path('england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson')
+          if not canon.exists():
+              raise SystemExit(f'canonical missing: {canon}')
+
+          def sha256_bytes(b): return hashlib.sha256(b).hexdigest()
+          def sha256_file(p):
+              h=hashlib.sha256()
+              with p.open('rb') as f:
+                  for chunk in iter(lambda:f.read(1024*1024), b''): h.update(chunk)
+              return h.hexdigest()
+          def fetch(url, accept='*/*', timeout=180):
+              req=urllib.request.Request(url, headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3/1.0','Accept':accept})
+              with urllib.request.urlopen(req, timeout=timeout) as r:
+                  data=r.read()
+                  return {'status':getattr(r,'status',None),'url':r.geturl(),'content_type':r.headers.get('Content-Type'),'data':data}
+
+          observed=datetime.datetime.now(datetime.timezone.utc).isoformat()
+          canon_sha256=sha256_file(canon)
+          canon_git_sha=subprocess.check_output(['git','hash-object',str(canon)],text=True).strip()
+          c=json.loads(canon.read_text(encoding='utf-8'))
+          cfeatures=c.get('features') or []
+          points=[]
+          geom_types={}
+          for f in cfeatures:
+              g=f.get('geometry') or {}; gt=g.get('type'); geom_types[gt]=geom_types.get(gt,0)+1
+              if gt!='Point': continue
+              co=g.get('coordinates') or []
+              if len(co)<2: continue
+              pid=(f.get('properties') or {}).get('security_parcel_id')
+              if pid in (None,''): continue
+              points.append((str(pid),float(co[0]),float(co[1]),f.get('properties') or {}))
+          canonical_meta={
+              'slot_id':slot,'observed_at_utc':observed,'path':str(canon),'git_blob_sha1':canon_git_sha,
+              'sha256':canon_sha256,'size_bytes':canon.stat().st_size,'feature_count':len(cfeatures),
+              'geometry_types':geom_types,'usable_security_parcel_points':len(points),
+              'selector':'properties.security_parcel_id + Point geometry','denominator':len(cfeatures)
+          }
+          (out/'canonical_meta.json').write_text(json.dumps(canonical_meta,indent=2)+'\n')
+
+          growth_url=('https://services.arcgis.com/drifeOPKLpgnJ8Qa/ArcGIS/rest/services/'
+                      'planning_local_plan_data_07/FeatureServer/13/query?where=1%3D1&outFields=%2A&'
+                      'returnGeometry=true&outSR=4326&f=geojson')
+          gr=fetch(growth_url,'application/geo+json,application/json')
+          raw=gr.pop('data')
+          (out/'camden_growth_area_layer13_raw.geojson').write_bytes(raw)
+          growth_sha=sha256_bytes(raw)
+          gj=json.loads(raw.decode('utf-8'))
+          gfeatures=gj.get('features') or []
+          gtypes={}
+          growth=[]
+          for idx,f in enumerate(gfeatures):
+              geom=f.get('geometry') or {}; gt=geom.get('type'); gtypes[gt]=gtypes.get(gt,0)+1
+              if gt not in ('Polygon','MultiPolygon'): continue
+              sh=shape(geom)
+              attrs=f.get('properties') or {}
+              growth.append((idx,f,sh,attrs))
+          growth_meta={
+              'slot_id':slot,'observed_at_utc':observed,'source_id':'camden_local_plan_growth_area_layer13',
+              'url':growth_url,'final_url':gr['url'],'http_status':gr['status'],'content_type':gr['content_type'],
+              'source_sha256':growth_sha,'bytes':len(raw),'feature_count':len(gfeatures),'geometry_types':gtypes,
+              'selector':'FeatureServer/13 Local Plan Growth Area; where=1=1; outFields=*; returnGeometry=true; outSR=4326',
+              'denominator':len(gfeatures),'publisher':'London Borough of Camden / London Datastore ArcGIS service',
+              'license':'Open Government Licence v3.0 (to be reverified against dataset landing page before acceptance)'
+          }
+          (out/'camden_growth_area_layer13.meta.json').write_text(json.dumps(growth_meta,indent=2)+'\n')
+
+          matches=[]
+          for pid,x,y,props in points:
+              p=Point(x,y)
+              for gi,gf,poly,attrs in growth:
+                  if poly.covers(p):
+                      matches.append({'security_parcel_id':pid,'x':x,'y':y,'canonical_properties':props,
+                                      'growth_feature_index':gi,'growth_properties':attrs,
+                                      'growth_geometry':gf.get('geometry')})
+                      break
+          match_meta={'slot_id':slot,'observed_at_utc':observed,'canonical_point_count':len(points),
+                      'growth_polygon_count':len(growth),'match_count':len(matches),'matches':matches[:50]}
+          (out/'growth_matches.json').write_text(json.dumps(match_meta,ensure_ascii=False,indent=2)+'\n')
+
+          # Probe HMLR INSPIRE WMS parcel polygons for the first matched centroids.
+          # This does not accept anything by itself; it only materializes exact geometry evidence when returned.
+          to_bng=Transformer.from_crs('EPSG:4326','EPSG:27700',always_xy=True)
+          to_wgs=Transformer.from_crs('EPSG:27700','EPSG:4326',always_xy=True)
+          hmlr_base='https://inspire.landregistry.gov.uk/inspire/ows'
+          hmlr=[]
+          previews=[]
+          for m in matches[:10]:
+              E,N=to_bng.transform(m['x'],m['y'])
+              span=40.0; bbox=(E-span,N-span,E+span,N+span); width=800; height=800
+              i=j=400
+              from urllib.parse import urlencode
+              params={'SERVICE':'WMS','VERSION':'1.3.0','REQUEST':'GetFeatureInfo','LAYERS':'inspire:CP.CadastralParcel',
+                      'QUERY_LAYERS':'inspire:CP.CadastralParcel','STYLES':'','CRS':'EPSG:27700','BBOX':','.join(map(str,bbox)),
+                      'WIDTH':str(width),'HEIGHT':str(height),'I':str(i),'J':str(j),'FEATURE_COUNT':'10',
+                      'INFO_FORMAT':'application/vnd.ogc.gml'}
+              u=hmlr_base+'?'+urlencode(params)
+              try:
+                  rr=fetch(u,'application/vnd.ogc.gml,text/xml,*/*')
+                  data=rr.pop('data'); text=data.decode('utf-8','replace')
+                  raw_name=f"hmlr_{m['security_parcel_id']}.gml"
+                  (out/raw_name).write_bytes(data)
+                  poslists=re.findall(r'<(?:\\w+:)?posList[^>]*>([^<]+)</(?:\\w+:)?posList>',text,re.I)
+                  ring_candidates=[]
+                  for s in poslists:
+                      vals=[float(v) for v in s.split()]
+                      if len(vals)>=8 and len(vals)%2==0:
+                          ring=[(vals[k],vals[k+1]) for k in range(0,len(vals),2)]
+                          try:
+                              pg=Polygon(ring)
+                              if pg.is_valid and not pg.is_empty and pg.covers(Point(E,N)):
+                                  ring_candidates.append(pg)
+                          except Exception: pass
+                  selected=min(ring_candidates,key=lambda p:p.area) if ring_candidates else None
+                  geom_wgs=mapping(transform(to_wgs.transform,selected)) if selected is not None else None
+                  rec={'security_parcel_id':m['security_parcel_id'],'url':u,'http_status':rr['status'],
+                       'content_type':rr['content_type'],'source_sha256':sha256_bytes(data),'bytes':len(data),
+                       'poslist_count':len(poslists),'covering_polygon_count':len(ring_candidates),
+                       'parcel_geometry':geom_wgs}
+                  hmlr.append(rec)
+              except Exception as e:
+                  hmlr.append({'security_parcel_id':m['security_parcel_id'],'url':u,'error_type':type(e).__name__,'error':str(e)})
+          (out/'hmlr_parcel_probe.json').write_text(json.dumps({'slot_id':slot,'observed_at_utc':observed,'results':hmlr},ensure_ascii=False,indent=2)+'\n')
+
+          # Candidate preview only when a real HMLR parcel Polygon was returned.
+          bypid={x['security_parcel_id']:x for x in hmlr if x.get('parcel_geometry')}
+          preview=[]
+          for m in matches[:10]:
+              hp=bypid.get(m['security_parcel_id'])
+              if not hp: continue
+              attrs=m['growth_properties']
+              preview.append({'type':'Feature','id':f"fg3_camden_{m['security_parcel_id']}",
+                              'geometry':hp['parcel_geometry'],
+                              'properties':{'slot_id':slot,'fake_data':False,'parcel_id':m['security_parcel_id'],
+                                            'canonical_relation_id':f"security_parcel_id:{m['security_parcel_id']}",
+                                            'growth_area_id':attrs.get('OBJECTID') or attrs.get('ObjectID') or attrs.get('FID') or m['growth_feature_index'],
+                                            'growth_type':'Local Plan Growth Area','growth_status':'official_current_layer',
+                                            'growth_area_geometry':m['growth_geometry'],
+                                            '_growth_properties':attrs,'_hmlr_source_sha256':hp['source_sha256']}})
+          (out/'candidate_preview.geojson').write_text(json.dumps({'type':'FeatureCollection','features':preview},ensure_ascii=False,indent=2)+'\n')
+          summary={'slot_id':slot,'observed_at_utc':observed,'canonical_points':len(points),'growth_polygons':len(growth),
+                   'growth_matches':len(matches),'hmlr_polygon_candidates':len(preview),'candidate_preview_count':len(preview)}
+          (out/'summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+          print(json.dumps(summary,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fg3-camden-growth-bind-20260912
+          path: /tmp/fg3_probe
+          if-no-files-found: error
+          retention-days: 3
