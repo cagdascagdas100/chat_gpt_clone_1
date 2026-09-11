@@ -11,59 +11,37 @@ jobs:
   probe:
     runs-on: ubuntu-24.04
     steps:
-      - name: Resolve public City of London INSPIRE GML with cookie session
+      - name: Download and unpack public City of London INSPIRE parcel ZIP
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p pb4_hmlr_cookie_gml
           python - <<'PY'
-          import requests, hashlib, json, os, re, datetime
-          from urllib.parse import urljoin
+          import requests, hashlib, json, os, datetime, zipfile, io
           OUT='pb4_hmlr_cookie_gml'
           UA='Mozilla/5.0 TerraYield-AAYS-ChatGPT/1.0 planned_buildings_4 public evidence'
           s=requests.Session(); s.headers.update({'User-Agent':UA,'Accept':'*/*'})
           page='https://use-land-property-data.service.gov.uk/datasets/inspire/download'
-          out={'schema':'pb4_hmlr_cookie_gml_probe_v1','generated_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z'),'attempts':[]}
-          def rec(url, r, label):
-              b=r.content
-              rr={'label':label,'requested_url':url,'status':r.status_code,'final_url':r.url,'headers':dict(r.headers),'cookies':s.cookies.get_dict(),'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest(),'content_type':r.headers.get('content-type'),'preview':b[:1000].decode('utf-8','replace')}
-              out['attempts'].append(rr); return b,rr
-          try:
-              r=s.get(page,allow_redirects=True,timeout=120); b,pr=rec(page,r,'index_page')
-          except requests.TooManyRedirects as e:
-              r=s.get(page,allow_redirects=False,timeout=120); b,pr=rec(page,r,'index_page_no_redirect'); out['index_redirect_error']=str(e)
-          open(OUT+'/index.raw.html','wb').write(b)
-          text=b.decode('utf-8','replace')
-          city_links=[]
-          for m in re.finditer(r'City of London Corporation',text,re.I):
-              chunk=text[max(0,m.start()-2500):m.end()+2500]
-              for h in re.findall(r'href=["\']([^"\']+)["\']',chunk,re.I):
-                  u=urljoin(page,h)
-                  if u not in city_links: city_links.append(u)
-          out['city_links']=city_links[:30]
-          urls=[
-            'https://use-land-property-data.service.gov.uk/datasets/inspire/download/City_of_London_Corporation.gml',
-            'https://use-land-property-data.service.gov.uk/datasets/inspire/download/City_of_London_Corporation.zip',
-          ]+city_links[:12]
-          seen=set(); selected=None
-          for u in urls:
-              if u in seen: continue
-              seen.add(u)
-              try:
-                  r=s.get(u,allow_redirects=True,timeout=180); b,rr=rec(u,r,'candidate_download')
-              except requests.TooManyRedirects as e:
-                  try:
-                      r=s.get(u,allow_redirects=False,timeout=120); b,rr=rec(u,r,'candidate_download_no_redirect'); rr['redirect_error']=str(e)
-                  except Exception as e2:
-                      out['attempts'].append({'label':'candidate_download','requested_url':u,'error_type':type(e2).__name__,'error':str(e2),'cookies':s.cookies.get_dict()}); continue
-              except Exception as e:
-                  out['attempts'].append({'label':'candidate_download','requested_url':u,'error_type':type(e).__name__,'error':str(e),'cookies':s.cookies.get_dict()}); continue
-              head=b[:20000].lower(); ct=(r.headers.get('content-type') or '').lower()
-              is_gml=(b'<gml:' in head or b'<wfs:' in head or b'cadastralparcel' in head or 'gml' in ct) and len(b)>1000
-              if r.status_code==200 and is_gml:
-                  fn=OUT+'/City_of_London_Corporation.raw.gml'; open(fn,'wb').write(b)
-                  selected={**rr,'path':'City_of_London_Corporation.raw.gml'}; break
-          out['selected']=selected
+          url='https://use-land-property-data.service.gov.uk/datasets/inspire/download/City_of_London_Corporation.zip'
+          out={'schema':'pb4_hmlr_cookie_gml_probe_v2','generated_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z'),'page_url':page,'download_url':url}
+          rp=s.get(page,allow_redirects=True,timeout=120); pb=rp.content
+          open(OUT+'/index.raw.html','wb').write(pb)
+          out['index']={'status':rp.status_code,'final_url':rp.url,'bytes':len(pb),'sha256':hashlib.sha256(pb).hexdigest(),'cookies':s.cookies.get_dict()}
+          r=s.get(url,allow_redirects=True,timeout=180); b=r.content
+          out['download']={'status':r.status_code,'final_url':r.url,'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest(),'content_type':r.headers.get('content-type'),'cookies':s.cookies.get_dict()}
+          if r.status_code!=200 or not b.startswith(b'PK'):
+              out['error']='EXPECTED_ZIP_NOT_RECEIVED'
+          else:
+              open(OUT+'/City_of_London_Corporation.raw.zip','wb').write(b)
+              z=zipfile.ZipFile(io.BytesIO(b)); out['members']=[]
+              for zi in z.infolist():
+                  if zi.is_dir(): continue
+                  bb=z.read(zi.filename); safe=os.path.basename(zi.filename)
+                  if not safe: continue
+                  path=OUT+'/'+safe; open(path,'wb').write(bb)
+                  out['members'].append({'original_name':zi.filename,'path':safe,'bytes':len(bb),'sha256':hashlib.sha256(bb).hexdigest()})
+              gml=[x for x in out['members'] if x['path'].lower().endswith(('.gml','.xml'))]
+              out['gml_members']=gml
           open(OUT+'/summary.json','w',encoding='utf-8').write(json.dumps(out,indent=2,ensure_ascii=False))
           inv=[]
           for fn in sorted(os.listdir(OUT)):
@@ -71,7 +49,7 @@ jobs:
               if os.path.isfile(p):
                   bb=open(p,'rb').read(); inv.append({'path':p,'bytes':len(bb),'sha256':hashlib.sha256(bb).hexdigest()})
           open(OUT+'/inventory.json','w').write(json.dumps(inv,indent=2))
-          print(json.dumps({'selected':selected,'cookies':s.cookies.get_dict(),'city_links':city_links[:12],'attempt_count':len(out['attempts'])},indent=2)[:20000])
+          print(json.dumps(out,indent=2,ensure_ascii=False)[:30000])
           PY
       - uses: actions/upload-artifact@v4
         with:
