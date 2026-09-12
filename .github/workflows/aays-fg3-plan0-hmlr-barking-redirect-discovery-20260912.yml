@@ -1,0 +1,57 @@
+name: AAYS FG3 HMLR Barking redirect discovery 20260912
+on:
+  push:
+    paths:
+      - '.github/workflows/aays-fg3-plan0-hmlr-barking-redirect-discovery-20260912.yml'
+permissions:
+  contents: read
+jobs:
+  discover:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Inspect redirect chain without following loops
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/hmlr_redirect
+          python - <<'PY'
+          import urllib.request, urllib.error, json
+          from urllib.parse import urljoin
+          urls=[
+            'https://use-land-property-data.service.gov.uk/datasets/inspire/download',
+            'https://use-land-property-data.service.gov.uk/datasets/inspire/download/London_Borough_of_Barking_and_Dagenham.zip',
+            'https://use-land-property-data.service.gov.uk/datasets/inspire/download/London_Borough_of_Camden.zip',
+          ]
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl): return None
+          opener=urllib.request.build_opener(NoRedirect)
+          out=[]
+          for start in urls:
+              chain=[]; cur=start
+              for i in range(8):
+                  req=urllib.request.Request(cur,headers={'User-Agent':'Mozilla/5.0 TerraYield-AAYS-HMLR-Redirect-Probe/1.0','Accept':'*/*'})
+                  try:
+                      r=opener.open(req,timeout=60); body=r.read(4096)
+                      chain.append({'url':cur,'status':getattr(r,'status',None),'location':r.headers.get('Location'),'content_type':r.headers.get('Content-Type'),'body_prefix':body.decode('utf-8','replace')[:1000]})
+                      break
+                  except urllib.error.HTTPError as e:
+                      loc=e.headers.get('Location'); body=e.read(4096)
+                      chain.append({'url':cur,'status':e.code,'location':loc,'content_type':e.headers.get('Content-Type'),'body_prefix':body.decode('utf-8','replace')[:1000]})
+                      if e.code in (301,302,303,307,308) and loc:
+                          nxt=urljoin(cur,loc)
+                          if any(x['url']==nxt for x in chain):
+                              chain.append({'cycle_to':nxt}); break
+                          cur=nxt; continue
+                      break
+                  except Exception as e:
+                      chain.append({'url':cur,'error':repr(e)}); break
+              out.append({'start':start,'chain':chain})
+          print(json.dumps(out,indent=2))
+          open('/tmp/hmlr_redirect/redirect_chains.json','w').write(json.dumps(out,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fg3-hmlr-barking-redirect-discovery-20260912
+          path: /tmp/hmlr_redirect
+          if-no-files-found: error
+          retention-days: 3
