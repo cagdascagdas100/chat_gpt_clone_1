@@ -1,0 +1,166 @@
+name: AAYS FG3 Barking opportunity HMLR directzip fix 20260912
+on:
+  push:
+    paths:
+      - '.github/workflows/aays-fg3-plan0-barking-opportunity-hmlr-directzip-fix-20260912.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+      - name: Install geometry dependencies
+        run: python -m pip install --quiet shapely lxml pyproj
+      - name: Probe Barking opportunity area with direct HMLR ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/fg3_barking_fix/evidence/hmlr_slices
+          python - <<'PY'
+          from pathlib import Path
+          import json, hashlib, urllib.request, datetime, subprocess, zipfile, io
+          from lxml import etree
+          from shapely.geometry import shape, Point, Polygon, mapping
+          from shapely.ops import transform, unary_union
+          from shapely.validation import make_valid
+          from pyproj import Transformer
+          out=Path('/tmp/fg3_barking_fix')
+          observed=datetime.datetime.now(datetime.timezone.utc).isoformat()
+          ua='TerraYield-AAYS-Plan0-future_growth_3-barking-directzip/1.0'
+          def get(url, accept='*/*'):
+              req=urllib.request.Request(url,headers={'User-Agent':ua,'Accept':accept})
+              with urllib.request.urlopen(req,timeout=240) as r:
+                  raw=r.read(); return raw,getattr(r,'status',None),r.geturl(),r.headers.get('Content-Type')
+          def sha(b): return hashlib.sha256(b).hexdigest()
+          def sha_file(p):
+              h=hashlib.sha256()
+              with open(p,'rb') as f:
+                  for c in iter(lambda:f.read(1024*1024),b''): h.update(c)
+              return h.hexdigest()
+
+          canon=Path('england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson')
+          c_raw=canon.read_bytes(); c=json.loads(c_raw)
+          c_git=subprocess.check_output(['git','hash-object',str(canon)],text=True).strip()
+          points=[]
+          for f in c.get('features') or []:
+              g=f.get('geometry') or {}; p=f.get('properties') or {}; co=g.get('coordinates') or []
+              if g.get('type')=='Point' and len(co)>=2 and p.get('security_parcel_id') not in (None,''):
+                  points.append((str(p['security_parcel_id']),float(co[0]),float(co[1]),p))
+
+          growth_url=('https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/'
+                      'planning_local_plan_data_02/FeatureServer/23/query?where=1%3D1&outFields=%2A&'
+                      'returnGeometry=true&outSR=4326&f=geojson')
+          g_raw,g_status,g_final,g_ctype=get(growth_url,'application/geo+json,application/json')
+          (out/'barking_london_riverside_opportunity_area_raw.geojson').write_bytes(g_raw)
+          gj=json.loads(g_raw.decode('utf-8'))
+          growth=[]
+          for gi,f in enumerate(gj.get('features') or []):
+              geom=f.get('geometry') or {}
+              if geom.get('type') in ('Polygon','MultiPolygon'): growth.append((gi,f,shape(geom)))
+          strict=[]
+          for pid,x,y,props in points:
+              pt=Point(x,y)
+              for gi,gf,poly in growth:
+                  if poly.covers(pt):
+                      strict.append({'security_parcel_id':pid,'x':x,'y':y,'canonical_properties':props,
+                                     'growth_feature_index':gi,'growth_properties':gf.get('properties') or {},
+                                     'growth_geometry':gf.get('geometry')}); break
+
+          hmlr_url='https://use-land-property-data.service.gov.uk/datasets/inspire/download/London_Borough_of_Barking_and_Dagenham.zip'
+          z_raw,z_status,z_final,z_ctype=get(hmlr_url,'application/zip,application/octet-stream')
+          (out/'barking_hmlr_inspire.zip').write_bytes(z_raw)
+          z=zipfile.ZipFile(io.BytesIO(z_raw)); names=z.namelist()
+          gml_name=next(n for n in names if n.lower().endswith('.gml'))
+          gml_path=Path('/tmp/fg3_barking_fix_work.gml'); gml_path.write_bytes(z.read(gml_name))
+          gml_sha=sha_file(gml_path)
+
+          records=[]; ring_features=0; total_interiors=0
+          for _,member in etree.iterparse(str(gml_path),events=('end',),tag='{http://www.opengis.net/wfs/2.0}member',huge_tree=True):
+              ids=member.xpath('.//*[local-name()="NATIONALCADASTRALREFERENCE"]')
+              if not ids or not (ids[0].text or '').strip(): member.clear(); continue
+              hid=(ids[0].text or '').strip(); polys=[]; interior_count=0
+              for pn in member.xpath('.//*[local-name()="Polygon"]'):
+                  ext=pn.xpath('./*[local-name()="exterior"]//*[local-name()="posList"]')
+                  if not ext: continue
+                  vals=[float(v) for v in (ext[0].text or '').split()]
+                  if len(vals)<8 or len(vals)%2: continue
+                  shell=[(vals[i],vals[i+1]) for i in range(0,len(vals),2)]; holes=[]
+                  for inn in pn.xpath('./*[local-name()="interior"]//*[local-name()="posList"]'):
+                      iv=[float(v) for v in (inn.text or '').split()]
+                      if len(iv)>=8 and len(iv)%2==0:
+                          holes.append([(iv[i],iv[i+1]) for i in range(0,len(iv),2)]); interior_count+=1
+                  try: poly=Polygon(shell,holes)
+                  except Exception: continue
+                  if not poly.is_valid: poly=make_valid(poly)
+                  if not poly.is_empty: polys.append(poly)
+              if not polys: member.clear(); continue
+              geom=unary_union(polys)
+              if not geom.is_valid: geom=make_valid(geom)
+              if geom.is_empty or geom.geom_type not in ('Polygon','MultiPolygon'): member.clear(); continue
+              if interior_count: ring_features+=1; total_interiors+=interior_count
+              fields={}
+              for tag in ['INSPIREID','LABEL','NATIONALCADASTRALREFERENCE','VALIDFROM','BEGINLIFESPANVERSION']:
+                  ns=member.xpath('.//*[local-name()=$n]',n=tag)
+                  vv=[' '.join((x.text or '').split()) for x in ns if (x.text or '').strip()]
+                  if vv: fields[tag]=vv
+              xml=etree.tostring(member,encoding='utf-8',xml_declaration=True,pretty_print=True)
+              records.append({'hmlr_id':hid,'geom':geom,'fields':fields,'xml':xml})
+              member.clear()
+
+          to_bng=Transformer.from_crs('EPSG:4326','EPSG:27700',always_xy=True)
+          to_wgs=Transformer.from_crs('EPSG:27700','EPSG:4326',always_xy=True)
+          candidates=[]; skips=[]; used=set()
+          for mi,m in enumerate(strict):
+              pt_bng=Point(*to_bng.transform(m['x'],m['y']))
+              hits=[r for r in records if r['geom'].covers(pt_bng)]; hits.sort(key=lambda r:r['geom'].area)
+              if not hits:
+                  skips.append({'strict_match_index':mi,'parcel_id':m['security_parcel_id'],'reason':'NO_HMLR_COVER'}); continue
+              h=hits[0]
+              if h['hmlr_id'] in used:
+                  skips.append({'strict_match_index':mi,'parcel_id':m['security_parcel_id'],'hmlr_id':h['hmlr_id'],'reason':'DUP_HMLR_ID_IN_NEW_WINDOW'}); continue
+              gbng=transform(to_bng.transform,shape(m['growth_geometry']))
+              inter=h['geom'].intersection(gbng); ratio=inter.area/h['geom'].area if h['geom'].area else 0.0
+              if not gbng.covers(h['geom']):
+                  skips.append({'strict_match_index':mi,'parcel_id':m['security_parcel_id'],'hmlr_id':h['hmlr_id'],
+                                'reason':'HMLR_PARCEL_NOT_FULLY_COVERED_BY_GROWTH_POLYGON','overlap_ratio':ratio}); continue
+              used.add(h['hmlr_id'])
+              xml_name=f'evidence/hmlr_slices/{m["security_parcel_id"]}_{h["hmlr_id"]}.xml'; (out/xml_name).write_bytes(h['xml'])
+              candidates.append({'strict_match_index':mi,'parcel_id':m['security_parcel_id'],'x':m['x'],'y':m['y'],
+                                 'canonical_properties':m['canonical_properties'],'growth_feature_index':m['growth_feature_index'],
+                                 'growth_properties':m['growth_properties'],'growth_geometry':m['growth_geometry'],
+                                 'hmlr_inspire_id':h['hmlr_id'],'hmlr_fields':h['fields'],
+                                 'hmlr_geometry_wgs84':mapping(transform(to_wgs.transform,h['geom'])),
+                                 'hmlr_source_slice_path':xml_name,'hmlr_source_slice_sha256':sha(h['xml']),
+                                 'parcel_overlap_ratio':ratio,'covering_polygon_count':len(hits)})
+              if len(candidates)>=10: break
+
+          result={'slot_id':'future_growth_3','observed_at_utc':observed,
+                  'canonical':{'path':str(canon),'feature_count':len(c.get('features') or []),'usable_points':len(points),
+                               'sha256':sha(c_raw),'git_blob_sha1':c_git},
+                  'growth':{'url':growth_url,'final_url':g_final,'http_status':g_status,'content_type':g_ctype,
+                            'source_sha256':sha(g_raw),'feature_count':len(gj.get('features') or []),
+                            'polygon_feature_count':len(growth),'strict_canonical_match_count':len(strict),
+                            'layer_name':'London Riverside Opportunity Area','service_index':2,'layer_id':23,
+                            'license':'Open Government Licence v3'},
+                  'hmlr':{'download_url':z_final,'download_http_status':z_status,'download_sha256':sha(z_raw),
+                          'gml_member_feature_count':len(records),'gml_sha256':gml_sha,
+                          'features_with_interior_rings':ring_features,'interior_ring_count':total_interiors,
+                          'license':'Open Government Licence v3.0','dataset_index_url':'https://use-land-property-data.service.gov.uk/datasets/inspire/download'},
+                  'candidate_count':len(candidates),'skip_count_before_10':len(skips),'candidates':candidates,'skips':skips}
+          (out/'probe_result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
+          gml_path.unlink(missing_ok=True)
+          print(json.dumps({'strict_matches':len(strict),'candidate_count':len(candidates),'growth_features':len(growth),
+                            'hmlr_features':len(records),'growth_sha256':sha(g_raw),'hmlr_zip_sha256':sha(z_raw),
+                            'hmlr_url':z_final,'selected':[(c['parcel_id'],c['hmlr_inspire_id']) for c in candidates]},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fg3-barking-opportunity-hmlr-directzip-fix-20260912
+          path: /tmp/fg3_barking_fix
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 6
