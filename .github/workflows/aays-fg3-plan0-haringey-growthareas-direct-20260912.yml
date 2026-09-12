@@ -1,4 +1,4 @@
-name: AAYS FG3 Lambeth status evidence 20260912
+name: AAYS FG3 Lambeth status evidence pypdf 20260912
 on:
   push:
     paths:
@@ -13,14 +13,17 @@ jobs:
         with:
           ref: codex/aays-single-runner-v5-20260706
           fetch-depth: 1
-      - name: Materialize Lambeth Local Plan status evidence
+      - name: Install PDF parser
+        run: python -m pip install --quiet pypdf
+      - name: Materialize Lambeth Local Plan status evidence with pypdf
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p /tmp/fg3_lambeth_status
           python - <<'PY'
           from pathlib import Path
-          import urllib.request, hashlib, datetime, json, re, subprocess
+          import urllib.request, hashlib, datetime, json, re
+          from pypdf import PdfReader
           out=Path('/tmp/fg3_lambeth_status')
           observed=datetime.datetime.now(datetime.timezone.utc).isoformat()
           sources={
@@ -29,7 +32,7 @@ jobs:
           }
           meta={}
           for key,url in sources.items():
-              req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-lambeth-status/1.0','Accept':'*/*'})
+              req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-lambeth-status-pypdf/1.0','Accept':'*/*'})
               with urllib.request.urlopen(req,timeout=180) as r:
                   raw=r.read(); status=getattr(r,'status',None); final=r.geturl(); ctype=r.headers.get('Content-Type')
               assert len(raw)>0
@@ -39,23 +42,17 @@ jobs:
           html=(out/'local_plan_page.html').read_text(encoding='utf-8',errors='ignore')
           norm=' '.join(re.sub('<[^>]+>',' ',html).split())
           assert re.search(r'adopted\s+on\s+22\s+September\s+2021',norm,re.I)
-          pdf=out/'adoption_statement.pdf'
-          txt=out/'adoption_statement.txt'
-          subprocess.run(['pdftotext',str(pdf),str(txt)],check=True)
-          pdf_text=' '.join(txt.read_text(encoding='utf-8',errors='ignore').split())
-          assert re.search(r'adopted\s+the\s+Lambeth\s+Local\s+Plan\s+on\s+22\s+September\s+2021',pdf_text,re.I)
-          page_count=None
-          try:
-              info=subprocess.check_output(['pdfinfo',str(pdf)],text=True,errors='ignore')
-              m=re.search(r'^Pages:\s+(\d+)',info,re.M)
-              if m: page_count=int(m.group(1))
-          except Exception: pass
+          reader=PdfReader(str(out/'adoption_statement.pdf'))
+          pdf_text=' '.join((page.extract_text() or '') for page in reader.pages)
+          pdf_norm=' '.join(pdf_text.split())
+          assert re.search(r'adopted\s+the\s+Lambeth\s+Local\s+Plan\s+on\s+22\s+September\s+2021',pdf_norm,re.I)
           result={
-            'schema':'fg3_lambeth_status_evidence_v1','slot_id':'future_growth_3','observed_at_utc':observed,
+            'schema':'fg3_lambeth_status_evidence_v2','slot_id':'future_growth_3','observed_at_utc':observed,
             'sources':meta,'growth_status':'Adopted','growth_status_date':'2021-09-22',
             'growth_type':'Opportunity Areas','raw_arcgis_status':None,
             'selector':'official Lambeth Local Plan page and Adoption Statement state Lambeth Local Plan 2021 was adopted on 22 September 2021; ArcGIS designation is Opportunity Areas',
-            'denominator':2,'adoption_statement_page_count':page_count,
+            'denominator':2,'adoption_statement_page_count':len(reader.pages),
+            'parser_method':'pypdf PdfReader extract_text after pdftotext executable was unavailable',
             'license':'Public statutory planning material; no reuse licence asserted for council page/PDF'
           }
           (out/'lambeth_status_evidence.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
@@ -63,7 +60,7 @@ jobs:
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: fg3-lambeth-status-evidence-20260912
+          name: fg3-lambeth-status-evidence-pypdf-20260912
           path: /tmp/fg3_lambeth_status
           if-no-files-found: error
           retention-days: 3
