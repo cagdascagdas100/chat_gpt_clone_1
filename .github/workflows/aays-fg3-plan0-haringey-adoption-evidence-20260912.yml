@@ -1,0 +1,42 @@
+name: AAYS FG3 Haringey adoption evidence 20260912
+on:
+  push:
+    paths:
+      - '.github/workflows/aays-fg3-plan0-haringey-adoption-evidence-20260912.yml'
+permissions:
+  contents: read
+jobs:
+  acquire:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fetch official Haringey adoption evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/fg3_haringey_status
+          python - <<'PY'
+          import urllib.request, hashlib, json, datetime
+          from pathlib import Path
+          out=Path('/tmp/fg3_haringey_status')
+          ua='TerraYield-AAYS-Plan0-future_growth_3-haringey-status/1.0'
+          urls={
+            'local_plan':'https://www.haringey.gov.uk/sites/default/files/2024-01/final_haringey_local_plan_2017_online.pdf',
+            'adoption_statement':'https://www.haringey.gov.uk/sites/default/files/local_plan_adoption_statement_2.pdf',
+          }
+          meta={'observed_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'sources':{}}
+          for k,u in urls.items():
+              req=urllib.request.Request(u,headers={'User-Agent':ua,'Accept':'*/*'})
+              with urllib.request.urlopen(req,timeout=120) as r:
+                  b=r.read(); status=getattr(r,'status',None); final=r.geturl(); ct=r.headers.get('Content-Type')
+              p=out/(k+'.pdf'); p.write_bytes(b)
+              meta['sources'][k]={'url':u,'final_url':final,'http_status':status,'content_type':ct,
+                                  'sha256':hashlib.sha256(b).hexdigest(),'bytes':len(b)}
+          (out/'haringey_adoption_evidence_meta.json').write_text(json.dumps(meta,indent=2)+'\n')
+          print(json.dumps(meta,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fg3-haringey-adoption-evidence-20260912
+          path: /tmp/fg3_haringey_status
+          if-no-files-found: error
+          retention-days: 3
