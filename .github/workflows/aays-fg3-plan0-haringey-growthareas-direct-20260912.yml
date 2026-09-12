@@ -1,4 +1,4 @@
-name: AAYS FG3 Hammersmith Fulham status evidence 20260912
+name: AAYS FG3 Hammersmith Fulham guarded status evidence 20260912
 on:
   push:
     paths:
@@ -15,46 +15,59 @@ jobs:
           fetch-depth: 1
       - name: Install PDF dependency
         run: python -m pip install --quiet pypdf
-      - name: Materialize Hammersmith Fulham status evidence
+      - name: Materialize guarded Hammersmith Fulham adoption evidence
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p /tmp/fg3_hf_status
+          url='https://www.lbhf.gov.uk/sites/default/files/section_attachments/adoption_statement_local_plan_1.pdf'
+          curl -L --fail --retry 3 --retry-delay 2 -A 'TerraYield-AAYS-Plan0-future_growth_3-hf-status/2.0' "$url" -o /tmp/fg3_hf_status/adoption_statement_local_plan_2018.pdf
+          test -s /tmp/fg3_hf_status/adoption_statement_local_plan_2018.pdf
           python - <<'PY'
           from pathlib import Path
-          import urllib.request, hashlib, datetime, json, re
+          import hashlib, datetime, json, re, subprocess
           from pypdf import PdfReader
           out=Path('/tmp/fg3_hf_status')
+          p=out/'adoption_statement_local_plan_2018.pdf'
           observed=datetime.datetime.now(datetime.timezone.utc).isoformat()
-          urls={
-            'lds_pdf':'https://www.lbhf.gov.uk/sites/default/files/section_attachments/lds_revised_may_2016.pdf',
-            'local_plan_2018_pdf':'https://www.lbhf.gov.uk/sites/default/files/section_attachments/local_plan_2018_web_version.pdf'
-          }
-          meta={}; texts={}; pages={}
-          for key,url in urls.items():
-              req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-hf-status/1.0','Accept':'application/pdf,*/*'})
-              with urllib.request.urlopen(req,timeout=180) as r:
-                  raw=r.read(); status=getattr(r,'status',None); final=r.geturl(); ctype=r.headers.get('Content-Type')
-              p=out/(key+'.pdf'); p.write_bytes(raw)
-              reader=PdfReader(str(p)); txt='\n'.join((pg.extract_text() or '') for pg in reader.pages)
-              (out/(key+'_extracted.txt')).write_text(txt,encoding='utf-8')
-              meta[key]={'url':url,'final_url':final,'http_status':status,'content_type':ctype,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),'path':p.name}
-              texts[key]=txt; pages[key]=len(reader.pages)
+          raw=p.read_bytes()
+          reader=PdfReader(str(p))
+          text='\n'.join((pg.extract_text() or '') for pg in reader.pages)
+          (out/'adoption_statement_extracted.txt').write_text(text,encoding='utf-8')
+          norm=' '.join(text.split())
+          patterns=['adopted the Hammersmith and Fulham Local Plan on 28th February 2018','replaces the Core Strategy (2011)','Core Strategy (2011)']
           snippets=[]
-          for key,pat in [
-              ('lds_pdf','Core Strategy 2011'),('lds_pdf','Adoption October 2011'),
-              ('local_plan_2018_pdf','replace the existing Core Strategy'),('local_plan_2018_pdf','Hammersmith & Fulham Local Plan 2018')
-          ]:
-              norm=' '.join(texts[key].split())
-              m=re.search(r'.{0,220}'+re.escape(pat)+r'.{0,300}',norm,re.I)
-              if m: snippets.append({'source':key,'pattern':pat,'snippet':m.group(0)})
-          result={'schema':'fg3_hf_status_evidence_v1','slot_id':'future_growth_3','observed_at_utc':observed,'sources':meta,'page_counts':pages,'matched_snippets':snippets,'growth_status':'Adopted source plan; superseded by H&F Local Plan 2018','source_plan_adoption':'October 2011','selector':'official H&F LDS confirms Core Strategy 2011 adoption; Local Plan 2018 confirms replacement/supersession','denominator':sum(pages.values())}
+          for pat in patterns:
+              m=re.search(r'.{0,220}'+re.escape(pat)+r'.{0,320}',norm,re.I)
+              if m: snippets.append({'pattern':pat,'snippet':m.group(0)})
+          result={
+            'schema':'fg3_hf_status_evidence_v2',
+            'slot_id':'future_growth_3',
+            'observed_at_utc':observed,
+            'source':{
+              'url':'https://www.lbhf.gov.uk/sites/default/files/section_attachments/adoption_statement_local_plan_1.pdf',
+              'http_status':200,
+              'bytes':len(raw),
+              'sha256':hashlib.sha256(raw).hexdigest(),
+              'page_count':len(reader.pages),
+              'license':'Public statutory planning document; no reuse licence asserted'
+            },
+            'matched_snippets':snippets,
+            'growth_status':'Official layer; source Core Strategy 2011 superseded by H&F Local Plan 2018',
+            'current_local_plan_adopted_date':'2018-02-28',
+            'source_plan_indicator':'ArcGIS feature source URL contains core_strategy_adopted_oct_2011',
+            'selector':'official H&F Local Plan 2018 adoption statement confirms adoption and replacement of Core Strategy 2011; ArcGIS feature source URL identifies adopted Oct 2011 source document',
+            'denominator':len(reader.pages)
+          }
+          assert len(raw)>0 and len(reader.pages)>0
+          assert any('28th February 2018' in x['snippet'] for x in snippets)
+          assert any('replaces the Core Strategy (2011)' in x['snippet'] for x in snippets)
           (out/'hf_status_evidence.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
           print(json.dumps(result,ensure_ascii=False,indent=2))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: fg3-hf-status-evidence-20260912
+          name: fg3-hf-status-evidence-guarded-20260912
           path: /tmp/fg3_hf_status
           if-no-files-found: error
           retention-days: 3
