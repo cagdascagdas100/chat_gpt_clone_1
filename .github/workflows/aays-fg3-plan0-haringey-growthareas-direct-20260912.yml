@@ -1,4 +1,4 @@
-name: AAYS FG3 Waltham Forest INB6 bbox evidence 20260912
+name: AAYS FG3 service29 layer3 grouped intensification 20260912
 on:
   push:
     paths:
@@ -13,97 +13,88 @@ jobs:
         with:
           ref: codex/aays-single-runner-v5-20260706
           fetch-depth: 1
-      - name: Install bbox PDF parser
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
-      - name: Materialize Waltham Forest INB6 lifecycle by PDF coordinates
+      - name: Install geometry dependency
+        run: python -m pip install --quiet shapely
+      - name: Materialize service29 layer3 and grouped strict canonical relations
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/fg3_waf_status
+          mkdir -p /tmp/fg3_s29l3
           python - <<'PY'
           from pathlib import Path
-          import urllib.request, hashlib, datetime, json, re, subprocess, xml.etree.ElementTree as ET
-          out=Path('/tmp/fg3_waf_status')
+          import json, hashlib, urllib.request, datetime, subprocess
+          from shapely.geometry import shape, Point, mapping
+          from shapely.ops import unary_union
+          from shapely.validation import make_valid
+          out=Path('/tmp/fg3_s29l3')
           observed=datetime.datetime.now(datetime.timezone.utc).isoformat()
-          sources={
-            'current_local_plan_page':'https://www.walthamforest.gov.uk/planning-and-building-control/planning-policy/local-plan-part-1-shaping-borough-2020-2035/local-plan-part-1',
-            'dm_adoption_version':'https://www.walthamforest.gov.uk/sites/default/files/2021-12/DMPolicies%20Adoption%20Version%20October%202013.pdf'
-          }
-          meta={}
-          for key,url in sources.items():
-              req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-waf-status-bbox/1.0','Accept':'*/*'})
-              with urllib.request.urlopen(req,timeout=240) as r:
-                  raw=r.read(); status=getattr(r,'status',None); final=r.geturl(); ctype=r.headers.get('Content-Type')
-              assert raw
-              ext='.pdf' if key=='dm_adoption_version' or 'pdf' in (ctype or '').lower() else '.html'
-              p=out/(key+ext); p.write_bytes(raw)
-              meta[key]={'url':url,'final_url':final,'http_status':status,'content_type':ctype,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),'path':p.name}
-          html=(out/'current_local_plan_page.html').read_text(encoding='utf-8',errors='ignore')
-          hnorm=' '.join(re.sub('<[^>]+>',' ',html).split())
-          assert re.search(r'adopted\s+on\s+29\s+February\s+2024',hnorm,re.I), 'current plan adoption text not found'
-          bbox=out/'dm_adoption_version_bbox.html'
-          subprocess.run(['pdftotext','-bbox-layout',str(out/'dm_adoption_version.pdf'),str(bbox)],check=True)
-          root=ET.parse(bbox).getroot()
-          pages=[]
-          for pno,page in enumerate(root.iter(),start=0):
-              if page.tag.split('}')[-1] != 'page': continue
-              words=[]
-              for w in page.iter():
-                  if w.tag.split('}')[-1] != 'word': continue
-                  text=''.join(w.itertext()).strip()
-                  if not text: continue
-                  try:
-                      x0=float(w.attrib.get('xMin')); x1=float(w.attrib.get('xMax')); y0=float(w.attrib.get('yMin')); y1=float(w.attrib.get('yMax'))
-                  except Exception:
-                      continue
-                  words.append({'text':text,'xMin':x0,'xMax':x1,'yMin':y0,'yMax':y1,'xMid':(x0+x1)/2,'yMid':(y0+y1)/2})
-              pages.append(words)
-          inb6_hits=[]
-          for page_index,words in enumerate(pages):
-              for w in words:
-                  if re.fullmatch(r'INB6',w['text'],re.I):
-                      inb6_hits.append((page_index,w,words))
-          assert inb6_hits, 'INB6 bbox word not found'
-          recon=[]
-          success=None
-          for page_index,hit,words in inb6_hits:
-              # capture a broad same-row/multiline table band around the INB6 cell
-              band=[w for w in words if abs(w['yMid']-hit['yMid']) <= 55]
-              band=sorted(band,key=lambda w:(round(w['yMid'],1),w['xMin']))
-              band_text=' '.join(w['text'] for w in band)
-              # capture nearest regeneration-corridor words on same page independently of text-stream order
-              corridor=[w for w in words if re.search(r'^(Lee|Lea|Valley|Regeneration|Corridor|Mixed|Use|Areas?)$',w['text'],re.I)]
-              near_corridor=sorted(corridor,key=lambda w:(abs(w['yMid']-hit['yMid']),w['xMin']))[:40]
-              near_text=' '.join(w['text'] for w in sorted(near_corridor,key=lambda w:(round(w['yMid'],1),w['xMin'])))
-              item={'page_1based':page_index+1,'inb6_bbox':hit,'band_y_plus_minus_points':55,'band_text':band_text,'near_corridor_words':near_corridor,'near_corridor_text':near_text}
-              recon.append(item)
-              combined=band_text+' '+near_text
-              has_label=bool(re.search(r'(Lee|Lea).*Valley.*Regeneration.*Corridor',combined,re.I))
-              has_cs1=bool(re.search(r'\bCS1\b',band_text,re.I)); has_cs8=bool(re.search(r'\bCS8\b',band_text,re.I)); has_dm1=bool(re.search(r'\bDM1\b',band_text,re.I))
-              item.update({'has_label':has_label,'has_CS1':has_cs1,'has_CS8':has_cs8,'has_DM1':has_dm1})
-              if has_label and has_cs1 and has_cs8 and has_dm1 and success is None:
-                  success=item
-          assert success is not None, 'bbox reconstruction did not co-locate INB6 with label and replacement policy cells'
-          # independently verify table supersession headers anywhere in coordinate-extracted document
-          doc_text=' '.join(w['text'] for words in pages for w in words)
-          assert re.search(r'superseded',doc_text,re.I), 'superseded header/term not found in bbox document'
-          result={
-            'schema':'fg3_waf_inb6_status_evidence_v5','slot_id':'future_growth_3','observed_at_utc':observed,
-            'sources':meta,'growth_status':'Superseded','growth_status_date':None,
-            'growth_type':'Lee Valley Regeneration Corridor','raw_arcgis_status':None,'source_policy':'INB6',
-            'current_local_plan_adoption_date':'2024-02-29',
-            'selector':'ArcGIS extrainfo1=Policy INB6; official adopted Development Management Policies PDF bbox reconstruction co-locates INB6 with Lee/Lea Valley Regeneration Corridor and superseding CS1/CS8 plus DM1; current Local Plan Part 1 page states adoption on 29 February 2024',
-            'denominator':2,'bbox_success':success,'bbox_all_hits':recon,
-            'parser_method':'poppler pdftotext -bbox-layout + XML word-coordinate row-band reconstruction ±55 PDF points',
-            'previous_parser_failures':['pypdf exact row co-location failed on Core Strategy','pdfplumber text extraction did not recover INB6 token from Core Strategy','poppler forward-only normalized regex found INB6 but missed label ordering','poppler line-neighborhood found INB6 but table columns were not line-adjacent'],
-            'license':'Public statutory planning material; no reuse licence asserted for council page/PDF'
-          }
-          (out/'waf_inb6_status_evidence.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-          print(json.dumps({'growth_status':result['growth_status'],'growth_type':result['growth_type'],'current_local_plan_adoption_date':result['current_local_plan_adoption_date'],'bbox_success':success,'sources':meta,'parser_method':result['parser_method']},ensure_ascii=False,indent=2))
+          canon=Path('england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson')
+          c_raw=canon.read_bytes(); c=json.loads(c_raw)
+          c_git=subprocess.check_output(['git','hash-object',str(canon)],text=True).strip()
+          points=[]
+          for f in c.get('features') or []:
+              g=f.get('geometry') or {}; p=f.get('properties') or {}; co=g.get('coordinates') or []
+              if g.get('type')=='Point' and len(co)>=2 and p.get('security_parcel_id') not in (None,''):
+                  points.append((str(p['security_parcel_id']),float(co[0]),float(co[1]),p))
+          base='https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_29/FeatureServer/3'
+          meta_url=base+'?f=pjson'
+          req=urllib.request.Request(meta_url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-s29l3/1.0','Accept':'application/json'})
+          with urllib.request.urlopen(req,timeout=120) as r:
+              meta_raw=r.read(); meta_status=getattr(r,'status',None); meta_final=r.geturl()
+          (out/'service29_layer3_meta.json').write_bytes(meta_raw)
+          layer_meta=json.loads(meta_raw.decode('utf-8'))
+          url=base+'/query?where=1%3D1&outFields=%2A&returnGeometry=true&outSR=4326&f=geojson'
+          req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-s29l3/1.0','Accept':'application/geo+json,application/json'})
+          with urllib.request.urlopen(req,timeout=180) as r:
+              raw=r.read(); status=getattr(r,'status',None); final=r.geturl(); ctype=r.headers.get('Content-Type')
+          (out/'service29_layer3_raw.geojson').write_bytes(raw)
+          gj=json.loads(raw.decode('utf-8'))
+          geom_types={}; grouped={}; invalid=[]
+          for gi,f in enumerate(gj.get('features') or []):
+              geom=f.get('geometry') or {}; gt=geom.get('type'); geom_types[gt]=geom_types.get(gt,0)+1
+              props=f.get('properties') or {}
+              if gt not in ('Polygon','MultiPolygon'):
+                  continue
+              try: poly=make_valid(shape(geom))
+              except Exception as e:
+                  invalid.append({'index':gi,'reason':str(e)}); continue
+              if poly.is_empty or poly.geom_type not in ('Polygon','MultiPolygon'):
+                  invalid.append({'index':gi,'reason':'empty_or_non_polygon_after_make_valid'}); continue
+              gid=props.get('layerreference') or props.get('sitereference') or f'objectid:{props.get("objectid",gi)}'
+              grouped.setdefault(str(gid),[]).append({'index':gi,'properties':props,'geometry':geom,'shape':poly})
+          groups=[]; selected=[]; unmatched=[]
+          for gid,parts in sorted(grouped.items(), key=lambda kv:min(p['index'] for p in kv[1])):
+              union=make_valid(unary_union([p['shape'] for p in parts]))
+              matches=[]
+              minx,miny,maxx,maxy=union.bounds
+              for pid,x,y,props in points:
+                  if x < minx or x > maxx or y < miny or y > maxy: continue
+                  if union.covers(Point(x,y)):
+                      matches.append({'parcel_id':pid,'x':x,'y':y,'canonical_properties':props})
+              item={'growth_area_id':gid,'source_feature_indices':[p['index'] for p in parts],
+                    'source_properties':[p['properties'] for p in parts],
+                    'source_part_count':len(parts),'union_geometry':mapping(union),
+                    'canonical_match_count':len(matches),'canonical_matches':matches[:50]}
+              groups.append(item)
+              if matches and len(selected)<10:
+                  selected.append({**item,'selected_match':matches[0]})
+              if not matches:
+                  unmatched.append({'growth_area_id':gid,'source_feature_indices':item['source_feature_indices'],'source_part_count':len(parts)})
+          result={'schema':'fg3_service29_layer3_grouped_direct_v1','slot_id':'future_growth_3','observed_at_utc':observed,
+            'canonical':{'path':str(canon),'feature_count':len(c.get('features') or []),'usable_points':len(points),'sha256':hashlib.sha256(c_raw).hexdigest(),'git_blob_sha1':c_git,'selector':'geometry.type=Point AND security_parcel_id present','denominator':len(c.get('features') or [])},
+            'layer_meta':{'url':meta_url,'final_url':meta_final,'http_status':meta_status,'source_sha256':hashlib.sha256(meta_raw).hexdigest(),'name':layer_meta.get('name'),'description':layer_meta.get('description'),'copyrightText':layer_meta.get('copyrightText'),'geometryType':layer_meta.get('geometryType'),'serviceItemId':layer_meta.get('serviceItemId')},
+            'growth':{'url':url,'final_url':final,'http_status':status,'content_type':ctype,'source_sha256':hashlib.sha256(raw).hexdigest(),'feature_count':len(gj.get('features') or []),'geometry_type_counts':geom_types,'polygon_feature_count':sum(1 for f in gj.get('features') or [] if (f.get('geometry') or {}).get('type') in ('Polygon','MultiPolygon')),'valid_group_count':len(groups),'service_index':29,'layer_id':3,'license':'Open Government Licence v3','selector':'where=1=1; outFields=*; returnGeometry=true; outSR=4326','denominator':len(gj.get('features') or [])},
+            'groups':groups,'selected_count':len(selected),'selected':selected,'unmatched_count':len(unmatched),'unmatched':unmatched,'invalid':invalid}
+          (out/'service29_layer3_grouped_result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          def slim(s):
+              p=(s.get('source_properties') or [{}])[0]
+              m=s.get('selected_match') or {}
+              return {'growth_area_id':s['growth_area_id'],'source_feature_indices':s['source_feature_indices'],'source_part_count':s['source_part_count'],'canonical_match_count':s['canonical_match_count'],'parcel_id':m.get('parcel_id'),'properties':p}
+          print(json.dumps({'layer_name':layer_meta.get('name'),'description':layer_meta.get('description'),'geometryType':layer_meta.get('geometryType'),'http_status':status,'feature_count':len(gj.get('features') or []),'geometry_type_counts':geom_types,'group_count':len(groups),'selected_count':len(selected),'unmatched_count':len(unmatched),'source_sha256':result['growth']['source_sha256'],'selected':[slim(x) for x in selected],'unmatched':unmatched},ensure_ascii=False,indent=2))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: fg3-waf-inb6-status-evidence-20260912
-          path: /tmp/fg3_waf_status
+          name: fg3-service29-layer3-grouped-20260912
+          path: /tmp/fg3_s29l3
           if-no-files-found: error
           retention-days: 3
