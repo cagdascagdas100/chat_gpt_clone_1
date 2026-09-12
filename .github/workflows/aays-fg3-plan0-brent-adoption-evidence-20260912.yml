@@ -1,0 +1,48 @@
+name: AAYS FG3 Brent adoption evidence 20260912
+on:
+  push:
+    paths:
+      - '.github/workflows/aays-fg3-plan0-brent-adoption-evidence-20260912.yml'
+permissions:
+  contents: read
+jobs:
+  acquire:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fetch official Brent adoption evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/fg3_brent_status
+          python - <<'PY'
+          import urllib.request, hashlib, json, datetime
+          from pathlib import Path
+          out=Path('/tmp/fg3_brent_status')
+          ua='TerraYield-AAYS-Plan0-future_growth_3-brent-status/1.0'
+          urls={
+            'page':'https://www.brent.gov.uk/planning-and-building-control/planning-policy-and-guidance/brent-local-plan',
+            'adoption_statement':'https://www.brent.gov.uk/media/16420110/brent-local-plan-adoption-statement-feb-22.pdf',
+          }
+          meta={'observed_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'sources':{}}
+          for k,u in urls.items():
+              req=urllib.request.Request(u,headers={'User-Agent':ua,'Accept':'*/*'})
+              with urllib.request.urlopen(req,timeout=120) as r:
+                  b=r.read(); status=getattr(r,'status',None); final=r.geturl(); ct=r.headers.get('Content-Type')
+              ext='.pdf' if k=='adoption_statement' else '.html'
+              p=out/(k+ext); p.write_bytes(b)
+              meta['sources'][k]={'url':u,'final_url':final,'http_status':status,'content_type':ct,
+                                  'sha256':hashlib.sha256(b).hexdigest(),'bytes':len(b)}
+              if k=='page':
+                  text=b.decode('utf-8','replace').lower()
+                  meta['sources'][k]['contains_adopted_february_2022']=('adopt' in text and 'february 2022' in text)
+                  meta['sources'][k]['contains_2019_2041']=('2019-2041' in text or '2019 - 2041' in text)
+          (out/'brent_adoption_evidence_meta.json').write_text(json.dumps(meta,indent=2)+'\n')
+          print(json.dumps(meta,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fg3-brent-adoption-evidence-20260912
+          path: /tmp/fg3_brent_status
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 6
