@@ -1,0 +1,113 @@
+name: AAYS FG3 Plan0 rematerialize tail 50-94 20260912
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - '.github/workflows/aays-fg3-plan0-rematerialize-tail-50-94-20260912.yml'
+permissions:
+  contents: read
+jobs:
+  rematerialize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+      - name: Install geometry dependencies
+        run: python -m pip install --quiet shapely
+      - name: Rematerialize Camden growth matches tail 50-94
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/fg3_tail
+          python - <<'PY'
+          from pathlib import Path
+          import json, hashlib, urllib.request, datetime, subprocess
+          from shapely.geometry import shape, Point
+
+          out=Path('/tmp/fg3_tail')
+          slot='future_growth_3'
+          canon=Path('england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson')
+          if not canon.exists():
+              raise SystemExit(f'canonical missing: {canon}')
+
+          def sha256_file(p):
+              h=hashlib.sha256()
+              with p.open('rb') as f:
+                  for chunk in iter(lambda:f.read(1024*1024), b''): h.update(chunk)
+              return h.hexdigest()
+
+          observed=datetime.datetime.now(datetime.timezone.utc).isoformat()
+          canonical_sha=sha256_file(canon)
+          canonical_git_sha=subprocess.check_output(['git','hash-object',str(canon)],text=True).strip()
+          c=json.loads(canon.read_text(encoding='utf-8'))
+          cfeatures=c.get('features') or []
+          points=[]
+          for f in cfeatures:
+              g=f.get('geometry') or {}
+              if g.get('type')!='Point':
+                  continue
+              co=g.get('coordinates') or []
+              if len(co)<2:
+                  continue
+              props=f.get('properties') or {}
+              pid=props.get('security_parcel_id')
+              if pid in (None,''):
+                  continue
+              points.append((str(pid),float(co[0]),float(co[1]),props))
+
+          growth_url=('https://services.arcgis.com/drifeOPKLpgnJ8Qa/ArcGIS/rest/services/'
+                      'planning_local_plan_data_07/FeatureServer/13/query?where=1%3D1&outFields=%2A&'
+                      'returnGeometry=true&outSR=4326&f=geojson')
+          req=urllib.request.Request(growth_url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-tail/1.0','Accept':'application/geo+json,application/json'})
+          with urllib.request.urlopen(req,timeout=180) as r:
+              raw=r.read(); status=getattr(r,'status',None); final_url=r.geturl(); ctype=r.headers.get('Content-Type')
+          (out/'camden_growth_area_layer13_tail_source.geojson').write_bytes(raw)
+          growth_sha=hashlib.sha256(raw).hexdigest()
+          gj=json.loads(raw.decode('utf-8'))
+          growth=[]
+          for idx,f in enumerate(gj.get('features') or []):
+              geom=f.get('geometry') or {}
+              if geom.get('type') not in ('Polygon','MultiPolygon'):
+                  continue
+              growth.append((idx,f,shape(geom)))
+
+          matches=[]
+          for pid,x,y,props in points:
+              p=Point(x,y)
+              for gi,gf,poly in growth:
+                  if poly.covers(p):
+                      matches.append({'security_parcel_id':pid,'x':x,'y':y,'canonical_properties':props,
+                                      'growth_feature_index':gi,'growth_properties':gf.get('properties') or {},
+                                      'growth_geometry':gf.get('geometry')})
+                      break
+
+          tail=matches[50:95]
+          result={
+              'schema':'fg3_growth_matches_tail_v1','slot_id':slot,'observed_at_utc':observed,
+              'selector_window':'strict canonical Point covered_by Camden Local Plan Growth Area; global match indices 50-94',
+              'canonical_source':{'path':str(canon),'git_blob_sha1':canonical_git_sha,'sha256':canonical_sha,
+                                  'feature_count':len(cfeatures),'usable_point_count':len(points),
+                                  'selector':'geometry.type=Point AND properties.security_parcel_id present',
+                                  'denominator':len(cfeatures)},
+              'growth_source':{'url':growth_url,'final_url':final_url,'http_status':status,'content_type':ctype,
+                               'source_sha256':growth_sha,'bytes':len(raw),'feature_count':len(gj.get('features') or []),
+                               'selector':'FeatureServer/13 Local Plan Growth Area; where=1=1; outFields=*; returnGeometry=true; outSR=4326',
+                               'denominator':len(gj.get('features') or []),'license':'Open Government Licence v3'},
+              'total_match_count':len(matches),'tail_start_index':50,'tail_end_index_exclusive':95,
+              'tail_count':len(tail),'matches':tail
+          }
+          (out/'growth_matches_50_94.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
+          print(json.dumps({'slot_id':slot,'canonical_features':len(cfeatures),'growth_features':len(gj.get('features') or []),
+                            'total_match_count':len(matches),'tail_count':len(tail),'canonical_sha256':canonical_sha,
+                            'growth_sha256':growth_sha,'http_status':status},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fg3-growth-matches-tail-50-94-20260912
+          path: /tmp/fg3_tail
+          if-no-files-found: error
+          retention-days: 3
