@@ -1,4 +1,4 @@
-name: AAYS FG3 service15 layer18 Opportunity Area 20260912
+name: AAYS FG3 service19 layer9 City Fringe Opportunity Area 20260912
 on:
   push:
     paths:
@@ -15,16 +15,16 @@ jobs:
           fetch-depth: 1
       - name: Install geometry dependency
         run: python -m pip install --quiet shapely
-      - name: Materialize service15 layer18 and strict canonical relations
+      - name: Materialize service19 layer9 and strict canonical relations
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/fg3_s15l18
+          mkdir -p /tmp/fg3_s19l9
           python - <<'PY'
           from pathlib import Path
           import json, hashlib, urllib.request, datetime, subprocess
           from shapely.geometry import shape, Point
-          out=Path('/tmp/fg3_s15l18')
+          out=Path('/tmp/fg3_s19l9')
           observed=datetime.datetime.now(datetime.timezone.utc).isoformat()
           canon=Path('england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson')
           c_raw=canon.read_bytes(); c=json.loads(c_raw)
@@ -34,22 +34,22 @@ jobs:
               g=f.get('geometry') or {}; p=f.get('properties') or {}; co=g.get('coordinates') or []
               if g.get('type')=='Point' and len(co)>=2 and p.get('security_parcel_id') not in (None,''):
                   points.append((str(p['security_parcel_id']),float(co[0]),float(co[1]),p))
-          base='https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_15/FeatureServer/18'
+          base='https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_19/FeatureServer/9'
           meta_url=base+'?f=pjson'
-          with urllib.request.urlopen(urllib.request.Request(meta_url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-s15l18/1.0','Accept':'application/json'}),timeout=120) as r:
+          with urllib.request.urlopen(urllib.request.Request(meta_url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-s19l9/1.0','Accept':'application/json'}),timeout=120) as r:
               meta_raw=r.read(); meta_status=getattr(r,'status',None); meta_final=r.geturl()
-          (out/'service15_layer18_meta.json').write_bytes(meta_raw)
+          (out/'service19_layer9_meta.json').write_bytes(meta_raw)
           layer_meta=json.loads(meta_raw.decode('utf-8'))
           url=base+'/query?where=1%3D1&outFields=%2A&returnGeometry=true&outSR=4326&f=geojson'
-          req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-s15l18/1.0','Accept':'application/geo+json,application/json'})
+          req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-s19l9/1.0','Accept':'application/geo+json,application/json'})
           with urllib.request.urlopen(req,timeout=180) as r:
               raw=r.read(); status=getattr(r,'status',None); final=r.geturl(); ctype=r.headers.get('Content-Type')
-          (out/'service15_layer18_raw.geojson').write_bytes(raw)
+          (out/'service19_layer9_raw.geojson').write_bytes(raw)
           gj=json.loads(raw.decode('utf-8'))
-          official=[]
+          official=[]; geom_types={}
           for gi,f in enumerate(gj.get('features') or []):
-              geom=f.get('geometry') or {}
-              if geom.get('type') not in ('Polygon','MultiPolygon'): continue
+              geom=f.get('geometry') or {}; gt=geom.get('type'); geom_types[gt]=geom_types.get(gt,0)+1
+              if gt not in ('Polygon','MultiPolygon'): continue
               poly=shape(geom)
               if poly.is_empty or not poly.is_valid: continue
               matches=[]
@@ -64,17 +64,17 @@ jobs:
               used_parcels.add(m['parcel_id'])
               selected.append({'growth_feature_index':g['growth_feature_index'],'growth_properties':g['growth_properties'],'growth_geometry':g['growth_geometry'],'growth_feature_canonical_match_count':g['canonical_match_count'],**m})
               if len(selected)>=10: break
-          result={'schema':'fg3_service15_layer18_direct_v1','slot_id':'future_growth_3','observed_at_utc':observed,
+          result={'schema':'fg3_service19_layer9_direct_v1','slot_id':'future_growth_3','observed_at_utc':observed,
               'canonical':{'path':str(canon),'feature_count':len(c.get('features') or []),'usable_points':len(points),'sha256':hashlib.sha256(c_raw).hexdigest(),'git_blob_sha1':c_git,'selector':'geometry.type=Point AND security_parcel_id present','denominator':len(c.get('features') or [])},
               'layer_meta':{'url':meta_url,'final_url':meta_final,'http_status':meta_status,'source_sha256':hashlib.sha256(meta_raw).hexdigest(),'name':layer_meta.get('name'),'description':layer_meta.get('description'),'copyrightText':layer_meta.get('copyrightText'),'geometryType':layer_meta.get('geometryType'),'serviceItemId':layer_meta.get('serviceItemId')},
-              'growth':{'url':url,'final_url':final,'http_status':status,'content_type':ctype,'source_sha256':hashlib.sha256(raw).hexdigest(),'feature_count':len(gj.get('features') or []),'polygon_feature_count':len(official),'service_index':15,'layer_id':18,'license':'Open Government Licence v3','selector':'where=1=1; outFields=*; returnGeometry=true; outSR=4326','denominator':len(gj.get('features') or [])},
+              'growth':{'url':url,'final_url':final,'http_status':status,'content_type':ctype,'source_sha256':hashlib.sha256(raw).hexdigest(),'feature_count':len(gj.get('features') or []),'geometry_type_counts':geom_types,'polygon_feature_count':len(official),'service_index':19,'layer_id':9,'license':'Open Government Licence v3','selector':'where=1=1; outFields=*; returnGeometry=true; outSR=4326','denominator':len(gj.get('features') or [])},
               'official_growth_features':official,'selected_count':len(selected),'selected':selected}
-          (out/'service15_layer18_direct_result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-          print(json.dumps({'layer_name':layer_meta.get('name'),'description':layer_meta.get('description'),'http_status':status,'feature_count':len(gj.get('features') or []),'polygon_feature_count':len(official),'selected_count':len(selected),'source_sha256':result['growth']['source_sha256'],'selected':[{'parcel_id':x['parcel_id'],'growth_feature_index':x['growth_feature_index'],'properties':x['growth_properties']} for x in selected]},ensure_ascii=False,indent=2))
+          (out/'service19_layer9_direct_result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps({'layer_name':layer_meta.get('name'),'description':layer_meta.get('description'),'geometryType':layer_meta.get('geometryType'),'http_status':status,'feature_count':len(gj.get('features') or []),'geometry_type_counts':geom_types,'polygon_feature_count':len(official),'selected_count':len(selected),'source_sha256':result['growth']['source_sha256'],'selected':[{'parcel_id':x['parcel_id'],'growth_feature_index':x['growth_feature_index'],'properties':x['growth_properties']} for x in selected]},ensure_ascii=False,indent=2))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: fg3-service15-layer18-direct-20260912
-          path: /tmp/fg3_s15l18
+          name: fg3-service19-layer9-direct-20260912
+          path: /tmp/fg3_s19l9
           if-no-files-found: error
           retention-days: 3
