@@ -1,4 +1,4 @@
-name: AAYS FG3 Waltham Forest INB6 status evidence poppler 20260912
+name: AAYS FG3 Waltham Forest INB6 line neighborhood evidence 20260912
 on:
   push:
     paths:
@@ -13,9 +13,9 @@ jobs:
         with:
           ref: codex/aays-single-runner-v5-20260706
           fetch-depth: 1
-      - name: Install changed PDF parser
+      - name: Install poppler parser
         run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
-      - name: Materialize Waltham Forest adopted DM supersession evidence
+      - name: Materialize Waltham Forest INB6 lifecycle with line-neighborhood extraction
         shell: bash
         run: |
           set -euo pipefail
@@ -31,7 +31,7 @@ jobs:
           }
           meta={}
           for key,url in sources.items():
-              req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-waf-status-poppler/1.0','Accept':'*/*'})
+              req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-waf-status-lines/1.0','Accept':'*/*'})
               with urllib.request.urlopen(req,timeout=240) as r:
                   raw=r.read(); status=getattr(r,'status',None); final=r.geturl(); ctype=r.headers.get('Content-Type')
               assert raw
@@ -41,29 +41,37 @@ jobs:
           html=(out/'current_local_plan_page.html').read_text(encoding='utf-8',errors='ignore')
           hnorm=' '.join(re.sub('<[^>]+>',' ',html).split())
           assert re.search(r'adopted\s+on\s+29\s+February\s+2024',hnorm,re.I), 'current plan adoption text not found'
-          txt_path=out/'dm_adoption_version.txt'
+          txt_path=out/'dm_adoption_version_layout.txt'
           subprocess.run(['pdftotext','-layout',str(out/'dm_adoption_version.pdf'),str(txt_path)],check=True)
-          txt=txt_path.read_text(encoding='utf-8',errors='ignore')
-          norm=' '.join(txt.split())
-          m=re.search(r'POLICY\s+INB6.{0,1200}',norm,re.I)
-          assert m, 'POLICY INB6 not found by pdftotext -layout'
-          snippet=m.group(0)
-          assert re.search(r'Lee\s+Valley\s+Regeneration\s+Corridor',snippet,re.I), 'Lee Valley label missing from INB6 row'
-          assert re.search(r'CS1\s*,?\s*CS8',snippet,re.I), 'CS1/CS8 supersession mapping missing'
-          assert re.search(r'DM1',snippet,re.I), 'DM replacement mapping missing'
+          lines=txt_path.read_text(encoding='utf-8',errors='ignore').splitlines()
+          hit_idx=[i for i,line in enumerate(lines) if re.search(r'\bINB6\b',line,re.I)]
+          assert hit_idx, 'INB6 line not found'
+          blocks=[]
+          for i in hit_idx:
+              lo=max(0,i-12); hi=min(len(lines),i+13)
+              raw_block='\n'.join(lines[lo:hi])
+              norm_block=' '.join(raw_block.split())
+              blocks.append({'line_index_0based':i,'start_line_1based':lo+1,'end_line_1based':hi,'raw_block':raw_block,'normalized_block':norm_block})
+          all_neighborhood=' '.join(b['normalized_block'] for b in blocks)
+          assert re.search(r'(Lee|Lea)\s+Valley\s+Regeneration\s+Corridor',all_neighborhood,re.I), 'Lee/Lea Valley Regeneration Corridor not found within ±12 lines of INB6'
+          assert re.search(r'CS1',all_neighborhood,re.I) and re.search(r'CS8',all_neighborhood,re.I), 'CS1/CS8 not found within INB6 neighborhood'
+          assert re.search(r'DM1',all_neighborhood,re.I), 'DM1 not found within INB6 neighborhood'
+          full_norm=' '.join(' '.join(lines).split())
+          assert re.search(r'Policies?\s+superseded\s+by\s+Adopted\s+Core\s+Strategy',full_norm,re.I), 'superseded-by-Core-Strategy table header not found'
+          assert re.search(r'Policies?\s+superseded\s+by\s+Development\s+Management\s+Policies',full_norm,re.I), 'superseded-by-DM table header not found'
           result={
-            'schema':'fg3_waf_inb6_status_evidence_v3','slot_id':'future_growth_3','observed_at_utc':observed,
+            'schema':'fg3_waf_inb6_status_evidence_v4','slot_id':'future_growth_3','observed_at_utc':observed,
             'sources':meta,'growth_status':'Superseded','growth_status_date':None,
             'growth_type':'Lee Valley Regeneration Corridor','raw_arcgis_status':None,'source_policy':'INB6',
             'current_local_plan_adoption_date':'2024-02-29',
-            'selector':'ArcGIS extrainfo1=Policy INB6; official adopted Development Management Policies supersession table maps POLICY INB6 Lee Valley Regeneration Corridor/Mixed Use Regeneration Areas to superseding CS1/CS8 and Development Management policies',
-            'denominator':2,'inb6_snippet':snippet[:1600],
-            'parser_method':'poppler pdftotext -layout',
-            'previous_parser_failures':['pypdf did not recover INB6 table row from Core Strategy','pdfplumber did not recover INB6 token from Core Strategy text layer'],
+            'selector':'ArcGIS extrainfo1=Policy INB6; official adopted Development Management Policies supersession table contains the INB6 Lee/Lea Valley Regeneration Corridor row with CS1/CS8 and DM replacements; current Local Plan Part 1 page states adoption on 29 February 2024',
+            'denominator':2,'inb6_hit_count':len(hit_idx),'inb6_line_neighborhoods':blocks[:5],
+            'parser_method':'poppler pdftotext -layout + raw line neighborhood ±12 lines around INB6',
+            'previous_parser_failures':['pypdf exact row co-location failed on Core Strategy','pdfplumber text extraction did not recover INB6 token from Core Strategy','poppler forward-only normalized regex found INB6 but missed label ordering in adopted DM PDF'],
             'license':'Public statutory planning material; no reuse licence asserted for council page/PDF'
           }
           (out/'waf_inb6_status_evidence.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-          print(json.dumps(result,ensure_ascii=False,indent=2))
+          print(json.dumps({'growth_status':result['growth_status'],'growth_type':result['growth_type'],'current_local_plan_adoption_date':result['current_local_plan_adoption_date'],'inb6_hit_count':result['inb6_hit_count'],'blocks':result['inb6_line_neighborhoods'],'sources':meta,'parser_method':result['parser_method']},ensure_ascii=False,indent=2))
           PY
       - uses: actions/upload-artifact@v4
         with:
