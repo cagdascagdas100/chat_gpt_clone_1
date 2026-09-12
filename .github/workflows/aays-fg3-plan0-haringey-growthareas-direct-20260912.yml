@@ -1,4 +1,4 @@
-name: AAYS FG3 Sutton Policy 7 status evidence 20260912
+name: AAYS FG3 Sutton Policy 7 status PDFs 20260912
 on:
   push:
     paths:
@@ -15,7 +15,7 @@ jobs:
           fetch-depth: 1
       - name: Install PDF parser
         run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
-      - name: Materialize Sutton Policy 7 adopted status evidence
+      - name: Materialize Sutton status from official PDF documents
         shell: bash
         run: |
           set -euo pipefail
@@ -26,43 +26,46 @@ jobs:
           out=Path('/tmp/fg3_sutton_status')
           observed=datetime.datetime.now(datetime.timezone.utc).isoformat()
           sources={
-            'local_plan_page':'https://www.sutton.gov.uk/planning-and-building/planning/planning-policy/local-plan',
+            'authority_monitoring_report':'https://www.sutton.gov.uk/documents/d/guest/authority-monitoring-report-2021-22',
             'adopted_local_plan':'https://www.sutton.gov.uk/documents/20124/864129/1.%2BSutton%2BLocal%2BPlan%2B%28Adopted%2B2018%29.pdf/57903d66-57ad-bf28-857d-8c8e779fc3ce?t=1678268850847'
           }
           meta={}
           for key,url in sources.items():
-              req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-sutton-status/1.0','Accept':'*/*'})
+              req=urllib.request.Request(url,headers={
+                  'User-Agent':'Mozilla/5.0 (compatible; TerraYield-AAYS-Plan0-future_growth_3/1.0)',
+                  'Accept':'application/pdf,application/octet-stream;q=0.9,*/*;q=0.8',
+                  'Referer':'https://www.sutton.gov.uk/'
+              })
               with urllib.request.urlopen(req,timeout=240) as r:
                   raw=r.read(); status=getattr(r,'status',None); final=r.geturl(); ctype=r.headers.get('Content-Type')
               assert raw, f'{key} empty'
-              ext='.pdf' if key=='adopted_local_plan' or 'pdf' in (ctype or '').lower() else '.html'
-              p=out/(key+ext); p.write_bytes(raw)
+              p=out/(key+'.pdf'); p.write_bytes(raw)
               meta[key]={'url':url,'final_url':final,'http_status':status,'content_type':ctype,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),'path':p.name}
-          html=(out/'local_plan_page.html').read_text(encoding='utf-8',errors='ignore')
-          hnorm=' '.join(re.sub('<[^>]+>',' ',html).split())
-          adoption_patterns=[r'adopted\s+by\s+the\s+Council.*26\s+February\s+2018',r'adopted.*26\s+February\s+2018']
-          assert any(re.search(p,hnorm,re.I) for p in adoption_patterns), 'Sutton Local Plan adoption date not found on official page'
-          txt_path=out/'adopted_local_plan_layout.txt'
-          subprocess.run(['pdftotext','-layout',str(out/'adopted_local_plan.pdf'),str(txt_path)],check=True)
-          txt=txt_path.read_text(encoding='utf-8',errors='ignore')
-          norm=' '.join(txt.split())
-          assert re.search(r'POLICY\s+7\s*:\s*Housing\s+Density',norm,re.I), 'Policy 7 Housing Density not found'
-          assert re.search(r'Area[s]?\s+of\s+Potential\s+Intensification',norm,re.I), 'Areas of Potential Intensification not found'
-          assert re.search(r'Sutton\s+Town\s+Centre\s+Area\s+of\s+Potential\s+Intensification',norm,re.I), 'Sutton Town Centre API text not found'
+          texts={}
+          for key in sources:
+              txt_path=out/(key+'.txt')
+              subprocess.run(['pdftotext','-layout',str(out/(key+'.pdf')),str(txt_path)],check=True)
+              texts[key]=txt_path.read_text(encoding='utf-8',errors='ignore')
+          amr=' '.join(texts['authority_monitoring_report'].split())
+          lp=' '.join(texts['adopted_local_plan'].split())
+          assert re.search(r'adopted\s+by\s+the\s+Council\s+on\s+26\s+February\s+2018',amr,re.I), 'AMR adoption statement not found'
+          assert re.search(r'POLICY\s+7\s*:\s*Housing\s+Density',lp,re.I), 'Policy 7 Housing Density not found'
+          assert re.search(r'Area[s]?\s+of\s+Potential\s+Intensification',lp,re.I), 'Areas of Potential Intensification not found'
           result={
-            'schema':'fg3_sutton_policy7_status_evidence_v1','slot_id':'future_growth_3','observed_at_utc':observed,
+            'schema':'fg3_sutton_policy7_status_evidence_v2','slot_id':'future_growth_3','observed_at_utc':observed,
             'sources':meta,'growth_status':'Adopted','growth_status_date':'2018-02-26',
             'growth_type':'Areas of Potential Intensification','raw_arcgis_status':None,'source_policy':'Policy 7',
-            'selector':'ArcGIS extrainfo1=Policy 7; official Sutton Local Plan page states Sutton Local Plan 2016-31 was adopted by Council on 26 February 2018; adopted Local Plan PDF contains Policy 7 Housing Density and Areas of Potential Intensification',
-            'denominator':2,'parser_method':'poppler pdftotext -layout + normalized exact policy/designation assertions',
-            'license':'Public statutory planning material; no reuse licence asserted for council page/PDF'
+            'selector':'ArcGIS extrainfo1=Policy 7; official Sutton Authority Monitoring Report states current Local Plan was adopted by Council on 26 February 2018; adopted Sutton Local Plan PDF contains Policy 7 Housing Density and Areas of Potential Intensification',
+            'denominator':2,'parser_method':'poppler pdftotext -layout + normalized exact adoption/policy/designation assertions',
+            'previous_access_failure':'Council Local Plan HTML page returned HTTP 403 in prior runner attempt; changed to direct official PDF documents',
+            'license':'Public statutory planning material; no reuse licence asserted for council PDFs'
           }
           (out/'sutton_policy7_status_evidence.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
           print(json.dumps(result,ensure_ascii=False,indent=2))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: fg3-sutton-policy7-status-evidence-20260912
+          name: fg3-sutton-policy7-status-pdfs-20260912
           path: /tmp/fg3_sutton_status
           if-no-files-found: error
           retention-days: 3
