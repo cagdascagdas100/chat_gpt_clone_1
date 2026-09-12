@@ -1,4 +1,4 @@
-name: AAYS FG3 unused growth opportunity layer scan 20260912
+name: AAYS FG3 service23 layer8 Growth Areas 20260912
 on:
   push:
     paths:
@@ -13,40 +13,68 @@ jobs:
         with:
           ref: codex/aays-single-runner-v5-20260706
           fetch-depth: 1
-      - name: Scan Planning Local Plan Data services
+      - name: Install geometry dependency
+        run: python -m pip install --quiet shapely
+      - name: Materialize service23 layer8 and strict canonical relations
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/fg3_scan
+          mkdir -p /tmp/fg3_s23l8
           python - <<'PY'
           from pathlib import Path
-          import urllib.request, json, datetime, re, hashlib
-          out=Path('/tmp/fg3_scan')
+          import json, hashlib, urllib.request, datetime, subprocess
+          from shapely.geometry import shape, Point
+          out=Path('/tmp/fg3_s23l8')
           observed=datetime.datetime.now(datetime.timezone.utc).isoformat()
-          used={(2,23),(4,13),(5,30),(7,13),(8,18),(14,18)}
-          # 7/13 is Camden Local Plan Growth Area; retained as used source family window.
-          hits=[]; errors=[]
-          for svc in range(1,34):
-              base=f'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_{svc:02d}/FeatureServer'
-              url=base+'?f=pjson'
-              try:
-                  req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-layer-scan/1.0','Accept':'application/json'})
-                  with urllib.request.urlopen(req,timeout=45) as r:
-                      raw=r.read(); status=getattr(r,'status',None); final=r.geturl()
-                  meta=json.loads(raw.decode('utf-8'))
-                  for lyr in meta.get('layers') or []:
-                      lid=lyr.get('id'); name=str(lyr.get('name') or '')
-                      if re.search(r'growth|opportunit|intensification|regeneration',name,re.I):
-                          hits.append({'service_index':svc,'layer_id':lid,'layer_name':name,'used':(svc,lid) in used,'service_url':base,'http_status':status,'service_meta_sha256':hashlib.sha256(raw).hexdigest()})
-              except Exception as e:
-                  errors.append({'service_index':svc,'error':repr(e)})
-          result={'schema':'fg3_unused_layer_scan_v1','slot_id':'future_growth_3','observed_at_utc':observed,'service_range':'01-33','used_pairs':sorted([list(x) for x in used]),'hits':hits,'unused_hits':[h for h in hits if not h['used']],'errors':errors}
-          (out/'unused_growth_opportunity_layer_scan.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
-          print(json.dumps({'hit_count':len(hits),'unused_hit_count':len(result['unused_hits']),'unused_hits':result['unused_hits'],'errors':errors},ensure_ascii=False,indent=2))
+          canon=Path('england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson')
+          c_raw=canon.read_bytes(); c=json.loads(c_raw)
+          c_git=subprocess.check_output(['git','hash-object',str(canon)],text=True).strip()
+          points=[]
+          for f in c.get('features') or []:
+              g=f.get('geometry') or {}; p=f.get('properties') or {}; co=g.get('coordinates') or []
+              if g.get('type')=='Point' and len(co)>=2 and p.get('security_parcel_id') not in (None,''):
+                  points.append((str(p['security_parcel_id']),float(co[0]),float(co[1]),p))
+          base='https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_23/FeatureServer/8'
+          meta_url=base+'?f=pjson'
+          with urllib.request.urlopen(urllib.request.Request(meta_url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-s23l8/1.0','Accept':'application/json'}),timeout=120) as r:
+              meta_raw=r.read(); meta_status=getattr(r,'status',None); meta_final=r.geturl()
+          (out/'service23_layer8_meta.json').write_bytes(meta_raw)
+          layer_meta=json.loads(meta_raw.decode('utf-8'))
+          url=base+'/query?where=1%3D1&outFields=%2A&returnGeometry=true&outSR=4326&f=geojson'
+          req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-s23l8/1.0','Accept':'application/geo+json,application/json'})
+          with urllib.request.urlopen(req,timeout=180) as r:
+              raw=r.read(); status=getattr(r,'status',None); final=r.geturl(); ctype=r.headers.get('Content-Type')
+          (out/'service23_layer8_raw.geojson').write_bytes(raw)
+          gj=json.loads(raw.decode('utf-8'))
+          official=[]
+          for gi,f in enumerate(gj.get('features') or []):
+              geom=f.get('geometry') or {}
+              if geom.get('type') not in ('Polygon','MultiPolygon'): continue
+              poly=shape(geom)
+              if poly.is_empty or not poly.is_valid: continue
+              matches=[]
+              for pid,x,y,props in points:
+                  if poly.covers(Point(x,y)):
+                      matches.append({'parcel_id':pid,'x':x,'y':y,'canonical_properties':props})
+              official.append({'growth_feature_index':gi,'growth_properties':f.get('properties') or {},'growth_geometry':geom,'canonical_match_count':len(matches),'canonical_matches':matches[:30]})
+          selected=[]; used_parcels=set()
+          for g in official:
+              if not g['canonical_matches']: continue
+              m=next((x for x in g['canonical_matches'] if x['parcel_id'] not in used_parcels),g['canonical_matches'][0])
+              used_parcels.add(m['parcel_id'])
+              selected.append({'growth_feature_index':g['growth_feature_index'],'growth_properties':g['growth_properties'],'growth_geometry':g['growth_geometry'],'growth_feature_canonical_match_count':g['canonical_match_count'],**m})
+              if len(selected)>=10: break
+          result={'schema':'fg3_service23_layer8_direct_v1','slot_id':'future_growth_3','observed_at_utc':observed,
+                  'canonical':{'path':str(canon),'feature_count':len(c.get('features') or []),'usable_points':len(points),'sha256':hashlib.sha256(c_raw).hexdigest(),'git_blob_sha1':c_git,'selector':'geometry.type=Point AND security_parcel_id present','denominator':len(c.get('features') or [])},
+                  'layer_meta':{'url':meta_url,'final_url':meta_final,'http_status':meta_status,'source_sha256':hashlib.sha256(meta_raw).hexdigest(),'name':layer_meta.get('name'),'description':layer_meta.get('description'),'copyrightText':layer_meta.get('copyrightText')},
+                  'growth':{'url':url,'final_url':final,'http_status':status,'content_type':ctype,'source_sha256':hashlib.sha256(raw).hexdigest(),'feature_count':len(gj.get('features') or []),'polygon_feature_count':len(official),'service_index':23,'layer_id':8,'license':'Open Government Licence v3','selector':'where=1=1; outFields=*; returnGeometry=true; outSR=4326','denominator':len(gj.get('features') or [])},
+                  'official_growth_features':official,'selected_count':len(selected),'selected':selected}
+          (out/'service23_layer8_direct_result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
+          print(json.dumps({'layer_name':layer_meta.get('name'),'description':layer_meta.get('description'),'http_status':status,'feature_count':len(gj.get('features') or []),'polygon_feature_count':len(official),'selected_count':len(selected),'source_sha256':result['growth']['source_sha256'],'selected':[{'parcel_id':x['parcel_id'],'growth_feature_index':x['growth_feature_index'],'properties':x['growth_properties']} for x in selected]},ensure_ascii=False,indent=2))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: fg3-unused-growth-opportunity-layer-scan-20260912
-          path: /tmp/fg3_scan
+          name: fg3-service23-layer8-direct-20260912
+          path: /tmp/fg3_s23l8
           if-no-files-found: error
           retention-days: 3
