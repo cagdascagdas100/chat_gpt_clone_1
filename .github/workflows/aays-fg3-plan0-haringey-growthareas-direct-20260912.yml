@@ -1,4 +1,4 @@
-name: AAYS FG3 service32 layer19 nine elms vauxhall opportunity area 20260912
+name: AAYS FG3 service10 layer15 medium growth mixed use 20260912
 on:
   push:
     paths:
@@ -15,18 +15,18 @@ jobs:
           fetch-depth: 1
       - name: Install geometry dependency
         run: python -m pip install --quiet shapely
-      - name: Materialize service32 layer19 and strict canonical relations
+      - name: Materialize service10 layer15 and strict canonical relations
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/fg3_s32l19
+          mkdir -p /tmp/fg3_s10l15
           python - <<'PY'
           from pathlib import Path
           import json, hashlib, urllib.request, datetime, subprocess
           from shapely.geometry import shape, Point, mapping
           from shapely.ops import unary_union
           from shapely.validation import make_valid
-          out=Path('/tmp/fg3_s32l19')
+          out=Path('/tmp/fg3_s10l15')
           observed=datetime.datetime.now(datetime.timezone.utc).isoformat()
           canon=Path('england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson')
           c_raw=canon.read_bytes(); c=json.loads(c_raw)
@@ -36,18 +36,18 @@ jobs:
               g=f.get('geometry') or {}; p=f.get('properties') or {}; co=g.get('coordinates') or []
               if g.get('type')=='Point' and len(co)>=2 and p.get('security_parcel_id') not in (None,''):
                   points.append((str(p['security_parcel_id']),float(co[0]),float(co[1]),p))
-          base='https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_32/FeatureServer/19'
+          base='https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_10/FeatureServer/15'
           meta_url=base+'?f=pjson'
-          req=urllib.request.Request(meta_url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-s32l19/1.0','Accept':'application/json'})
+          req=urllib.request.Request(meta_url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-s10l15/1.0','Accept':'application/json'})
           with urllib.request.urlopen(req,timeout=120) as r:
               meta_raw=r.read(); meta_status=getattr(r,'status',None); meta_final=r.geturl()
-          (out/'service32_layer19_meta.json').write_bytes(meta_raw)
+          (out/'service10_layer15_meta.json').write_bytes(meta_raw)
           layer_meta=json.loads(meta_raw.decode('utf-8'))
           url=base+'/query?where=1%3D1&outFields=%2A&returnGeometry=true&outSR=4326&f=geojson'
-          req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-s32l19/1.0','Accept':'application/geo+json,application/json'})
+          req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-s10l15/1.0','Accept':'application/geo+json,application/json'})
           with urllib.request.urlopen(req,timeout=180) as r:
               raw=r.read(); status=getattr(r,'status',None); final=r.geturl(); ctype=r.headers.get('Content-Type')
-          (out/'service32_layer19_raw.geojson').write_bytes(raw)
+          (out/'service10_layer15_raw.geojson').write_bytes(raw)
           gj=json.loads(raw.decode('utf-8'))
           geom_types={}; grouped={}; invalid=[]
           for gi,f in enumerate(gj.get('features') or []):
@@ -71,16 +71,16 @@ jobs:
                   if x<minx or x>maxx or y<miny or y>maxy: continue
                   if union.covers(Point(x,y)):
                       matches.append({'parcel_id':pid,'x':x,'y':y,'canonical_properties':props})
-              item={'growth_area_id':gid,'source_feature_indices':[p['index'] for p in parts], 'source_properties':[p['properties'] for p in parts], 'source_part_count':len(parts), 'union_geometry':mapping(union), 'canonical_match_count':len(matches), 'canonical_matches':matches[:100]}
+              item={'growth_area_id':gid,'source_feature_indices':[p['index'] for p in parts], 'source_properties':[p['properties'] for p in parts], 'source_part_count':len(parts), 'union_geometry':mapping(union), 'canonical_match_count':len(matches), 'canonical_matches':matches[:150]}
               groups.append(item)
               if matches and len(selected)<10: selected.append({**item,'selected_match':matches[0]})
               if not matches: unmatched.append({'growth_area_id':gid,'source_feature_indices':item['source_feature_indices'],'source_part_count':len(parts)})
-          result={'schema':'fg3_service32_layer19_grouped_direct_v1','slot_id':'future_growth_3','observed_at_utc':observed,
+          result={'schema':'fg3_service10_layer15_grouped_direct_v1','slot_id':'future_growth_3','observed_at_utc':observed,
             'canonical':{'path':str(canon),'feature_count':len(c.get('features') or []),'usable_points':len(points),'sha256':hashlib.sha256(c_raw).hexdigest(),'git_blob_sha1':c_git,'selector':'geometry.type=Point AND security_parcel_id present','denominator':len(c.get('features') or [])},
             'layer_meta':{'url':meta_url,'final_url':meta_final,'http_status':meta_status,'source_sha256':hashlib.sha256(meta_raw).hexdigest(),'name':layer_meta.get('name'),'description':layer_meta.get('description'),'copyrightText':layer_meta.get('copyrightText'),'geometryType':layer_meta.get('geometryType'),'serviceItemId':layer_meta.get('serviceItemId')},
-            'growth':{'url':url,'final_url':final,'http_status':status,'content_type':ctype,'source_sha256':hashlib.sha256(raw).hexdigest(),'feature_count':len(gj.get('features') or []),'geometry_type_counts':geom_types,'polygon_feature_count':sum(1 for f in gj.get('features') or [] if (f.get('geometry') or {}).get('type') in ('Polygon','MultiPolygon')),'valid_group_count':len(groups),'service_index':32,'layer_id':19,'license':'Open Government Licence v3','selector':'where=1=1; outFields=*; returnGeometry=true; outSR=4326','denominator':len(gj.get('features') or [])},
+            'growth':{'url':url,'final_url':final,'http_status':status,'content_type':ctype,'source_sha256':hashlib.sha256(raw).hexdigest(),'feature_count':len(gj.get('features') or []),'geometry_type_counts':geom_types,'polygon_feature_count':sum(1 for f in gj.get('features') or [] if (f.get('geometry') or {}).get('type') in ('Polygon','MultiPolygon')),'valid_group_count':len(groups),'service_index':10,'layer_id':15,'license':'Open Government Licence v3','selector':'where=1=1; outFields=*; returnGeometry=true; outSR=4326','denominator':len(gj.get('features') or [])},
             'groups':groups,'selected_count':len(selected),'selected':selected,'unmatched_count':len(unmatched),'unmatched':unmatched,'invalid':invalid}
-          (out/'service32_layer19_grouped_result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          (out/'service10_layer15_grouped_result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
           def slim(s):
               p=(s.get('source_properties') or [{}])[0]; m=s.get('selected_match') or {}
               return {'growth_area_id':s['growth_area_id'],'source_feature_indices':s['source_feature_indices'],'source_part_count':s['source_part_count'],'canonical_match_count':s['canonical_match_count'],'parcel_id':m.get('parcel_id'),'properties':p}
@@ -88,7 +88,7 @@ jobs:
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: fg3-service32-layer19-nine-elms-vauxhall-opportunity-area-20260912
-          path: /tmp/fg3_s32l19
+          name: fg3-service10-layer15-medium-growth-mixed-use-20260912
+          path: /tmp/fg3_s10l15
           if-no-files-found: error
           retention-days: 3
