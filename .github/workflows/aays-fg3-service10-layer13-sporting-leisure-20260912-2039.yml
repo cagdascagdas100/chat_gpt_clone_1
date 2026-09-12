@@ -1,4 +1,4 @@
-name: AAYS FG3 unused polygon designation discovery 20260912
+name: AAYS FG3 service16 layer30 strategic development areas 20260912
 on:
   push:
     paths:
@@ -6,77 +6,89 @@ on:
 permissions:
   contents: read
 jobs:
-  discover:
+  acquire:
     runs-on: ubuntu-24.04
     steps:
-      - name: Scan official London Planning Local Plan polygon designation layers
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+      - name: Install geometry dependency
+        run: python -m pip install --quiet shapely
+      - name: Materialize service16 layer30 and strict canonical relations
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/fg3_discovery
+          mkdir -p /tmp/fg3_s16l30
           python - <<'PY'
           from pathlib import Path
-          import json, urllib.request, urllib.parse, datetime, hashlib, re
-          out=Path('/tmp/fg3_discovery')
+          import json, hashlib, urllib.request, datetime, subprocess
+          from shapely.geometry import shape, Point, mapping
+          from shapely.ops import unary_union
+          from shapely.validation import make_valid
+          out=Path('/tmp/fg3_s16l30')
           observed=datetime.datetime.now(datetime.timezone.utc).isoformat()
-          rgx=re.compile(r'(growth|opportun|regener|intensif|allocation|strategic|development\s*(site|area)|housing\s*zone|renewal|transformation|urban\s*extension|major\s*site|key\s*site|future)', re.I)
-          rows=[]; errors=[]
-          for si in range(0,41):
-              svc=f'https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_{si:02d}/FeatureServer'
-              req=urllib.request.Request(svc+'?f=pjson',headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-discovery/1.0','Accept':'application/json'})
-              try:
-                  with urllib.request.urlopen(req,timeout=60) as r:
-                      raw=r.read(); svc_status=getattr(r,'status',None); svc_final=r.geturl()
-                  meta=json.loads(raw.decode('utf-8'))
+          canon=Path('england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson')
+          c_raw=canon.read_bytes(); c=json.loads(c_raw)
+          c_git=subprocess.check_output(['git','hash-object',str(canon)],text=True).strip()
+          points=[]
+          for f in c.get('features') or []:
+              g=f.get('geometry') or {}; p=f.get('properties') or {}; co=g.get('coordinates') or []
+              if g.get('type')=='Point' and len(co)>=2 and p.get('security_parcel_id') not in (None,''):
+                  points.append((str(p['security_parcel_id']),float(co[0]),float(co[1]),p))
+          base='https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_16/FeatureServer/30'
+          meta_url=base+'?f=pjson'
+          req=urllib.request.Request(meta_url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-s16l30/1.0','Accept':'application/json'})
+          with urllib.request.urlopen(req,timeout=120) as r:
+              meta_raw=r.read(); meta_status=getattr(r,'status',None); meta_final=r.geturl()
+          (out/'service16_layer30_meta.json').write_bytes(meta_raw)
+          layer_meta=json.loads(meta_raw.decode('utf-8'))
+          url=base+'/query?where=1%3D1&outFields=%2A&returnGeometry=true&outSR=4326&f=geojson'
+          req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-s16l30/1.0','Accept':'application/geo+json,application/json'})
+          with urllib.request.urlopen(req,timeout=180) as r:
+              raw=r.read(); status=getattr(r,'status',None); final=r.geturl(); ctype=r.headers.get('Content-Type')
+          (out/'service16_layer30_raw.geojson').write_bytes(raw)
+          gj=json.loads(raw.decode('utf-8'))
+          geom_types={}; grouped={}; invalid=[]
+          for gi,f in enumerate(gj.get('features') or []):
+              geom=f.get('geometry') or {}; gt=geom.get('type'); geom_types[gt]=geom_types.get(gt,0)+1
+              props=f.get('properties') or {}
+              if gt not in ('Polygon','MultiPolygon'): continue
+              try: poly=make_valid(shape(geom))
               except Exception as e:
-                  errors.append({'service_index':si,'url':svc,'error':str(e)})
-                  continue
-              for lyr in meta.get('layers') or []:
-                  lid=lyr.get('id'); name=str(lyr.get('name') or '')
-                  if lid is None or not rgx.search(name):
-                      continue
-                  lurl=f'{svc}/{lid}'
-                  try:
-                      req=urllib.request.Request(lurl+'?f=pjson',headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-discovery/1.0','Accept':'application/json'})
-                      with urllib.request.urlopen(req,timeout=60) as r:
-                          lraw=r.read(); lstatus=getattr(r,'status',None); lfinal=r.geturl()
-                      lm=json.loads(lraw.decode('utf-8'))
-                  except Exception as e:
-                      errors.append({'service_index':si,'layer_id':lid,'url':lurl,'error':str(e)})
-                      continue
-                  geom=lm.get('geometryType')
-                  if geom!='esriGeometryPolygon':
-                      continue
-                  qurl=lurl+'/query?'+urllib.parse.urlencode({
-                      'where':'1=1','outFields':'planningauthority,borough,designation,boroughdesignation,status,source,extrainfo1,layerreference,sitereference,sitename','returnGeometry':'false','resultRecordCount':'1','f':'json'
-                  })
-                  sample=None; qstatus=None
-                  try:
-                      req=urllib.request.Request(qurl,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-discovery/1.0','Accept':'application/json'})
-                      with urllib.request.urlopen(req,timeout=60) as r:
-                          qraw=r.read(); qstatus=getattr(r,'status',None)
-                      qo=json.loads(qraw.decode('utf-8'))
-                      fs=qo.get('features') or []
-                      sample=(fs[0].get('attributes') if fs else None)
-                  except Exception as e:
-                      errors.append({'service_index':si,'layer_id':lid,'query_url':qurl,'error':str(e)})
-                  rows.append({
-                      'service_index':si,'layer_id':lid,'layer_name':name,'service_url':svc,'layer_url':lurl,
-                      'service_http_status':svc_status,'layer_http_status':lstatus,'sample_http_status':qstatus,
-                      'geometryType':geom,'serviceItemId':lm.get('serviceItemId') or meta.get('serviceItemId'),
-                      'copyrightText':lm.get('copyrightText') or meta.get('copyrightText'),
-                      'description':lm.get('description'),'displayField':lm.get('displayField'),
-                      'maxRecordCount':lm.get('maxRecordCount'),'sample':sample,
-                      'service_meta_sha256':hashlib.sha256(raw).hexdigest(),
-                      'layer_meta_sha256':hashlib.sha256(lraw).hexdigest(),
-                  })
-          result={'schema':'fg3_unused_polygon_designation_discovery_v1','slot_id':'future_growth_3','observed_at_utc':observed,'keyword_regex':rgx.pattern,'rows':rows,'errors':errors,'row_count':len(rows),'error_count':len(errors)}
-          (out/'discovery_scan.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-          print(json.dumps({'row_count':len(rows),'error_count':len(errors),'rows':rows[:120]},ensure_ascii=False,indent=2))
+                  invalid.append({'index':gi,'reason':str(e)}); continue
+              if poly.is_empty or poly.geom_type not in ('Polygon','MultiPolygon'):
+                  invalid.append({'index':gi,'reason':'empty_or_non_polygon_after_make_valid'}); continue
+              gid=props.get('layerreference') or props.get('sitereference') or props.get('siteid') or f'objectid:{props.get("objectid",gi)}'
+              grouped.setdefault(str(gid),[]).append({'index':gi,'properties':props,'shape':poly})
+          groups=[]; selected=[]; unmatched=[]
+          for gid,parts in sorted(grouped.items(), key=lambda kv:min(p['index'] for p in kv[1])):
+              union=make_valid(unary_union([p['shape'] for p in parts]))
+              if union.is_empty or union.geom_type not in ('Polygon','MultiPolygon'):
+                  invalid.append({'growth_area_id':gid,'reason':'group_union_empty_or_non_polygon'}); continue
+              matches=[]; minx,miny,maxx,maxy=union.bounds
+              for pid,x,y,props in points:
+                  if x<minx or x>maxx or y<miny or y>maxy: continue
+                  if union.covers(Point(x,y)):
+                      matches.append({'parcel_id':pid,'x':x,'y':y,'canonical_properties':props})
+              item={'growth_area_id':gid,'source_feature_indices':[p['index'] for p in parts],'source_properties':[p['properties'] for p in parts],'source_part_count':len(parts),'union_geometry':mapping(union),'canonical_match_count':len(matches),'canonical_matches':matches[:250]}
+              groups.append(item)
+              if matches and len(selected)<10: selected.append({**item,'selected_match':matches[0]})
+              if not matches: unmatched.append({'growth_area_id':gid,'source_feature_indices':item['source_feature_indices'],'source_part_count':len(parts)})
+          result={'schema':'fg3_service16_layer30_grouped_direct_v1','slot_id':'future_growth_3','observed_at_utc':observed,
+            'canonical':{'path':str(canon),'feature_count':len(c.get('features') or []),'usable_points':len(points),'sha256':hashlib.sha256(c_raw).hexdigest(),'git_blob_sha1':c_git,'selector':'geometry.type=Point AND security_parcel_id present','denominator':len(c.get('features') or [])},
+            'layer_meta':{'url':meta_url,'final_url':meta_final,'http_status':meta_status,'source_sha256':hashlib.sha256(meta_raw).hexdigest(),'name':layer_meta.get('name'),'description':layer_meta.get('description'),'copyrightText':layer_meta.get('copyrightText'),'geometryType':layer_meta.get('geometryType'),'serviceItemId':layer_meta.get('serviceItemId')},
+            'growth':{'url':url,'final_url':final,'http_status':status,'content_type':ctype,'source_sha256':hashlib.sha256(raw).hexdigest(),'feature_count':len(gj.get('features') or []),'geometry_type_counts':geom_types,'polygon_feature_count':sum(1 for f in gj.get('features') or [] if (f.get('geometry') or {}).get('type') in ('Polygon','MultiPolygon')),'valid_group_count':len(groups),'service_index':16,'layer_id':30,'license':'Open Government Licence v3','selector':'where=1=1; outFields=*; returnGeometry=true; outSR=4326','denominator':len(gj.get('features') or [])},
+            'groups':groups,'selected_count':len(selected),'selected':selected,'unmatched_count':len(unmatched),'unmatched':unmatched,'invalid':invalid}
+          (out/'service16_layer30_grouped_result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          def slim(s):
+              p=(s.get('source_properties') or [{}])[0]; m=s.get('selected_match') or {}
+              return {'growth_area_id':s['growth_area_id'],'source_feature_indices':s['source_feature_indices'],'source_part_count':s['source_part_count'],'canonical_match_count':s['canonical_match_count'],'parcel_id':m.get('parcel_id'),'properties':p}
+          print(json.dumps({'layer_name':layer_meta.get('name'),'geometryType':layer_meta.get('geometryType'),'http_status':status,'feature_count':len(gj.get('features') or []),'geometry_type_counts':geom_types,'group_count':len(groups),'selected_count':len(selected),'unmatched_count':len(unmatched),'source_sha256':result['growth']['source_sha256'],'selected':[slim(x) for x in selected],'unmatched':unmatched,'invalid':invalid},ensure_ascii=False,indent=2))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: fg3-unused-polygon-designation-discovery-20260912
-          path: /tmp/fg3_discovery
+          name: fg3-service16-layer30-strategic-development-areas-20260912
+          path: /tmp/fg3_s16l30
           if-no-files-found: error
           retention-days: 3
