@@ -1,4 +1,4 @@
-name: AAYS FG3 Waltham Forest INB6 status evidence pdfplumber 20260912
+name: AAYS FG3 Waltham Forest INB6 status evidence poppler 20260912
 on:
   push:
     paths:
@@ -13,61 +13,53 @@ jobs:
         with:
           ref: codex/aays-single-runner-v5-20260706
           fetch-depth: 1
-      - name: Install PDF parser
-        run: python -m pip install --quiet pdfplumber
-      - name: Materialize Waltham Forest policy lifecycle evidence with changed parser
+      - name: Install changed PDF parser
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Materialize Waltham Forest adopted DM supersession evidence
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p /tmp/fg3_waf_status
           python - <<'PY'
           from pathlib import Path
-          import urllib.request, hashlib, datetime, json, re
-          import pdfplumber
+          import urllib.request, hashlib, datetime, json, re, subprocess
           out=Path('/tmp/fg3_waf_status')
           observed=datetime.datetime.now(datetime.timezone.utc).isoformat()
           sources={
             'current_local_plan_page':'https://www.walthamforest.gov.uk/planning-and-building-control/planning-policy/local-plan-part-1-shaping-borough-2020-2035/local-plan-part-1',
-            'core_strategy':'https://www.walthamforest.gov.uk/sites/default/files/2021-11/adopted-core-strategy.pdf'
+            'dm_adoption_version':'https://www.walthamforest.gov.uk/sites/default/files/2021-12/DMPolicies%20Adoption%20Version%20October%202013.pdf'
           }
           meta={}
           for key,url in sources.items():
-              req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-waf-status-pdfplumber/1.0','Accept':'*/*'})
+              req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-waf-status-poppler/1.0','Accept':'*/*'})
               with urllib.request.urlopen(req,timeout=240) as r:
                   raw=r.read(); status=getattr(r,'status',None); final=r.geturl(); ctype=r.headers.get('Content-Type')
               assert raw
-              ext='.pdf' if key=='core_strategy' or 'pdf' in (ctype or '').lower() else '.html'
+              ext='.pdf' if key=='dm_adoption_version' or 'pdf' in (ctype or '').lower() else '.html'
               p=out/(key+ext); p.write_bytes(raw)
               meta[key]={'url':url,'final_url':final,'http_status':status,'content_type':ctype,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),'path':p.name}
           html=(out/'current_local_plan_page.html').read_text(encoding='utf-8',errors='ignore')
           hnorm=' '.join(re.sub('<[^>]+>',' ',html).split())
           assert re.search(r'adopted\s+on\s+29\s+February\s+2024',hnorm,re.I), 'current plan adoption text not found'
-          page_texts=[]
-          with pdfplumber.open(str(out/'core_strategy.pdf')) as pdf:
-              for i,p in enumerate(pdf.pages):
-                  txt=p.extract_text(x_tolerance=2,y_tolerance=2,layout=True) or ''
-                  page_texts.append((i+1,' '.join(txt.split())))
-              page_count=len(pdf.pages)
-          inb6=[]
-          for pg,txt in page_texts:
-              if re.search(r'INB6',txt,re.I):
-                  pos=re.search(r'INB6',txt,re.I).start()
-                  snippet=txt[max(0,pos-1200):pos+2600]
-                  inb6.append({'page':pg,'snippet':snippet})
-          assert inb6, 'INB6 not found by pdfplumber'
-          joined=' '.join(x['snippet'] for x in inb6)
-          assert re.search(r'Lee\s+Valley\s+Regeneration\s+Corridor',joined,re.I), 'Lee Valley label not found near INB6'
-          assert re.search(r'superseded',joined,re.I), 'superseded context not found near INB6'
-          assert re.search(r'CS1',joined,re.I) and re.search(r'CS8',joined,re.I), 'replacement policies CS1/CS8 not found near INB6'
+          txt_path=out/'dm_adoption_version.txt'
+          subprocess.run(['pdftotext','-layout',str(out/'dm_adoption_version.pdf'),str(txt_path)],check=True)
+          txt=txt_path.read_text(encoding='utf-8',errors='ignore')
+          norm=' '.join(txt.split())
+          m=re.search(r'POLICY\s+INB6.{0,1200}',norm,re.I)
+          assert m, 'POLICY INB6 not found by pdftotext -layout'
+          snippet=m.group(0)
+          assert re.search(r'Lee\s+Valley\s+Regeneration\s+Corridor',snippet,re.I), 'Lee Valley label missing from INB6 row'
+          assert re.search(r'CS1\s*,?\s*CS8',snippet,re.I), 'CS1/CS8 supersession mapping missing'
+          assert re.search(r'DM1',snippet,re.I), 'DM replacement mapping missing'
           result={
-            'schema':'fg3_waf_inb6_status_evidence_v2','slot_id':'future_growth_3','observed_at_utc':observed,
+            'schema':'fg3_waf_inb6_status_evidence_v3','slot_id':'future_growth_3','observed_at_utc':observed,
             'sources':meta,'growth_status':'Superseded','growth_status_date':None,
             'growth_type':'Lee Valley Regeneration Corridor','raw_arcgis_status':None,'source_policy':'INB6',
             'current_local_plan_adoption_date':'2024-02-29',
-            'selector':'ArcGIS extrainfo1=Policy INB6; official Waltham Forest Core Strategy supersession table identifies POLICY INB6 Lee Valley Regeneration Corridor/Mixed Use Regeneration Areas as superseded and replaced by CS1/CS8',
-            'denominator':2,'core_strategy_page_count':page_count,'inb6_match_pages':[x['page'] for x in inb6],
-            'inb6_snippets':[x['snippet'] for x in inb6[:3]],'parser_method':'pdfplumber extract_text layout=True x_tolerance=2 y_tolerance=2',
-            'previous_parser_failure':'pypdf PdfReader exact row co-location failed to recover the table row',
+            'selector':'ArcGIS extrainfo1=Policy INB6; official adopted Development Management Policies supersession table maps POLICY INB6 Lee Valley Regeneration Corridor/Mixed Use Regeneration Areas to superseding CS1/CS8 and Development Management policies',
+            'denominator':2,'inb6_snippet':snippet[:1600],
+            'parser_method':'poppler pdftotext -layout',
+            'previous_parser_failures':['pypdf did not recover INB6 table row from Core Strategy','pdfplumber did not recover INB6 token from Core Strategy text layer'],
             'license':'Public statutory planning material; no reuse licence asserted for council page/PDF'
           }
           (out/'waf_inb6_status_evidence.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
