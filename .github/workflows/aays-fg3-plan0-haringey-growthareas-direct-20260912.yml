@@ -1,4 +1,4 @@
-name: AAYS FG3 service19 layer9 City Fringe Opportunity Area 20260912
+name: AAYS FG3 Islington status evidence 20260912
 on:
   push:
     paths:
@@ -13,68 +13,49 @@ jobs:
         with:
           ref: codex/aays-single-runner-v5-20260706
           fetch-depth: 1
-      - name: Install geometry dependency
-        run: python -m pip install --quiet shapely
-      - name: Materialize service19 layer9 and strict canonical relations
+      - name: Materialize Islington Local Plan status evidence
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/fg3_s19l9
+          mkdir -p /tmp/fg3_islington_status
           python - <<'PY'
           from pathlib import Path
-          import json, hashlib, urllib.request, datetime, subprocess
-          from shapely.geometry import shape, Point
-          out=Path('/tmp/fg3_s19l9')
+          import urllib.request, hashlib, datetime, json, re
+          out=Path('/tmp/fg3_islington_status')
           observed=datetime.datetime.now(datetime.timezone.utc).isoformat()
-          canon=Path('england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson')
-          c_raw=canon.read_bytes(); c=json.loads(c_raw)
-          c_git=subprocess.check_output(['git','hash-object',str(canon)],text=True).strip()
-          points=[]
-          for f in c.get('features') or []:
-              g=f.get('geometry') or {}; p=f.get('properties') or {}; co=g.get('coordinates') or []
-              if g.get('type')=='Point' and len(co)>=2 and p.get('security_parcel_id') not in (None,''):
-                  points.append((str(p['security_parcel_id']),float(co[0]),float(co[1]),p))
-          base='https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/planning_local_plan_data_19/FeatureServer/9'
-          meta_url=base+'?f=pjson'
-          with urllib.request.urlopen(urllib.request.Request(meta_url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-s19l9/1.0','Accept':'application/json'}),timeout=120) as r:
-              meta_raw=r.read(); meta_status=getattr(r,'status',None); meta_final=r.geturl()
-          (out/'service19_layer9_meta.json').write_bytes(meta_raw)
-          layer_meta=json.loads(meta_raw.decode('utf-8'))
-          url=base+'/query?where=1%3D1&outFields=%2A&returnGeometry=true&outSR=4326&f=geojson'
-          req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-s19l9/1.0','Accept':'application/geo+json,application/json'})
-          with urllib.request.urlopen(req,timeout=180) as r:
-              raw=r.read(); status=getattr(r,'status',None); final=r.geturl(); ctype=r.headers.get('Content-Type')
-          (out/'service19_layer9_raw.geojson').write_bytes(raw)
-          gj=json.loads(raw.decode('utf-8'))
-          official=[]; geom_types={}
-          for gi,f in enumerate(gj.get('features') or []):
-              geom=f.get('geometry') or {}; gt=geom.get('type'); geom_types[gt]=geom_types.get(gt,0)+1
-              if gt not in ('Polygon','MultiPolygon'): continue
-              poly=shape(geom)
-              if poly.is_empty or not poly.is_valid: continue
-              matches=[]
-              for pid,x,y,props in points:
-                  if poly.covers(Point(x,y)):
-                      matches.append({'parcel_id':pid,'x':x,'y':y,'canonical_properties':props})
-              official.append({'growth_feature_index':gi,'growth_properties':f.get('properties') or {},'growth_geometry':geom,'canonical_match_count':len(matches),'canonical_matches':matches[:50]})
-          selected=[]; used_parcels=set()
-          for g in official:
-              if not g['canonical_matches']: continue
-              m=next((x for x in g['canonical_matches'] if x['parcel_id'] not in used_parcels),g['canonical_matches'][0])
-              used_parcels.add(m['parcel_id'])
-              selected.append({'growth_feature_index':g['growth_feature_index'],'growth_properties':g['growth_properties'],'growth_geometry':g['growth_geometry'],'growth_feature_canonical_match_count':g['canonical_match_count'],**m})
-              if len(selected)>=10: break
-          result={'schema':'fg3_service19_layer9_direct_v1','slot_id':'future_growth_3','observed_at_utc':observed,
-              'canonical':{'path':str(canon),'feature_count':len(c.get('features') or []),'usable_points':len(points),'sha256':hashlib.sha256(c_raw).hexdigest(),'git_blob_sha1':c_git,'selector':'geometry.type=Point AND security_parcel_id present','denominator':len(c.get('features') or [])},
-              'layer_meta':{'url':meta_url,'final_url':meta_final,'http_status':meta_status,'source_sha256':hashlib.sha256(meta_raw).hexdigest(),'name':layer_meta.get('name'),'description':layer_meta.get('description'),'copyrightText':layer_meta.get('copyrightText'),'geometryType':layer_meta.get('geometryType'),'serviceItemId':layer_meta.get('serviceItemId')},
-              'growth':{'url':url,'final_url':final,'http_status':status,'content_type':ctype,'source_sha256':hashlib.sha256(raw).hexdigest(),'feature_count':len(gj.get('features') or []),'geometry_type_counts':geom_types,'polygon_feature_count':len(official),'service_index':19,'layer_id':9,'license':'Open Government Licence v3','selector':'where=1=1; outFields=*; returnGeometry=true; outSR=4326','denominator':len(gj.get('features') or [])},
-              'official_growth_features':official,'selected_count':len(selected),'selected':selected}
-          (out/'service19_layer9_direct_result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-          print(json.dumps({'layer_name':layer_meta.get('name'),'description':layer_meta.get('description'),'geometryType':layer_meta.get('geometryType'),'http_status':status,'feature_count':len(gj.get('features') or []),'geometry_type_counts':geom_types,'polygon_feature_count':len(official),'selected_count':len(selected),'source_sha256':result['growth']['source_sha256'],'selected':[{'parcel_id':x['parcel_id'],'growth_feature_index':x['growth_feature_index'],'properties':x['growth_properties']} for x in selected]},ensure_ascii=False,indent=2))
+          sources={
+            'local_plan_page':'https://www.islington.gov.uk/planning/planning-policy/islington-local-plan.',
+            'adoption_notice':'https://www.islington.gov.uk/-/media/sharepoint-lists/public-records/planningandbuildingcontrol/publicity/publicconsultation/20232024/islington-local-plan-adoption-notice-28-september-2023.pdf?hash=9E4B3D585021A856303D83ED03D494370A92F82B&la=en'
+          }
+          meta={}
+          for key,url in sources.items():
+              req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-islington-status/1.0','Accept':'*/*'})
+              with urllib.request.urlopen(req,timeout=180) as r:
+                  raw=r.read(); status=getattr(r,'status',None); final=r.geturl(); ctype=r.headers.get('Content-Type')
+              assert len(raw)>0
+              ext='.pdf' if 'pdf' in (ctype or '').lower() or key=='adoption_notice' else '.html'
+              p=out/(key+ext); p.write_bytes(raw)
+              meta[key]={'url':url,'final_url':final,'http_status':status,'content_type':ctype,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),'path':p.name}
+          html=(out/'local_plan_page.html').read_text(encoding='utf-8',errors='ignore')
+          norm=' '.join(re.sub('<[^>]+>',' ',html).split())
+          assert re.search(r'adopted\s+on\s+28\s+September\s+2023',norm,re.I)
+          result={
+            'schema':'fg3_islington_status_evidence_v1','slot_id':'future_growth_3','observed_at_utc':observed,
+            'sources':meta,
+            'growth_status':'Adopted',
+            'growth_status_date':'2023-09-28',
+            'growth_type':'City Fringe Opportunity Area',
+            'raw_arcgis_status':None,
+            'selector':'official Islington Local Plan page states adopted on 28 September 2023; adoption notice is the statutory adoption statement; ArcGIS designation is City Fringe Opportunity Area',
+            'denominator':2,
+            'license':'Public statutory planning material; no reuse licence asserted for council page/PDF'
+          }
+          (out/'islington_status_evidence.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps(result,ensure_ascii=False,indent=2))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: fg3-service19-layer9-direct-20260912
-          path: /tmp/fg3_s19l9
+          name: fg3-islington-status-evidence-20260912
+          path: /tmp/fg3_islington_status
           if-no-files-found: error
           retention-days: 3
