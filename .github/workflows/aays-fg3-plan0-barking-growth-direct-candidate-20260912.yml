@@ -1,0 +1,84 @@
+name: AAYS FG3 Barking growth direct candidate 20260912
+on:
+  push:
+    paths:
+      - '.github/workflows/aays-fg3-plan0-barking-growth-direct-candidate-20260912.yml'
+permissions:
+  contents: read
+jobs:
+  acquire:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+      - name: Install geometry dependency
+        run: python -m pip install --quiet shapely
+      - name: Materialize Barking opportunity area and one canonical relation per official growth feature
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/fg3_barking_growth
+          python - <<'PY'
+          from pathlib import Path
+          import json, hashlib, urllib.request, datetime, subprocess
+          from shapely.geometry import shape, Point
+          out=Path('/tmp/fg3_barking_growth')
+          observed=datetime.datetime.now(datetime.timezone.utc).isoformat()
+          canon=Path('england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson')
+          c_raw=canon.read_bytes(); c=json.loads(c_raw)
+          c_git=subprocess.check_output(['git','hash-object',str(canon)],text=True).strip()
+          points=[]
+          for f in c.get('features') or []:
+              g=f.get('geometry') or {}; p=f.get('properties') or {}; co=g.get('coordinates') or []
+              if g.get('type')=='Point' and len(co)>=2 and p.get('security_parcel_id') not in (None,''):
+                  points.append((str(p['security_parcel_id']),float(co[0]),float(co[1]),p))
+          url=('https://services.arcgis.com/drifeOPKLpgnJ8Qa/arcgis/rest/services/'
+               'planning_local_plan_data_02/FeatureServer/23/query?where=1%3D1&outFields=%2A&'
+               'returnGeometry=true&outSR=4326&f=geojson')
+          req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-barking-growth/1.0','Accept':'application/geo+json,application/json'})
+          with urllib.request.urlopen(req,timeout=180) as r:
+              raw=r.read(); status=getattr(r,'status',None); final=r.geturl(); ctype=r.headers.get('Content-Type')
+          (out/'barking_london_riverside_opportunity_area_raw.geojson').write_bytes(raw)
+          gj=json.loads(raw.decode('utf-8'))
+          official=[]
+          for gi,f in enumerate(gj.get('features') or []):
+              geom=f.get('geometry') or {}
+              if geom.get('type') not in ('Polygon','MultiPolygon'): continue
+              poly=shape(geom); matches=[]
+              for pid,x,y,props in points:
+                  if poly.covers(Point(x,y)):
+                      matches.append({'parcel_id':pid,'x':x,'y':y,'canonical_properties':props})
+              official.append({'growth_feature_index':gi,'growth_properties':f.get('properties') or {},'growth_geometry':geom,
+                               'canonical_match_count':len(matches),'canonical_matches':matches})
+          selected=[]
+          for g in official:
+              if not g['canonical_matches']: continue
+              # One canonical relation per official growth feature to avoid reusing source feature/hash/ID.
+              m=g['canonical_matches'][0]
+              selected.append({'growth_feature_index':g['growth_feature_index'],'growth_properties':g['growth_properties'],
+                               'growth_geometry':g['growth_geometry'],'growth_feature_canonical_match_count':g['canonical_match_count'],
+                               **m})
+              if len(selected)>=10: break
+          result={'schema':'fg3_barking_growth_direct_v1','slot_id':'future_growth_3','observed_at_utc':observed,
+                  'canonical':{'path':str(canon),'feature_count':len(c.get('features') or []),'usable_points':len(points),
+                               'sha256':hashlib.sha256(c_raw).hexdigest(),'git_blob_sha1':c_git,
+                               'selector':'geometry.type=Point AND security_parcel_id present','denominator':len(c.get('features') or [])},
+                  'growth':{'url':url,'final_url':final,'http_status':status,'content_type':ctype,
+                            'source_sha256':hashlib.sha256(raw).hexdigest(),'feature_count':len(gj.get('features') or []),
+                            'polygon_feature_count':len(official),'layer_name':'London Riverside Opportunity Area',
+                            'service_index':2,'layer_id':23,'license':'Open Government Licence v3',
+                            'selector':'where=1=1; outFields=*; returnGeometry=true; outSR=4326','denominator':len(gj.get('features') or [])},
+                  'official_growth_features':official,'selected_count':len(selected),'selected':selected}
+          (out/'barking_growth_direct_result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
+          print(json.dumps({'official_polygon_features':len(official),'selected_count':len(selected),
+                            'selected':[(x['parcel_id'],x['growth_properties'].get('layerreference'),x['growth_properties'].get('objectid')) for x in selected],
+                            'growth_sha256':result['growth']['source_sha256'],'http_status':status},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fg3-barking-growth-direct-candidate-20260912
+          path: /tmp/fg3_barking_growth
+          if-no-files-found: error
+          retention-days: 3
