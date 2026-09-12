@@ -1,0 +1,58 @@
+name: AAYS FG3 scan unused London growth services 20260912
+on:
+  push:
+    paths:
+      - '.github/workflows/aays-fg3-plan0-scan-unused-london-growth-services-20260912.yml'
+permissions:
+  contents: read
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/aays-single-runner-v5-20260706
+          fetch-depth: 1
+      - name: Scan public ArcGIS planning_local_plan_data services
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/fg3_scan
+          python - <<'PY'
+          import json, urllib.request, hashlib, datetime
+          from pathlib import Path
+          out=Path('/tmp/fg3_scan')
+          base='https://services.arcgis.com/drifeOPKLpgnJ8Qa/ArcGIS/rest/services/planning_local_plan_data_{:02d}/FeatureServer?f=pjson'
+          rows=[]
+          for n in range(1,41):
+              url=base.format(n)
+              try:
+                  req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-Plan0-future_growth_3-service-scan/1.0','Accept':'application/json'})
+                  with urllib.request.urlopen(req,timeout=30) as r:
+                      raw=r.read(); status=getattr(r,'status',None); final=r.geturl()
+                  obj=json.loads(raw.decode('utf-8'))
+              except Exception as e:
+                  rows.append({'service_index':n,'url':url,'error':repr(e)})
+                  continue
+              layers=obj.get('layers') or []
+              growth=[x for x in layers if 'growth' in str(x.get('name','')).lower() or 'opportunity' in str(x.get('name','')).lower() or 'intensification' in str(x.get('name','')).lower()]
+              rows.append({
+                'service_index':n,'url':url,'final_url':final,'http_status':status,
+                'service_description':obj.get('serviceDescription'),'item_id':obj.get('serviceItemId'),
+                'full_extent':obj.get('fullExtent'),'growth_like_layers':growth,
+                'layer_count':len(layers),'source_sha256':hashlib.sha256(raw).hexdigest(),
+              })
+          result={'observed_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                  'selector':'planning_local_plan_data_01..40 FeatureServer service metadata; growth/opportunity/intensification layer names',
+                  'denominator':40,'rows':rows}
+          (out/'service_scan.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
+          hits=[r for r in rows if r.get('growth_like_layers')]
+          (out/'growth_service_hits.json').write_text(json.dumps({'hit_count':len(hits),'hits':hits},ensure_ascii=False,indent=2)+'\n')
+          print(json.dumps({'hit_count':len(hits),'hits':[{'i':r['service_index'],'desc':r.get('service_description'),'layers':r.get('growth_like_layers')} for r in hits]},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fg3-unused-london-growth-service-scan-20260912
+          path: /tmp/fg3_scan
+          if-no-files-found: error
+          retention-days: 3
