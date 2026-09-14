@@ -1,0 +1,54 @@
+name: AAYS bt3 Plan0 title-boundary probe 20260914
+
+on:
+  push:
+    paths:
+      - '.github/workflows/aays-bt3-plan0-title-boundary-probe-20260914.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-title-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch exact Planning Data title-boundary intersections
+        shell: python
+        run: |
+          import base64, hashlib, json, urllib.parse, urllib.request
+
+          queries = [
+              (
+                  "ENG_OSM_way_253977368",
+                  "POLYGON((-0.682727132909978 51.6029057529896,-0.682863838586388 51.6030017921667,-0.682754361852353 51.6030625170247,-0.682617671841152 51.6029659383851,-0.682727132909978 51.6029057529896))",
+              ),
+              (
+                  "ENG_OSM_way_253977373",
+                  "POLYGON((-0.683388452678526 51.6031056915927,-0.683269259537991 51.6031429290647,-0.683204302900876 51.6030623523698,-0.683323495888203 51.6030251149624,-0.683388452678526 51.6031056915927))",
+              ),
+          ]
+          base = "https://www.planning.data.gov.uk/entity.geojson"
+          for fid, wkt in queries:
+              params = [
+                  ("dataset", "title-boundary"),
+                  ("geometry", wkt),
+                  ("geometry_relation", "intersects"),
+                  ("limit", "100"),
+              ]
+              url = base + "?" + urllib.parse.urlencode(params)
+              req = urllib.request.Request(url, headers={"User-Agent": "AAYS-Plan0-V6-building_type_3/20260914"})
+              with urllib.request.urlopen(req, timeout=60) as r:
+                  body = r.read()
+                  meta = {
+                      "fid": fid,
+                      "url": url,
+                      "final_url": r.geturl(),
+                      "http_status": r.status,
+                      "content_type": r.headers.get("Content-Type"),
+                      "bytes": len(body),
+                      "sha256": hashlib.sha256(body).hexdigest(),
+                  }
+              print("BT3_META " + json.dumps(meta, sort_keys=True, separators=(",", ":")))
+              print("BT3_RAW_B64_BEGIN " + fid)
+              print(base64.b64encode(body).decode("ascii"))
+              print("BT3_RAW_B64_END " + fid)
