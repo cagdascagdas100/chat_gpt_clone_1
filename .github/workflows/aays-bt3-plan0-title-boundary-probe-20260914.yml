@@ -9,35 +9,27 @@ permissions:
   contents: read
 
 jobs:
-  canonical-readback:
+  hmlr-price-paid-semantic:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: codex/aays-single-runner-v5-20260706
-          fetch-depth: 1
-      - name: Scan canonical for duplicate identities and schema keys
+      - name: Fetch exact HMLR Price Paid address records
         shell: python
         run: |
-          import json
-          p='england_map_web/data/building_type/shards/building_type_3_latest.geojson'
-          obj=json.load(open(p,encoding='utf-8'))
-          fs=obj.get('features') or []
-          needles={
-            '32129771','32127598','12032129771','12032127598',
-            '4AD98F7E-0D4F-4C68-B4B6-31808EAFEE30','208CD3B0-B579-4157-8D90-60712583FB18',
-            'title-boundary:32129771','title-boundary:32127598',
-          }
-          hits=[]
-          for i,f in enumerate(fs):
-              p=f.get('properties') or {}
-              vals=[]
-              for k,v in p.items():
-                  if isinstance(v,(str,int,float)):
-                      vals.append((k,str(v)))
-              for k,v in vals:
-                  if v in needles or any(n in v for n in needles):
-                      hits.append({'index':i,'feature_id':f.get('id') or p.get('feature_id'),'key':k,'value':v})
-          sample_keys=sorted((fs[0].get('properties') or {}).keys()) if fs else []
-          last_keys=sorted((fs[-1].get('properties') or {}).keys()) if fs else []
-          print('BT3_CANONICAL_READBACK '+json.dumps({'feature_count':len(fs),'duplicate_hits':hits,'sample_property_keys':sample_keys,'last_property_keys':last_keys},sort_keys=True,separators=(',',':')))
+          import base64, hashlib, json, urllib.parse, urllib.request
+          base='https://landregistry.data.gov.uk/data/ppi/transaction-record.json'
+          for paon in ('6','9'):
+              params=[
+                  ('propertyAddress.postcode','HP10 0NU'),
+                  ('propertyAddress.paon',paon),
+                  ('propertyAddress.street','WHITE HOUSE CLOSE'),
+                  ('_pageSize','100'),
+              ]
+              url=base+'?'+urllib.parse.urlencode(params)
+              req=urllib.request.Request(url,headers={'User-Agent':'AAYS-Plan0-V6-building_type_3/20260914','Accept':'application/json'})
+              with urllib.request.urlopen(req,timeout=90) as r:
+                  body=r.read()
+                  meta={'paon':paon,'url':url,'final_url':r.geturl(),'http_status':r.status,'content_type':r.headers.get('Content-Type'),'bytes':len(body),'sha256':hashlib.sha256(body).hexdigest()}
+              print('BT3_PPD_META '+json.dumps(meta,sort_keys=True,separators=(',',':')))
+              print('BT3_PPD_RAW_B64_BEGIN '+paon)
+              print(base64.b64encode(body).decode('ascii'))
+              print('BT3_PPD_RAW_B64_END '+paon)
