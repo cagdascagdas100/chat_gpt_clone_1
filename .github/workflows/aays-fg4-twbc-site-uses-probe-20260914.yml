@@ -1,0 +1,47 @@
+name: AAYS fg4 TWBC site allocation uses probe 20260914
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - '.github/workflows/aays-fg4-twbc-site-uses-probe-20260914.yml'
+permissions:
+  contents: read
+jobs:
+  fetch-site-uses:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fetch first ten site-allocation-use polygons
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import urllib.request, urllib.parse, json, hashlib, datetime
+          base='https://services.arcgis.com/tghlG7ZjtJZbhYYT/ArcGIS/rest/services/TWBC_Local_Plan__Adopted_2025__Interactive_Policies_Map_v2_WFL1/FeatureServer/8/query'
+          params={'where':'1=1','outFields':'*','returnGeometry':'true','outSR':'4326','orderByFields':'OBJECTID ASC','resultRecordCount':'10','f':'geojson'}
+          url=base+'?'+urllib.parse.urlencode(params)
+          req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-future_growth_4/1.0','Accept':'application/geo+json,application/json'})
+          with urllib.request.urlopen(req,timeout=180) as r:
+            raw=r.read(); status=getattr(r,'status',None); final=r.geturl(); ctype=r.headers.get('Content-Type')
+          data=json.loads(raw)
+          if data.get('type')!='FeatureCollection': raise SystemExit('not FeatureCollection')
+          feats=data.get('features',[])[:10]
+          if not feats: raise SystemExit('no features')
+          for f in feats:
+            g=f.get('geometry') or {}
+            if g.get('type') not in ('Polygon','MultiPolygon'): raise SystemExit('non-polygon geometry: '+str(g.get('type')))
+          out={'type':'FeatureCollection','features':feats}
+          canonical=json.dumps(out,separators=(',',':'),ensure_ascii=False).encode()
+          open('fg4_twbc_site_allocation_uses.geojson','wb').write(canonical)
+          meta={'slot_id':'future_growth_4','retrieved_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z'),'http_status':status,'content_type':ctype,'request_url':url,'final_url':final,'raw_response_sha256':hashlib.sha256(raw).hexdigest(),'selected_geojson_sha256':hashlib.sha256(canonical).hexdigest(),'feature_count':len(feats),'features':[{'id':f.get('id'),'geometry_type':(f.get('geometry') or {}).get('type'),'properties':f.get('properties',{})} for f in feats]}
+          open('fg4_twbc_site_allocation_uses_meta.json','w').write(json.dumps(meta,indent=2,ensure_ascii=False))
+          print(json.dumps(meta,ensure_ascii=False))
+          PY
+      - name: Upload probe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fg4-twbc-site-allocation-uses-probe
+          path: |
+            fg4_twbc_site_allocation_uses.geojson
+            fg4_twbc_site_allocation_uses_meta.json
+          if-no-files-found: error
