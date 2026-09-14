@@ -1,0 +1,66 @@
+name: AAYS fg4 GLA site allocations probe 11-20 20260915
+on:
+  push:
+    branches:
+      - codex/aays-single-runner-v5-20260706
+    paths:
+      - '.github/workflows/aays-fg4-gla-site-allocations-probe-11-20-20260915.yml'
+permissions:
+  contents: read
+jobs:
+  fetch-gla-site-allocations:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fetch GLA Site Allocations current records 11-20
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import urllib.request, urllib.parse, json, hashlib, datetime
+          base='https://gis.london.gov.uk/arcgis/rest/services/apps/planning_data_map_02/FeatureServer/102/query'
+          params={
+            'where':'removeddate IS NULL',
+            'outFields':'*',
+            'returnGeometry':'true',
+            'outSR':'4326',
+            'orderByFields':'objectid ASC',
+            'resultOffset':'10',
+            'resultRecordCount':'10',
+            'f':'geojson'
+          }
+          url=base+'?'+urllib.parse.urlencode(params)
+          req=urllib.request.Request(url,headers={'User-Agent':'TerraYield-AAYS-future_growth_4/1.0','Accept':'application/geo+json,application/json'})
+          with urllib.request.urlopen(req,timeout=180) as r:
+            raw=r.read(); status=getattr(r,'status',None); final=r.geturl(); ctype=r.headers.get('Content-Type')
+          data=json.loads(raw)
+          feats=(data.get('features') or [])[:10]
+          if len(feats)!=10: raise SystemExit('expected 10 features, got '+str(len(feats)))
+          for f in feats:
+            g=f.get('geometry') or {}
+            if g.get('type') not in ('Polygon','MultiPolygon'): raise SystemExit('non-polygon geometry: '+str(g.get('type')))
+          out={'type':'FeatureCollection','features':feats}
+          canonical=json.dumps(out,separators=(',',':'),ensure_ascii=False).encode()
+          open('fg4_gla_site_allocations_11_20.geojson','wb').write(canonical)
+          meta={
+            'slot_id':'future_growth_4',
+            'retrieved_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat().replace('+00:00','Z'),
+            'http_status':status,
+            'content_type':ctype,
+            'request_url':url,
+            'final_url':final,
+            'raw_response_sha256':hashlib.sha256(raw).hexdigest(),
+            'selected_geojson_sha256':hashlib.sha256(canonical).hexdigest(),
+            'feature_count':len(feats),
+            'features':[{'id':f.get('id'),'geometry_type':(f.get('geometry') or {}).get('type'),'properties':f.get('properties',{})} for f in feats]
+          }
+          open('fg4_gla_site_allocations_11_20_meta.json','w').write(json.dumps(meta,indent=2,ensure_ascii=False))
+          print(json.dumps(meta,ensure_ascii=False))
+          PY
+      - name: Upload probe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fg4-gla-site-allocations-probe-11-20
+          path: |
+            fg4_gla_site_allocations_11_20.geojson
+            fg4_gla_site_allocations_11_20_meta.json
+          if-no-files-found: error
