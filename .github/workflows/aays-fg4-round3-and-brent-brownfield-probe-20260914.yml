@@ -1,4 +1,4 @@
-name: AAYS fg4 round3 and Rother brownfield-site probe 20260914
+name: AAYS fg4 round3 and GLA site allocations probe 20260914
 on:
   push:
     branches:
@@ -11,7 +11,7 @@ jobs:
   fetch-sources:
     runs-on: ubuntu-24.04
     steps:
-      - name: Fetch TWBC 51-60 and Rother authoritative brownfield-site
+      - name: Fetch TWBC 51-60 and GLA Site Allocations
         shell: bash
         run: |
           set -euo pipefail
@@ -37,34 +37,33 @@ jobs:
           b=json.dumps(out,separators=(',',':'),ensure_ascii=False).encode()
           open('fg4_twbc_site_allocation_uses_51_60.geojson','wb').write(b)
           open('fg4_twbc_site_allocation_uses_51_60_meta.json','w').write(json.dumps({'slot_id':'future_growth_4','retrieved_at_utc':now,'http_status':status,'content_type':ctype,'request_url':twbc_url,'final_url':final,'raw_response_sha256':hashlib.sha256(raw).hexdigest(),'selected_geojson_sha256':hashlib.sha256(b).hexdigest(),'feature_count':len(feats),'features':[{'id':f.get('id'),'geometry_type':(f.get('geometry') or {}).get('type'),'properties':f.get('properties',{})} for f in feats]},indent=2,ensure_ascii=False))
-          # Changed source family/region after round 3: Planning Data authoritative brownfield-site, Rother District Council.
-          pd_base='https://www.planning.data.gov.uk/entity.geojson'
-          pd_params=[('dataset','brownfield-site'),('organisation_entity','269'),('quality','authoritative'),('period','current'),('limit','100'),('offset','0')]
-          pd_url=pd_base+'?'+urllib.parse.urlencode(pd_params)
-          raw2,status2,final2,ctype2=get(pd_url)
+          # Changed source family/region after round 3: Greater London Authority Site Allocations layer 102.
+          gla_base='https://gis.london.gov.uk/arcgis/rest/services/apps/planning_data_map_02/FeatureServer/102/query'
+          gla_params={'where':'removeddate IS NULL','outFields':'*','returnGeometry':'true','outSR':'4326','orderByFields':'objectid ASC','resultRecordCount':'25','f':'geojson'}
+          gla_url=gla_base+'?'+urllib.parse.urlencode(gla_params)
+          raw2,status2,final2,ctype2=get(gla_url)
           d2=json.loads(raw2)
           allf=d2.get('features') or []
           selected=[]
           for f in allf:
               g=f.get('geometry') or {}
-              p=f.get('properties') or {}
-              if g.get('type') in ('Polygon','MultiPolygon') and p.get('end-date','') in ('',None):
+              if g.get('type') in ('Polygon','MultiPolygon'):
                   selected.append(f)
               if len(selected)>=10: break
-          if not selected: raise SystemExit('Rother no polygon features')
+          if len(selected)<1: raise SystemExit('GLA no polygon features')
           out2={'type':'FeatureCollection','features':selected}
           b2=json.dumps(out2,separators=(',',':'),ensure_ascii=False).encode()
-          open('fg4_planning_data_rother_brownfield_site.geojson','wb').write(b2)
-          open('fg4_planning_data_rother_brownfield_site_meta.json','w').write(json.dumps({'slot_id':'future_growth_4','retrieved_at_utc':now,'http_status':status2,'content_type':ctype2,'request_url':pd_url,'final_url':final2,'raw_response_sha256':hashlib.sha256(raw2).hexdigest(),'selected_geojson_sha256':hashlib.sha256(b2).hexdigest(),'returned_feature_count':len(allf),'selected_feature_count':len(selected),'features':[{'id':f.get('id'),'geometry_type':(f.get('geometry') or {}).get('type'),'properties':f.get('properties',{})} for f in selected]},indent=2,ensure_ascii=False))
-          print(json.dumps({'twbc_count':len(feats),'rother_selected_count':len(selected),'twbc_http':status,'rother_http':status2},ensure_ascii=False))
+          open('fg4_gla_site_allocations.geojson','wb').write(b2)
+          open('fg4_gla_site_allocations_meta.json','w').write(json.dumps({'slot_id':'future_growth_4','retrieved_at_utc':now,'http_status':status2,'content_type':ctype2,'request_url':gla_url,'final_url':final2,'raw_response_sha256':hashlib.sha256(raw2).hexdigest(),'selected_geojson_sha256':hashlib.sha256(b2).hexdigest(),'returned_feature_count':len(allf),'selected_feature_count':len(selected),'features':[{'id':f.get('id'),'geometry_type':(f.get('geometry') or {}).get('type'),'properties':f.get('properties',{})} for f in selected]},indent=2,ensure_ascii=False))
+          print(json.dumps({'twbc_count':len(feats),'gla_selected_count':len(selected),'twbc_http':status,'gla_http':status2},ensure_ascii=False))
           PY
       - name: Upload probe artifact
         uses: actions/upload-artifact@v4
         with:
-          name: fg4-round3-and-rother-brownfield-site-probe
+          name: fg4-round3-and-gla-site-allocations-probe
           path: |
             fg4_twbc_site_allocation_uses_51_60.geojson
             fg4_twbc_site_allocation_uses_51_60_meta.json
-            fg4_planning_data_rother_brownfield_site.geojson
-            fg4_planning_data_rother_brownfield_site_meta.json
+            fg4_gla_site_allocations.geojson
+            fg4_gla_site_allocations_meta.json
           if-no-files-found: error
