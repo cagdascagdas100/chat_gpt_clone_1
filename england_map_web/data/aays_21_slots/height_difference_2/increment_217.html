@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_2 · Increment 217</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:20px;background:#f6f7f9;color:#17202a}
+h1{margin-bottom:4px}.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin:16px 0}
+.card{background:white;border:1px solid #dfe3e8;border-radius:8px;padding:10px}.value{font-size:1.35rem;font-weight:700}
+table{border-collapse:collapse;width:100%;background:white;font-size:13px}th,td{padding:7px;border:1px solid #e2e6ea;vertical-align:top}th{position:sticky;top:0;background:#eef1f4}
+.completed{background:#eefaf1}.blocked{background:#fff1f0}.badge{font-weight:700}
+</style></head><body>
+<h1>height_difference_2 — Increment 217</h1>
+<div>Resmî kaynak derinleştirmesi ve üç aday için satır bazlı kontrol matrisi. Yeni sayısal ölçüm iddiası yoktur.</div>
+<div class="summary">
+<div class="card"><div>İşlem</div><div class="value">108</div></div>
+<div class="card"><div>Tamamlanan</div><div class="value">104</div></div>
+<div class="card"><div>Engelli</div><div class="value">4</div></div>
+<div class="card"><div>Resmî kaynak</div><div class="value">28</div></div>
+<div class="card"><div>Aday kontrolü</div><div class="value">48</div></div>
+<div class="card"><div>Genel ilerleme</div><div class="value">%78</div></div>
+</div>
+<table><thead><tr><th>No</th><th>Durum</th><th>Aşama</th><th>İşlem</th><th>Kaynak</th><th>Satır ayrıntısı</th><th>Doğruluk</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+const files=["operations_increment_217_a.json", "operations_increment_217_b.json", "operations_increment_217_c.json", "operations_increment_217_d.json", "operations_increment_217_e.json", "operations_increment_217_f.json"];
+Promise.all(files.map(f=>fetch(f).then(r=>r.json()))).then(parts=>{
+ const ops=parts.flatMap(p=>p.operations).sort((a,b)=>a.operation_no-b.operation_no);
+ document.getElementById('rows').innerHTML=ops.map(o=>`<tr class="${o.status}">
+ <td>${o.operation_no}</td><td class="badge">${o.display_badge}</td><td>${o.stage}</td>
+ <td>${o.operation_type}</td><td>${o.source_url?`<a href="${o.source_url}" target="_blank" rel="noopener">${o.source_name}</a>`:o.source_name}</td>
+ <td>${o.details_summary}</td><td>${o.accuracy_score_4}</td></tr>`).join('');
+}).catch(e=>document.getElementById('rows').innerHTML=`<tr><td colspan="7">Dosyalar yüklenemedi: ${e}</td></tr>`);
+</script></body></html>

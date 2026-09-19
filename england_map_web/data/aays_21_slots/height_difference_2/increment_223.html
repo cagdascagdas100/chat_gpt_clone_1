@@ -1,0 +1,19 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_2 Increment 223</title><style>body{font-family:system-ui,sans-serif;margin:20px;background:#f7f7f8;color:#171717}
+h1{font-size:22px}.summary{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}.card{background:white;border:1px solid #ddd;border-radius:8px;padding:10px}
+table{border-collapse:collapse;width:100%;background:white;font-size:13px}th,td{border:1px solid #ddd;padding:7px;vertical-align:top;text-align:left}
+th{position:sticky;top:0;background:#eee}.completed{color:#087a35}.blocked{color:#b42318;font-weight:700}</style></head><body>
+<h1>height_difference_2 — Increment 223</h1><div class="summary"><div class="card">96 işlem</div><div class="card">92 tamamlandı</div>
+<div class="card">4 engel</div><div class="card">Kaynak doğruluğu 4.0/4</div></div>
+<p>Terrain 50 resmî ASCII parser, piksel merkezi, satır yönü, header ve yan dosya kabul matrisi.</p>
+<table><thead><tr><th>No</th><th>Durum</th><th>Aşama</th><th>İşlem</th><th>Aday</th><th>Özet</th><th>Kaynak</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+const files=['operations_increment_223_a.json','operations_increment_223_b.json','operations_increment_223_c.json'];
+function fmt(t,c){return t.replace(/\{(\w+)(?::\.3f)?\}/g,(_,k)=>typeof c[k]==='number'&&t.includes('{'+k+':.3f}')?c[k].toFixed(3):c[k])}
+function expand(p){if(p.operations)return p.operations;const g=p.generator,o=[];let n=p.operation_start;
+for(const c of g.candidates)for(const t of g.templates)o.push({operation_no:n++,status:'completed',stage:g.stage,operation_type:t.operation_type,
+candidate_row:c.row,details_summary:fmt(t.details_template,c),source_name:g.source_name,source_url:g.source_url});return o}
+Promise.all(files.map(f=>fetch(f).then(r=>{if(!r.ok)throw Error(f+' '+r.status);return r.json()})))
+.then(ps=>ps.flatMap(expand).sort((a,b)=>a.operation_no-b.operation_no)).then(ops=>{const t=document.getElementById('rows');for(const o of ops){const tr=document.createElement('tr');
+tr.innerHTML=`<td>${o.operation_no}</td><td class="${o.status}">${o.status}</td><td>${o.stage}</td><td>${o.operation_type}</td><td>${o.candidate_row??''}</td><td>${o.details_summary}</td><td>${o.source_name??''}</td>`;t.appendChild(tr)}})
+.catch(e=>document.body.insertAdjacentHTML('beforeend',`<p class="blocked">${e}</p>`));</script></body></html>
