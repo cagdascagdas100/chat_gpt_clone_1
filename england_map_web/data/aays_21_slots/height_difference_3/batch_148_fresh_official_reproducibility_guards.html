@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><title>height_difference_3 Batch 148</title>
+<style>
+body{font-family:Arial,sans-serif;margin:18px;line-height:1.35}
+.summary{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.card{border:1px solid #ccc;padding:8px 10px;border-radius:6px}
+input,select{padding:7px;margin:6px 4px 10px 0}input{width:min(520px,70vw)}
+table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ccc;padding:5px;text-align:left;vertical-align:top}
+thead{position:sticky;top:0;background:white}.status{font-weight:bold}.notice{border:1px solid #999;padding:10px;margin:10px 0}
+</style></head><body>
+<h1>height_difference_3 — Batch 148</h1>
+<p>Recovery-safe araştırma görünümü. Aynı continuation/task ve mevcut Draft PR korunur. Runtime, exact candidate source bytes ve numeric height-difference promotion çalıştırılmamıştır.</p>
+<div class="summary" id="summary"></div>
+<div class="notice">Resmî kaynak aileleri: HM Land Registry INSPIRE, Environment Agency LIDAR Composite DTM 1m/WCS, Ordnance Survey Terrain 50/Downloads API. Exact candidate bytes olmadığı yerde kontrol BLOCKED olarak kapanır; sayısal değer uydurulmaz.</div>
+<input id="q" placeholder="Satırlarda ara..." oninput="render()">
+<select id="status" onchange="render()"><option value="">Tüm durumlar</option><option>PASS</option><option>BLOCKED</option><option>PREPARED</option></select>
+<select id="type" onchange="render()"><option value="">Tüm türler</option><option>OFFICIAL_SOURCE_FACT</option><option>CANDIDATE_GUARD</option><option>STRICT12_PREP</option><option>RECOVERY_GUARD</option></select>
+<table><thead><tr><th>#</th><th>Tür</th><th>Kaynak</th><th>Aday</th><th>Kontrol</th><th>Durum</th><th>Kanıt / neden</th><th>Bağlantı</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+const RAW='https://raw.githubusercontent.com/cagdascagdas100/chat_gpt_clone_1/agent/height-difference-3-recovery-safe-web146-20260727/docs/chatgpt_status/_shared/slots_21/height_difference_3/research_only/batch_148_fresh_official_reproducibility_guards.json';
+let rows=[];
+function add(type,source,candidate,check,status,reason,url){rows.push({operation:rows.length+1,type,source,candidate,check,status,reason,url});}
+function expand(d){
+  rows=[];
+  for(const f of d.official_facts){add('OFFICIAL_SOURCE_FACT',f[0],'',f[1],'PASS',f[2],f[3]);}
+  for(const [id,c] of Object.entries(d.candidates)){
+    for(const check of d.candidate_guard_template.pass){
+      let reason='Canonical candidate metadata or current official source semantics are pinned and internally reproducible for this research-only check.';
+      if(check==='CELL_OFFSET_WITHIN_HALF_DIAGONAL') reason=`Pinned candidate-to-cell-centre offset ${c.offset_m} m is within a 50 m grid cell half-diagonal.`;
+      if(check==='HMLR_RELEASE_CURRENT') reason='Current HMLR INSPIRE release is 5 July 2026.';
+      if(check==='EA_DTM_CURRENT') reason='EA DTM 1m metadata/WCS source family is current and readable.';
+      if(check==='OS_TERRAIN50_CURRENT') reason='OS Terrain 50 documentation confirms current annual July product semantics.';
+      if(check==='OS_TQ_API_AREA_SUPPORTED') reason='OS Downloads API enumerates TQ as a supported area filter.';
+      add('CANDIDATE_GUARD','HMLR+EA+OS',id,check,'PASS',reason,'repo://runner_inputs/059_candidate_manifest_61536_61539_batch_115.json');
+    }
+    for(const check of d.candidate_guard_template.blocked){
+      let reason='Fresh candidate-specific official bytes were not consumed by the stale canonical runtime; fail closed.';
+      if(check==='NUMERIC_HEIGHT_DIFFERENCE_PROMOTION') reason='Promotion remains forbidden until exact HMLR boundary + EA WCS sample + OS tile cross-check + sealed runtime/publish/readback all pass.';
+      add('CANDIDATE_GUARD','HMLR+EA+OS',id,check,'BLOCKED',reason,'repo://slots_21/height_difference_3/current_task_latest.json');
+    }
+  }
+  for(const id of d.strict12.rows){
+    for(const check of d.strict12.prepared) add('STRICT12_PREP','HMLR+EA+OS',id,check,'PREPARED','Canonical strict-12 plan position is preserved; no identity or numeric value is inferred.','repo://height_difference_3/strict12-plan');
+    for(const check of d.strict12.blocked) add('STRICT12_PREP','HMLR+EA+OS',id,check,'BLOCKED','Required exact canonical/runtime evidence is not yet materialized; fail closed.','repo://height_difference_3/strict12-plan');
+  }
+  for(const g of d.recovery_guards){
+    add('RECOVERY_GUARD','CANONICAL','',g[0],g[1],g[1]==='PASS'?'Continuation safety invariant verified.':'Recovery/runtime/publisher gate is not satisfied.','repo://slots_21/height_difference_3');
+  }
+}
+function render(){
+  const q=document.getElementById('q').value.toLowerCase(), st=document.getElementById('status').value, ty=document.getElementById('type').value;
+  const out=rows.filter(r=>(!st||r.status===st)&&(!ty||r.type===ty)&&(!q||JSON.stringify(r).toLowerCase().includes(q)));
+  document.getElementById('rows').innerHTML=out.map(r=>`<tr><td>${r.operation}</td><td>${r.type}</td><td>${r.source}</td><td>${r.candidate}</td><td>${r.check}</td><td class="status">${r.status}</td><td>${r.reason}</td><td>${r.url.startsWith('http')?`<a href="${r.url}">source</a>`:r.url}</td></tr>`).join('');
+}
+fetch(RAW).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(d=>{
+  expand(d);
+  if(rows.length!==d.quality.expanded_visible_rows) throw new Error(`expanded row mismatch ${rows.length} != ${d.quality.expanded_visible_rows}`);
+  document.getElementById('summary').innerHTML=[
+    ['Satır',d.quality.expanded_visible_rows],['PASS',d.quality.pass],['BLOCKED',d.quality.blocked_fail_closed],['PREPARED',d.quality.prepared_not_promoted],
+    ['Resmî kontrol',d.quality.official_source_fact_checks],['Hardened aday',d.candidate_summary.hardened_candidates.length],
+    ['Numeric promotion',d.candidate_summary.promoted_rows_this_batch],['Genel hazırlık',`${d.canonical_progress.completed}/${d.canonical_progress.total} = %${d.canonical_progress.percent}`]
+  ].map(x=>`<div class="card"><b>${x[0]}</b><br>${x[1]}</div>`).join('');
+  render();
+}).catch(e=>{document.body.insertAdjacentHTML('afterbegin',`<div class="notice"><b>DATA LOAD ERROR:</b> ${e}</div>`);});
+</script></body></html>
