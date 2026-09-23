@@ -7,6 +7,11 @@ Install this once on every Windows PC whose Downloads folder receives AAYS ZIP p
 3. Run `INSTALL_ON_THIS_PC.ps1` with PowerShell.
 4. Run `START_NOW.cmd` once.
 
+The kit also includes the current Plan 0 and Layer24 start/continue prompts under
+`PROMPTS/`. Use those files instead of older saved continuations. Their mandatory
+gate keeps area joins, direct parcel measurements, building classification and
+distinct planned-building counts separate, and requires GitHub transport proof.
+
 The uploader validates producer ZIP contents and SHA-256 sidecars, retains the original download, and commits valid packages to one of these paths:
 
 - `incoming/plan0/<COMPUTERNAME>/`
