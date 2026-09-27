@@ -1,0 +1,1 @@
+CAPABILITY_PROBE_ERROR: Additional harmless marker files were mistakenly created after write capability was already proven. No source/data acceptance occurred. Do not treat this directory as a valid lineage delivery because the actual LINEAGE_ID was unavailable from the accessible checkpoint.
