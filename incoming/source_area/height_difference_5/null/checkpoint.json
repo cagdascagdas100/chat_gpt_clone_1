@@ -4,22 +4,22 @@
   "partition": null,
   "lineage_id": null,
   "page_generation": null,
-  "checkpoint_generation": "R8",
-  "previous_checkpoint": "R7",
+  "checkpoint_generation": "R9",
+  "previous_checkpoint": "R8",
   "producer_family": "AAYS_LAYER24_EVIDENCE_V1",
   "package_category": "AAYS_SOURCE_AREA_V1",
-  "state": "DELIVERY_BLOCKED:SOURCE_DATA_ACCESS_REQUIRED",
+  "state": "DELIVERY_BLOCKED:EXACT_BUILDING_GEOMETRY_AND_LOCAL_JOIN_REQUIRED",
   "accepted_count": 0,
   "source_area_count": 4,
-  "accepted_count_semantics": "unchanged; source-area evidence is not parcel progress",
+  "accepted_count_semantics": "unchanged; source evidence is not parcel progress",
   "previous_physical_package": {
-    "zip_sha256": "261f0001a18a319e2569a58fa44b911ced1d7fb2b4e41efbb6e62167289d4b77",
+    "zip_sha256": "8134cc6c9cc57dd11aca7d16a8f78ef04b8baae89ebb02a3d9d4c22bb44f3c2b",
     "external_zip_sidecar": "PASS",
     "internal_SHA256SUMS": "PASS",
     "individual_sidecars": "PASS"
   },
   "previous_remote_delivery": {
-    "commit_sha": "9c40781af8bb9190bbc35fd69b7a14b773d85174",
+    "commit_sha": "e08822b85065908ae58f4001a4f872ed8a888cec",
     "exact_path": "incoming/source_area/height_difference_5/null/",
     "readback": "PASS"
   },
@@ -30,40 +30,27 @@
     "readback": "PASS",
     "retest_performed": false
   },
-  "new_source_record_count": 0,
+  "new_source_record_count": 5,
   "duplicate_count": 0,
   "rejected_count": 0,
   "unmatched_count": 0,
   "cursor": {
-    "window_id": "HD5_R8_OS_DATA_HUB_OPENMAPLOCAL_ACTUAL_BINARY_ACCESS",
-    "method": "official_os_data_hub_actual_binary_access",
-    "product": "OS OpenMap - Local",
-    "area": "TQ",
-    "format": "GeoPackage",
-    "processed_source_records": 0,
+    "window_id": "HD5_R9_OS_GITHUB_ZOOMSTACK_LOCAL_BUILDINGS_NOTEBOOK",
+    "method": "official_ordnance_survey_public_github_notebook_output",
+    "repository": "OrdnanceSurvey/osdatahub",
+    "commit": "98acd2b66f106379ba3c4aa3d09b5cada33d98dd",
+    "blob_sha": "1f439cdd1e7ed370fdccf4c1b8a07f480e828d5d",
+    "path": "Examples/Post Processing API Queries.ipynb",
+    "product": "zoomstack_local_buildings",
+    "processed_records": 5,
     "max_records": 50,
+    "last_objectid": 11251587,
+    "last_uuid": "3393a65d-8fe3-4a9f-baf6-25de6f6b2a1c",
     "complete": true,
-    "result": "SOURCE_DATA_ACCESS_BLOCKED",
-    "failures": [
-      {
-        "stage": "web_open_product_page",
-        "url": "https://osdatahub.os.uk/data/downloads/open/OpenMapLocal",
-        "error": "Official OS Data Hub page returned only: You need to enable JavaScript to run this app."
-      },
-      {
-        "stage": "web_open_downloads_api_response",
-        "url": "https://api.os.uk/downloads/v1/products/OpenMapLocal/downloads?area=TQ&format=GeoPackage&redirect=false",
-        "error": "URL not accessible via web retrieval tool."
-      },
-      {
-        "stage": "container_direct_downloads_api_response",
-        "url": "https://api.os.uk/downloads/v1/products/OpenMapLocal/downloads?area=TQ&format=GeoPackage&redirect=false",
-        "error": "DNS resolution failed: socket.gaierror [Errno -3] Temporary failure in name resolution."
-      }
-    ],
-    "next_rule": "Do not repeat this product-page/direct-Downloads-API access window or the failed web/container methods. Next progress requires a transport that can retrieve the public OS binary/redirect target, or a local OpenCode environment that already has the actual OpenMap-Local Building vector and canonical parcel geometries."
+    "result": "PARTIAL_GEOMETRY_EVIDENCE_ONLY",
+    "next_rule": "Do not repeat this notebook/commit/output window. Next progress requires full exact building polygon coordinates or a verified local vector copy plus canonical parcel spatial join/readback."
   },
   "local_parcel_matching": "NOT_PERFORMED",
   "height_statistics": "NOT_COMPUTED",
-  "first_missing_criterion": "actual OS OpenMap-Local Building vector bytes (or verified local copy) plus canonical parcel geometry/spatial intersection readback; without both, building-containing canonical parcels cannot receive official DEM/LIDAR min/max/mean/max-min and Layer24 accepted_count"
+  "first_missing_criterion": "full exact building polygon coordinates (not truncated display) or a verified local OS building vector copy, plus canonical parcel geometry/spatial intersection readback; only then may building-containing canonical parcels receive official DEM/LIDAR min/max/mean/max-min evidence and Layer24 accepted_count"
 }
