@@ -4,24 +4,26 @@
   "partition": null,
   "lineage_id": null,
   "page_generation": null,
-  "checkpoint_generation": "R9",
-  "previous_checkpoint": "R8",
+  "checkpoint_generation": "R10",
+  "previous_checkpoint": "R9",
   "producer_family": "AAYS_LAYER24_EVIDENCE_V1",
   "package_category": "AAYS_SOURCE_AREA_V1",
-  "state": "DELIVERY_BLOCKED:EXACT_BUILDING_GEOMETRY_AND_LOCAL_JOIN_REQUIRED",
+  "state": "DELIVERY_BLOCKED:LOCAL_CANONICAL_JOIN_AND_DEM_STATS_REQUIRED",
   "accepted_count": 0,
   "source_area_count": 4,
   "accepted_count_semantics": "unchanged; source evidence is not parcel progress",
   "previous_physical_package": {
-    "zip_sha256": "8134cc6c9cc57dd11aca7d16a8f78ef04b8baae89ebb02a3d9d4c22bb44f3c2b",
+    "zip_sha256": "b77a467d28bfb809b68701618d39061c0277ba7645e4be7a30a178e69179fd45",
     "external_zip_sidecar": "PASS",
     "internal_SHA256SUMS": "PASS",
     "individual_sidecars": "PASS"
   },
   "previous_remote_delivery": {
-    "commit_sha": "e08822b85065908ae58f4001a4f872ed8a888cec",
+    "commit_sha": "c54aadbef8d36f5cd67ccafd3e4f7e04bc6a5e18",
+    "checkpoint_generation": "R9",
     "exact_path": "incoming/source_area/height_difference_5/null/",
-    "readback": "PASS"
+    "readback": "PASS",
+    "r9_zip_sidecar_present": false
   },
   "github_write_capability": {
     "commit_sha": "fb8a360ce7f9cc23f72844bc3eaf96c11764c123",
@@ -30,27 +32,31 @@
     "readback": "PASS",
     "retest_performed": false
   },
-  "new_source_record_count": 5,
+  "new_source_record_count": 4,
   "duplicate_count": 0,
   "rejected_count": 0,
   "unmatched_count": 0,
   "cursor": {
-    "window_id": "HD5_R9_OS_GITHUB_ZOOMSTACK_LOCAL_BUILDINGS_NOTEBOOK",
-    "method": "official_ordnance_survey_public_github_notebook_output",
+    "window_id": "HD5_R10_OS_NGD_BUILDINGPART_EXACT_POLYGONS_CELL29",
+    "method": "official_ordnance_survey_public_github_ngd_notebook_output",
     "repository": "OrdnanceSurvey/osdatahub",
     "commit": "98acd2b66f106379ba3c4aa3d09b5cada33d98dd",
-    "blob_sha": "1f439cdd1e7ed370fdccf4c1b8a07f480e828d5d",
-    "path": "Examples/Post Processing API Queries.ipynb",
-    "product": "zoomstack_local_buildings",
-    "processed_records": 5,
+    "blob_sha": "08be365678da7516f8b2cc6ac1b1a2e105cb522f",
+    "path": "Examples/Using the NGD Features API.ipynb",
+    "collection": "bld-fts-buildingpart",
+    "query_bbox_crs84": [
+      -2.244973,
+      53.47662,
+      -2.237799,
+      53.480525
+    ],
+    "processed_records": 4,
     "max_records": 50,
-    "last_objectid": 11251587,
-    "last_uuid": "3393a65d-8fe3-4a9f-baf6-25de6f6b2a1c",
+    "last_osid": "04b6b1d7-2a73-4173-b953-20c3ef2e6ce7",
     "complete": true,
-    "result": "PARTIAL_GEOMETRY_EVIDENCE_ONLY",
-    "next_rule": "Do not repeat this notebook/commit/output window. Next progress requires full exact building polygon coordinates or a verified local vector copy plus canonical parcel spatial join/readback."
+    "next_rule": "Do not repeat this notebook/cell/query window. Exact building polygons now exist; next progress requires canonical parcel spatial join/readback and official DEM/LIDAR raster statistics (min/max/mean/max-min) for intersecting building-containing parcels."
   },
   "local_parcel_matching": "NOT_PERFORMED",
   "height_statistics": "NOT_COMPUTED",
-  "first_missing_criterion": "full exact building polygon coordinates (not truncated display) or a verified local OS building vector copy, plus canonical parcel geometry/spatial intersection readback; only then may building-containing canonical parcels receive official DEM/LIDAR min/max/mean/max-min evidence and Layer24 accepted_count"
+  "first_missing_criterion": "canonical parcel geometry/spatial intersection readback for these exact OS Building Part polygons, followed by official DEM/LIDAR raster min/max/mean/max-min on only the intersecting building-containing canonical parcels"
 }
