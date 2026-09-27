@@ -6,37 +6,53 @@
   "owner": "height_difference_5",
   "partition": null,
   "lineage_id": null,
+  "delivery_block": "DELIVERY_BLOCKED:SOURCE_DATA_ACCESS_REQUIRED",
   "accepted_count": 0,
   "source_area_count": 4,
   "accepted_count_semantics": "unchanged; source-area evidence is not parcel progress",
-  "new_source_record_count": 1,
+  "new_source_record_count": 0,
   "cumulative_source_record_count": 4,
   "duplicate_count": 0,
   "rejected_count": 0,
   "unmatched_count": 0,
   "source_window": {
-    "window_id": "HD5_R7_OS_DOWNLOADS_API_OPENMAPLOCAL_TQ_GPKG",
+    "window_id": "HD5_R8_OS_DATA_HUB_OPENMAPLOCAL_ACTUAL_BINARY_ACCESS",
     "publisher": "Ordnance Survey",
-    "api": "OS Downloads API",
-    "product_id": "OpenMapLocal",
-    "area": "TQ",
-    "format": "GeoPackage",
-    "exact_request": "https://api.os.uk/downloads/v1/products/OpenMapLocal/downloads?area=TQ&format=GeoPackage&redirect=true",
+    "product_page": "https://osdatahub.os.uk/data/downloads/open/OpenMapLocal",
+    "api_response_url": "https://api.os.uk/downloads/v1/products/OpenMapLocal/downloads?area=TQ&format=GeoPackage&redirect=false",
+    "api_redirect_url": "https://api.os.uk/downloads/v1/products/OpenMapLocal/downloads?area=TQ&format=GeoPackage&redirect=true",
     "public_no_login": true,
-    "response_body_retrieved": false,
+    "actual_binary_retrieved": false,
     "cursor": {
-      "window_id": "HD5_R7_OS_DOWNLOADS_API_OPENMAPLOCAL_TQ_GPKG",
-      "method": "official_ordnance_survey_downloads_api_technical_specification",
-      "product_id": "OpenMapLocal",
+      "window_id": "HD5_R8_OS_DATA_HUB_OPENMAPLOCAL_ACTUAL_BINARY_ACCESS",
+      "method": "official_os_data_hub_actual_binary_access",
+      "product": "OS OpenMap - Local",
       "area": "TQ",
       "format": "GeoPackage",
-      "exact_request": "https://api.os.uk/downloads/v1/products/OpenMapLocal/downloads?area=TQ&format=GeoPackage&redirect=true",
-      "processed_records": 1,
+      "processed_source_records": 0,
       "max_records": 50,
       "complete": true,
-      "next_rule": "Do not repeat this productId/area/format request-definition window. Next progress requires successful retrieval/loading of the actual TQ GeoPackage Building layer and local canonical parcel spatial join/readback."
+      "result": "SOURCE_DATA_ACCESS_BLOCKED",
+      "failures": [
+        {
+          "stage": "web_open_product_page",
+          "url": "https://osdatahub.os.uk/data/downloads/open/OpenMapLocal",
+          "error": "Official OS Data Hub page returned only: You need to enable JavaScript to run this app."
+        },
+        {
+          "stage": "web_open_downloads_api_response",
+          "url": "https://api.os.uk/downloads/v1/products/OpenMapLocal/downloads?area=TQ&format=GeoPackage&redirect=false",
+          "error": "URL not accessible via web retrieval tool."
+        },
+        {
+          "stage": "container_direct_downloads_api_response",
+          "url": "https://api.os.uk/downloads/v1/products/OpenMapLocal/downloads?area=TQ&format=GeoPackage&redirect=false",
+          "error": "DNS resolution failed: socket.gaierror [Errno -3] Temporary failure in name resolution."
+        }
+      ],
+      "next_rule": "Do not repeat this product-page/direct-Downloads-API access window or the failed web/container methods. Next progress requires a transport that can retrieve the public OS binary/redirect target, or a local OpenCode environment that already has the actual OpenMap-Local Building vector and canonical parcel geometries."
     }
   },
   "delivery_target": "incoming/source_area/height_difference_5/null/",
-  "first_missing_criterion": "successful local retrieval/loading of the actual OS OpenMap-Local TQ GeoPackage Building layer from the verified no-login OS Downloads API request, plus canonical parcel spatial intersection/readback; only then may building-containing parcels receive official DEM/LIDAR min/max/mean/max-min evidence and Layer24 accepted_count"
+  "first_missing_criterion": "actual OS OpenMap-Local Building vector bytes (or verified local copy) plus canonical parcel geometry/spatial intersection readback; without both, building-containing canonical parcels cannot receive official DEM/LIDAR min/max/mean/max-min and Layer24 accepted_count"
 }

@@ -6,33 +6,50 @@
   "created_at": "2026-09-27T20:38:00+03:00",
   "category": "AAYS_SOURCE_AREA_V1",
   "producer_family": "AAYS_LAYER24_EVIDENCE_V1",
-  "delivery_status": "PENDING_GITHUB_ATOMIC_COMMIT",
+  "delivery_status": "DELIVERY_BLOCKED:SOURCE_DATA_ACCESS_REQUIRED",
   "accepted_count": 0,
   "source_area_count": 4,
   "counts": {
-    "new_source_records": 1,
+    "new_source_records": 0,
     "cumulative_source_records": 4,
     "duplicates": 0,
     "rejected": 0,
     "unmatched": 0
   },
   "cursor": {
-    "window_id": "HD5_R7_OS_DOWNLOADS_API_OPENMAPLOCAL_TQ_GPKG",
-    "method": "official_ordnance_survey_downloads_api_technical_specification",
-    "product_id": "OpenMapLocal",
+    "window_id": "HD5_R8_OS_DATA_HUB_OPENMAPLOCAL_ACTUAL_BINARY_ACCESS",
+    "method": "official_os_data_hub_actual_binary_access",
+    "product": "OS OpenMap - Local",
     "area": "TQ",
     "format": "GeoPackage",
-    "exact_request": "https://api.os.uk/downloads/v1/products/OpenMapLocal/downloads?area=TQ&format=GeoPackage&redirect=true",
-    "processed_records": 1,
+    "processed_source_records": 0,
     "max_records": 50,
     "complete": true,
-    "next_rule": "Do not repeat this productId/area/format request-definition window. Next progress requires successful retrieval/loading of the actual TQ GeoPackage Building layer and local canonical parcel spatial join/readback."
+    "result": "SOURCE_DATA_ACCESS_BLOCKED",
+    "failures": [
+      {
+        "stage": "web_open_product_page",
+        "url": "https://osdatahub.os.uk/data/downloads/open/OpenMapLocal",
+        "error": "Official OS Data Hub page returned only: You need to enable JavaScript to run this app."
+      },
+      {
+        "stage": "web_open_downloads_api_response",
+        "url": "https://api.os.uk/downloads/v1/products/OpenMapLocal/downloads?area=TQ&format=GeoPackage&redirect=false",
+        "error": "URL not accessible via web retrieval tool."
+      },
+      {
+        "stage": "container_direct_downloads_api_response",
+        "url": "https://api.os.uk/downloads/v1/products/OpenMapLocal/downloads?area=TQ&format=GeoPackage&redirect=false",
+        "error": "DNS resolution failed: socket.gaierror [Errno -3] Temporary failure in name resolution."
+      }
+    ],
+    "next_rule": "Do not repeat this product-page/direct-Downloads-API access window or the failed web/container methods. Next progress requires a transport that can retrieve the public OS binary/redirect target, or a local OpenCode environment that already has the actual OpenMap-Local Building vector and canonical parcel geometries."
   },
-  "previous_remote_commit_sha": "7412494f893b045c594b10e91399568122947700",
+  "previous_remote_commit_sha": "9c40781af8bb9190bbc35fd69b7a14b773d85174",
   "github_write_capability_commit_sha": "fb8a360ce7f9cc23f72844bc3eaf96c11764c123",
   "local_import_readback": false,
   "publisher_proof": false,
   "program_progress_claimed": false,
   "completion_claimed": false,
-  "first_missing_criterion": "successful local retrieval/loading of the actual OS OpenMap-Local TQ GeoPackage Building layer from the verified no-login OS Downloads API request, plus canonical parcel spatial intersection/readback; only then may building-containing parcels receive official DEM/LIDAR min/max/mean/max-min evidence and Layer24 accepted_count"
+  "first_missing_criterion": "actual OS OpenMap-Local Building vector bytes (or verified local copy) plus canonical parcel geometry/spatial intersection readback; without both, building-containing canonical parcels cannot receive official DEM/LIDAR min/max/mean/max-min and Layer24 accepted_count"
 }
