@@ -1,0 +1,81 @@
+{
+  "schema_version": 5,
+  "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
+  "task_version": "1.0-fail-closed-local-join",
+  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260928-001",
+  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-partition-61524-76903-local-join-data-police-latest-first50-v1",
+  "page_key": "aays1",
+  "layer_page_key": "security_public_safety",
+  "slot_id": "security_public_safety_5",
+  "owner": null,
+  "lineage_id": "86b5e932de484ad26133fa8c",
+  "status": "pickup_requested",
+  "priority": -500,
+  "created_at": "2026-09-28T00:54:00+03:00",
+  "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
+  "target_branch": "main",
+  "parcel_partition": {
+    "start": 61524,
+    "end": 76903,
+    "count": 15380
+  },
+  "max_source_records": 50,
+  "script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.ps1",
+  "automation_script": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.ps1",
+  "python_script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.py",
+  "expected_output": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json",
+  "canonical_source": {
+    "historical_branch": "codex/aays-single-runner-v5-20260706",
+    "repo_path": "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson",
+    "required_git_blob_sha": "bb48164e7a0af78df875f30421a6a3068c43edb8",
+    "feature_count": 92283,
+    "fail_closed": true
+  },
+  "source_area_evidence": {
+    "commit_sha": "eb916767b7b22e6706d2fe34c1005729a4142db6",
+    "records_path": "incoming/source_area/security_public_safety_5/86b5e932de484ad26133fa8c/planning_data_barnet_ward_polygons_20260927T204546Z/records.geojson",
+    "zip_sha256": "a22b7b141719fee5857189e83bc9e94809dc2ce2826c3ffe2c5086bb607d07f7",
+    "coverage_polygon_ids": [
+      "E05013628",
+      "E05013629",
+      "E05013644"
+    ]
+  },
+  "new_official_source_window": {
+    "publisher": "data.police.uk",
+    "window_rule": "explicit latest month returned by /api/crime-last-updated; street-level all-crime point queries only",
+    "docs": "https://data.police.uk/docs/method/crime-street/",
+    "max_records": 50,
+    "semantics": "approximate area evidence around point; never exact parcel crime locations"
+  },
+  "allowed_paths": [
+    "docs/chatgpt_status/aays1/queue/0000_000_security_public_safety_5_local_spatial_join_v1_20260928.task.json",
+    "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json"
+  ],
+  "exact_write_paths": [
+    "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json"
+  ],
+  "acceptance_checks": [
+    "Materialize and verify exact canonical Git blob SHA bb48164e7a0af78df875f30421a6a3068c43edb8",
+    "Use only parcel_61524 through parcel_76903",
+    "Spatially join every canonical Point in the fixed partition against all three existing official ward polygons",
+    "Process official street-crime field evidence for at most 50 matched canonical parcels in one explicit latest-month source window",
+    "Store HTTP 200 response SHA256 and preserve data.police approximate-location limitation",
+    "Never claim accepted_count or final package delivery from the runner output",
+    "Keep fake_data=false and final_ready=false"
+  ],
+  "single_shared_runner_required": true,
+  "new_runner_allowed": false,
+  "single_runner_only": true,
+  "parallel_runner": false,
+  "no_fake_final_ready": true,
+  "no_db_write": true,
+  "no_migration": true,
+  "no_production_deploy": true,
+  "fake_data": false,
+  "db_write": false,
+  "migration": false,
+  "production_deploy": false,
+  "person_level_data": false,
+  "final_ready": false
+}
