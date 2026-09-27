@@ -4,22 +4,20 @@
   "partition": null,
   "lineage_id": null,
   "page_generation": null,
-  "checkpoint_generation": "R12",
-  "previous_checkpoint": "R11",
+  "checkpoint_generation": "R13",
+  "previous_checkpoint": "R12",
   "producer_family": "AAYS_LAYER24_EVIDENCE_V1",
   "package_category": "AAYS_SOURCE_AREA_V1",
-  "state": "DELIVERY_BLOCKED:LOCAL_CANONICAL_PARCEL_INPUT_REQUIRED",
+  "state": "DELIVERY_BLOCKED:CANONICAL_PARCEL_POLYGON_READBACK_REQUIRED",
   "accepted_count": 0,
   "source_area_count": 4,
   "accepted_count_semantics": "unchanged; source-area/source evidence is not parcel progress",
   "previous_remote_binary_rehash": {
-    "commit_sha": "3521a7a8f940cb092d5cc3f87e96c450e5f10832",
+    "commit_sha": "283907da5ace772e654d3af40a8f4b5e283a7097",
     "exact_path": "incoming/source_area/height_difference_5/null/",
-    "zip_sha256": "d53e2d694adc8b2150829a78f2e1d34e290db4e8fb718b95bc6fd73068e6bbf0",
-    "zip_blob_sha": "d5adfd44e1b5c62a2a46b024fc3b6f40b7015f47",
-    "zip_sidecar": "PASS",
-    "internal_SHA256SUMS": "PASS",
-    "individual_sidecars": "PASS"
+    "zip_sha256": "17127a48a21c705864fc0e4659972bcbb55da9fb8231045ade0fec648b743a06",
+    "zip_blob_sha": "f3cbba0fa9c5e43c212a35d780f09452d83adbcb",
+    "zip_sidecar": "PASS"
   },
   "github_write_capability": {
     "commit_sha": "fb8a360ce7f9cc23f72844bc3eaf96c11764c123",
@@ -33,59 +31,39 @@
   "rejected_count": 0,
   "unmatched_count": 0,
   "cursor": {
-    "window_id": "HD5_R12_LAYER24_CANONICAL_INPUT_PATH_RECHECK",
-    "method": "layer24_exact_path_dependency_probe",
+    "window_id": "HD5_R13_CANONICAL_WORKFLOW_GEOMETRY_SEMANTICS_AUDIT",
+    "method": "repo_wide_canonical_workflow_semantics_audit",
     "processed_records": 0,
     "max_records": 50,
     "complete": true,
-    "result": "ONLY_CAPABILITY_DIRECTORY_PRESENT",
+    "result": "CANONICAL_WORKFLOW_FOUND_BUT_POINT_ONLY",
     "source_window_opened": false,
-    "layer24_exact_path": "incoming/layer24/height_difference_5/null/",
-    "layer24_children": [
-      "_capability/"
-    ],
-    "previous_cursor": {
-      "window_id": "HD5_R11_LOCAL_CANONICAL_JOIN_GATE",
-      "method": "local_canonical_parcel_dependency_gate",
-      "processed_records": 0,
-      "max_records": 50,
-      "complete": true,
-      "result": "LOCAL_CANONICAL_PARCEL_INPUT_NOT_FOUND",
-      "previous_source_cursor": {
-        "window_id": "HD5_R10_OS_NGD_BUILDINGPART_EXACT_POLYGONS_CELL29",
-        "method": "official_ordnance_survey_public_github_ngd_notebook_output",
-        "repository": "OrdnanceSurvey/osdatahub",
-        "commit": "98acd2b66f106379ba3c4aa3d09b5cada33d98dd",
-        "blob_sha": "08be365678da7516f8b2cc6ac1b1a2e105cb522f",
-        "path": "Examples/Using the NGD Features API.ipynb",
-        "collection": "bld-fts-buildingpart",
-        "query_bbox_crs84": [
-          -2.244973,
-          53.47662,
-          -2.237799,
-          53.480525
-        ],
-        "processed_records": 4,
-        "max_records": 50,
-        "last_osid": "04b6b1d7-2a73-4173-b953-20c3ef2e6ce7",
-        "complete": true,
-        "next_rule": "Do not repeat this notebook/cell/query window. Exact building polygons now exist; next progress requires canonical parcel spatial join/readback and official DEM/LIDAR raster statistics (min/max/mean/max-min) for intersecting building-containing parcels."
+    "inspected_artifacts": [
+      {
+        "path": "docs/chatgpt_status/aays1/queue/0002_000_height_difference_3_canonical_point_extract_v1_20260722.task.json",
+        "blob_sha": "6373d1eaebd2a7a2231db91c8a58bcd55b313ba3",
+        "slot_id": "height_difference_3"
       },
-      "repository_search_terms": [
-        "canonical_parcel",
-        "parcel_id",
-        "canonical parcel",
-        "spatial join"
-      ],
-      "repository_search_result_count": 0,
-      "source_window_opened": false,
-      "rationale": "The first missing criterion is a local canonical-parcel spatial join/readback dependency. Opening another external official source window would not establish canonical parcel identity and would violate the no-fabrication rule.",
-      "next_rule": "Provide/read back canonical parcel geometry plus canonical identifiers in the local OpenCode pipeline; then intersect the already captured exact OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing parcels."
+      {
+        "path": "docs/chatgpt_status/height_difference/automation/height_difference_3_extract_canonical_points_v1.py",
+        "blob_sha": "00e2a03c42bb1fbe00b472af2872d433540a5636",
+        "slot_id": "height_difference_3"
+      }
+    ],
+    "discovered_canonical_source": {
+      "branch": "codex/aays-single-runner-v5-20260706",
+      "path": "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson",
+      "required_git_blob_sha": "bb48164e7a0af78df875f30421a6a3068c43edb8",
+      "geometry_type_required": "Point",
+      "parcel_id_property": "security_parcel_id",
+      "workflow_expected_feature_count": 92283,
+      "expected_feature_count_semantics": "historical workflow validation count only; NOT treated as a national parcel total"
     },
-    "rationale": "The exact Layer24 slot path contains only the previously verified capability directory. No canonical parcel geometry/identifier package or accepted Layer24 parcel package is present. Another external source window cannot satisfy canonical identity/readback.",
-    "next_rule": "Wait for/read back a local OpenCode canonical-parcel package under the slot lineage, then spatially intersect the already captured exact OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing parcels."
+    "blocker": "The discovered immutable canonical workflow provides Point geometries only. Height Difference acceptance requires a canonical parcel polygon/area geometry capable of spatial intersection with exact building polygons; no height_difference_5 canonical polygon package/readback exists in the slot path.",
+    "zero_acceptance_policy": "Third consecutive zero-acceptance turn changes method from path probe to repo-wide workflow semantic audit and records a concrete geometry-semantics blocker.",
+    "next_rule": "Do not repeat external source discovery or path-only probing. Require a local OpenCode readback containing canonical parcel polygon geometry plus canonical identifiers; then spatially intersect existing OS Building Part polygons and sample official DEM/LIDAR."
   },
-  "local_parcel_matching": "BLOCKED_NO_CANONICAL_PARCEL_GEOMETRY_OR_IDENTIFIER_READBACK",
+  "local_parcel_matching": "BLOCKED_POINT_ONLY_CANONICAL_WORKFLOW_NO_PARCEL_POLYGON_READBACK",
   "height_statistics": "NOT_COMPUTED",
-  "first_missing_criterion": "canonical parcel geometry/spatial intersection readback for these exact OS Building Part polygons, followed by official DEM/LIDAR raster min/max/mean/max-min on only the intersecting building-containing canonical parcels"
+  "first_missing_criterion": "canonical parcel polygon geometry plus canonical identifier readback for the exact OS Building Part polygons; the available repo canonical workflow is Point-only and cannot prove parcel-boundary intersection; after polygon join, compute official DEM/LIDAR raster min/max/mean/max-min only for matched building-containing canonical parcels"
 }
