@@ -6,7 +6,8 @@
   "owner": "height_difference_5",
   "partition": null,
   "lineage_id": null,
-  "delivery_block": "DELIVERY_BLOCKED:NO_POST_R14_CANONICAL_POLYGON_DELTA",
+  "delivery_block": "DELIVERY_BLOCKED:SOURCE_DATA_CANONICAL_PARCEL_POLYGON_TASK_OR_OUTPUT_REQUIRED",
+  "blocker_stage": "SOURCE_DATA",
   "accepted_count": 0,
   "source_area_count": 4,
   "accepted_count_semantics": "unchanged; source-area/source evidence is not parcel progress",
@@ -17,17 +18,23 @@
   "unmatched_count": 0,
   "source_window": {
     "opened": false,
-    "reason": "first_missing_criterion is local canonical polygon readback; no post-R14 branch delta exists"
+    "reason": "first_missing_criterion is a local canonical polygon task/output/readback dependency"
   },
-  "delta_evidence": {
-    "base_commit": "a1e651f3175fc76f9b5420b255dce1e410125e6d",
-    "branch": "aays/height_difference_5/null",
-    "compare_status": "identical",
-    "ahead_by": 0,
-    "behind_by": 0,
-    "total_commits": 0,
-    "changed_files": 0
+  "dependency_audit": {
+    "method": "targeted_repository_code_search_for_slot_task_runner_trace",
+    "queries": [
+      "\"height_difference_5\" canonical",
+      "\"height_difference_5\" runner_outputs",
+      "\"height_difference_5\" Polygon",
+      "\"height_difference_5\" security_parcel_id"
+    ],
+    "result_counts": [
+      0,
+      0,
+      0,
+      0
+    ]
   },
   "delivery_target": "incoming/source_area/height_difference_5/null/",
-  "first_missing_criterion": "a new local OpenCode-produced height_difference_5 canonical parcel polygon readback containing exact polygon geometry plus canonical identifier; no post-R14 branch delta exists; after that readback, intersect existing OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing canonical parcels"
+  "first_missing_criterion": "a local OpenCode-produced height_difference_5 canonical parcel polygon task/output/readback containing exact polygon geometry plus canonical identifier; targeted repository task/runner searches return zero matches for height_difference_5 canonical, runner_outputs, Polygon, and security_parcel_id; after such readback, intersect existing OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing canonical parcels"
 }

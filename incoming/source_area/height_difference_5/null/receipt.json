@@ -6,7 +6,7 @@
   "created_at": "2026-09-28T01:21:00+03:00",
   "category": "AAYS_SOURCE_AREA_V1",
   "producer_family": "AAYS_LAYER24_EVIDENCE_V1",
-  "delivery_status": "SOURCE_AREA_NO_NEW_CANONICAL_POLYGON_DELTA",
+  "delivery_status": "SOURCE_AREA_SOURCE_DATA_CANONICAL_POLYGON_TASK_OR_OUTPUT_BLOCKED",
   "accepted_count": 0,
   "source_area_count": 4,
   "counts": {
@@ -17,28 +17,34 @@
     "unmatched": 0
   },
   "cursor": {
-    "window_id": "HD5_R15_POST_R14_BRANCH_DELTA_CHECK",
-    "method": "post_checkpoint_branch_delta_compare",
+    "window_id": "HD5_R16_TASK_RUNNER_CANONICAL_OUTPUT_TRACE_AUDIT",
+    "method": "targeted_repository_code_search_for_slot_task_runner_trace",
     "processed_records": 0,
     "max_records": 50,
     "complete": true,
-    "result": "NO_POST_R14_DELTA",
+    "result": "NO_HEIGHT_DIFFERENCE_5_CANONICAL_TASK_OR_RUNNER_TRACE",
     "source_window_opened": false,
-    "baseline_commit": "a1e651f3175fc76f9b5420b255dce1e410125e6d",
-    "branch": "aays/height_difference_5/null",
-    "compare_status": "identical",
-    "ahead_by": 0,
-    "behind_by": 0,
-    "total_commits": 0,
-    "changed_files": 0,
-    "blocker": "No commit or file delta exists after R14 on the fixed slot branch, so no new height_difference_5 canonical polygon/OpenCode readback is available.",
-    "next_rule": "Do not repeat this delta check while the branch head remains R15. Resume only when a new local OpenCode-produced canonical parcel polygon package/readback appears; then perform building intersection and official DEM/LIDAR statistics."
+    "queries": [
+      "\"height_difference_5\" canonical",
+      "\"height_difference_5\" runner_outputs",
+      "\"height_difference_5\" Polygon",
+      "\"height_difference_5\" security_parcel_id"
+    ],
+    "result_counts": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "blocker_stage": "SOURCE_DATA",
+    "blocker": "No height_difference_5-specific canonical polygon task, runner output, Polygon reference, or security_parcel_id trace is present in repository code search. Without a local canonical parcel polygon package/readback, parcel identity and building intersection cannot be established.",
+    "next_rule": "Do not repeat these code-search queries. Resume only when a local OpenCode canonical parcel polygon task/output/readback for height_difference_5 exists; then spatially intersect the existing exact OS Building Part polygons and compute official DEM/LIDAR statistics."
   },
-  "previous_remote_commit_sha": "a1e651f3175fc76f9b5420b255dce1e410125e6d",
+  "previous_remote_commit_sha": "19fc1967896a4ea3b752aae4747aa403a78935ba",
   "github_write_capability_commit_sha": "fb8a360ce7f9cc23f72844bc3eaf96c11764c123",
   "local_import_readback": false,
   "publisher_proof": false,
   "program_progress_claimed": false,
   "completion_claimed": false,
-  "first_missing_criterion": "a new local OpenCode-produced height_difference_5 canonical parcel polygon readback containing exact polygon geometry plus canonical identifier; no post-R14 branch delta exists; after that readback, intersect existing OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing canonical parcels"
+  "first_missing_criterion": "a local OpenCode-produced height_difference_5 canonical parcel polygon task/output/readback containing exact polygon geometry plus canonical identifier; targeted repository task/runner searches return zero matches for height_difference_5 canonical, runner_outputs, Polygon, and security_parcel_id; after such readback, intersect existing OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing canonical parcels"
 }
