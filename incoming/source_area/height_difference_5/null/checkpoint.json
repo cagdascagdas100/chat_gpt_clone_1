@@ -4,27 +4,22 @@
   "partition": null,
   "lineage_id": null,
   "page_generation": null,
-  "checkpoint_generation": "R11",
-  "previous_checkpoint": "R10",
+  "checkpoint_generation": "R12",
+  "previous_checkpoint": "R11",
   "producer_family": "AAYS_LAYER24_EVIDENCE_V1",
   "package_category": "AAYS_SOURCE_AREA_V1",
   "state": "DELIVERY_BLOCKED:LOCAL_CANONICAL_PARCEL_INPUT_REQUIRED",
   "accepted_count": 0,
   "source_area_count": 4,
-  "accepted_count_semantics": "unchanged; source evidence is not parcel progress",
-  "previous_physical_package": {
-    "zip_sha256": "3674dd4533d1cffe9f87861f013521353ba915e5aeeb715583ed16c893b333a5",
-    "external_zip_sidecar": "PASS",
-    "internal_SHA256SUMS": "PASS",
-    "individual_sidecars": "PASS",
-    "matches_previous_remote_zip": false
-  },
-  "previous_remote_delivery": {
-    "commit_sha": "d34f0c3006cd497f762b54d191c4b63fec853745",
+  "accepted_count_semantics": "unchanged; source-area/source evidence is not parcel progress",
+  "previous_remote_binary_rehash": {
+    "commit_sha": "3521a7a8f940cb092d5cc3f87e96c450e5f10832",
     "exact_path": "incoming/source_area/height_difference_5/null/",
-    "zip_sha256": "4420fd51493371450406cf6bc2159489a96c33f234fea13a8f3da2e0337d9034",
-    "readback": "PASS",
-    "receipt_delivery_status": "PENDING_GITHUB_ATOMIC_COMMIT"
+    "zip_sha256": "d53e2d694adc8b2150829a78f2e1d34e290db4e8fb718b95bc6fd73068e6bbf0",
+    "zip_blob_sha": "d5adfd44e1b5c62a2a46b024fc3b6f40b7015f47",
+    "zip_sidecar": "PASS",
+    "internal_SHA256SUMS": "PASS",
+    "individual_sidecars": "PASS"
   },
   "github_write_capability": {
     "commit_sha": "fb8a360ce7f9cc23f72844bc3eaf96c11764c123",
@@ -38,42 +33,57 @@
   "rejected_count": 0,
   "unmatched_count": 0,
   "cursor": {
-    "window_id": "HD5_R11_LOCAL_CANONICAL_JOIN_GATE",
-    "method": "local_canonical_parcel_dependency_gate",
+    "window_id": "HD5_R12_LAYER24_CANONICAL_INPUT_PATH_RECHECK",
+    "method": "layer24_exact_path_dependency_probe",
     "processed_records": 0,
     "max_records": 50,
     "complete": true,
-    "result": "LOCAL_CANONICAL_PARCEL_INPUT_NOT_FOUND",
-    "previous_source_cursor": {
-      "window_id": "HD5_R10_OS_NGD_BUILDINGPART_EXACT_POLYGONS_CELL29",
-      "method": "official_ordnance_survey_public_github_ngd_notebook_output",
-      "repository": "OrdnanceSurvey/osdatahub",
-      "commit": "98acd2b66f106379ba3c4aa3d09b5cada33d98dd",
-      "blob_sha": "08be365678da7516f8b2cc6ac1b1a2e105cb522f",
-      "path": "Examples/Using the NGD Features API.ipynb",
-      "collection": "bld-fts-buildingpart",
-      "query_bbox_crs84": [
-        -2.244973,
-        53.47662,
-        -2.237799,
-        53.480525
-      ],
-      "processed_records": 4,
-      "max_records": 50,
-      "last_osid": "04b6b1d7-2a73-4173-b953-20c3ef2e6ce7",
-      "complete": true,
-      "next_rule": "Do not repeat this notebook/cell/query window. Exact building polygons now exist; next progress requires canonical parcel spatial join/readback and official DEM/LIDAR raster statistics (min/max/mean/max-min) for intersecting building-containing parcels."
-    },
-    "repository_search_terms": [
-      "canonical_parcel",
-      "parcel_id",
-      "canonical parcel",
-      "spatial join"
-    ],
-    "repository_search_result_count": 0,
+    "result": "ONLY_CAPABILITY_DIRECTORY_PRESENT",
     "source_window_opened": false,
-    "rationale": "The first missing criterion is a local canonical-parcel spatial join/readback dependency. Opening another external official source window would not establish canonical parcel identity and would violate the no-fabrication rule.",
-    "next_rule": "Provide/read back canonical parcel geometry plus canonical identifiers in the local OpenCode pipeline; then intersect the already captured exact OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing parcels."
+    "layer24_exact_path": "incoming/layer24/height_difference_5/null/",
+    "layer24_children": [
+      "_capability/"
+    ],
+    "previous_cursor": {
+      "window_id": "HD5_R11_LOCAL_CANONICAL_JOIN_GATE",
+      "method": "local_canonical_parcel_dependency_gate",
+      "processed_records": 0,
+      "max_records": 50,
+      "complete": true,
+      "result": "LOCAL_CANONICAL_PARCEL_INPUT_NOT_FOUND",
+      "previous_source_cursor": {
+        "window_id": "HD5_R10_OS_NGD_BUILDINGPART_EXACT_POLYGONS_CELL29",
+        "method": "official_ordnance_survey_public_github_ngd_notebook_output",
+        "repository": "OrdnanceSurvey/osdatahub",
+        "commit": "98acd2b66f106379ba3c4aa3d09b5cada33d98dd",
+        "blob_sha": "08be365678da7516f8b2cc6ac1b1a2e105cb522f",
+        "path": "Examples/Using the NGD Features API.ipynb",
+        "collection": "bld-fts-buildingpart",
+        "query_bbox_crs84": [
+          -2.244973,
+          53.47662,
+          -2.237799,
+          53.480525
+        ],
+        "processed_records": 4,
+        "max_records": 50,
+        "last_osid": "04b6b1d7-2a73-4173-b953-20c3ef2e6ce7",
+        "complete": true,
+        "next_rule": "Do not repeat this notebook/cell/query window. Exact building polygons now exist; next progress requires canonical parcel spatial join/readback and official DEM/LIDAR raster statistics (min/max/mean/max-min) for intersecting building-containing parcels."
+      },
+      "repository_search_terms": [
+        "canonical_parcel",
+        "parcel_id",
+        "canonical parcel",
+        "spatial join"
+      ],
+      "repository_search_result_count": 0,
+      "source_window_opened": false,
+      "rationale": "The first missing criterion is a local canonical-parcel spatial join/readback dependency. Opening another external official source window would not establish canonical parcel identity and would violate the no-fabrication rule.",
+      "next_rule": "Provide/read back canonical parcel geometry plus canonical identifiers in the local OpenCode pipeline; then intersect the already captured exact OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing parcels."
+    },
+    "rationale": "The exact Layer24 slot path contains only the previously verified capability directory. No canonical parcel geometry/identifier package or accepted Layer24 parcel package is present. Another external source window cannot satisfy canonical identity/readback.",
+    "next_rule": "Wait for/read back a local OpenCode canonical-parcel package under the slot lineage, then spatially intersect the already captured exact OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing parcels."
   },
   "local_parcel_matching": "BLOCKED_NO_CANONICAL_PARCEL_GEOMETRY_OR_IDENTIFIER_READBACK",
   "height_statistics": "NOT_COMPUTED",
