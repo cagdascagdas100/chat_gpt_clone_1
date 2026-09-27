@@ -6,7 +6,7 @@
   "owner": "height_difference_5",
   "partition": null,
   "lineage_id": null,
-  "delivery_block": "DELIVERY_BLOCKED:CANONICAL_PARCEL_POLYGON_READBACK_REQUIRED",
+  "delivery_block": "DELIVERY_BLOCKED:HEIGHT_DIFFERENCE_5_CANONICAL_POLYGON_OUTPUT_ABSENT",
   "accepted_count": 0,
   "source_area_count": 4,
   "accepted_count_semantics": "unchanged; source-area/source evidence is not parcel progress",
@@ -17,17 +17,21 @@
   "unmatched_count": 0,
   "source_window": {
     "opened": false,
-    "reason": "first_missing_criterion is local canonical polygon readback; repo audit found only Point canonical workflow"
+    "reason": "first_missing_criterion is a local canonical polygon output/readback, not another external source"
   },
-  "dependency_evidence": {
-    "task_path": "docs/chatgpt_status/aays1/queue/0002_000_height_difference_3_canonical_point_extract_v1_20260722.task.json",
-    "task_blob_sha": "6373d1eaebd2a7a2231db91c8a58bcd55b313ba3",
-    "script_path": "docs/chatgpt_status/height_difference/automation/height_difference_3_extract_canonical_points_v1.py",
-    "script_blob_sha": "00e2a03c42bb1fbe00b472af2872d433540a5636",
-    "canonical_source_path": "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson",
-    "canonical_source_blob_sha": "bb48164e7a0af78df875f30421a6a3068c43edb8",
-    "geometry_type_required": "Point"
+  "dependency_inventory": {
+    "parent_tree_sha": "2a9f9aa4ddee6c2dc26b2ea99f2f6be733496710",
+    "height_difference_5_candidate_count": 6,
+    "height_difference_5_runner_output_count": 0,
+    "candidates": [
+      "incoming/source_area/height_difference_5/null/evidence/r10_os_ngd_buildingpart_exact_polygons.json",
+      "incoming/source_area/height_difference_5/null/evidence/r10_os_ngd_buildingpart_exact_polygons.json.sha256",
+      "incoming/source_area/height_difference_5/null/evidence/r11_local_canonical_join_gate.txt",
+      "incoming/source_area/height_difference_5/null/evidence/r11_local_canonical_join_gate.txt.sha256",
+      "incoming/source_area/height_difference_5/null/evidence/r13_canonical_workflow_geometry_semantics_audit.json",
+      "incoming/source_area/height_difference_5/null/evidence/r13_canonical_workflow_geometry_semantics_audit.json.sha256"
+    ]
   },
   "delivery_target": "incoming/source_area/height_difference_5/null/",
-  "first_missing_criterion": "canonical parcel polygon geometry plus canonical identifier readback for the exact OS Building Part polygons; the available repo canonical workflow is Point-only and cannot prove parcel-boundary intersection; after polygon join, compute official DEM/LIDAR raster min/max/mean/max-min only for matched building-containing canonical parcels"
+  "first_missing_criterion": "canonical parcel polygon geometry plus canonical identifier readback for the exact OS Building Part polygons; no height_difference_5 canonical polygon or runner-output artefact exists in the R13 repository tree; after polygon join, compute official DEM/LIDAR raster min/max/mean/max-min only for matched building-containing canonical parcels"
 }
