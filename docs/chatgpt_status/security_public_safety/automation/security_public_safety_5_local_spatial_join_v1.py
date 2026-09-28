@@ -80,7 +80,7 @@ def find_lambeth_link(html_bytes,base):
     if i>=0:
         win=s[max(0,i-2000):i+3000]
         import re
-        m=re.search(r'href=["\\']([^"\\']+\\.gml[^"\\']*)',win,re.I)
+        m=re.search(r"href=[\"']([^\"']+\\.gml[^\"']*)",win,re.I)
         if m: return urllib.parse.urljoin(base,m.group(1)),LOCAL_AUTHORITY
     return None,None
 
