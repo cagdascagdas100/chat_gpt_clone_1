@@ -1,15 +1,15 @@
 {
   "schema_version": 5,
   "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
-  "task_version": "4.0-mps-lsoa-current-24m",
+  "task_version": "4.0-mps-ward-crime-schema-precheck",
   "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260928-004",
-  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-partition-61524-76903-mps-lsoa-current-24m-61624-61673-v1",
+  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-mps-ward-current24m-barnet3-first50-schema-v1",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_5",
   "owner": null,
   "lineage_id": "86b5e932de484ad26133fa8c",
-  "status": "done",
+  "status": "pending",
   "priority": -500,
   "created_at": "2026-09-27T21:54:00+00:00",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
@@ -42,13 +42,14 @@
     ]
   },
   "new_official_source_window": {
-    "publisher": "Metropolitan Police Service / London Datastore",
-    "source_window_id": "mps_recorded_crime_lsoa_202409_202608_sps5_61624_61673_v1",
-    "method": "current 24-month MPS LSOA crime CSV; exact LSOA identifier join against canonical spatial-attribution readback",
-    "url": "https://data.london.gov.uk/download/exy3m/221142dd-f7b2-4209-921e-4de833a82285/MPS%20LSOA%20Level%20Crime%20%28most%20recent%2024%20months%29.csv",
-    "record_range": [
-      "parcel_61624",
-      "parcel_61673"
+    "publisher": "Metropolitan Police Service / Greater London Authority",
+    "source_window_id": "mps_ward_level_crime_current24m_barnet3_first50_20260925_v1",
+    "method": "current 24-month Ward Level Crime CSV exact WardCode binding",
+    "url": "https://data.london.gov.uk/download/exy3m/s8b/MPS%20Ward%20Level%20Crime%20%28most%20recent%2024%20months%29.csv",
+    "target_ward_codes": [
+      "E05013628",
+      "E05013629",
+      "E05013644"
     ],
     "max_records": 50,
     "public_no_login": true
@@ -61,13 +62,12 @@
     "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json"
   ],
   "acceptance_checks": [
-    "Verify canonical Git blob SHA bb48164e7a0af78df875f30421a6a3068c43edb8",
-    "Process only parcel_61624 through parcel_61673, maximum 50 records",
-    "Download the current MPS LSOA Level Crime CSV from the official London Datastore URL",
-    "Require a canonical LSOA exact code read back from the verified spatial canonical blob",
-    "Require the exact same LSOA code to exist in the official MPS CSV with crime field evidence",
-    "Do not fabricate a fresh polygon; local spatial attribution must be explicit canonical spatial readback",
-    "Never claim accepted_count or final package delivery from runner output"
+    "Process at most 50 official CSV rows for the three previously verified ward codes",
+    "Source-area preview geometry must be Polygon/MultiPolygon and carry every required coverage-area semantic field",
+    "Precheck parcel_61624..61673 before any ZIP or incoming/layer24 commit",
+    "Parcel geometry must be Polygon/MultiPolygon",
+    "canonical_parcel_id is mandatory; parcel_id/security_parcel_id aliases do not satisfy it",
+    "Any parcel schema failure forces accepted_count=0 and PRODUCER_SCHEMA_INVALID"
   ],
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
@@ -83,10 +83,6 @@
   "production_deploy": false,
   "person_level_data": false,
   "final_ready": false,
-  "pickup_normalization": "2026-09-28T08:15:00Z",
-  "pickup_normalization_reason": "Same existing SPS5 task advanced to unused MPS LSOA crime CSV window; no second writer/task.",
-  "picked_at": "2026-09-28T08:52:06.2329461+00:00",
-  "completed_at": "2026-09-28T08:52:12.7568219+00:00",
-  "runner_status": "GITHUB_ACTIONS_DONE",
-  "automation_exit_code": 0
+  "pickup_normalization": "2026-09-28T13:55:00Z",
+  "pickup_normalization_reason": "Same existing SPS5 task; one unused official MPS ward-crime CSV window; no second writer/task."
 }
