@@ -8,62 +8,60 @@
   "semantic_mode": "AREA_JOIN",
   "github_write_capability": {
     "status": "PASS_REUSED_READBACK",
-    "capability_commit_sha": "a7d69388267f026740c8ed5b91f3e5d8df7c947e",
-    "capability_test_repeated": false
+    "capability_test_repeated": false,
+    "capability_commit_sha": "a7d69388267f026740c8ed5b91f3e5d8df7c947e"
   },
-  "previous_artifact_physical_rehash": {
+  "prior_artifact_physical_rehash": {
     "status": "PASS",
-    "checkpoint_sha256": "8bed42bde0f0bf328bd124e5a444f1e425601cb6525f71f1576282022cf4c70e",
-    "receipt_sha256": "33f16c1e470e677b827b638e6cd0624637cd4d71c75a3a651a0356ba18de09b7",
-    "evidence_manifest_sha256": "7b8ebb2d74060d56a907372d9068439a3b32aa98df039a16457e1b082ab71c64",
-    "source_ledger_sha256": "daf9c2da477f8135e06e8365c9a3c1ae7a54dddce7b33ac6dc921f830006afdf",
-    "unmatched_sha256": "9d2ddd4d3d294fad810e2f5d3daf035edba7fef7c3e4e9d11717418f62c2c717",
-    "zip_sha256": "df9789c4802f31ea1f07ccbededf0a50a5c3ab4b4bdf79134572c261d7a98721",
-    "zip_sidecar_match": true,
-    "member_sidecars_checked": 10
+    "zip_sha256": "bfd79585bb3c9a0f3f35249802ca6f94e69aeb268877144ff200d8281e7a52fd",
+    "zip_integrity": "PASS",
+    "member_sidecars_checked": 11,
+    "member_sidecars_match": true
+  },
+  "prior_remote_loose_state_note": {
+    "checkpoint_receipt_manifest_sidecars": "MISMATCHED_AGAINST_RAW_REMOTE_BLOBS",
+    "recovery_basis": "physically verified gen16 ZIP contents"
   },
   "counts": {
     "previous_after_count": 0,
     "accepted_count": 0,
     "after_count": 0,
-    "source_area_count": 1,
+    "source_area_count": 0,
     "materialized_parcel_count": 0,
     "direct_parcel_count": 0,
     "verified_no_building_count": 0,
     "unprocessed_count": null,
-    "unprocessed_count_status": "NOT_CALCULABLE_PARTITION_UNRESOLVED",
     "planned_building_count": 0,
-    "rejected_count": 0,
+    "rejected_count": 1,
     "unmatched_count": 1,
-    "cumulative_unmatched_count": 2,
     "duplicate_count": 0,
     "proxy_count": 0,
-    "confidence_distribution": {"accepted": {}, "source_area": {"90_100": 1}, "binding_probe": {"90_100": 1}}
+    "confidence_distribution": {"accepted": {}, "source_area": {}, "rejected": {"90_100": 1}}
   },
   "source_window": {
-    "id": "HMLR_INSPIRE_DOWNLOAD_INDEX_20260906_BINDING_PROBE_001",
-    "authority": "HM Land Registry",
-    "source_family": "INSPIRE Index Polygons",
-    "url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
-    "final_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+    "id": "ONS_LAD_MAY_2026_BGC_FEATURESERVER_EXACT_QUERY_E06000001",
+    "authority": "Office for National Statistics",
+    "source_family": "LAD May 2026 BGC FeatureServer exact GeoJSON query",
+    "url": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Local_Authority_Districts_May_2026_Boundaries_UK_BGC/FeatureServer/0/query?f=geojson&outFields=%2A&outSR=4326&returnGeometry=true&where=LAD26CD%3D%27E06000001%27",
     "record_count": 1,
     "max_records": 50,
-    "data_date": "2026-09-06",
-    "licence": "OGL",
-    "http_status": null
+    "official_geometry_type": "esriGeometryPolygon",
+    "supported_query_format": "geoJSON",
+    "materialization_status": "FAILED_NO_PAYLOAD"
   },
-  "method_change": {
-    "trigger_zero_accept_streak_before_batch": 15,
-    "changed_authority": true,
-    "changed_source_family": true,
-    "changed_parser_target": true,
-    "changed_spatial_binding_method": true,
-    "new_method": "HMLR_INSPIRE_ID_TO_LOCAL_AUTHORITY_GML_POLYGON"
+  "semantic_preflight": {
+    "records_feature_count": 0,
+    "invalid_record_count": 0,
+    "candidate_rejected_before_records": true,
+    "required_source_area_geometry": ["Polygon","MultiPolygon"],
+    "candidate_schema_result": "INVALID_REJECTED_BEFORE_RECORDS"
   },
-  "evidence_slices": [{"path": "evidence/hmlr_inspire_binding_probe_001.json", "sha256": "f60a07680beb0c0f192590b759db6a93d99b42d8915f4236e9803cc52556bbeb"}],
-  "first_missing_criterion": "EXPLICIT_GAS_EMISSIONS_4_PARTITION_OWNERSHIP_MAP",
-  "cursor": "hmlr_inspire_download_index:publication=2026-09-06:record=1",
-  "zero_accept_streak": 16,
+  "evidence_slices": [{"path":"evidence/ons_lad26_e06000001_polygon_materialization_attempt.json","sha256":"4769dc994fdd7a27b41e6f776a5a800f1a69fa2db4205cf890cd344ccb55c6a7"}],
+  "cursor": "ons_lad_may_2026_bgc_featureserver_exact_query:E06000001:attempt=1:geometry_unmaterialized",
+  "zero_accept_streak": 17,
+  "first_missing_criterion": "MATERIALIZE_VALID_COVERAGE_AREA_POLYGON",
+  "next_after_geometry": "EXPLICIT_GAS_EMISSIONS_4_PARTITION_OWNERSHIP_MAP",
   "schema_mapping_required": false,
-  "fake_data": false
+  "fake_data": false,
+  "delivery_blocked_codes": ["PRODUCER_SCHEMA_INVALID","SOURCE_GEOMETRY_MATERIALIZATION_FAILED"]
 }
