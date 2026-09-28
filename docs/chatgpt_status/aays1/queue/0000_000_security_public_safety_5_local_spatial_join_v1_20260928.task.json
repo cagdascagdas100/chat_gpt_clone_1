@@ -1,15 +1,15 @@
 {
   "schema_version": 5,
   "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
-  "task_version": "5.0-planning-data-title-boundary-canonical-polygon-id",
-  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-005",
-  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-planning-data-title-boundary-61624-61673-v1",
+  "task_version": "6.0-hmlr-inspire-lambeth-canonical-resolution",
+  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-006",
+  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-hmlr-inspire-lambeth-2026-09-rejected5-v1",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_5",
   "owner": null,
   "lineage_id": "86b5e932de484ad26133fa8c",
-  "status": "done",
+  "status": "pending",
   "priority": -500,
   "created_at": "2026-09-27T21:54:00+00:00",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
@@ -19,7 +19,7 @@
     "end": 76903,
     "count": 15380
   },
-  "max_source_records": 50,
+  "max_source_records": 5,
   "script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.ps1",
   "automation_script": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.ps1",
   "python_script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.py",
@@ -42,17 +42,20 @@
     ]
   },
   "new_official_source_window": {
-    "publisher": "Planning Data / MHCLG",
-    "provider": "HM Land Registry",
-    "dataset": "title-boundary",
-    "source_window_id": "planning_data_title_boundary_coordinate_sps5_61624_61673_v1",
-    "method": "coordinate-intersection query returning HM Land Registry title-boundary Polygon/MultiPolygon and reference",
-    "api": "https://www.planning.data.gov.uk/entity.geojson",
-    "record_range": [
-      "parcel_61624",
-      "parcel_61673"
+    "publisher": "HM Land Registry",
+    "dataset": "INSPIRE Index Polygons",
+    "source_window_id": "hmlr_inspire_lambeth_2026_09_sps5_rejected5_v1",
+    "method": "official monthly Lambeth GML download plus local point-in-polygon against five prior rejected canonical locators",
+    "catalog_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+    "published_window": "2026-09-06",
+    "record_ids": [
+      "parcel_61637",
+      "parcel_61648",
+      "parcel_61649",
+      "parcel_61669",
+      "parcel_61672"
     ],
-    "max_records": 50,
+    "max_records": 5,
     "public_no_login": true
   },
   "allowed_paths": [
@@ -63,15 +66,14 @@
     "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json"
   ],
   "acceptance_checks": [
-    "Process at most 50 legacy locators parcel_61624..parcel_61673",
-    "Do not reopen the previously hashed MPS LSOA source window",
-    "Planning Data title-boundary query must return exactly one unique official reference for a candidate",
-    "records feature geometry must be Polygon or MultiPolygon",
-    "canonical_parcel_id must be title-boundary:<official reference>",
-    "Every records feature must include evidence_scope, coverage_area_id, source_resolution, time_window, source_url, measurement_date, measurement_method, spatial_binding_method, confidence_score_0_100, evidence_grade, field_evidence, canonical_parcel_id",
-    "parcel_id and accepted_parcel properties are forbidden",
-    "Rejected or ambiguous locators go to unmatched with exact reasons",
-    "Runner never writes incoming package; package writer must semantic-precheck again before commit"
+    "Physically rehash the previous Planning Data Layer24 ZIP on runner filesystem and verify all seven internal SHA-256 sidecars before source processing",
+    "Process only five prior rejected locators: parcel_61637, parcel_61648, parcel_61649, parcel_61669, parcel_61672",
+    "Use HM Land Registry September 2026 Lambeth INSPIRE GML; do not repeat Planning Data coordinate/title-boundary method",
+    "Canonical candidate requires exactly one INSPIRE polygon containing the canonical partition point and an exact INSPIRE identifier",
+    "Accepted proposed record geometry must be Polygon or MultiPolygon",
+    "Accepted proposed record must include canonical_parcel_id and all semantic required fields; parcel_id and accepted_parcel properties are forbidden",
+    "Security field evidence may only be reused from the already hashed MPS Layer24 evidence; rows without that field evidence must remain rejected",
+    "Runner never writes incoming package; package writer semantic-prechecks again before commit"
   ],
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
@@ -87,11 +89,9 @@
   "production_deploy": false,
   "person_level_data": false,
   "final_ready": false,
-  "pickup_normalization": "2026-09-28T22:04:00+00:00",
-  "pickup_normalization_reason": "Same existing SPS5 task advanced to one unused official Planning Data title-boundary window; prior MPS field evidence reused by hash/readback only; no second writer/task.",
+  "pickup_normalization": "2026-09-29T01:40:00+03:00",
+  "pickup_normalization_reason": "Same existing SPS5 task advanced to one unused official HM Land Registry INSPIRE window; no second writer/task.",
   "first_missing_criterion": "CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED",
-  "blocker": null,
-  "blocker_reason": null,
   "schema_precheck": {
     "require_geometry": [
       "Polygon",
@@ -118,16 +118,10 @@
     ],
     "commit_only_valid_records": true
   },
-  "blocker_detail": null,
-  "blocked_at": null,
   "reused_field_evidence": {
     "source_window_id": "mps_recorded_crime_lsoa_202409_202608_sps5_61624_61673_v1",
     "official_csv_sha256": "255d63bd759f08d7b0dd7674a38fca25ccb824c6c3a5d75d3fb00e504a34c082",
     "reopen_source": false,
     "readback_only": true
-  },
-  "picked_at": "2026-09-28T22:16:44.0393244+00:00",
-  "completed_at": "2026-09-28T22:17:04.5661619+00:00",
-  "runner_status": "GITHUB_ACTIONS_DONE",
-  "automation_exit_code": 0
+  }
 }
