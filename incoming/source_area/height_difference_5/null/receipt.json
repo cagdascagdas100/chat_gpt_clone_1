@@ -3,10 +3,10 @@
   "owner": "height_difference_5",
   "partition": null,
   "lineage_id": null,
-  "created_at": "2026-09-28T02:33:00+03:00",
+  "created_at": "2026-09-28T03:45:00+03:00",
   "category": "AAYS_SOURCE_AREA_V1",
   "producer_family": "AAYS_LAYER24_EVIDENCE_V1",
-  "delivery_status": "SOURCE_AREA_NO_POST_R17_CANONICAL_PRODUCER_COMMIT",
+  "delivery_status": "SOURCE_AREA_NO_HEIGHT_DIFFERENCE_5_PRODUCER_BRANCH_OR_CANONICAL_ARTEFACT",
   "accepted_count": 0,
   "source_area_count": 4,
   "counts": {
@@ -17,40 +17,42 @@
     "unmatched": 0
   },
   "cursor": {
-    "window_id": "HD5_R18_FIXED_BRANCH_PRODUCER_COMMIT_HISTORY",
-    "method": "fixed_branch_commit_history_producer_trace",
-    "processed_records": 50,
+    "window_id": "HD5_R19_BRANCH_NAMESPACE_PRODUCER_AUDIT",
+    "method": "github_branch_namespace_producer_trace",
+    "processed_records": 16,
     "max_records": 50,
     "complete": true,
-    "result": "NO_POST_R17_HEIGHT_DIFFERENCE_5_PRODUCER_COMMIT",
+    "result": "NO_HEIGHT_DIFFERENCE_5_PRODUCER_OR_OPENCODE_BRANCH",
     "source_window_opened": false,
-    "branch": "aays/height_difference_5/null",
-    "branch_commit_sample_size": 50,
-    "height_difference_5_commit_count": 16,
-    "post_r17_commit_count": 0,
-    "latest_height_difference_5_commit": {
-      "sha": "5d88ea7b5ee27a016298bbaf0f4f0891a2dc4955",
-      "message": "height_difference_5: checkpoint R17 local pipeline artefact blocker"
+    "branch_queries": {
+      "height_difference_5": {
+        "count": 1,
+        "branches": [
+          "aays/height_difference_5/null"
+        ]
+      },
+      "canonical": {
+        "count": 15,
+        "matching_height_difference_5": []
+      },
+      "opencode": {
+        "count": 0,
+        "branches": []
+      },
+      "parcel": {
+        "inspected_relevant_only": true,
+        "height_difference_5_matches": []
+      }
     },
-    "older_non_checkpoint_height_difference_5_commits": [
-      "c54aadbef8d36f5cd67ccafd3e4f7e04bc6a5e18",
-      "e08822b85065908ae58f4001a4f872ed8a888cec",
-      "9c40781af8bb9190bbc35fd69b7a14b773d85174",
-      "7412494f893b045c594b10e91399568122947700",
-      "c50a0f8aa9cd5a5d28c7df3fce279822fa9b19b3",
-      "1f1a8da1a7eb2c80db7055a94f0d90423172ee56",
-      "5d5ff92e3ddc7a13d5c09abc64638b94bad2ab5b",
-      "fb8a360ce7f9cc23f72844bc3eaf96c11764c123"
-    ],
     "blocker_stage": "SOURCE_DATA",
-    "blocker": "No commit exists after R17 on the fixed slot branch. Therefore no new producer/automation commit has introduced a height_difference_5 canonical parcel polygon task/input/output/readback.",
-    "next_rule": "Do not repeat this commit-history window. Resume only after a new post-R18 producer/automation commit introduces a height_difference_5 canonical parcel polygon artefact; then read back exact polygon geometry and canonical identifiers before any Layer24 acceptance."
+    "blocker": "Branch namespace contains only the fixed height_difference_5 checkpoint branch; there is no height_difference_5 producer/OpenCode branch or canonical-parcel branch to read back. Other canonical/parcel branches belong to unrelated producer families and are not valid substitutes.",
+    "next_rule": "Do not repeat this branch-namespace window. Resume only when a new height_difference_5 producer/OpenCode branch or committed canonical parcel polygon artefact exists; then verify exact polygon geometry and canonical identifiers before Layer24 acceptance."
   },
-  "previous_remote_commit_sha": "5d88ea7b5ee27a016298bbaf0f4f0891a2dc4955",
+  "previous_remote_commit_sha": "12410419aa288d5f21c400c94fffebf2f88fcf91",
   "github_write_capability_commit_sha": "fb8a360ce7f9cc23f72844bc3eaf96c11764c123",
   "local_import_readback": false,
   "publisher_proof": false,
   "program_progress_claimed": false,
   "completion_claimed": false,
-  "first_missing_criterion": "a new height_difference_5 producer/automation commit after R17 that carries a local OpenCode canonical parcel polygon task/input/output/readback with exact polygon geometry plus canonical identifier; fixed-branch commit history contains no such post-R17 producer commit; after that readback, intersect existing OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing canonical parcels"
+  "first_missing_criterion": "a height_difference_5-specific producer/OpenCode branch or committed local canonical parcel polygon artefact containing exact polygon geometry plus canonical identifier; branch-namespace audit finds only the fixed checkpoint branch for height_difference_5 and no opencode-named branch; after such artefact is read back, intersect existing OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing canonical parcels"
 }
