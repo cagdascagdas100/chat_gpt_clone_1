@@ -1,15 +1,15 @@
 {
   "schema_version": 5,
   "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
-  "task_version": "3.0-data-police-june-2026-boundary-archive",
-  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260928-003",
-  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-partition-61524-76903-data-police-npt-archive-2026-06-61574-61623-v1",
+  "task_version": "4.0-mps-lsoa-current-24m",
+  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260928-004",
+  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-partition-61524-76903-mps-lsoa-current-24m-61624-61673-v1",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_5",
   "owner": null,
   "lineage_id": "86b5e932de484ad26133fa8c",
-  "status": "done",
+  "status": "pending",
   "priority": -500,
   "created_at": "2026-09-27T21:54:00+00:00",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
@@ -42,14 +42,13 @@
     ]
   },
   "new_official_source_window": {
-    "publisher": "data.police.uk",
-    "source_window_id": "data_police_npt_boundary_archive_2026_06_sps5_61574_61623_v1",
-    "method": "monthly official NPT boundary KML archive; local point-in-polygon",
-    "url": "https://data.police.uk/data/boundaries/2026-06.zip",
-    "expected_md5": "62f89304c7d1e453bec3a307e5126372",
+    "publisher": "Metropolitan Police Service / London Datastore",
+    "source_window_id": "mps_recorded_crime_lsoa_202409_202608_sps5_61624_61673_v1",
+    "method": "current 24-month MPS LSOA crime CSV; exact LSOA identifier join against canonical spatial-attribution readback",
+    "url": "https://data.london.gov.uk/download/exy3m/221142dd-f7b2-4209-921e-4de833a82285/MPS%20LSOA%20Level%20Crime%20%28most%20recent%2024%20months%29.csv",
     "record_range": [
-      "parcel_61574",
-      "parcel_61623"
+      "parcel_61624",
+      "parcel_61673"
     ],
     "max_records": 50,
     "public_no_login": true
@@ -62,12 +61,12 @@
     "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json"
   ],
   "acceptance_checks": [
-    "Materialize and verify canonical Git blob SHA bb48164e7a0af78df875f30421a6a3068c43edb8",
-    "Process only parcel_61574 through parcel_61623, maximum 50 records",
-    "Download official June 2026 NPT boundary archive from data.police.uk",
-    "Require archive MD5 62f89304c7d1e453bec3a307e5126372",
-    "Parse official KML polygons locally",
-    "Candidate requires an exact KML identifier and successful local point-in-polygon join",
+    "Verify canonical Git blob SHA bb48164e7a0af78df875f30421a6a3068c43edb8",
+    "Process only parcel_61624 through parcel_61673, maximum 50 records",
+    "Download the current MPS LSOA Level Crime CSV from the official London Datastore URL",
+    "Require a canonical LSOA exact code read back from the verified spatial canonical blob",
+    "Require the exact same LSOA code to exist in the official MPS CSV with crime field evidence",
+    "Do not fabricate a fresh polygon; local spatial attribution must be explicit canonical spatial readback",
     "Never claim accepted_count or final package delivery from runner output"
   ],
   "single_shared_runner_required": true,
@@ -84,10 +83,6 @@
   "production_deploy": false,
   "person_level_data": false,
   "final_ready": false,
-  "pickup_normalization": "2026-09-28T08:05:00Z",
-  "pickup_normalization_reason": "Same existing SPS5 task advanced to one unused official June-2026 archive window; no second writer/task.",
-  "picked_at": "2026-09-28T08:10:28.7895306+00:00",
-  "completed_at": "2026-09-28T08:10:38.4439046+00:00",
-  "runner_status": "GITHUB_ACTIONS_DONE",
-  "automation_exit_code": 0
+  "pickup_normalization": "2026-09-28T08:15:00Z",
+  "pickup_normalization_reason": "Same existing SPS5 task advanced to unused MPS LSOA crime CSV window; no second writer/task."
 }
