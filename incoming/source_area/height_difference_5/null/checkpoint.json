@@ -4,19 +4,19 @@
   "partition": null,
   "lineage_id": null,
   "page_generation": null,
-  "checkpoint_generation": "R19",
-  "previous_checkpoint": "R18",
+  "checkpoint_generation": "R20",
+  "previous_checkpoint": "R19",
   "producer_family": "AAYS_LAYER24_EVIDENCE_V1",
   "package_category": "AAYS_SOURCE_AREA_V1",
-  "state": "DELIVERY_BLOCKED:SOURCE_DATA_NO_HEIGHT_DIFFERENCE_5_PRODUCER_BRANCH_OR_CANONICAL_ARTEFACT",
+  "state": "DELIVERY_BLOCKED:SOURCE_DATA_NO_HEIGHT_DIFFERENCE_5_PR_WORKFLOW_OR_CANONICAL_ARTEFACT",
   "accepted_count": 0,
   "source_area_count": 4,
   "accepted_count_semantics": "unchanged; source-area/source evidence is not parcel progress",
   "previous_remote_binary_rehash": {
-    "commit_sha": "12410419aa288d5f21c400c94fffebf2f88fcf91",
+    "commit_sha": "5459edd75a9714cf919a0792f0fde805e3556e91",
     "exact_path": "incoming/source_area/height_difference_5/null/",
-    "zip_sha256": "7116158f29a3d04c92c08f14ea866a0d1f0fa38e05971cd7be3c5ae5b5e04018",
-    "zip_blob_sha": "ecb78cf04446879025c55b0b1aa874a0103e539d",
+    "zip_sha256": "70823147d85364bafcd94a081bc0817e5e9185399722b58b70dd1c66946d0b81",
+    "zip_blob_sha": "6e4f5dee37482e53334c213b3a7fd409c1799bfc",
     "zip_sidecar": "PASS",
     "internal_SHA256SUMS": "PASS",
     "individual_sidecars": "PASS"
@@ -33,38 +33,29 @@
   "rejected_count": 0,
   "unmatched_count": 0,
   "cursor": {
-    "window_id": "HD5_R19_BRANCH_NAMESPACE_PRODUCER_AUDIT",
-    "method": "github_branch_namespace_producer_trace",
-    "processed_records": 16,
+    "window_id": "HD5_R20_PR_WORKFLOW_PRODUCER_TRACE_AUDIT",
+    "method": "github_recent_pull_request_and_workflow_run_trace",
+    "processed_records": 0,
     "max_records": 50,
     "complete": true,
-    "result": "NO_HEIGHT_DIFFERENCE_5_PRODUCER_OR_OPENCODE_BRANCH",
+    "result": "NO_HEIGHT_DIFFERENCE_5_PR_OR_WORKFLOW_RUN_TRACE",
     "source_window_opened": false,
-    "branch_queries": {
-      "height_difference_5": {
-        "count": 1,
-        "branches": [
-          "aays/height_difference_5/null"
-        ]
-      },
-      "canonical": {
-        "count": 15,
-        "matching_height_difference_5": []
-      },
-      "opencode": {
-        "count": 0,
-        "branches": []
-      },
-      "parcel": {
-        "inspected_relevant_only": true,
-        "height_difference_5_matches": []
+    "audit_metadata": {
+      "pulls_inspected": 50,
+      "workflow_runs_inspected": 50,
+      "height_difference_5_pull_matches": 0,
+      "height_difference_5_workflow_run_matches": 0,
+      "excluded_non_slot_match": {
+        "pull_number": 1272,
+        "title": "height_difference_2: publish increments 214–224 official-source web rows",
+        "reason": "different slot"
       }
     },
     "blocker_stage": "SOURCE_DATA",
-    "blocker": "Branch namespace contains only the fixed height_difference_5 checkpoint branch; there is no height_difference_5 producer/OpenCode branch or canonical-parcel branch to read back. Other canonical/parcel branches belong to unrelated producer families and are not valid substitutes.",
-    "next_rule": "Do not repeat this branch-namespace window. Resume only when a new height_difference_5 producer/OpenCode branch or committed canonical parcel polygon artefact exists; then verify exact polygon geometry and canonical identifiers before Layer24 acceptance."
+    "blocker": "No recent pull request or workflow run provides a height_difference_5 canonical parcel polygon producer/OpenCode trace. The only height-related PR match belongs to height_difference_2 and is not valid for this slot.",
+    "next_rule": "Do not repeat this PR/workflow audit window. Resume only when a height_difference_5-specific PR/workflow/branch or committed canonical parcel polygon artefact exists; verify exact polygon geometry and canonical identifiers before Layer24 acceptance."
   },
-  "local_parcel_matching": "BLOCKED_NO_HEIGHT_DIFFERENCE_5_PRODUCER_BRANCH_OR_CANONICAL_ARTEFACT",
+  "local_parcel_matching": "BLOCKED_NO_HEIGHT_DIFFERENCE_5_PR_WORKFLOW_OR_CANONICAL_ARTEFACT",
   "height_statistics": "NOT_COMPUTED",
-  "first_missing_criterion": "a height_difference_5-specific producer/OpenCode branch or committed local canonical parcel polygon artefact containing exact polygon geometry plus canonical identifier; branch-namespace audit finds only the fixed checkpoint branch for height_difference_5 and no opencode-named branch; after such artefact is read back, intersect existing OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing canonical parcels"
+  "first_missing_criterion": "a height_difference_5-specific producer/OpenCode PR, workflow run, branch, or committed local canonical parcel polygon artefact containing exact polygon geometry plus canonical identifier; recent PR/workflow audit found no height_difference_5 canonical production trace; after such artefact is read back, intersect existing OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing canonical parcels"
 }
