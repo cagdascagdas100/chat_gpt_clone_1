@@ -64,9 +64,18 @@ class RowParser(HTMLParser):
         if tag.lower()=='tr' and self.in_tr:
             self.rows.append((' '.join(self.texts),list(self.hrefs))); self.in_tr=False
 def fetch_bytes(url,timeout=120):
-    req=urllib.request.Request(url,headers={'User-Agent':'AAYS-security-public-safety-5/hmlr-inspire-v1','Accept':'*/*'})
-    with urllib.request.urlopen(req,timeout=timeout) as r:
-        return int(r.status),r.read(),r.geturl()
+    tmp=Path(tempfile.mkstemp(prefix='aays_hmlr_',suffix='.bin')[1])
+    meta=tmp.with_suffix('.meta')
+    cmd=['curl','-fL','--max-redirs','20','--retry','2','--retry-delay','1','--compressed','-A','Mozilla/5.0 AAYS-security-public-safety-5','-o',str(tmp),'-w','%{http_code}\\n%{url_effective}',url]
+    p=subprocess.run(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=False,timeout=timeout)
+    if p.returncode!=0:
+        raise RuntimeError('curl_failed:'+str(p.returncode)+':'+p.stderr.decode('utf-8','replace')[-2000:])
+    out=p.stdout.decode('utf-8','replace').splitlines()
+    status=int(out[0]) if out and out[0].isdigit() else 0
+    final=out[1].strip() if len(out)>1 else url
+    data=tmp.read_bytes()
+    tmp.unlink(missing_ok=True)
+    return status,data,final
 def find_lambeth_link(html_bytes,base):
     p=RowParser(); p.feed(html_bytes.decode('utf-8','replace'))
     for text,hrefs in p.rows:
