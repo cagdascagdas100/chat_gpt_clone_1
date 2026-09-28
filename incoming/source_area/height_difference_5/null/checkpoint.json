@@ -4,19 +4,19 @@
   "partition": null,
   "lineage_id": null,
   "page_generation": null,
-  "checkpoint_generation": "R17",
-  "previous_checkpoint": "R16",
+  "checkpoint_generation": "R18",
+  "previous_checkpoint": "R17",
   "producer_family": "AAYS_LAYER24_EVIDENCE_V1",
   "package_category": "AAYS_SOURCE_AREA_V1",
-  "state": "DELIVERY_BLOCKED:SOURCE_DATA_HEIGHT_DIFFERENCE_5_LOCAL_PIPELINE_ARTEFACT_ABSENT",
+  "state": "DELIVERY_BLOCKED:SOURCE_DATA_NO_POST_R17_CANONICAL_PRODUCER_COMMIT",
   "accepted_count": 0,
   "source_area_count": 4,
   "accepted_count_semantics": "unchanged; source-area/source evidence is not parcel progress",
   "previous_remote_binary_rehash": {
-    "commit_sha": "4a3e32b51b0f5ca5bb935603fb755b958bd9453b",
+    "commit_sha": "5d88ea7b5ee27a016298bbaf0f4f0891a2dc4955",
     "exact_path": "incoming/source_area/height_difference_5/null/",
-    "zip_sha256": "40aace1e1afb7a9025cf9266337dea5df9280cbca23f5804b1a0ea71e31fad36",
-    "zip_blob_sha": "25b4b70fdfa0cc1b3437e5716f1fed7d7ce93227",
+    "zip_sha256": "a1f2e4e5bfba741f1d71aae92bbe4182bbefe3abdac37d1131b00daa03b3ba0e",
+    "zip_blob_sha": "dc84983d6d3159922612475ec89c643d86c0ea6b",
     "zip_sidecar": "PASS",
     "internal_SHA256SUMS": "PASS",
     "individual_sidecars": "PASS"
@@ -33,47 +33,36 @@
   "rejected_count": 0,
   "unmatched_count": 0,
   "cursor": {
-    "window_id": "HD5_R17_LOCAL_PIPELINE_DIRECTORY_INVENTORY",
-    "method": "exact_queue_runner_input_slot_directory_inventory",
-    "processed_records": 0,
+    "window_id": "HD5_R18_FIXED_BRANCH_PRODUCER_COMMIT_HISTORY",
+    "method": "fixed_branch_commit_history_producer_trace",
+    "processed_records": 50,
     "max_records": 50,
     "complete": true,
-    "result": "NO_HEIGHT_DIFFERENCE_5_LOCAL_PIPELINE_ARTEFACT",
+    "result": "NO_POST_R17_HEIGHT_DIFFERENCE_5_PRODUCER_COMMIT",
     "source_window_opened": false,
-    "queue": {
-      "path": "docs/chatgpt_status/aays1/queue",
-      "entry_count": 113,
-      "height_difference_5_matches": 0
+    "branch": "aays/height_difference_5/null",
+    "branch_commit_sample_size": 50,
+    "height_difference_5_commit_count": 16,
+    "post_r17_commit_count": 0,
+    "latest_height_difference_5_commit": {
+      "sha": "5d88ea7b5ee27a016298bbaf0f4f0891a2dc4955",
+      "message": "height_difference_5: checkpoint R17 local pipeline artefact blocker"
     },
-    "runner_outputs": {
-      "path": "docs/chatgpt_status/height_difference/runner_outputs",
-      "status": "NOT_FOUND_404"
-    },
-    "height_difference_root": {
-      "children": [
-        "automation",
-        "recovery",
-        "runner_inputs",
-        "slots"
-      ]
-    },
-    "runner_inputs": {
-      "path": "docs/chatgpt_status/height_difference/runner_inputs",
-      "entry_count": 60,
-      "height_difference_5_matches": 0
-    },
-    "slots": {
-      "path": "docs/chatgpt_status/height_difference/slots",
-      "children": [
-        "height_difference_3"
-      ],
-      "height_difference_5_present": false
-    },
+    "older_non_checkpoint_height_difference_5_commits": [
+      "c54aadbef8d36f5cd67ccafd3e4f7e04bc6a5e18",
+      "e08822b85065908ae58f4001a4f872ed8a888cec",
+      "9c40781af8bb9190bbc35fd69b7a14b773d85174",
+      "7412494f893b045c594b10e91399568122947700",
+      "c50a0f8aa9cd5a5d28c7df3fce279822fa9b19b3",
+      "1f1a8da1a7eb2c80db7055a94f0d90423172ee56",
+      "5d5ff92e3ddc7a13d5c09abc64638b94bad2ab5b",
+      "fb8a360ce7f9cc23f72844bc3eaf96c11764c123"
+    ],
     "blocker_stage": "SOURCE_DATA",
-    "blocker": "The fixed branch has no height_difference_5 queue task, runner input, slot directory, or runner-output directory. Therefore the required local canonical parcel polygon package/readback has not entered the OpenCode pipeline.",
-    "next_rule": "Do not repeat this directory inventory. Resume only after a height_difference_5 local OpenCode task/input/slot/output artefact is committed; then read back exact canonical parcel polygons and identifiers before any Layer24 acceptance."
+    "blocker": "No commit exists after R17 on the fixed slot branch. Therefore no new producer/automation commit has introduced a height_difference_5 canonical parcel polygon task/input/output/readback.",
+    "next_rule": "Do not repeat this commit-history window. Resume only after a new post-R18 producer/automation commit introduces a height_difference_5 canonical parcel polygon artefact; then read back exact polygon geometry and canonical identifiers before any Layer24 acceptance."
   },
-  "local_parcel_matching": "BLOCKED_NO_HEIGHT_DIFFERENCE_5_LOCAL_PIPELINE_ARTEFACT",
+  "local_parcel_matching": "BLOCKED_NO_POST_R17_CANONICAL_PRODUCER_COMMIT",
   "height_statistics": "NOT_COMPUTED",
-  "first_missing_criterion": "a local OpenCode-produced height_difference_5 canonical parcel polygon task/input/slot/output/readback with exact polygon geometry and canonical identifier; exact directory inventory shows no height_difference_5 item in the 113-entry queue, none in 60 runner_inputs, no height_difference_5 slot directory, and no runner_outputs directory on the fixed branch; after such readback, intersect existing OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing canonical parcels"
+  "first_missing_criterion": "a new height_difference_5 producer/automation commit after R17 that carries a local OpenCode canonical parcel polygon task/input/output/readback with exact polygon geometry plus canonical identifier; fixed-branch commit history contains no such post-R17 producer commit; after that readback, intersect existing OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing canonical parcels"
 }
