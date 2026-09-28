@@ -1,15 +1,15 @@
 {
   "schema_version": 5,
   "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
-  "task_version": "5.0-hmlr-inspire-lambeth-canonical-polygon-correction",
-  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260928-005",
-  "idempotency_key": "sps5-lineage-86b5e932de484ad26133fa8c-hmlr-inspire-lambeth-2026-09-61624-61673-v1",
+  "task_version": "4.0-mps-lsoa-current-24m-canonical-polygon-schema-precheck",
+  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260928-004",
+  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-partition-61524-76903-mps-lsoa-current24m-61624-61673-v1",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_5",
   "owner": null,
   "lineage_id": "86b5e932de484ad26133fa8c",
-  "status": "blocked",
+  "status": "pending",
   "priority": -500,
   "created_at": "2026-09-27T21:54:00+00:00",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
@@ -42,12 +42,14 @@
     ]
   },
   "new_official_source_window": {
-    "publisher": "HM Land Registry",
-    "source_window_id": "hmlr_inspire_index_polygons_2026_09_lambeth_sps5_61624_61673_v1",
-    "method": "September 2026 London Borough of Lambeth INSPIRE GML; point-to-polygon correction join",
-    "download_page": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
-    "local_authority": "London Borough of Lambeth",
-    "published": "2026-09-06",
+    "publisher": "Metropolitan Police Service / London Datastore",
+    "source_window_id": "mps_lsoa_current_24m_sps5_61624_61673_v1",
+    "method": "official current LSOA recorded-crime CSV exact identifier join",
+    "url": "https://data.london.gov.uk/download/exy3m/221142dd-f7b2-4209-921e-4de833a82285/MPS%20LSOA%20Level%20Crime%20%28most%20recent%2024%20months%29.csv",
+    "record_range": [
+      "parcel_61624",
+      "parcel_61673"
+    ],
     "max_records": 50,
     "public_no_login": true
   },
@@ -81,12 +83,9 @@
   "production_deploy": false,
   "person_level_data": false,
   "final_ready": false,
-  "pickup_normalization": "2026-09-28T19:45:00Z",
-  "pickup_normalization_reason": "Same existing SPS5 task; one unused official HMLR INSPIRE Lambeth GML window; no second writer/task.",
+  "pickup_normalization": "2026-09-28T23:53:00+03:00",
+  "pickup_normalization_reason": "Same existing SPS5 task advanced to one unused official MPS LSOA window with strict polygon/canonical_parcel_id semantic precheck; no second writer/task.",
   "first_missing_criterion": "CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED",
-  "runner_status": "SOURCE_DATA_ACCESS_BLOCKED",
-  "completed_at": "2026-09-28T19:55:55Z",
-  "automation_exit_code": 1,
   "blocker": "SOURCE_DATA_ACCESS_REQUIRED",
   "blocker_reason": "HM Land Registry INSPIRE download page could not be materialized in the runner: urllib redirect loop; curl -L failed with exit code 47 after 20 redirects. No GML bytes, no records, no cursor advance.",
   "source_window_result": {
@@ -105,5 +104,27 @@
     "source_area_count": 0,
     "cursor_advanced": false,
     "first_missing_criterion": "CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED"
+  },
+  "schema_precheck": {
+    "require_geometry": [
+      "Polygon",
+      "MultiPolygon"
+    ],
+    "require_exact_property": "canonical_parcel_id",
+    "required_fields": [
+      "evidence_scope",
+      "coverage_area_id",
+      "source_resolution",
+      "time_window",
+      "source_url",
+      "measurement_date",
+      "measurement_method",
+      "spatial_binding_method",
+      "confidence_score_0_100",
+      "evidence_grade",
+      "field_evidence",
+      "canonical_parcel_id"
+    ],
+    "batch_commit_only_if_all_50_valid": true
   }
 }
