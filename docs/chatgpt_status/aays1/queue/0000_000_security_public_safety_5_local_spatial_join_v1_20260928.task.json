@@ -1,9 +1,9 @@
 {
   "schema_version": 5,
   "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
-  "task_version": "6.0-hmlr-inspire-lambeth-canonical-resolution",
-  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-006",
-  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-hmlr-inspire-lambeth-2026-09-rejected5-v1",
+  "task_version": "7.0-planning-data-custom-area-canonical-resolution",
+  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-007",
+  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-planning-data-custom-area-rejected5-v1",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_5",
@@ -42,12 +42,13 @@
     ]
   },
   "new_official_source_window": {
-    "publisher": "HM Land Registry",
-    "dataset": "INSPIRE Index Polygons",
-    "source_window_id": "hmlr_inspire_lambeth_2026_09_sps5_rejected5_v1",
-    "method": "official monthly Lambeth GML download plus local point-in-polygon against five prior rejected canonical locators",
-    "catalog_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
-    "published_window": "2026-09-06",
+    "publisher": "Planning Data / MHCLG",
+    "provider": "HM Land Registry",
+    "dataset": "title-boundary",
+    "source_window_id": "planning_data_title_boundary_custom_area_sps5_rejected5_v1",
+    "method": "custom WKT area query using geometry plus geometry_relation=intersects, then local point-in-polygon",
+    "api": "https://www.planning.data.gov.uk/entity.geojson",
+    "docs": "https://www.planning.data.gov.uk/docs",
     "record_ids": [
       "parcel_61637",
       "parcel_61648",
@@ -66,14 +67,12 @@
     "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json"
   ],
   "acceptance_checks": [
-    "Physically rehash the previous Planning Data Layer24 ZIP on runner filesystem and verify all seven internal SHA-256 sidecars before source processing",
-    "Process only five prior rejected locators: parcel_61637, parcel_61648, parcel_61649, parcel_61669, parcel_61672",
-    "Use HM Land Registry September 2026 Lambeth INSPIRE GML; do not repeat Planning Data coordinate/title-boundary method",
-    "Canonical candidate requires exactly one INSPIRE polygon containing the canonical partition point and an exact INSPIRE identifier",
-    "Accepted proposed record geometry must be Polygon or MultiPolygon",
-    "Accepted proposed record must include canonical_parcel_id and all semantic required fields; parcel_id and accepted_parcel properties are forbidden",
-    "Security field evidence may only be reused from the already hashed MPS Layer24 evidence; rows without that field evidence must remain rejected",
-    "Runner never writes incoming package; package writer semantic-prechecks again before commit"
+    "Physically rehash previous schema-valid Planning Data Layer24 ZIP and verify seven internal SHA-256 sidecars before source processing",
+    "Do not use prior latitude/longitude title-boundary query method",
+    "Use only custom WKT geometry plus geometry_relation=intersects for five prior rejected locators",
+    "Candidate requires exactly one Polygon/MultiPolygon that locally contains the canonical point",
+    "Accepted record requires canonical_parcel_id and all strict semantic fields; parcel_id and accepted_parcel are forbidden",
+    "Security field evidence may only be reused from prior hashed MPS evidence; missing field evidence remains rejected"
   ],
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
@@ -89,8 +88,8 @@
   "production_deploy": false,
   "person_level_data": false,
   "final_ready": false,
-  "pickup_normalization": "2026-09-29T01:40:00+03:00",
-  "pickup_normalization_reason": "Same existing SPS5 task advanced to one unused official HM Land Registry INSPIRE window; no second writer/task.",
+  "pickup_normalization": "2026-09-29T01:50:00+03:00",
+  "pickup_normalization_reason": "Same SPS5 task advanced to distinct Planning Data custom-area API method; no second task/writer.",
   "first_missing_criterion": "CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED",
   "schema_precheck": {
     "require_geometry": [
