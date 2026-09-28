@@ -1,15 +1,15 @@
 {
   "schema_version": 5,
   "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
-  "task_version": "4.0-mps-lsoa-current-24m-canonical-polygon-schema-precheck",
-  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260928-004",
-  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-partition-61524-76903-mps-lsoa-current24m-61624-61673-v1",
+  "task_version": "5.0-planning-data-title-boundary-canonical-polygon-id",
+  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-005",
+  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-planning-data-title-boundary-61624-61673-v1",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_5",
   "owner": null,
   "lineage_id": "86b5e932de484ad26133fa8c",
-  "status": "blocked",
+  "status": "pending",
   "priority": -500,
   "created_at": "2026-09-27T21:54:00+00:00",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
@@ -42,10 +42,12 @@
     ]
   },
   "new_official_source_window": {
-    "publisher": "Metropolitan Police Service / London Datastore",
-    "source_window_id": "mps_lsoa_current_24m_sps5_61624_61673_v1",
-    "method": "official current LSOA recorded-crime CSV exact identifier join",
-    "url": "https://data.london.gov.uk/download/exy3m/221142dd-f7b2-4209-921e-4de833a82285/MPS%20LSOA%20Level%20Crime%20%28most%20recent%2024%20months%29.csv",
+    "publisher": "Planning Data / MHCLG",
+    "provider": "HM Land Registry",
+    "dataset": "title-boundary",
+    "source_window_id": "planning_data_title_boundary_coordinate_sps5_61624_61673_v1",
+    "method": "coordinate-intersection query returning HM Land Registry title-boundary Polygon/MultiPolygon and reference",
+    "api": "https://www.planning.data.gov.uk/entity.geojson",
     "record_range": [
       "parcel_61624",
       "parcel_61673"
@@ -61,13 +63,15 @@
     "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json"
   ],
   "acceptance_checks": [
-    "Use exactly 50 legacy locators parcel_61624..parcel_61673",
-    "HM Land Registry GML record must provide Polygon/MultiPolygon and INSPIRE ID",
-    "canonical_parcel_id must be the HMLR INSPIRE ID; alias parcel_id does not satisfy it",
-    "Reuse only previously hashed MPS LSOA field-evidence bytes; do not re-open that source window",
-    "Every output record must include evidence_scope, coverage_area_id, source_resolution, time_window, source_url, measurement_date, measurement_method, spatial_binding_method, confidence_score_0_100, evidence_grade, field_evidence, canonical_parcel_id",
-    "Rejected aliases must be listed with exact reason; rejected aliases are never included in records.geojson",
-    "No incoming package is written by runner; package writer must re-precheck runner records before commit"
+    "Process at most 50 legacy locators parcel_61624..parcel_61673",
+    "Do not reopen the previously hashed MPS LSOA source window",
+    "Planning Data title-boundary query must return exactly one unique official reference for a candidate",
+    "records feature geometry must be Polygon or MultiPolygon",
+    "canonical_parcel_id must be title-boundary:<official reference>",
+    "Every records feature must include evidence_scope, coverage_area_id, source_resolution, time_window, source_url, measurement_date, measurement_method, spatial_binding_method, confidence_score_0_100, evidence_grade, field_evidence, canonical_parcel_id",
+    "parcel_id and accepted_parcel properties are forbidden",
+    "Rejected or ambiguous locators go to unmatched with exact reasons",
+    "Runner never writes incoming package; package writer must semantic-precheck again before commit"
   ],
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
@@ -83,28 +87,11 @@
   "production_deploy": false,
   "person_level_data": false,
   "final_ready": false,
-  "pickup_normalization": "2026-09-28T23:53:00+03:00",
-  "pickup_normalization_reason": "Same existing SPS5 task advanced to one unused official MPS LSOA window with strict polygon/canonical_parcel_id semantic precheck; no second writer/task.",
+  "pickup_normalization": "2026-09-29T01:04:00+03:00",
+  "pickup_normalization_reason": "Same existing SPS5 task advanced to one unused official Planning Data title-boundary window; prior MPS field evidence reused by hash/readback only; no second writer/task.",
   "first_missing_criterion": "CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED",
-  "blocker": "PRODUCER_SCHEMA_INVALID",
-  "blocker_reason": "HM Land Registry INSPIRE download page could not be materialized in the runner: urllib redirect loop; curl -L failed with exit code 47 after 20 redirects. No GML bytes, no records, no cursor advance.",
-  "source_window_result": {
-    "source_window_id": "hmlr_inspire_index_polygons_2026_09_lambeth_sps5_61624_61673_v1",
-    "publisher": "HM Land Registry",
-    "local_authority": "London Borough of Lambeth",
-    "published": "2026-09-06",
-    "official_download_page": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
-    "retrieval_methods_attempted": [
-      "python urllib redirect handling",
-      "curl -L redirect handling"
-    ],
-    "gml_bytes_materialized": false,
-    "processed_record_count": 0,
-    "accepted_count": 0,
-    "source_area_count": 0,
-    "cursor_advanced": false,
-    "first_missing_criterion": "CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED"
-  },
+  "blocker": null,
+  "blocker_reason": null,
   "schema_precheck": {
     "require_geometry": [
       "Polygon",
@@ -125,17 +112,19 @@
       "field_evidence",
       "canonical_parcel_id"
     ],
-    "batch_commit_only_if_all_50_valid": true
+    "forbidden_properties": [
+      "parcel_id",
+      "accepted_parcel"
+    ],
+    "commit_only_valid_records": true
   },
-  "runner_status": "SCHEMA_PRECHECK_BLOCKED",
-  "blocker_detail": "Canonical polygon blob 0180223f125027d55ffea5d908b77f8df08ffe84 contains 1264 MultiPolygon features but zero non-empty properties.canonical_parcel_id fields; matched_parcel_id/matched_inspire_id are not accepted substitutes under the current producer contract.",
-  "blocked_at": "2026-09-28T21:03:16Z",
-  "source_window_attempt": {
-    "source_window_id": "mps_lsoa_current_24m_sps5_61624_61673_v1",
-    "source_url": "https://data.london.gov.uk/download/exy3m/221142dd-f7b2-4209-921e-4de833a82285/MPS%20LSOA%20Level%20Crime%20%28most%20recent%2024%20months%29.csv",
-    "workflow_run_id": 36483227132,
-    "workflow_job_id": 109133744084,
-    "python_exit_code": 2,
-    "output_committed": false
+  "runner_status": null,
+  "blocker_detail": null,
+  "blocked_at": null,
+  "reused_field_evidence": {
+    "source_window_id": "mps_recorded_crime_lsoa_202409_202608_sps5_61624_61673_v1",
+    "official_csv_sha256": "255d63bd759f08d7b0dd7674a38fca25ccb824c6c3a5d75d3fb00e504a34c082",
+    "reopen_source": false,
+    "readback_only": true
   }
 }
