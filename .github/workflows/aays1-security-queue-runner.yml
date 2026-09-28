@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   run-pending-security-task:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,44 +49,38 @@ jobs:
                 [pscustomobject]@{ File=$_.FullName; Queue=$q; Status=[string]$q.status; Name=$_.Name }
               } catch { $null }
             } |
-            Where-Object { $_ -and $_.Status -eq 'pending' -and $_.Queue.automation_script -match 'security_public_safety' } |
+            Where-Object { $_ -and $_.Status -eq 'pending' -and $_.Queue.task_id -eq 'security-public-safety-5-local-spatial-join-v1-20260928' } |
             Select-Object -First 1
-          if (-not $pending) {
-            'No pending security queue task.' | Set-Content -LiteralPath (Join-Path $ReportDir 'github-actions-security-queue-idle.md') -Encoding UTF8
-            exit 0
-          }
+          if (-not $pending) { exit 0 }
           $queueFile = $pending.File
           $queue = $pending.Queue
-          $scriptRaw = [string]$queue.automation_script
-          $norm = $scriptRaw -replace '/', '\'
-          $idx = $norm.IndexOf('docs\chatgpt_status\')
-          if ($idx -lt 0) { throw "Cannot resolve automation_script: $scriptRaw" }
-          $rel = $norm.Substring($idx)
-          $scriptFile = Join-Path $RepoRoot $rel
+          $scriptFile = Join-Path $RepoRoot (($queue.automation_script -replace '/', [IO.Path]::DirectorySeparatorChar))
           if (-not (Test-Path -LiteralPath $scriptFile)) { throw "Automation script not found: $scriptFile" }
-          $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-          @{ status='GITHUB_ACTIONS_QUEUE_STARTED'; timestamp=$stamp; queue_file=$queueFile; automation_script=$scriptFile; final_ready=$false; fake_data=$false } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $StatusDir "github-actions-security-queue-started-$stamp.json") -Encoding UTF8
           $queue.status = 'running'
           $queue | Add-Member -NotePropertyName picked_at -NotePropertyValue (Get-Date).ToString('o') -Force
           $queue | Add-Member -NotePropertyName runner_status -NotePropertyValue 'GITHUB_ACTIONS_RUNNING' -Force
           $queue | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $queueFile -Encoding UTF8
           & pwsh -NoProfile -ExecutionPolicy Bypass -File $scriptFile
-          if ($LASTEXITCODE -ne 0) { throw "Automation failed with exit code $LASTEXITCODE" }
-          $queueDone = Get-Content -LiteralPath $queueFile -Raw | ConvertFrom-Json
-          $queueDone.status = 'done'
-          $queueDone | Add-Member -NotePropertyName completed_at -NotePropertyValue (Get-Date).ToString('o') -Force
-          $queueDone | Add-Member -NotePropertyName runner_status -NotePropertyValue 'GITHUB_ACTIONS_DONE' -Force
-          $queueDone | Add-Member -NotePropertyName automation_exit_code -NotePropertyValue 0 -Force
-          $queueDone | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $queueFile -Encoding UTF8
-          @{ status='GITHUB_ACTIONS_QUEUE_DONE'; timestamp=(Get-Date).ToString('o'); queue_file=$queueFile; automation_script=$scriptFile; final_ready=$false; fake_data=$false } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $StatusDir "github-actions-security-queue-done-$stamp.json") -Encoding UTF8
+          $exitCode = $LASTEXITCODE
+          if ($null -eq $exitCode) { $exitCode = 1 }
+          $q2 = Get-Content -LiteralPath $queueFile -Raw | ConvertFrom-Json
+          $q2.status = $(if ($exitCode -eq 0) { 'done' } else { 'blocked' })
+          $q2 | Add-Member -NotePropertyName completed_at -NotePropertyValue (Get-Date).ToString('o') -Force
+          $q2 | Add-Member -NotePropertyName runner_status -NotePropertyValue $(if ($exitCode -eq 0) { 'GITHUB_ACTIONS_DONE' } else { 'GITHUB_ACTIONS_BLOCKED' }) -Force
+          $q2 | Add-Member -NotePropertyName automation_exit_code -NotePropertyValue $exitCode -Force
+          $q2 | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $queueFile -Encoding UTF8
 
-      - name: Commit outputs
+      - name: Commit SPS5 outputs
+        if: always()
         shell: pwsh
         run: |
-          git add docs/chatgpt_status/aays1/queue docs/chatgpt_status/aays1/status docs/chatgpt_status/aays1/reports docs/chatgpt_status/security_public_safety/runner_outputs docs/chatgpt_status/security_public_safety/status docs/chatgpt_status/security_public_safety/reports england_map_web/data/security_public_safety outputs/england_program_parcel_matrix_20260629/security_public_safety_updates
+          git add docs/chatgpt_status/aays1/queue/0000_000_security_public_safety_5_local_spatial_join_v1_20260928.task.json
+          if (Test-Path 'docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json') {
+            git add docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json
+          }
           $changes = git status --porcelain
           if ($changes) {
-            git commit -m "Run AAYS1 Security queued task"
+            git commit -m "Run SPS5 neighbourhood-boundary local join"
             git pull --rebase origin main
             git push origin main
           }

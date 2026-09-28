@@ -1,15 +1,15 @@
 {
   "schema_version": 5,
   "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
-  "task_version": "1.0-fail-closed-local-join",
-  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260928-001",
-  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-partition-61524-76903-local-join-data-police-latest-first50-v1",
+  "task_version": "2.0-data-police-neighbourhood-boundary",
+  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260928-002",
+  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-partition-61524-76903-data-police-neighbourhood-boundary-first50-v1",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_5",
   "owner": null,
   "lineage_id": "86b5e932de484ad26133fa8c",
-  "status": "blocked",
+  "status": "pending",
   "priority": -500,
   "created_at": "2026-09-27T21:54:00+00:00",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
@@ -43,10 +43,14 @@
   },
   "new_official_source_window": {
     "publisher": "data.police.uk",
-    "window_rule": "explicit latest month returned by /api/crime-last-updated; street-level all-crime point queries only",
-    "docs": "https://data.police.uk/docs/method/crime-street/",
+    "source_window_id": "data_police_neighbourhood_locate_boundary_sps5_partition_61524_76903_first50_v1",
+    "method": "locate-neighbourhood exact identifier plus force/neighbourhood boundary",
+    "docs": [
+      "https://data.police.uk/docs/method/neighbourhood-locate/",
+      "https://data.police.uk/docs/method/neighbourhood-boundary/"
+    ],
     "max_records": 50,
-    "semantics": "approximate area evidence around point; never exact parcel crime locations"
+    "public_no_login": true
   },
   "allowed_paths": [
     "docs/chatgpt_status/aays1/queue/0000_000_security_public_safety_5_local_spatial_join_v1_20260928.task.json",
@@ -58,9 +62,10 @@
   "acceptance_checks": [
     "Materialize and verify exact canonical Git blob SHA bb48164e7a0af78df875f30421a6a3068c43edb8",
     "Use only parcel_61524 through parcel_76903",
-    "Spatially join every canonical Point in the fixed partition against all three existing official ward polygons",
-    "Process official street-crime field evidence for at most 50 matched canonical parcels in one explicit latest-month source window",
-    "Store HTTP 200 response SHA256 and preserve data.police approximate-location limitation",
+    "Process at most the first 50 canonical parcel Points in the fixed partition",
+    "For each processed parcel, obtain official force and neighbourhood exact identifiers from data.police.uk locate-neighbourhood",
+    "Fetch the official boundary for each unique force/neighbourhood identifier and hash each HTTP 200 response",
+    "Perform local point-in-boundary spatial join; candidate_ready only when canonical, exact identifier, official boundary, and local spatial join gates all pass",
     "Never claim accepted_count or final package delivery from the runner output",
     "Keep fake_data=false and final_ready=false"
   ],
@@ -78,10 +83,6 @@
   "production_deploy": false,
   "person_level_data": false,
   "final_ready": false,
-  "pickup_normalization": "2026-09-28T00:18:00+00:00",
-  "pickup_normalization_reason": "Existing single task normalized for the existing shared runner; no second writer/task.",
-  "picked_at": "2026-09-28T00:25:37.6078405+00:00",
-  "completed_at": "2026-09-28T00:25:40.8574713+00:00",
-  "runner_status": "GITHUB_ACTIONS_BLOCKED",
-  "automation_exit_code": 2
+  "pickup_normalization": "2026-09-28T03:18:00+03:00",
+  "pickup_normalization_reason": "Same existing SPS5 task updated to one unused official source window; no second writer/task."
 }
