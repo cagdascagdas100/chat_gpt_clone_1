@@ -9,7 +9,7 @@
   "slot_id": "security_public_safety_5",
   "owner": null,
   "lineage_id": "86b5e932de484ad26133fa8c",
-  "status": "pending",
+  "status": "blocked",
   "priority": -500,
   "created_at": "2026-09-27T21:54:00+00:00",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
@@ -86,7 +86,7 @@
   "pickup_normalization": "2026-09-28T23:53:00+03:00",
   "pickup_normalization_reason": "Same existing SPS5 task advanced to one unused official MPS LSOA window with strict polygon/canonical_parcel_id semantic precheck; no second writer/task.",
   "first_missing_criterion": "CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED",
-  "blocker": "SOURCE_DATA_ACCESS_REQUIRED",
+  "blocker": "PRODUCER_SCHEMA_INVALID",
   "blocker_reason": "HM Land Registry INSPIRE download page could not be materialized in the runner: urllib redirect loop; curl -L failed with exit code 47 after 20 redirects. No GML bytes, no records, no cursor advance.",
   "source_window_result": {
     "source_window_id": "hmlr_inspire_index_polygons_2026_09_lambeth_sps5_61624_61673_v1",
@@ -126,5 +126,16 @@
       "canonical_parcel_id"
     ],
     "batch_commit_only_if_all_50_valid": true
+  },
+  "runner_status": "SCHEMA_PRECHECK_BLOCKED",
+  "blocker_detail": "Canonical polygon blob 0180223f125027d55ffea5d908b77f8df08ffe84 contains 1264 MultiPolygon features but zero non-empty properties.canonical_parcel_id fields; matched_parcel_id/matched_inspire_id are not accepted substitutes under the current producer contract.",
+  "blocked_at": "2026-09-28T21:03:16Z",
+  "source_window_attempt": {
+    "source_window_id": "mps_lsoa_current_24m_sps5_61624_61673_v1",
+    "source_url": "https://data.london.gov.uk/download/exy3m/221142dd-f7b2-4209-921e-4de833a82285/MPS%20LSOA%20Level%20Crime%20%28most%20recent%2024%20months%29.csv",
+    "workflow_run_id": 36483227132,
+    "workflow_job_id": 109133744084,
+    "python_exit_code": 2,
+    "output_committed": false
   }
 }
