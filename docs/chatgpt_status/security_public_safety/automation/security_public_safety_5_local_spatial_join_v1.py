@@ -1,28 +1,29 @@
 from __future__ import annotations
-import hashlib,json,os,subprocess,tempfile,time,urllib.parse,urllib.request
-from datetime import datetime,timezone
+import hashlib, json, os, subprocess, tempfile, urllib.request, zipfile
+import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
 from pathlib import Path
 
 SLOT_ID='security_public_safety_5'
 LINEAGE_ID='86b5e932de484ad26133fa8c'
 P0,P1,PC=61524,76903,15380
+START_NUM=61574
 MAX_RECORDS=50
 REPO=Path(os.environ.get('AAYS_REPO_ROOT',r'F:\chatgpt\chat_gpt_clone_1_main'))
 OUT=REPO/'docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json'
 CANON_BRANCH='codex/aays-single-runner-v5-20260706'
 CANON_REL='england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson'
 CANON_BLOB='bb48164e7a0af78df875f30421a6a3068c43edb8'
-SOURCE_WINDOW='data_police_neighbourhood_locate_boundary_sps5_partition_61524_76903_first50_v1'
-LOCATE='https://data.police.uk/api/locate-neighbourhood'
+ARCHIVE_URL='https://data.police.uk/data/boundaries/2026-06.zip'
+ARCHIVE_MD5='62f89304c7d1e453bec3a307e5126372'
+SOURCE_WINDOW='data_police_npt_boundary_archive_2026_06_sps5_61574_61623_v1'
 
 def now(): return datetime.now(timezone.utc).isoformat().replace('+00:00','Z')
-def sha256(b): return hashlib.sha256(b).hexdigest()
 def git(args,timeout=900,stdout=None):
     return subprocess.run(['git','-C',str(REPO),*args],stdout=stdout if stdout is not None else subprocess.PIPE,stderr=subprocess.PIPE,check=False,timeout=timeout)
 def blob_sha(path):
     r=git(['hash-object',str(path)],180)
     return r.stdout.decode('utf-8','replace').strip() if r.returncode==0 else None
-
 def materialize():
     cache=Path(tempfile.gettempdir())/'aays_sps5'/Path(CANON_REL).name
     cache.parent.mkdir(parents=True,exist_ok=True)
@@ -55,18 +56,9 @@ def get_pid(props):
         v=props.get(k)
         if isinstance(v,str) and v.startswith('parcel_'): return v
     return None
-
-def http_json(url,attempts=3):
-    last=None
-    for n in range(1,attempts+1):
-        req=urllib.request.Request(url,headers={'User-Agent':'AAYS-security-public-safety-5/neighbourhood-boundary-v1','Accept':'application/json'})
-        try:
-            with urllib.request.urlopen(req,timeout=45) as resp:
-                body=resp.read(); return int(resp.status),body,json.loads(body.decode('utf-8'))
-        except Exception as e:
-            last=e
-            if n<attempts: time.sleep(min(8,2*n))
-    raise RuntimeError(str(last) if last else 'HTTP_FAILED')
+def save(x):
+    OUT.parent.mkdir(parents=True,exist_ok=True)
+    OUT.write_text(json.dumps(x,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
 def point_in_ring(x,y,ring):
     inside=False; j=len(ring)-1
@@ -77,13 +69,73 @@ def point_in_ring(x,y,ring):
             if d and x < (xj-xi)*(y-yi)/d+xi: inside=not inside
         j=i
     return inside
+def point_in_poly(x,y,outer,holes):
+    if not point_in_ring(x,y,outer): return False
+    for h in holes:
+        if point_in_ring(x,y,h): return False
+    return True
+def parse_coords(text):
+    out=[]
+    for tok in (text or '').replace('\n',' ').replace('\t',' ').split():
+        parts=tok.split(',')
+        if len(parts)>=2:
+            try: out.append((float(parts[0]),float(parts[1])))
+            except: pass
+    return out
+def localname(tag): return tag.rsplit('}',1)[-1] if '}' in tag else tag
+def child_text(el,name):
+    for ch in el.iter():
+        if localname(ch.tag)==name and ch.text and ch.text.strip():
+            return ch.text.strip()
+    return None
+def exact_identifier(pm):
+    pid=pm.attrib.get('id')
+    if pid: return pid,'kml_placemark_id'
+    vals=[]
+    for el in pm.iter():
+        ln=localname(el.tag)
+        if ln=='Data':
+            key=(el.attrib.get('name') or '').strip()
+            val=child_text(el,'value')
+            if key and val: vals.append((key,val))
+        elif ln=='SimpleData':
+            key=(el.attrib.get('name') or '').strip()
+            val=(el.text or '').strip()
+            if key and val: vals.append((key,val))
+    pref=('id','code','reference','ref','neighbourhood','neighborhood','ward')
+    for p in pref:
+        for k,v in vals:
+            if p in k.lower(): return v,f'extended_data:{k}'
+    return None,None
+def polygons_from_pm(pm):
+    polys=[]
+    for poly in [x for x in pm.iter() if localname(x.tag)=='Polygon']:
+        outer=None; holes=[]
+        for ob in [x for x in poly.iter() if localname(x.tag)=='outerBoundaryIs']:
+            c=child_text(ob,'coordinates'); r=parse_coords(c)
+            if len(r)>=3: outer=r; break
+        for ib in [x for x in poly.iter() if localname(x.tag)=='innerBoundaryIs']:
+            c=child_text(ib,'coordinates'); r=parse_coords(c)
+            if len(r)>=3: holes.append(r)
+        if outer:
+            xs=[p[0] for p in outer]; ys=[p[1] for p in outer]
+            polys.append({'outer':outer,'holes':holes,'bbox':(min(xs),min(ys),max(xs),max(ys))})
+    return polys
 
-def save(x):
-    OUT.parent.mkdir(parents=True,exist_ok=True)
-    OUT.write_text(json.dumps(x,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+def download_archive():
+    tmp=Path(tempfile.gettempdir())/'aays_sps5'/'data_police_boundaries_2026-06.zip'
+    req=urllib.request.Request(ARCHIVE_URL,headers={'User-Agent':'AAYS-security-public-safety-5/archive-v1'})
+    h_md5=hashlib.md5(); h_sha=hashlib.sha256()
+    with urllib.request.urlopen(req,timeout=120) as resp, tmp.open('wb') as fh:
+        status=int(resp.status)
+        while True:
+            b=resp.read(1024*1024)
+            if not b: break
+            fh.write(b); h_md5.update(b); h_sha.update(b)
+    return tmp,status,h_md5.hexdigest(),h_sha.hexdigest()
 
 def main():
-    base={'schema_version':2,'slot_id':SLOT_ID,'owner':None,'partition':{'start':P0,'end':P1,'count':PC},'lineage_id':LINEAGE_ID,'generated_at':now(),'first_missing_criterion':'LOCAL_SPATIAL_JOIN_AND_CANONICAL_READBACK_REQUIRED','source_window_id':SOURCE_WINDOW,'max_official_source_records':MAX_RECORDS,'accepted_count_claimed':0,'final_package_written':False,'fake_data':False,'db_write':False,'migration':False,'production_deploy':False}
+    base={'schema_version':3,'slot_id':SLOT_ID,'owner':None,'partition':{'start':P0,'end':P1,'count':PC},'lineage_id':LINEAGE_ID,'generated_at':now(),'first_missing_criterion':'LOCAL_SPATIAL_JOIN_AND_CANONICAL_READBACK_REQUIRED','source_window_id':SOURCE_WINDOW,'max_official_source_records':MAX_RECORDS,'accepted_count_claimed':0,'final_package_written':False,'fake_data':False,'db_write':False,'migration':False,'production_deploy':False}
     cp,mat=materialize(); base['canonical_materialization']=mat
     if not cp:
         base.update(status='BLOCKED',blocker='CANONICAL_BLOB_MATERIALIZATION_FAILED',candidate_ready_count=0,rows=[]); save(base); return 2
@@ -93,56 +145,62 @@ def main():
         if not isinstance(f,dict): continue
         props=f.get('properties') or {}; pid=get_pid(props); n=pid_num(pid)
         g=f.get('geometry') or {}
-        if n is None or not P0<=n<=P1 or g.get('type')!='Point' or not isinstance(g.get('coordinates'),list) or len(g['coordinates'])<2: continue
-        partition.append((n,pid,g,props))
-    partition.sort(key=lambda t:t[0])
-    selected=partition[:MAX_RECORDS]
-    boundary_cache={}
+        if n is None or not P0<=n<=P1 or n<START_NUM or g.get('type')!='Point' or not isinstance(g.get('coordinates'),list) or len(g['coordinates'])<2: continue
+        partition.append((n,pid,g))
+    partition.sort(key=lambda t:t[0]); selected=partition[:MAX_RECORDS]
+    try:
+        arc,status,md5,sha256=download_archive()
+    except Exception as ex:
+        base.update(status='BLOCKED',blocker='OFFICIAL_BOUNDARY_ARCHIVE_DOWNLOAD_FAILED',archive_url=ARCHIVE_URL,error=str(ex),candidate_ready_count=0,rows=[]); save(base); return 2
+    base['archive']={'url':ARCHIVE_URL,'http_status':status,'expected_md5':ARCHIVE_MD5,'md5':md5,'sha256':sha256,'size_bytes':arc.stat().st_size,'md5_verified':md5.lower()==ARCHIVE_MD5}
+    if status!=200 or md5.lower()!=ARCHIVE_MD5:
+        base.update(status='BLOCKED',blocker='OFFICIAL_BOUNDARY_ARCHIVE_HASH_MISMATCH',candidate_ready_count=0,rows=[]); save(base); return 2
+    boundaries=[]
+    member_count=0
+    with zipfile.ZipFile(arc) as z:
+        for name in z.namelist():
+            if not name.lower().endswith(('.kml','.xml')): continue
+            member_count+=1
+            try:
+                root=ET.fromstring(z.read(name))
+            except Exception:
+                continue
+            for pm in [x for x in root.iter() if localname(x.tag)=='Placemark']:
+                ident,basis=exact_identifier(pm)
+                pname=child_text(pm,'name')
+                polys=polygons_from_pm(pm)
+                if not polys: continue
+                boundaries.append({'member':name,'identifier':ident,'identifier_basis':basis,'name':pname,'polygons':polys})
+    base['archive']['parsed_kml_member_count']=member_count
+    base['archive']['parsed_boundary_placemark_count']=len(boundaries)
     rows=[]
-    for idx,(n,pid,g,props) in enumerate(selected,1):
+    for idx,(n,pid,g) in enumerate(selected,1):
         lng,lat=float(g['coordinates'][0]),float(g['coordinates'][1])
-        q=urllib.parse.urlencode({'q':f'{lat:.7f},{lng:.7f}'})
-        locate_url=f'{LOCATE}?{q}'
-        row={'record_index':idx,'cursor':f'{SOURCE_WINDOW}:record={idx}','parcel_id':pid,'parcel_number':n,'canonical_geometry':g,'canonical_security_score':props.get('safety_score') if props.get('safety_score') is not None else props.get('security_score'),'canonical_security_level':props.get('safety_level') or props.get('security_level'),'canonical_lsoa_code':props.get('security_lsoa_code'),'locate_url':locate_url,'locate_http_status':None,'locate_response_sha256':None,'force_id':None,'neighbourhood_id':None,'boundary_url':None,'boundary_http_status':None,'boundary_response_sha256':None,'boundary_vertex_count':0,'local_point_in_boundary':False,'canonical_gate':True,'exact_identifier_gate':False,'official_boundary_gate':False,'local_spatial_join_gate':False,'field_evidence_gate':False,'candidate_ready':False,'error':None}
-        try:
-            st,b,obj=http_json(locate_url); row['locate_http_status']=st; row['locate_response_sha256']=sha256(b) if st==200 else None
-            if st==200 and isinstance(obj,dict) and obj.get('force') and obj.get('neighbourhood'):
-                force=str(obj['force']); neigh=str(obj['neighbourhood']); row['force_id']=force; row['neighbourhood_id']=neigh; row['exact_identifier_gate']=True
-                key=(force,neigh)
-                if key not in boundary_cache:
-                    burl=f"https://data.police.uk/api/{urllib.parse.quote(force,safe='')}/{urllib.parse.quote(neigh,safe='')}/boundary"
-                    try:
-                        bst,bb,bo=http_json(burl)
-                        coords=[]
-                        if bst==200 and isinstance(bo,list):
-                            for p in bo:
-                                try: coords.append((float(p['longitude']),float(p['latitude'])))
-                                except: pass
-                        boundary_cache[key]={'url':burl,'http_status':bst,'sha256':sha256(bb) if bst==200 else None,'coords':coords,'vertex_count':len(coords),'error':None}
-                    except Exception as ex:
-                        boundary_cache[key]={'url':burl,'http_status':None,'sha256':None,'coords':[],'vertex_count':0,'error':str(ex)}
-                    time.sleep(.15)
-                be=boundary_cache[key]; row['boundary_url']=be['url']; row['boundary_http_status']=be['http_status']; row['boundary_response_sha256']=be['sha256']; row['boundary_vertex_count']=be['vertex_count']
-                if be['http_status']==200 and len(be['coords'])>=3:
-                    row['official_boundary_gate']=True
-                    row['local_point_in_boundary']=point_in_ring(lng,lat,be['coords'])
-                    row['local_spatial_join_gate']=row['local_point_in_boundary']
-                    row['field_evidence_gate']=True
-                if be.get('error'): row['error']=be['error']
-        except Exception as ex: row['error']=str(ex)
-        row['candidate_ready']=bool(row['canonical_gate'] and row['exact_identifier_gate'] and row['official_boundary_gate'] and row['local_spatial_join_gate'] and row['field_evidence_gate'])
-        rows.append(row); time.sleep(.15)
+        hits=[]
+        for b in boundaries:
+            matched=False
+            for poly in b['polygons']:
+                x0,y0,x1,y1=poly['bbox']
+                if not (x0<=lng<=x1 and y0<=lat<=y1): continue
+                if point_in_poly(lng,lat,poly['outer'],poly['holes']):
+                    matched=True; break
+            if matched:
+                hits.append({'identifier':b['identifier'],'identifier_basis':b['identifier_basis'],'name':b['name'],'member':b['member']})
+        exact_hits=[h for h in hits if h['identifier']]
+        distinct={(h['identifier'],h['member']) for h in exact_hits}
+        unique=(len(distinct)==1)
+        chosen=exact_hits[0] if unique else None
+        row={'record_index':idx,'cursor':f'{SOURCE_WINDOW}:record={idx}','parcel_id':pid,'parcel_number':n,'canonical_geometry':g,'archive_url':ARCHIVE_URL,'archive_md5':md5,'archive_sha256':sha256,'boundary_hit_count':len(hits),'exact_identifier_hit_count':len(exact_hits),'boundary_identifier':chosen['identifier'] if chosen else None,'boundary_identifier_basis':chosen['identifier_basis'] if chosen else None,'boundary_name':chosen['name'] if chosen else None,'boundary_member':chosen['member'] if chosen else None,'canonical_gate':True,'official_archive_gate':True,'exact_identifier_gate':bool(chosen),'local_spatial_join_gate':bool(chosen),'field_evidence_gate':bool(chosen),'candidate_ready':bool(chosen)}
+        rows.append(row)
     ready=sum(1 for r in rows if r['candidate_ready'])
-    base.update(status='LOCAL_SPATIAL_JOIN_EXECUTED',canonical_blob_sha=blob_sha(cp),canonical_blob_verified=blob_sha(cp)==CANON_BLOB,canonical_partition_feature_count=len(partition),source_records_processed_count=len(rows),unique_neighbourhood_boundary_count=len(boundary_cache),candidate_ready_count=ready,official_source_cursor=f'{SOURCE_WINDOW}:record={len(rows)}',rows=rows,next_step='Only candidate_ready rows may be packaged by the verified GitHub writer as AAYS_LAYER24_EVIDENCE_V1; no runner delivery claim.')
+    base.update(status='LOCAL_SPATIAL_JOIN_EXECUTED',canonical_blob_sha=blob_sha(cp),canonical_blob_verified=blob_sha(cp)==CANON_BLOB,canonical_partition_feature_count=PC,source_records_processed_count=len(rows),candidate_ready_count=ready,official_source_cursor=f'{SOURCE_WINDOW}:record={len(rows)}',rows=rows,next_step='Only candidate_ready rows may be packaged as AAYS_LAYER24_EVIDENCE_V1.')
     save(base)
-    print(f'SLOT_ID={SLOT_ID}')
     print(f'CANONICAL_BLOB_VERIFIED={base["canonical_blob_verified"]}')
-    print(f'PARTITION_FEATURE_COUNT={len(partition)}')
+    print(f'ARCHIVE_MD5_VERIFIED={base["archive"]["md5_verified"]}')
+    print(f'ARCHIVE_SHA256={sha256}')
+    print(f'BOUNDARY_PLACEMARKS={len(boundaries)}')
     print(f'SOURCE_RECORDS_PROCESSED={len(rows)}')
-    print(f'UNIQUE_BOUNDARIES={len(boundary_cache)}')
     print(f'CANDIDATE_READY_COUNT={ready}')
-    print(f'SOURCE_WINDOW_ID={SOURCE_WINDOW}')
     print(f'OUTPUT={OUT}')
     return 0 if base['canonical_blob_verified'] and ready>0 else 2
-
 if __name__=='__main__': raise SystemExit(main())
