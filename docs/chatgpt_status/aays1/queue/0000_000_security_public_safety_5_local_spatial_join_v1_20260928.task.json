@@ -1,15 +1,15 @@
 {
   "schema_version": 5,
   "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
-  "task_version": "4.0-mps-ward-crime-schema-precheck",
-  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260928-004",
-  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-mps-ward-current24m-barnet3-first50-schema-v1",
+  "task_version": "5.0-hmlr-inspire-lambeth-canonical-polygon-correction",
+  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260928-005",
+  "idempotency_key": "sps5-lineage-86b5e932de484ad26133fa8c-hmlr-inspire-lambeth-2026-09-61624-61673-v1",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_5",
   "owner": null,
   "lineage_id": "86b5e932de484ad26133fa8c",
-  "status": "blocked",
+  "status": "pending",
   "priority": -500,
   "created_at": "2026-09-27T21:54:00+00:00",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
@@ -42,15 +42,12 @@
     ]
   },
   "new_official_source_window": {
-    "publisher": "Metropolitan Police Service / Greater London Authority",
-    "source_window_id": "mps_ward_level_crime_current24m_barnet3_first50_20260925_v1",
-    "method": "current 24-month Ward Level Crime CSV exact WardCode binding",
-    "url": "https://data.london.gov.uk/download/exy3m/s8b/MPS%20Ward%20Level%20Crime%20%28most%20recent%2024%20months%29.csv",
-    "target_ward_codes": [
-      "E05013628",
-      "E05013629",
-      "E05013644"
-    ],
+    "publisher": "HM Land Registry",
+    "source_window_id": "hmlr_inspire_index_polygons_2026_09_lambeth_sps5_61624_61673_v1",
+    "method": "September 2026 London Borough of Lambeth INSPIRE GML; point-to-polygon correction join",
+    "download_page": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+    "local_authority": "London Borough of Lambeth",
+    "published": "2026-09-06",
     "max_records": 50,
     "public_no_login": true
   },
@@ -62,12 +59,13 @@
     "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json"
   ],
   "acceptance_checks": [
-    "Process at most 50 official CSV rows for the three previously verified ward codes",
-    "Source-area preview geometry must be Polygon/MultiPolygon and carry every required coverage-area semantic field",
-    "Precheck parcel_61624..61673 before any ZIP or incoming/layer24 commit",
-    "Parcel geometry must be Polygon/MultiPolygon",
-    "canonical_parcel_id is mandatory; parcel_id/security_parcel_id aliases do not satisfy it",
-    "Any parcel schema failure forces accepted_count=0 and PRODUCER_SCHEMA_INVALID"
+    "Use exactly 50 legacy locators parcel_61624..parcel_61673",
+    "HM Land Registry GML record must provide Polygon/MultiPolygon and INSPIRE ID",
+    "canonical_parcel_id must be the HMLR INSPIRE ID; alias parcel_id does not satisfy it",
+    "Reuse only previously hashed MPS LSOA field-evidence bytes; do not re-open that source window",
+    "Every output record must include evidence_scope, coverage_area_id, source_resolution, time_window, source_url, measurement_date, measurement_method, spatial_binding_method, confidence_score_0_100, evidence_grade, field_evidence, canonical_parcel_id",
+    "Rejected aliases must be listed with exact reason; rejected aliases are never included in records.geojson",
+    "No incoming package is written by runner; package writer must re-precheck runner records before commit"
   ],
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
@@ -83,19 +81,7 @@
   "production_deploy": false,
   "person_level_data": false,
   "final_ready": false,
-  "pickup_normalization": "2026-09-28T13:55:00Z",
-  "pickup_normalization_reason": "Same existing SPS5 task; one unused official MPS ward-crime CSV window; no second writer/task.",
-  "runner_status": "PRODUCER_SCHEMA_INVALID",
-  "completed_at": "2026-09-28T13:59:36Z",
-  "automation_exit_code": 2,
-  "source_window_result": {
-    "source_window_id": "mps_ward_level_crime_current24m_barnet3_first50_20260925_v1",
-    "csv_sha256": "561ecd54c9a9870d67064b13d00b358d47c597dc0abb6a763d100432df2b305e",
-    "source_records_processed_count": 50,
-    "parcel_schema_checked_count": 50,
-    "parcel_schema_invalid_count": 50,
-    "first_missing_criterion": "CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED"
-  },
-  "blocker": "PRODUCER_SCHEMA_INVALID",
-  "blocker_reason": "parcel_61624..61673 canonical geometry is Point and canonical_parcel_id is absent; Layer24 acceptance prohibited by current schema."
+  "pickup_normalization": "2026-09-28T19:45:00Z",
+  "pickup_normalization_reason": "Same existing SPS5 task; one unused official HMLR INSPIRE Lambeth GML window; no second writer/task.",
+  "first_missing_criterion": "CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED"
 }

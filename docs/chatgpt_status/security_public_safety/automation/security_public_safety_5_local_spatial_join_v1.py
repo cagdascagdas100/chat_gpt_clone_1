@@ -1,22 +1,24 @@
 from __future__ import annotations
-import csv, hashlib, io, json, os, subprocess, tempfile, urllib.request
-from datetime import datetime, timezone
+import hashlib, json, os, subprocess, sys, tempfile, urllib.parse, urllib.request
+import xml.etree.ElementTree as ET
+from html.parser import HTMLParser
 from pathlib import Path
+from datetime import datetime, timezone
 
 SLOT_ID='security_public_safety_5'
 LINEAGE_ID='86b5e932de484ad26133fa8c'
-P0,P1,PC=61524,76903,15380
-START_NUM=61624
+P0,P1=61524,76903
+START,END=61624,61673
 MAX_RECORDS=50
-REPO=Path(os.environ.get('AAYS_REPO_ROOT',r'F:\chatgpt\chat_gpt_clone_1_main'))
+REPO=Path(os.environ.get('AAYS_REPO_ROOT') or Path(__file__).resolve().parents[4])
 OUT=REPO/'docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json'
-CANON_BRANCH='codex/aays-single-runner-v5-20260706'
-CANON_REL='england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson'
-CANON_BLOB='bb48164e7a0af78df875f30421a6a3068c43edb8'
-WARD_POLY_REL='incoming/source_area/security_public_safety_5/86b5e932de484ad26133fa8c/planning_data_barnet_ward_polygons_20260927T204546Z/records.geojson'
-CSV_URL='https://data.london.gov.uk/download/exy3m/s8b/MPS%20Ward%20Level%20Crime%20%28most%20recent%2024%20months%29.csv'
-SOURCE_WINDOW='mps_ward_level_crime_current24m_barnet3_first50_20260925_v1'
-WARD_CODES={'E05013628','E05013629','E05013644'}
+POINT_BRANCH='codex/aays-single-runner-v5-20260706'
+POINT_REL='england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson'
+POINT_BLOB='bb48164e7a0af78df875f30421a6a3068c43edb8'
+FIELD_EVIDENCE=REPO/'incoming/layer24/security_public_safety_5/86b5e932de484ad26133fa8c/mps_lsoa_recorded_crime_202108_202307_61624_61673_20260928T085212Z/evidence/mps_lsoa_recorded_crime_202108_202307.json'
+DOWNLOAD_PAGE='https://use-land-property-data.service.gov.uk/datasets/inspire/download'
+SOURCE_WINDOW='hmlr_inspire_index_polygons_2026_09_lambeth_sps5_61624_61673_v1'
+LOCAL_AUTHORITY='London Borough of Lambeth'
 
 def now(): return datetime.now(timezone.utc).isoformat().replace('+00:00','Z')
 def git(args,timeout=900,stdout=None):
@@ -24,149 +26,275 @@ def git(args,timeout=900,stdout=None):
 def blob_sha(path):
     r=git(['hash-object',str(path)],180)
     return r.stdout.decode('utf-8','replace').strip() if r.returncode==0 else None
-def materialize():
-    cache=Path(tempfile.gettempdir())/'aays_sps5'/Path(CANON_REL).name
+def materialize_point_source():
+    cache=Path(tempfile.gettempdir())/'aays_sps5'/Path(POINT_REL).name
     cache.parent.mkdir(parents=True,exist_ok=True)
-    ev={'branch':CANON_BRANCH,'repo_path':CANON_REL,'required_git_blob_sha':CANON_BLOB,'cache_path':str(cache),'verified':False,'fetch_attempted':False}
-    if cache.is_file() and blob_sha(cache)==CANON_BLOB:
+    ev={'branch':POINT_BRANCH,'repo_path':POINT_REL,'required_git_blob_sha':POINT_BLOB,'cache_path':str(cache),'verified':False}
+    if cache.is_file() and blob_sha(cache)==POINT_BLOB:
         ev.update(cache_hit=True,verified=True); return cache,ev
     cache.unlink(missing_ok=True)
-    for ref in (f'origin/{CANON_BRANCH}',CANON_BRANCH):
+    for ref in (f'origin/{POINT_BRANCH}',POINT_BRANCH):
         part=cache.with_suffix('.part'); part.unlink(missing_ok=True)
-        with part.open('wb') as fh: r=git(['show',f'{ref}:{CANON_REL}'],stdout=fh)
-        ev.setdefault('attempts',[]).append({'ref':ref,'returncode':r.returncode,'stderr':r.stderr.decode('utf-8','replace')[-1000:]})
-        if r.returncode==0 and blob_sha(part)==CANON_BLOB:
+        with part.open('wb') as fh: r=git(['show',f'{ref}:{POINT_REL}'],stdout=fh)
+        if r.returncode==0 and blob_sha(part)==POINT_BLOB:
             os.replace(part,cache); ev.update(source_ref=ref,verified=True); return cache,ev
         part.unlink(missing_ok=True)
-    ev['fetch_attempted']=True
-    r=git(['fetch','origin',CANON_BRANCH],900); ev['fetch_returncode']=r.returncode; ev['fetch_stderr']=r.stderr.decode('utf-8','replace')[-2000:]
+    r=git(['fetch','origin',POINT_BRANCH],900)
+    ev['fetch_returncode']=r.returncode
     if r.returncode==0:
         part=cache.with_suffix('.part')
-        with part.open('wb') as fh: s=git(['show',f'FETCH_HEAD:{CANON_REL}'],stdout=fh)
-        if s.returncode==0 and blob_sha(part)==CANON_BLOB:
+        with part.open('wb') as fh: s=git(['show',f'FETCH_HEAD:{POINT_REL}'],stdout=fh)
+        if s.returncode==0 and blob_sha(part)==POINT_BLOB:
             os.replace(part,cache); ev.update(source_ref='FETCH_HEAD',verified=True); return cache,ev
         part.unlink(missing_ok=True)
-    ev['error']='EXACT_CANONICAL_BLOB_NOT_MATERIALIZED'; return None,ev
-def pid_num(pid):
-    try: return int(pid.split('_',1)[1]) if isinstance(pid,str) and pid.startswith('parcel_') else None
-    except: return None
-def get_pid(props):
-    for k in ('security_parcel_id','parcel_id'):
-        v=props.get(k)
-        if isinstance(v,str) and v.startswith('parcel_'): return v
+    ev['error']='EXACT_POINT_SOURCE_NOT_MATERIALIZED'; return None,ev
+
+class RowParser(HTMLParser):
+    def __init__(self):
+        super().__init__(); self.in_tr=False; self.rows=[]; self.texts=[]; self.hrefs=[]
+    def handle_starttag(self,tag,attrs):
+        if tag.lower()=='tr':
+            self.in_tr=True; self.texts=[]; self.hrefs=[]
+        if self.in_tr and tag.lower()=='a':
+            d=dict(attrs); h=d.get('href')
+            if h: self.hrefs.append(h)
+    def handle_data(self,data):
+        if self.in_tr and data.strip(): self.texts.append(data.strip())
+    def handle_endtag(self,tag):
+        if tag.lower()=='tr' and self.in_tr:
+            self.rows.append((' '.join(self.texts),list(self.hrefs))); self.in_tr=False
+def fetch_bytes(url,timeout=120):
+    req=urllib.request.Request(url,headers={'User-Agent':'AAYS-security-public-safety-5/hmlr-inspire-v1','Accept':'*/*'})
+    with urllib.request.urlopen(req,timeout=timeout) as r:
+        return int(r.status),r.read(),r.geturl()
+def find_lambeth_link(html_bytes,base):
+    p=RowParser(); p.feed(html_bytes.decode('utf-8','replace'))
+    for text,hrefs in p.rows:
+        if LOCAL_AUTHORITY.lower() in text.lower():
+            for h in hrefs:
+                if '.gml' in h.lower() or 'download' in h.lower():
+                    return urllib.parse.urljoin(base,h),text
+    # fallback: local text window around authority
+    s=html_bytes.decode('utf-8','replace')
+    i=s.lower().find(LOCAL_AUTHORITY.lower())
+    if i>=0:
+        win=s[max(0,i-2000):i+3000]
+        import re
+        m=re.search(r'href=["\\']([^"\\']+\\.gml[^"\\']*)',win,re.I)
+        if m: return urllib.parse.urljoin(base,m.group(1)),LOCAL_AUTHORITY
+    return None,None
+
+def ensure_pyproj():
+    try:
+        import pyproj
+        return pyproj
+    except Exception:
+        subprocess.run([sys.executable,'-m','pip','install','--disable-pip-version-check','pyproj'],check=True,timeout=300)
+        import pyproj
+        return pyproj
+
+def lname(tag): return tag.rsplit('}',1)[-1].upper()
+def text_desc(el,names):
+    names={n.upper() for n in names}
+    for x in el.iter():
+        if lname(x.tag) in names and x.text and x.text.strip():
+            return x.text.strip()
     return None
+def parse_poslist(txt):
+    vals=[float(v) for v in (txt or '').replace('\n',' ').split()]
+    return [(vals[i],vals[i+1]) for i in range(0,len(vals)-1,2)]
+def rings_from_polygon(poly):
+    outer=None; holes=[]
+    for x in poly.iter():
+        ln=lname(x.tag)
+        if ln in ('EXTERIOR','OUTERBOUNDARYIS'):
+            pos=text_desc(x,['posList'])
+            r=parse_poslist(pos)
+            if len(r)>=4: outer=r
+        elif ln in ('INTERIOR','INNERBOUNDARYIS'):
+            pos=text_desc(x,['posList'])
+            r=parse_poslist(pos)
+            if len(r)>=4: holes.append(r)
+    if outer is None:
+        poss=[x for x in poly.iter() if lname(x.tag)=='POSLIST' and x.text]
+        if poss:
+            r=parse_poslist(poss[0].text)
+            if len(r)>=4: outer=r
+            for p in poss[1:]:
+                h=parse_poslist(p.text)
+                if len(h)>=4: holes.append(h)
+    return outer,holes
+def point_in_ring(x,y,ring):
+    inside=False; j=len(ring)-1
+    for i in range(len(ring)):
+        xi,yi=ring[i]; xj,yj=ring[j]
+        if ((yi>y)!=(yj>y)):
+            d=yj-yi
+            if d and x < (xj-xi)*(y-yi)/d+xi: inside=not inside
+        j=i
+    return inside
+def point_in_poly(x,y,outer,holes):
+    if not outer or not point_in_ring(x,y,outer): return False
+    return not any(point_in_ring(x,y,h) for h in holes)
+def feature_candidates(root):
+    seen=set()
+    for el in root.iter():
+        inspire=text_desc(el,['INSPIREID','INSPIRE_ID'])
+        if not inspire: continue
+        polys=[p for p in el.iter() if lname(p.tag) in ('POLYGON','POLYGONPATCH')]
+        if not polys: continue
+        key=(inspire,id(el))
+        if key in seen: continue
+        seen.add(key)
+        yield el,inspire,polys
+
+def geom4326(polys,tr):
+    out=[]
+    for poly in polys:
+        outer,holes=rings_from_polygon(poly)
+        if not outer: continue
+        def cv(r): return [[round(tr.transform(x,y)[0],8),round(tr.transform(x,y)[1],8)] for x,y in r]
+        rings=[cv(outer)]+[cv(h) for h in holes]
+        out.append(rings)
+    if not out: return None
+    return {'type':'Polygon','coordinates':out[0]} if len(out)==1 else {'type':'MultiPolygon','coordinates':out}
+
+def valid_record(f):
+    g=f.get('geometry') or {}; p=f.get('properties') or {}
+    req=['evidence_scope','coverage_area_id','source_resolution','time_window','source_url','measurement_date','measurement_method','spatial_binding_method','confidence_score_0_100','evidence_grade','field_evidence','canonical_parcel_id']
+    reasons=[]
+    if g.get('type') not in ('Polygon','MultiPolygon'): reasons.append('geometry_not_polygon_or_multipolygon')
+    for k in req:
+        if p.get(k) in (None,'',[]): reasons.append('missing_'+k)
+    if p.get('evidence_scope')!='parcel': reasons.append('evidence_scope_not_parcel')
+    return reasons
+
 def save(x):
     OUT.parent.mkdir(parents=True,exist_ok=True)
     OUT.write_text(json.dumps(x,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
-def download_csv():
-    req=urllib.request.Request(CSV_URL,headers={'User-Agent':'AAYS-security-public-safety-5/mps-ward-crime-v1','Accept':'text/csv,*/*'})
-    with urllib.request.urlopen(req,timeout=120) as resp:
-        body=resp.read()
-        return int(resp.status),body,resp.headers.get('Content-Type')
-
 def main():
-    base={
-      'schema_version':4,'slot_id':SLOT_ID,'owner':None,'partition':{'start':P0,'end':P1,'count':PC},
-      'lineage_id':LINEAGE_ID,'generated_at':now(),
-      'source_window_id':SOURCE_WINDOW,'max_official_source_records':MAX_RECORDS,
-      'accepted_count_claimed':0,'final_package_written':False,'fake_data':False,
-      'db_write':False,'migration':False,'production_deploy':False
-    }
-    cp,mat=materialize(); base['canonical_materialization']=mat
-    if not cp:
-        base.update(status='BLOCKED',blocker='CANONICAL_BLOB_MATERIALIZATION_FAILED',first_missing_criterion='CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED',rows=[]); save(base); return 2
-    canon=json.loads(cp.read_text(encoding='utf-8-sig'))
-    parcel_rows=[]
-    for f in canon.get('features',[]):
-        if not isinstance(f,dict): continue
-        props=f.get('properties') or {}; pid=get_pid(props); n=pid_num(pid)
-        if n is None or not START_NUM<=n<START_NUM+MAX_RECORDS: continue
-        geom=f.get('geometry') or {}; reasons=[]
-        if geom.get('type') not in ('Polygon','MultiPolygon'):
-            reasons.append('geometry_type_must_be_Polygon_or_MultiPolygon_got_'+str(geom.get('type')))
-        if not props.get('canonical_parcel_id'):
-            reasons.append('missing_required_canonical_parcel_id')
-        if props.get('accepted_parcel') is True:
-            reasons.append('accepted_parcel_label_does_not_satisfy_schema')
-        parcel_rows.append({
-          'parcel_number':n,'source_parcel_alias':pid,'canonical_parcel_id':props.get('canonical_parcel_id'),
-          'geometry_type':geom.get('type'),'schema_valid':not reasons,'rejection_reasons':reasons
-        })
-    parcel_rows.sort(key=lambda x:x['parcel_number'])
-    if len(parcel_rows)>MAX_RECORDS: parcel_rows=parcel_rows[:MAX_RECORDS]
-
-    poly_path=REPO/WARD_POLY_REL
-    poly=json.loads(poly_path.read_text(encoding='utf-8'))
-    ward_poly={}
-    for f in poly.get('features',[]):
-        code=str(f.get('id') or (f.get('properties') or {}).get('coverage_area_id') or '')
-        if code in WARD_CODES and (f.get('geometry') or {}).get('type') in ('Polygon','MultiPolygon'):
-            ward_poly[code]=f.get('geometry')
-
-    try:
-        status,body,ctype=download_csv()
-    except Exception as ex:
-        base.update(status='BLOCKED',blocker='OFFICIAL_MPS_WARD_CSV_DOWNLOAD_FAILED',first_missing_criterion='CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED',error=str(ex),parcel_schema_precheck=parcel_rows); save(base); return 2
-    sha=hashlib.sha256(body).hexdigest()
-    text=body.decode('utf-8-sig',errors='strict')
-    reader=csv.DictReader(io.StringIO(text))
-    fieldnames=reader.fieldnames or []
-    matched=[]
-    for rownum,row in enumerate(reader, start=2):
-        code=(row.get('WardCode') or '').strip()
-        if code not in WARD_CODES: continue
-        geom=ward_poly.get(code)
-        reasons=[]
-        if not geom or geom.get('type') not in ('Polygon','MultiPolygon'): reasons.append('missing_or_invalid_verified_ward_polygon')
-        if not code: reasons.append('missing_coverage_area_id')
-        required_meta={
-          'evidence_scope':'coverage_area','coverage_area_id':code,'source_resolution':'ward',
-          'time_window':'2024-06..2026-05','source_url':CSV_URL,'measurement_date':'2026-05',
-          'measurement_method':'MPS recorded crime monthly count by WardCode',
-          'spatial_binding_method':'exact WardCode -> verified official ward polygon',
-          'confidence_score_0_100':95,'evidence_grade':'A','field_evidence':{
-            'group':row.get('Group'),'subgroup':row.get('SubGroup'),'ward_name':row.get('WardName'),
-            'ward_code':code,'borough':row.get('LookUp_BoroughName'),
-            'monthly_counts':{k:row.get(k) for k in fieldnames if k and k.isdigit() and len(k)==6}
-          }
+    base={'schema_version':5,'slot_id':SLOT_ID,'owner':None,'partition':[P0,P1],'lineage_id':LINEAGE_ID,'generated_at':now(),'source_window_id':SOURCE_WINDOW,'max_records':MAX_RECORDS,'first_missing_criterion':'CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED','accepted_count_claimed':0,'final_package_written':False,'fake_data':False}
+    point_path,mat=materialize_point_source(); base['point_source_materialization']=mat
+    if not point_path:
+        base.update(status='BLOCKED',blocker='CANONICAL_POINT_SOURCE_MATERIALIZATION_FAILED',records=[],rejections=[]);save(base);return 2
+    point_geo=json.loads(point_path.read_text(encoding='utf-8-sig'))
+    points={}
+    for f in point_geo.get('features',[]):
+        props=f.get('properties') or {}
+        pid=props.get('security_parcel_id') or props.get('parcel_id')
+        if not isinstance(pid,str) or not pid.startswith('parcel_'): continue
+        try:n=int(pid.split('_',1)[1])
+        except:continue
+        g=f.get('geometry') or {}
+        if START<=n<=END and g.get('type')=='Point':
+            points[pid]={'n':n,'coord':g.get('coordinates'),'props':props}
+    if len(points)!=50:
+        base.update(status='BLOCKED',blocker='FIXED_50_POINT_LOCATORS_NOT_FOUND',point_locator_count=len(points),records=[],rejections=[]);save(base);return 2
+    fe=json.loads(FIELD_EVIDENCE.read_text(encoding='utf-8'))
+    fmap={r['parcel_id']:r for r in fe.get('accepted_records',[]) if r.get('parcel_id')}
+    base['prior_field_evidence']={'path':str(FIELD_EVIDENCE.relative_to(REPO)).replace('\\','/'),'source_url':fe.get('source_url'),'source_sha256':fe.get('source_sha256'),'time_window':f"{fe.get('observed_header_period',{}).get('first_month')}-{fe.get('observed_header_period',{}).get('last_month')}",'accepted_alias_count':len(fmap)}
+    st,page,final_page=fetch_bytes(DOWNLOAD_PAGE)
+    base['hmlr_download_page']={'url':final_page,'http_status':st,'sha256':hashlib.sha256(page).hexdigest(),'size_bytes':len(page)}
+    link,rowtext=find_lambeth_link(page,final_page)
+    if not link:
+        base.update(status='BLOCKED',blocker='HMLR_LAMBETH_GML_LINK_NOT_FOUND',records=[],rejections=[]);save(base);return 2
+    st2,gml,gml_url=fetch_bytes(link,180)
+    base['hmlr_gml']={'url':gml_url,'http_status':st2,'sha256':hashlib.sha256(gml).hexdigest(),'size_bytes':len(gml),'local_authority':LOCAL_AUTHORITY,'listing_row':rowtext}
+    if st2!=200:
+        base.update(status='BLOCKED',blocker='HMLR_GML_DOWNLOAD_FAILED',records=[],rejections=[]);save(base);return 2
+    pyproj=ensure_pyproj()
+    to_bng=pyproj.Transformer.from_crs('EPSG:4326','EPSG:27700',always_xy=True)
+    to_wgs=pyproj.Transformer.from_crs('EPSG:27700','EPSG:4326',always_xy=True)
+    root=ET.fromstring(gml)
+    features=[]
+    for el,inspire,polys in feature_candidates(root):
+        nat=text_desc(el,['NATIONALCADASTRALREFERENCE'])
+        label=text_desc(el,['LABEL'])
+        parsed=[]
+        for p in polys:
+            outer,holes=rings_from_polygon(p)
+            if outer:
+                xs=[x for x,y in outer];ys=[y for x,y in outer]
+                parsed.append((outer,holes,(min(xs),min(ys),max(xs),max(ys))))
+        if parsed: features.append({'inspire':inspire,'national_ref':nat,'label':label,'polys':parsed,'xml_polys':polys})
+    base['hmlr_gml']['parsed_feature_count']=len(features)
+    candidates=[]; rejections=[]
+    used_ids=set()
+    for pid in sorted(points,key=lambda x:points[x]['n']):
+        p=points[pid]; lng,lat=p['coord']; x,y=to_bng.transform(float(lng),float(lat))
+        hits=[]
+        for hf in features:
+            matched=False
+            for outer,holes,b in hf['polys']:
+                if b[0]<=x<=b[2] and b[1]<=y<=b[3] and point_in_poly(x,y,outer,holes):
+                    matched=True;break
+            if matched:hits.append(hf)
+        field=fmap.get(pid)
+        if not field:
+            rejections.append({'parcel_alias':pid,'reason':'missing_prior_official_field_evidence'});continue
+        if len(hits)!=1:
+            rejections.append({'parcel_alias':pid,'reason':'hmlr_polygon_match_count_not_one','match_count':len(hits)});continue
+        h=hits[0]; cid=str(h['inspire']).strip()
+        if cid in used_ids:
+            rejections.append({'parcel_alias':pid,'reason':'duplicate_hmlr_inspire_polygon','canonical_parcel_id':cid});continue
+        geometry=geom4326(h['xml_polys'],to_wgs)
+        if not geometry:
+            rejections.append({'parcel_alias':pid,'reason':'hmlr_geometry_conversion_failed','canonical_parcel_id':cid});continue
+        prop={
+          'evidence_scope':'parcel',
+          'coverage_area_id':field.get('lsoa_code'),
+          'source_resolution':'HMLR_INSPIRE_freehold_index_polygon_plus_MPS_LSOA_recorded_crime',
+          'time_window':'202108-202307',
+          'source_url':gml_url,
+          'measurement_date':'2023-07',
+          'measurement_method':'MPS_LSOA_recorded_crime_aggregation_with_HMLR_INSPIRE_polygon_identity',
+          'spatial_binding_method':'legacy_canonical_point_within_HMLR_INSPIRE_polygon_and_prior_exact_LSOA_attribution',
+          'confidence_score_0_100':95,
+          'evidence_grade':'A_OFFICIAL_POLYGON_PLUS_OFFICIAL_LSOA',
+          'field_evidence':{
+             'publisher':'Metropolitan Police Service / Greater London Authority',
+             'source_url':fe.get('source_url'),
+             'source_sha256':fe.get('source_sha256'),
+             'lsoa_code':field.get('lsoa_code'),
+             'official_lsoa_row_count':field.get('official_lsoa_row_count'),
+             'official_crime_value_sum':field.get('official_crime_value_sum'),
+             'official_numeric_cells':field.get('official_numeric_cells')
+          },
+          'canonical_parcel_id':cid,
+          'canonical_identity_source':'HM_LAND_REGISTRY_INSPIRE_ID',
+          'national_cadastral_reference':h.get('national_ref'),
+          'hmlr_label':h.get('label'),
+          'legacy_parcel_alias':pid,
+          'hmlr_gml_sha256':base['hmlr_gml']['sha256'],
+          'correction_of_commit':'6342cc858dc07de5b050ec67e458b295cb0c1921',
+          'program_progress_claimed':False
         }
-        matched.append({
-          'csv_row_number':rownum,'ward_code':code,'ward_name':row.get('WardName'),
-          'geometry':geom,'properties':required_meta,'source_schema_valid':not reasons,'source_rejection_reasons':reasons
-        })
-        if len(matched)>=MAX_RECORDS: break
-
-    source_invalid=sum(1 for x in matched if not x['source_schema_valid'])
-    parcel_invalid=sum(1 for x in parcel_rows if not x['schema_valid'])
-    base.update(
-      status='PRODUCER_SCHEMA_INVALID' if parcel_invalid else 'SOURCE_WINDOW_PROCESSED',
-      blocker='PRODUCER_SCHEMA_INVALID' if parcel_invalid else None,
-      first_missing_criterion='CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED' if parcel_invalid else 'LOCAL_SPATIAL_JOIN_AND_CANONICAL_READBACK_REQUIRED',
-      canonical_blob_sha=blob_sha(cp),canonical_blob_verified=blob_sha(cp)==CANON_BLOB,
-      parcel_schema_precheck=parcel_rows,parcel_schema_checked_count=len(parcel_rows),parcel_schema_invalid_count=parcel_invalid,
-      official_source={
-        'publisher':'Metropolitan Police Service / Greater London Authority',
-        'dataset':'MPS Recorded Crime: Geographic Breakdown - Ward Level current 24 months',
-        'url':CSV_URL,'http_status':status,'content_type':ctype,'sha256':sha,'size_bytes':len(body),
-        'columns':fieldnames,'time_window':'2024-06..2026-05','updated_catalog_date':'2026-09-25'
-      },
-      source_records_processed_count=len(matched),source_schema_invalid_count=source_invalid,
-      source_records=matched,
-      official_source_cursor=f'{SOURCE_WINDOW}:record={len(matched)}',
-      rejection_ledger=[{
-        'record_kind':'parcel_candidate','source_parcel_alias':r['source_parcel_alias'],'parcel_number':r['parcel_number'],
-        'reasons':r['rejection_reasons']
-      } for r in parcel_rows if not r['schema_valid']],
-      accepted_count_claimed=0,source_area_count_claimed=0,
-      next_step='Do not commit parcel package. Obtain Polygon/MultiPolygon canonical parcel geometry with canonical_parcel_id before any Layer24 acceptance.'
-    )
+        feat={'type':'Feature','id':cid,'geometry':geometry,'properties':prop}
+        reasons=valid_record(feat)
+        if reasons:
+            rejections.append({'parcel_alias':pid,'canonical_parcel_id':cid,'reason':'schema_precheck_failed','details':reasons});continue
+        used_ids.add(cid);candidates.append(feat)
+    base['records']=candidates
+    base['rejections']=rejections
+    base['candidate_input_count']=50
+    base['schema_valid_record_count']=len(candidates)
+    base['rejection_count']=len(rejections)
+    base['source_records_processed_count']=50
+    base['cursor']=SOURCE_WINDOW+':record=50'
+    base['precheck_all_records_valid']=all(not valid_record(f) for f in candidates)
+    base['accepted_count_claimed']=0
+    if not candidates:
+        base.update(status='BLOCKED',blocker='PRODUCER_SCHEMA_INVALID_OR_NO_CANONICAL_POLYGON_MATCH')
+        save(base);return 2
+    base.update(status='SCHEMA_VALID_CORRECTION_CANDIDATES_READY',blocker=None)
     save(base)
-    print(f'CSV_SHA256={sha}')
-    print(f'SOURCE_RECORDS_PROCESSED={len(matched)}')
-    print(f'PARCEL_SCHEMA_CHECKED={len(parcel_rows)}')
-    print(f'PARCEL_SCHEMA_INVALID={parcel_invalid}')
-    print(f'FIRST_MISSING={base["first_missing_criterion"]}')
-    print(f'OUTPUT={OUT}')
-    return 2 if parcel_invalid or source_invalid else 0
+    print('HMLR_GML_URL='+gml_url)
+    print('HMLR_GML_SHA256='+base['hmlr_gml']['sha256'])
+    print('HMLR_FEATURES='+str(len(features)))
+    print('SCHEMA_VALID_RECORDS='+str(len(candidates)))
+    print('REJECTIONS='+str(len(rejections)))
+    print('OUTPUT='+str(OUT))
+    return 0
+
 if __name__=='__main__': raise SystemExit(main())
