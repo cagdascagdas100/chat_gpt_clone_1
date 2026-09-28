@@ -4,19 +4,19 @@
   "partition": null,
   "lineage_id": null,
   "page_generation": null,
-  "checkpoint_generation": "R20",
-  "previous_checkpoint": "R19",
+  "checkpoint_generation": "R21",
+  "previous_checkpoint": "R20",
   "producer_family": "AAYS_LAYER24_EVIDENCE_V1",
   "package_category": "AAYS_SOURCE_AREA_V1",
-  "state": "DELIVERY_BLOCKED:SOURCE_DATA_NO_HEIGHT_DIFFERENCE_5_PR_WORKFLOW_OR_CANONICAL_ARTEFACT",
+  "state": "DELIVERY_BLOCKED:SOURCE_DATA_NO_HEIGHT_DIFFERENCE_5_ACTIONS_ARTIFACT_OR_CANONICAL_ARTEFACT",
   "accepted_count": 0,
   "source_area_count": 4,
   "accepted_count_semantics": "unchanged; source-area/source evidence is not parcel progress",
   "previous_remote_binary_rehash": {
-    "commit_sha": "5459edd75a9714cf919a0792f0fde805e3556e91",
+    "commit_sha": "242ad6bd3aab8d6ba36792bb894f394cc760a0e9",
     "exact_path": "incoming/source_area/height_difference_5/null/",
-    "zip_sha256": "70823147d85364bafcd94a081bc0817e5e9185399722b58b70dd1c66946d0b81",
-    "zip_blob_sha": "6e4f5dee37482e53334c213b3a7fd409c1799bfc",
+    "zip_sha256": "f78d7007b7ab570135b58e0d22824872307e45ddad97f03986444749df3766e3",
+    "zip_blob_sha": "8cb3b2675e4deaa45b89427d7e3865e2d7c1fc57",
     "zip_sidecar": "PASS",
     "internal_SHA256SUMS": "PASS",
     "individual_sidecars": "PASS"
@@ -33,29 +33,29 @@
   "rejected_count": 0,
   "unmatched_count": 0,
   "cursor": {
-    "window_id": "HD5_R20_PR_WORKFLOW_PRODUCER_TRACE_AUDIT",
-    "method": "github_recent_pull_request_and_workflow_run_trace",
-    "processed_records": 0,
+    "window_id": "HD5_R21_ACTIONS_RUN_ARTIFACT_TRACE_AUDIT",
+    "method": "github_actions_run_level_artifact_inventory",
+    "processed_records": 10,
     "max_records": 50,
     "complete": true,
-    "result": "NO_HEIGHT_DIFFERENCE_5_PR_OR_WORKFLOW_RUN_TRACE",
+    "result": "NO_ARTIFACTS_IN_LATEST_10_WORKFLOW_RUNS",
     "source_window_opened": false,
-    "audit_metadata": {
-      "pulls_inspected": 50,
-      "workflow_runs_inspected": 50,
-      "height_difference_5_pull_matches": 0,
-      "height_difference_5_workflow_run_matches": 0,
-      "excluded_non_slot_match": {
-        "pull_number": 1272,
-        "title": "height_difference_2: publish increments 214–224 official-source web rows",
-        "reason": "different slot"
-      }
+    "repository_wide_artifact_endpoint": {
+      "attempted": true,
+      "result": "TOOL_UNSUPPORTED",
+      "error_stage": "mcp__GitHub__fetch/actions/artifacts",
+      "error": "HTTP 400 INVALID_ARGUMENT: URL is not an allowed public GitHub repository or search endpoint"
+    },
+    "run_level_artifact_audit": {
+      "workflow_runs_inspected": 10,
+      "artifacts_total": 0,
+      "height_difference_5_artifact_matches": 0
     },
     "blocker_stage": "SOURCE_DATA",
-    "blocker": "No recent pull request or workflow run provides a height_difference_5 canonical parcel polygon producer/OpenCode trace. The only height-related PR match belongs to height_difference_2 and is not valid for this slot.",
-    "next_rule": "Do not repeat this PR/workflow audit window. Resume only when a height_difference_5-specific PR/workflow/branch or committed canonical parcel polygon artefact exists; verify exact polygon geometry and canonical identifiers before Layer24 acceptance."
+    "blocker": "The latest 10 workflow runs contain zero GitHub Actions artifacts, so no height_difference_5 canonical parcel polygon/OpenCode artifact can be read back from this window. Repository-wide artifact listing is unavailable through the connector, but the underlying blocker remains absence of a committed/readable canonical polygon artefact.",
+    "next_rule": "Do not repeat this run-artifact window or the unsupported repository-wide artifact endpoint. Resume only when a new height_difference_5 workflow artifact or committed canonical parcel polygon artefact is available; verify exact polygon geometry and canonical identifiers before Layer24 acceptance."
   },
-  "local_parcel_matching": "BLOCKED_NO_HEIGHT_DIFFERENCE_5_PR_WORKFLOW_OR_CANONICAL_ARTEFACT",
+  "local_parcel_matching": "BLOCKED_NO_ACTIONS_ARTIFACT_OR_COMMITTED_CANONICAL_POLYGON_ARTEFACT",
   "height_statistics": "NOT_COMPUTED",
-  "first_missing_criterion": "a height_difference_5-specific producer/OpenCode PR, workflow run, branch, or committed local canonical parcel polygon artefact containing exact polygon geometry plus canonical identifier; recent PR/workflow audit found no height_difference_5 canonical production trace; after such artefact is read back, intersect existing OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing canonical parcels"
+  "first_missing_criterion": "a height_difference_5-specific local OpenCode workflow artifact or committed canonical parcel polygon artefact containing exact polygon geometry plus canonical identifier; run-level artifact audit of the latest 10 workflow runs found zero artifacts in total, while repository-wide artifact listing is unsupported by the connector; after such artefact is read back, intersect existing OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing canonical parcels"
 }

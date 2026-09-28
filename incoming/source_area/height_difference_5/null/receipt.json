@@ -6,7 +6,7 @@
   "created_at": "2026-09-28T10:56:00+03:00",
   "category": "AAYS_SOURCE_AREA_V1",
   "producer_family": "AAYS_LAYER24_EVIDENCE_V1",
-  "delivery_status": "SOURCE_AREA_NO_HEIGHT_DIFFERENCE_5_PR_WORKFLOW_OR_CANONICAL_ARTEFACT",
+  "delivery_status": "SOURCE_AREA_NO_HEIGHT_DIFFERENCE_5_ACTIONS_ARTIFACT_OR_CANONICAL_ARTEFACT",
   "accepted_count": 0,
   "source_area_count": 4,
   "counts": {
@@ -17,33 +17,33 @@
     "unmatched": 0
   },
   "cursor": {
-    "window_id": "HD5_R20_PR_WORKFLOW_PRODUCER_TRACE_AUDIT",
-    "method": "github_recent_pull_request_and_workflow_run_trace",
-    "processed_records": 0,
+    "window_id": "HD5_R21_ACTIONS_RUN_ARTIFACT_TRACE_AUDIT",
+    "method": "github_actions_run_level_artifact_inventory",
+    "processed_records": 10,
     "max_records": 50,
     "complete": true,
-    "result": "NO_HEIGHT_DIFFERENCE_5_PR_OR_WORKFLOW_RUN_TRACE",
+    "result": "NO_ARTIFACTS_IN_LATEST_10_WORKFLOW_RUNS",
     "source_window_opened": false,
-    "audit_metadata": {
-      "pulls_inspected": 50,
-      "workflow_runs_inspected": 50,
-      "height_difference_5_pull_matches": 0,
-      "height_difference_5_workflow_run_matches": 0,
-      "excluded_non_slot_match": {
-        "pull_number": 1272,
-        "title": "height_difference_2: publish increments 214–224 official-source web rows",
-        "reason": "different slot"
-      }
+    "repository_wide_artifact_endpoint": {
+      "attempted": true,
+      "result": "TOOL_UNSUPPORTED",
+      "error_stage": "mcp__GitHub__fetch/actions/artifacts",
+      "error": "HTTP 400 INVALID_ARGUMENT: URL is not an allowed public GitHub repository or search endpoint"
+    },
+    "run_level_artifact_audit": {
+      "workflow_runs_inspected": 10,
+      "artifacts_total": 0,
+      "height_difference_5_artifact_matches": 0
     },
     "blocker_stage": "SOURCE_DATA",
-    "blocker": "No recent pull request or workflow run provides a height_difference_5 canonical parcel polygon producer/OpenCode trace. The only height-related PR match belongs to height_difference_2 and is not valid for this slot.",
-    "next_rule": "Do not repeat this PR/workflow audit window. Resume only when a height_difference_5-specific PR/workflow/branch or committed canonical parcel polygon artefact exists; verify exact polygon geometry and canonical identifiers before Layer24 acceptance."
+    "blocker": "The latest 10 workflow runs contain zero GitHub Actions artifacts, so no height_difference_5 canonical parcel polygon/OpenCode artifact can be read back from this window. Repository-wide artifact listing is unavailable through the connector, but the underlying blocker remains absence of a committed/readable canonical polygon artefact.",
+    "next_rule": "Do not repeat this run-artifact window or the unsupported repository-wide artifact endpoint. Resume only when a new height_difference_5 workflow artifact or committed canonical parcel polygon artefact is available; verify exact polygon geometry and canonical identifiers before Layer24 acceptance."
   },
-  "previous_remote_commit_sha": "5459edd75a9714cf919a0792f0fde805e3556e91",
+  "previous_remote_commit_sha": "242ad6bd3aab8d6ba36792bb894f394cc760a0e9",
   "github_write_capability_commit_sha": "fb8a360ce7f9cc23f72844bc3eaf96c11764c123",
   "local_import_readback": false,
   "publisher_proof": false,
   "program_progress_claimed": false,
   "completion_claimed": false,
-  "first_missing_criterion": "a height_difference_5-specific producer/OpenCode PR, workflow run, branch, or committed local canonical parcel polygon artefact containing exact polygon geometry plus canonical identifier; recent PR/workflow audit found no height_difference_5 canonical production trace; after such artefact is read back, intersect existing OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing canonical parcels"
+  "first_missing_criterion": "a height_difference_5-specific local OpenCode workflow artifact or committed canonical parcel polygon artefact containing exact polygon geometry plus canonical identifier; run-level artifact audit of the latest 10 workflow runs found zero artifacts in total, while repository-wide artifact listing is unsupported by the connector; after such artefact is read back, intersect existing OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing canonical parcels"
 }
