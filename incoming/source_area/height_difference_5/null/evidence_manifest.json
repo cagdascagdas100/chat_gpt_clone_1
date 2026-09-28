@@ -1,31 +1,24 @@
 {
   "schema": "AAYS_LAYER24_EVIDENCE_V1",
   "package_category": "AAYS_SOURCE_AREA_V1",
-  "schema_status": "OK_FOR_SOURCE_AREA",
+  "schema_status": "OUTPUT_RECORDS_VALID_BUT_LEGACY_INPUT_SCHEMA_INVALID",
+  "delivery_mode": "BINARY_ZIP",
   "slot_id": "height_difference_5",
   "owner": "height_difference_5",
   "partition": null,
   "lineage_id": null,
-  "delivery_block": "DELIVERY_BLOCKED:SOURCE_DATA_NO_HEIGHT_DIFFERENCE_5_ACTIONS_ARTIFACT_OR_CANONICAL_ARTEFACT",
-  "blocker_stage": "SOURCE_DATA",
+  "delivery_block": "DELIVERY_BLOCKED:PRODUCER_SCHEMA_INVALID",
+  "blocker_stage": "SCHEMA",
   "accepted_count": 0,
-  "source_area_count": 4,
-  "accepted_count_semantics": "unchanged; source-area/source evidence is not parcel progress",
+  "source_area_count": 1,
   "new_source_record_count": 0,
-  "cumulative_source_record_count": 13,
-  "duplicate_count": 0,
-  "rejected_count": 0,
-  "unmatched_count": 0,
+  "normalized_legacy_source_area_record_count": 1,
+  "rejected_legacy_record_count": 12,
+  "records_geojson_semantic_preflight": "PASS_AFTER_FILTERING",
   "source_window": {
     "opened": false,
-    "reason": "first_missing_criterion is a local workflow artifact or committed canonical polygon dependency"
-  },
-  "artifact_trace_audit": {
-    "workflow_runs_inspected": 10,
-    "artifacts_total": 0,
-    "height_difference_5_artifact_matches": 0,
-    "repository_wide_endpoint_status": "TOOL_UNSUPPORTED"
+    "reason": "schema gate failed before any new official-source window"
   },
   "delivery_target": "incoming/source_area/height_difference_5/null/",
-  "first_missing_criterion": "a height_difference_5-specific local OpenCode workflow artifact or committed canonical parcel polygon artefact containing exact polygon geometry plus canonical identifier; run-level artifact audit of the latest 10 workflow runs found zero artifacts in total, while repository-wide artifact listing is unsupported by the connector; after such artefact is read back, intersect existing OS Building Part polygons and compute official DEM/LIDAR min/max/mean/max-min only for matched building-containing canonical parcels"
+  "first_missing_criterion": "a height_difference_5-specific local OpenCode canonical parcel polygon artefact containing exact Polygon/MultiPolygon geometry, canonical_parcel_id, and field evidence; only after that parcel readback may existing building evidence be spatially joined and official DEM/LIDAR min/max/mean/max-min be computed"
 }
