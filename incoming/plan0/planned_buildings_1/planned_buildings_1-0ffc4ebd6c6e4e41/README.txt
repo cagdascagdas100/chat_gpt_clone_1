@@ -1,3 +1,4 @@
 TEXT_BUNDLE_V1
-planned_buildings_1 / planned_buildings_1-0ffc4ebd6c6e4e41
-Planning Data planning-application bounded window; 1 candidate rejected; no accepted building footprints.
+slot_id=planned_buildings_1
+lineage_id=planned_buildings_1-0ffc4ebd6c6e4e41
+This bundle contains required text members and matching SHA-256 sidecars. Binary ZIP is not used by this delivery path.
