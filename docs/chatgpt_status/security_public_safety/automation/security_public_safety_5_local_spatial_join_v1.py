@@ -1,12 +1,12 @@
 from __future__ import annotations
-import hashlib,io,json,math,os,subprocess,urllib.parse,urllib.request,xml.etree.ElementTree as ET,zipfile
+import hashlib,io,json,math,os,re,subprocess,urllib.parse,urllib.request,xml.etree.ElementTree as ET,zipfile
 from datetime import datetime,timezone
 from pathlib import Path
 
 SLOT_ID="security_public_safety_5"
 LINEAGE_ID="86b5e932de484ad26133fa8c"
-SOURCE_WINDOW="hmlr_inspire_lambeth_direct_zip_sps5_61624_61673_v1"
-HMLR_ZIP="https://data.inspire.landregistry.gov.uk/Lambeth.zip"
+SOURCE_WINDOW="hmlr_inspire_lambeth_current_direct_gml_2026_09_sps5_61624_61673_v1"
+HMLR_PAGE="https://use-land-property-data.service.gov.uk/datasets/inspire/download"
 REPO=Path(os.environ.get("AAYS_REPO_ROOT",".")); OUT=REPO/"docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json"
 TARGET={"partition_record_id":"parcel_61637","lon":-0.1410325,"lat":51.4653843,"coverage_area_id":"E01003039","rows":24,"crime_sum":622,"numeric_cells":576}
 MPS_URL="https://data.london.gov.uk/download/exy3m/221142dd-f7b2-4209-921e-4de833a82285/MPS%20LSOA%20Level%20Crime%20%28most%20recent%2024%20months%29.csv"
@@ -126,15 +126,23 @@ for f in fg.get("features",[]):
     if pp.get("parcel_id"): fieldmap[pp["parcel_id"]]=pp
 if len(pts)!=50:
     base.update(status="BLOCKED",blocker="PRIOR_POINT_RANGE_INCOMPLETE",records=[],unmatched=[]);save(base);raise SystemExit(0)
-req=urllib.request.Request(HMLR_ZIP,headers={"User-Agent":"AAYS-security-public-safety-5/HMLR-direct-zip-v1","Accept":"application/zip,*/*"})
 try:
-    with urllib.request.urlopen(req,timeout=240) as resp:
-        body=resp.read(); status=int(resp.status); final_url=resp.geturl(); ctype=resp.headers.get("Content-Type")
-    z=zipfile.ZipFile(io.BytesIO(body)); members=z.namelist(); gml_name=next(n for n in members if n.lower().endswith(".gml")); gml=z.read(gml_name)
+    preq=urllib.request.Request(HMLR_PAGE,headers={"User-Agent":"AAYS-security-public-safety-5/HMLR-current-GML-v1","Accept":"text/html,*/*"})
+    with urllib.request.urlopen(preq,timeout=90) as resp:
+        page=resp.read(); page_status=int(resp.status); page_final=resp.geturl()
+    html=page.decode("utf-8","replace")
+    m=re.search(r"<tr[^>]*>.*?London Borough of Lambeth.*?</tr>",html,re.I|re.S)
+    win=m.group(0) if m else html[max(0,html.lower().find("london borough of lambeth")-1500):html.lower().find("london borough of lambeth")+3000]
+    hrefs=re.findall(r'href=["\\']([^"\\']+)["\\']',win,re.I)
+    href=next(h for h in hrefs if ".gml" in h.lower())
+    gml_url=urllib.parse.urljoin(HMLR_PAGE,href)
+    greq=urllib.request.Request(gml_url,headers={"User-Agent":"AAYS-security-public-safety-5/HMLR-current-GML-v1","Accept":"application/gml+xml,application/xml,text/xml,*/*"})
+    with urllib.request.urlopen(greq,timeout=240) as resp:
+        gml=resp.read(); status=int(resp.status); final_url=resp.geturl(); ctype=resp.headers.get("Content-Type")
     root=ET.fromstring(gml)
 except Exception as ex:
-    base.update(status="BLOCKED",blocker="HMLR_DIRECT_ZIP_OR_GML_FAILED",error=str(ex),records=[],unmatched=[]);save(base);raise SystemExit(0)
-base["official_source"]={"publisher":"HM Land Registry","dataset":"INSPIRE Index Polygons","local_authority":"London Borough of Lambeth","source_url":HMLR_ZIP,"final_url":final_url,"http_status":status,"content_type":ctype,"zip_sha256":hashlib.sha256(body).hexdigest(),"zip_size_bytes":len(body),"gml_member":gml_name,"gml_sha256":hashlib.sha256(gml).hexdigest(),"published_window":"2026-09","data_window":"2026-08","public_no_login":True}
+    base.update(status="BLOCKED",blocker="HMLR_CURRENT_DIRECT_GML_FAILED",error=str(ex),records=[],unmatched=[]);save(base);raise SystemExit(0)
+base["official_source"]={"publisher":"HM Land Registry","dataset":"INSPIRE Index Polygons","local_authority":"London Borough of Lambeth","download_page_url":HMLR_PAGE,"download_page_status":page_status,"download_page_sha256":hashlib.sha256(page).hexdigest(),"source_url":gml_url,"final_url":final_url,"http_status":status,"content_type":ctype,"gml_sha256":hashlib.sha256(gml).hexdigest(),"gml_size_bytes":len(gml),"published_window":"2026-09","data_window":"2026-08","public_no_login":True}
 pbn=[]
 for a in pts:
     E,N=wgs_to_bng(a["lon"],a["lat"]); pbn.append(dict(a,E=E,N=N))
@@ -167,7 +175,7 @@ for i,a in enumerate(pts,1):
         unmatched.append({"record_index":i,"partition_record_id":a["partition_record_id"],"cursor":SOURCE_WINDOW+f":record={i}","exact_reasons":reasons});continue
     h=next(iter(hs.values()));cid=h["identifier"]
     fe={"criterion":"security_public_safety","publisher":fp.get("official_source"),"source_url":fp.get("official_csv_url"),"official_csv_sha256":fp.get("official_csv_sha256"),"lsoa_code":fp.get("canonical_lsoa_code"),"official_lsoa_row_count":fp.get("official_lsoa_row_count"),"official_crime_value_sum":fp.get("official_crime_value_sum"),"official_numeric_cells":fp.get("official_numeric_cells"),"prior_verified_package_commit":FIELD_COMMIT}
-    props={"evidence_scope":"coverage_area","coverage_area_id":fp.get("canonical_lsoa_code"),"source_resolution":"HMLR_INSPIRE_REGISTERED_FREEHOLD_POLYGON_PLUS_MPS_LSOA_MONTHLY_CRIME","time_window":"202108-202307","source_url":fp.get("official_csv_url"),"measurement_date":"2023-07-31","measurement_method":"official MPS LSOA recorded-crime exact-identifier aggregation with HMLR INSPIRE cadastral polygon readback","spatial_binding_method":"canonical partition point contained by exactly one HMLR INSPIRE polygon; field evidence bound by exact MPS LSOA identifier","confidence_score_0_100":90,"confidence_basis":"exact official identifiers; conservative reduction for published HMLR CRS reprojection uncertainty","evidence_grade":"A","field_evidence":fe,"canonical_parcel_id":cid,"canonical_parcel_id_namespace":"HM_LAND_REGISTRY_INSPIRE","partition_record_id":a["partition_record_id"],"canonical_geometry_source_url":HMLR_ZIP,"canonical_geometry_source_sha256":base["official_source"]["zip_sha256"],"source_window_id":SOURCE_WINDOW,"cursor":SOURCE_WINDOW+f":record={i}"}
+    props={"evidence_scope":"coverage_area","coverage_area_id":fp.get("canonical_lsoa_code"),"source_resolution":"HMLR_INSPIRE_REGISTERED_FREEHOLD_POLYGON_PLUS_MPS_LSOA_MONTHLY_CRIME","time_window":"202108-202307","source_url":fp.get("official_csv_url"),"measurement_date":"2023-07-31","measurement_method":"official MPS LSOA recorded-crime exact-identifier aggregation with HMLR INSPIRE cadastral polygon readback","spatial_binding_method":"canonical partition point contained by exactly one HMLR INSPIRE polygon; field evidence bound by exact MPS LSOA identifier","confidence_score_0_100":90,"confidence_basis":"exact official identifiers; conservative reduction for published HMLR CRS reprojection uncertainty","evidence_grade":"A","field_evidence":fe,"canonical_parcel_id":cid,"canonical_parcel_id_namespace":"HM_LAND_REGISTRY_INSPIRE","partition_record_id":a["partition_record_id"],"canonical_geometry_source_url":gml_url,"canonical_geometry_source_sha256":base["official_source"]["gml_sha256"],"source_window_id":SOURCE_WINDOW,"cursor":SOURCE_WINDOW+f":record={i}"}
     f={"type":"Feature","id":cid,"geometry":h["geometry"],"properties":props};bad=[]
     if f["geometry"]["type"] not in ("Polygon","MultiPolygon"): bad.append("invalid_geometry")
     for k in required:
@@ -179,5 +187,5 @@ for i,a in enumerate(pts,1):
 base.update(status="SEMANTIC_PRECHECK_COMPLETE",source_records_processed_count=50,schema_valid_count=len(records),schema_invalid_count=len(issues),unmatched_count=len(unmatched),records=records,unmatched=unmatched,schema_issues=issues,cursor=SOURCE_WINDOW+":record=50",semantic_precheck_passed=(len(records)>0 and len(issues)==0))
 if not base["semantic_precheck_passed"]: base["blocker"]="PRODUCER_SCHEMA_INVALID"
 save(base)
-print(json.dumps({"valid":len(records),"unmatched":len(unmatched),"issues":len(issues),"zip_sha256":base["official_source"]["zip_sha256"]}))
+print(json.dumps({"valid":len(records),"unmatched":len(unmatched),"issues":len(issues),"gml_sha256":base["official_source"]["gml_sha256"]}))
 raise SystemExit(0)
