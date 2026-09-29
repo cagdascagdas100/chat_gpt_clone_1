@@ -1,5 +1,5 @@
 from __future__ import annotations
-import hashlib,json,os,re,subprocess,sys,urllib.parse
+import hashlib,json,math,os,re,subprocess,sys,urllib.parse
 from datetime import datetime,timezone
 from pathlib import Path
 
@@ -27,11 +27,6 @@ def ensure(pkg):
         return __import__(pkg)
 
 requests=ensure("requests")
-try:
-    from pyproj import Transformer
-except Exception:
-    subprocess.check_call([sys.executable,"-m","pip","install","-q","pyproj"])
-    from pyproj import Transformer
 import xml.etree.ElementTree as ET
 
 def lname(tag): return tag.rsplit("}",1)[-1] if "}" in tag else tag
@@ -56,6 +51,97 @@ def inring(x,y,ring):
 def inpoly(x,y,outer,holes):
     if not inring(x,y,outer): return False
     return not any(inring(x,y,h) for h in holes)
+
+def _cart_from_ll(lat,lon,a,b,h=0.0):
+    e2=1.0-(b*b)/(a*a); sl=math.sin(lat); cl=math.cos(lat)
+    nu=a/math.sqrt(1.0-e2*sl*sl)
+    return ((nu+h)*cl*math.cos(lon),(nu+h)*cl*math.sin(lon),((1.0-e2)*nu+h)*sl)
+
+def _ll_from_cart(x,y,z,a,b):
+    e2=1.0-(b*b)/(a*a); p=math.hypot(x,y)
+    lat=math.atan2(z,p*(1.0-e2))
+    for _ in range(12):
+        nu=a/math.sqrt(1.0-e2*math.sin(lat)**2)
+        nxt=math.atan2(z+e2*nu*math.sin(lat),p)
+        if abs(nxt-lat)<1e-13: lat=nxt; break
+        lat=nxt
+    return lat,math.atan2(y,x)
+
+def _helmert(x,y,z,tx,ty,tz,rx_sec,ry_sec,rz_sec,s_ppm):
+    sec=math.pi/(180.0*3600.0); rx=rx_sec*sec; ry=ry_sec*sec; rz=rz_sec*sec
+    sf=1.0+s_ppm*1e-6
+    return (tx+x*sf-y*rz+z*ry,
+            ty+x*rz+y*sf-z*rx,
+            tz-x*ry+y*rx+z*sf)
+
+_AIRY_A=6377563.396; _AIRY_B=6356256.909
+_WGS_A=6378137.0; _WGS_B=6356752.3141
+_F0=0.9996012717; _LAT0=math.radians(49.0); _LON0=math.radians(-2.0); _N0=-100000.0; _E0=400000.0
+
+def _osgb_ll_to_en(lat,lon):
+    a=_AIRY_A; b=_AIRY_B; F0=_F0
+    e2=1.0-(b*b)/(a*a); n=(a-b)/(a+b)
+    sl=math.sin(lat); cl=math.cos(lat); tl=math.tan(lat)
+    nu=a*F0/math.sqrt(1.0-e2*sl*sl)
+    rho=a*F0*(1.0-e2)/(1.0-e2*sl*sl)**1.5
+    eta2=nu/rho-1.0
+    dlat=lat-_LAT0
+    M=b*F0*((1+n+5*n*n/4+5*n**3/4)*dlat
+      -(3*n+3*n*n+21*n**3/8)*math.sin(dlat)*math.cos(lat+_LAT0)
+      +(15*n*n/8+15*n**3/8)*math.sin(2*dlat)*math.cos(2*(lat+_LAT0))
+      -(35*n**3/24)*math.sin(3*dlat)*math.cos(3*(lat+_LAT0)))
+    dl=lon-_LON0
+    I=M+_N0
+    II=nu/2*sl*cl
+    III=nu/24*sl*cl**3*(5-tl*tl+9*eta2)
+    IIIA=nu/720*sl*cl**5*(61-58*tl*tl+tl**4)
+    IV=nu*cl
+    V=nu/6*cl**3*(nu/rho-tl*tl)
+    VI=nu/120*cl**5*(5-18*tl*tl+tl**4+14*eta2-58*tl*tl*eta2)
+    N=I+II*dl**2+III*dl**4+IIIA*dl**6
+    E=_E0+IV*dl+V*dl**3+VI*dl**5
+    return E,N
+
+def _en_to_osgb_ll(E,N):
+    a=_AIRY_A; b=_AIRY_B; F0=_F0; n=(a-b)/(a+b)
+    lat=_LAT0
+    for _ in range(20):
+        dlat=lat-_LAT0
+        M=b*F0*((1+n+5*n*n/4+5*n**3/4)*dlat
+          -(3*n+3*n*n+21*n**3/8)*math.sin(dlat)*math.cos(lat+_LAT0)
+          +(15*n*n/8+15*n**3/8)*math.sin(2*dlat)*math.cos(2*(lat+_LAT0))
+          -(35*n**3/24)*math.sin(3*dlat)*math.cos(3*(lat+_LAT0)))
+        delta=N-_N0-M
+        lat+=delta/(a*F0)
+        if abs(delta)<1e-5: break
+    e2=1.0-(b*b)/(a*a); sl=math.sin(lat); cl=math.cos(lat); tl=math.tan(lat)
+    nu=a*F0/math.sqrt(1.0-e2*sl*sl)
+    rho=a*F0*(1.0-e2)/(1.0-e2*sl*sl)**1.5
+    eta2=nu/rho-1.0; dE=E-_E0; sec=1.0/cl
+    VII=tl/(2*rho*nu)
+    VIII=tl/(24*rho*nu**3)*(5+3*tl*tl+eta2-9*tl*tl*eta2)
+    IX=tl/(720*rho*nu**5)*(61+90*tl*tl+45*tl**4)
+    X=sec/nu
+    XI=sec/(6*nu**3)*(nu/rho+2*tl*tl)
+    XII=sec/(120*nu**5)*(5+28*tl*tl+24*tl**4)
+    XIIA=sec/(5040*nu**7)*(61+662*tl*tl+1320*tl**4+720*tl**6)
+    lat2=lat-VII*dE**2+VIII*dE**4-IX*dE**6
+    lon2=_LON0+X*dE-XI*dE**3+XII*dE**5-XIIA*dE**7
+    return lat2,lon2
+
+def wgs84_to_bng(lon_deg,lat_deg):
+    lat=math.radians(lat_deg); lon=math.radians(lon_deg)
+    x,y,z=_cart_from_ll(lat,lon,_WGS_A,_WGS_B)
+    x,y,z=_helmert(x,y,z,-446.448,125.157,-542.060,-0.1502,-0.2470,-0.8421,20.4894)
+    lat2,lon2=_ll_from_cart(x,y,z,_AIRY_A,_AIRY_B)
+    return _osgb_ll_to_en(lat2,lon2)
+
+def bng_to_wgs84(E,N):
+    lat,lon=_en_to_osgb_ll(E,N)
+    x,y,z=_cart_from_ll(lat,lon,_AIRY_A,_AIRY_B)
+    x,y,z=_helmert(x,y,z,446.448,-125.157,542.060,0.1502,0.2470,0.8421,-20.4894)
+    lat2,lon2=_ll_from_cart(x,y,z,_WGS_A,_WGS_B)
+    return math.degrees(lon2),math.degrees(lat2)
 
 base={"schema_version":5,"slot_id":SLOT_ID,"lineage_id":LINEAGE_ID,"generated_at":now(),
       "source_window_id":SOURCE_WINDOW,"source_window_reused":False,
@@ -102,9 +188,7 @@ if gr.status_code!=200 or len(gml)<1000:
     base.update(status="BLOCKED",blocker="HMLR_LAMBETH_GML_DOWNLOAD_FAILED",gml_url=gml_url,gml_http_status=gr.status_code,gml_size=len(gml),records=[],unmatched=[])
     save(base);raise SystemExit(0)
 
-to_bng=Transformer.from_crs("EPSG:4326","EPSG:27700",always_xy=True)
-to_wgs=Transformer.from_crs("EPSG:27700","EPSG:4326",always_xy=True)
-tp={t["partition_record_id"]:{**t,"xy":to_bng.transform(t["lon"],t["lat"]),"hits":[]} for t in TARGETS}
+tp={t["partition_record_id"]:{**t,"xy":wgs84_to_bng(t["lon"],t["lat"]),"hits":[]} for t in TARGETS}
 
 root=ET.fromstring(gml)
 feature_count=0
@@ -128,8 +212,8 @@ for el in root.iter():
         x,y=t["xy"]
         for outer,holes in polygons:
             if inpoly(x,y,outer,holes):
-                wouter=[list(to_wgs.transform(a,b)) for a,b in outer]
-                wholes=[[list(to_wgs.transform(a,b)) for a,b in h] for h in holes]
+                wouter=[list(bng_to_wgs84(a,b)) for a,b in outer]
+                wholes=[[list(bng_to_wgs84(a,b)) for a,b in h] for h in holes]
                 t["hits"].append({"identifier":ident,"geometry":{"type":"MultiPolygon","coordinates":[[wouter,*wholes]]}})
                 break
 
