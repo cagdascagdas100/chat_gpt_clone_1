@@ -1,15 +1,15 @@
 {
   "schema_version": 6,
   "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
-  "task_version": "4.0-schema-precheck-may-2026-source-area",
+  "task_version": "4.0-may2026-boundary-canonical-polygon-schema-precheck",
   "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-004",
-  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-may-2026-61624-61673-schema-v4",
+  "idempotency_key": "sps5-lineage-86b5e932de484ad26133fa8c-may2026-npt-61624-61673-polygon-schema-v1",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_5",
   "owner": null,
   "lineage_id": "86b5e932de484ad26133fa8c",
-  "status": "done",
+  "status": "pending",
   "priority": -500,
   "created_at": "2026-09-27T21:54:00+00:00",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
@@ -43,14 +43,13 @@
   },
   "new_official_source_window": {
     "publisher": "data.police.uk",
-    "source_window_id": "data_police_npt_boundary_archive_2026_05_sps5_61624_61673_v1",
+    "source_window_id": "data_police_npt_boundary_archive_2026_05_sps5_61624_61673_polygon_schema_v1",
     "url": "https://data.police.uk/data/boundaries/2026-05.zip",
     "expected_md5": "a39d88624434ff668270b82f33fb77d3",
     "record_range": [
       "parcel_61624",
       "parcel_61673"
     ],
-    "max_records": 50,
     "public_no_login": true
   },
   "allowed_paths": [
@@ -118,8 +117,26 @@
     "reopen_source": false,
     "readback_only": true
   },
-  "picked_at": "2026-09-29T01:11:53.3829536+00:00",
-  "completed_at": "2026-09-29T01:12:06.1866199+00:00",
-  "runner_status": "GITHUB_ACTIONS_DONE",
-  "automation_exit_code": 0
+  "semantic_precheck": {
+    "geometry_allowed": [
+      "Polygon",
+      "MultiPolygon"
+    ],
+    "parcel_required_fields": [
+      "evidence_scope",
+      "coverage_area_id",
+      "source_resolution",
+      "time_window",
+      "source_url",
+      "measurement_date",
+      "measurement_method",
+      "spatial_binding_method",
+      "confidence_score_0_100",
+      "evidence_grade",
+      "field_evidence",
+      "canonical_parcel_id"
+    ],
+    "fail_closed": true,
+    "invalid_batch_delivery_blocked_code": "PRODUCER_SCHEMA_INVALID"
+  }
 }
