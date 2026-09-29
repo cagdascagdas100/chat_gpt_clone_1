@@ -27,13 +27,11 @@ def ensure(pkg):
         return __import__(pkg)
 
 requests=ensure("requests")
-bs4=ensure("bs4")
 try:
     from pyproj import Transformer
 except Exception:
     subprocess.check_call([sys.executable,"-m","pip","install","-q","pyproj"])
     from pyproj import Transformer
-from bs4 import BeautifulSoup
 import xml.etree.ElementTree as ET
 
 def lname(tag): return tag.rsplit("}",1)[-1] if "}" in tag else tag
@@ -79,18 +77,19 @@ if html is None:
     base.update(status="BLOCKED",blocker="HMLR_INSPIRE_DOWNLOAD_PAGE_UNAVAILABLE",errors=errs,records=[],unmatched=[])
     save(base);raise SystemExit(0)
 
-soup=BeautifulSoup(html,"html.parser")
 href=None
-for tr in soup.find_all(["tr","li","div"]):
-    t=" ".join(tr.stripped_strings)
-    if "London Borough of Lambeth" in t:
-        a=tr.find("a",href=True)
-        if a: href=a["href"];break
+row_match=re.search(r'<tr\\b[^>]*>.*?London Borough of Lambeth.*?</tr>',html,re.I|re.S)
+if row_match:
+    links=re.findall(r'href=["\\']([^"\\']+)["\\']',row_match.group(0),re.I)
+    preferred=[x for x in links if ".gml" in x.lower() or "inspire" in x.lower()]
+    if preferred: href=preferred[0]
+    elif links: href=links[0]
 if not href:
     idx=html.find("London Borough of Lambeth")
-    frag=html[idx:idx+4000] if idx>=0 else ""
-    m=re.search(r'href=["\']([^"\']+)["\']',frag,re.I)
-    if m: href=m.group(1)
+    frag=html[max(0,idx-4000):idx+8000] if idx>=0 else ""
+    links=re.findall(r'href=["\\']([^"\\']+)["\\']',frag,re.I)
+    preferred=[x for x in links if ".gml" in x.lower() or "inspire" in x.lower()]
+    if preferred: href=preferred[0]
 if not href:
     base.update(status="BLOCKED",blocker="HMLR_LAMBETH_GML_LINK_NOT_FOUND",page_status=page_status,page_url=page_url,records=[],unmatched=[])
     save(base);raise SystemExit(0)
