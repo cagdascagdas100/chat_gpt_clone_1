@@ -1,13 +1,13 @@
 from __future__ import annotations
-import hashlib,json,math,os,subprocess,urllib.parse,urllib.request,xml.etree.ElementTree as ET
+import hashlib,io,json,math,os,subprocess,urllib.parse,urllib.request,xml.etree.ElementTree as ET,zipfile
 from datetime import datetime,timezone
 from pathlib import Path
 
 SLOT_ID="security_public_safety_5"
 LINEAGE_ID="86b5e932de484ad26133fa8c"
-SOURCE_WINDOW="hmlr_inspire_wms_gfi_sps5_61637_v1"
-WMS="https://inspire.landregistry.gov.uk/inspire/ows"
-OUT=Path(os.environ.get("AAYS_REPO_ROOT","."))/"docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json"
+SOURCE_WINDOW="hmlr_inspire_lambeth_direct_zip_sps5_61624_61673_v1"
+HMLR_ZIP="https://data.inspire.landregistry.gov.uk/Lambeth.zip"
+REPO=Path(os.environ.get("AAYS_REPO_ROOT",".")); OUT=REPO/"docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json"
 TARGET={"partition_record_id":"parcel_61637","lon":-0.1410325,"lat":51.4653843,"coverage_area_id":"E01003039","rows":24,"crime_sum":622,"numeric_cells":576}
 MPS_URL="https://data.london.gov.uk/download/exy3m/221142dd-f7b2-4209-921e-4de833a82285/MPS%20LSOA%20Level%20Crime%20%28most%20recent%2024%20months%29.csv"
 MPS_SHA="255d63bd759f08d7b0dd7674a38fca25ccb824c6c3a5d75d3fb00e504a34c082"
@@ -87,77 +87,97 @@ def rings_from_feature(el):
         if len(pts)>=4: rings.append(pts)
     return rings
 
-base={"schema_version":6,"slot_id":SLOT_ID,"lineage_id":LINEAGE_ID,"generated_at":now(),"source_window_id":SOURCE_WINDOW,"first_missing_criterion":"CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED","accepted_count_claimed":0,"final_package_written":False,"fake_data":False}
-E,N=wgs_to_bng(TARGET["lon"],TARGET["lat"]); pad=3.0
-params={"SERVICE":"WMS","VERSION":"1.1.1","REQUEST":"GetFeatureInfo","LAYERS":"inspire:CP.CadastralParcel","QUERY_LAYERS":"inspire:CP.CadastralParcel","STYLES":"","SRS":"EPSG:27700","BBOX":f"{E-pad},{N-pad},{E+pad},{N+pad}","WIDTH":"101","HEIGHT":"101","X":"50","Y":"50","FORMAT":"image/png","INFO_FORMAT":"application/vnd.ogc.gml","FEATURE_COUNT":"10","EXCEPTIONS":"application/vnd.ogc.se_xml"}
-url=WMS+"?"+urllib.parse.urlencode(params)
-req=urllib.request.Request(url,headers={"User-Agent":"AAYS-security-public-safety-5/wms-gfi-v1","Accept":"application/vnd.ogc.gml,text/xml,application/xml,*/*"})
+
+def git_show(ref,path):
+    q=subprocess.run(["git","-C",str(REPO),"show",f"{ref}:{path}"],capture_output=True,check=False,timeout=180)
+    if q.returncode!=0: raise RuntimeError(q.stderr.decode("utf-8","replace")[-500:])
+    return q.stdout
+def pin(x,y,ring):
+    inside=False;j=len(ring)-1
+    for i in range(len(ring)):
+        xi,yi=ring[i];xj,yj=ring[j]
+        if ((yi>y)!=(yj>y)):
+            d=yj-yi
+            if d and x < (xj-xi)*(y-yi)/d+xi: inside=not inside
+        j=i
+    return inside
+def ident_of(el):
+    return text_first(el,["localId","nationalCadastralReference","inspireId","identifier"]) or el.attrib.get("{http://www.opengis.net/gml/3.2}id") or el.attrib.get("{http://www.opengis.net/gml}id") or el.attrib.get("id")
+
+RUNNER_COMMIT="a1a3e428882e653c32694d163e8a5f014d1580c9"
+RUNNER_PATH="docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json"
+FIELD_COMMIT="6342cc858dc07de5b050ec67e458b295cb0c1921"
+FIELD_PATH="incoming/layer24/security_public_safety_5/86b5e932de484ad26133fa8c/mps_lsoa_recorded_crime_202108_202307_61624_61673_20260928T085212Z/records.geojson"
+base={"schema_version":7,"slot_id":SLOT_ID,"owner":None,"partition":{"start":61524,"end":76903,"count":15380},"lineage_id":LINEAGE_ID,"generated_at":now(),"source_window_id":SOURCE_WINDOW,"first_missing_criterion":"CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED","accepted_count_claimed":0,"final_package_written":False,"fake_data":False,"max_records":50}
 try:
-    with urllib.request.urlopen(req,timeout=90) as resp:
-        body=resp.read(); status=int(resp.status); ctype=resp.headers.get("Content-Type")
+    prior=json.loads(git_show(RUNNER_COMMIT,RUNNER_PATH).decode("utf-8-sig"))
+    fg=json.loads(git_show(FIELD_COMMIT,FIELD_PATH).decode("utf-8-sig"))
 except Exception as ex:
-    base.update(status="BLOCKED",blocker="HMLR_WMS_GETFEATUREINFO_REQUEST_FAILED",error=str(ex),request_url=url,records=[],unmatched=[{"partition_record_id":TARGET["partition_record_id"],"reasons":["wms_request_failed"]}]);save(base);raise SystemExit(0)
-base["official_source"]={"publisher":"HM Land Registry","dataset":"INSPIRE Index Polygons View Service","wms_url":WMS,"request_url":url,"http_status":status,"content_type":ctype,"response_sha256":hashlib.sha256(body).hexdigest(),"response_size_bytes":len(body)}
-try: root=ET.fromstring(body)
+    base.update(status="BLOCKED",blocker="PRIOR_READBACK_FAILED",error=str(ex),records=[],unmatched=[]);save(base);raise SystemExit(0)
+pts=[]
+for x in prior.get("rows",[]):
+    n=x.get("parcel_number");g=x.get("canonical_geometry") or {}
+    if isinstance(n,int) and 61624<=n<=61673 and g.get("type")=="Point":
+        pts.append({"partition_record_id":x.get("parcel_id"),"parcel_number":n,"lon":float(g["coordinates"][0]),"lat":float(g["coordinates"][1])})
+pts.sort(key=lambda z:z["parcel_number"])
+fieldmap={}
+for f in fg.get("features",[]):
+    pp=f.get("properties") or {}
+    if pp.get("parcel_id"): fieldmap[pp["parcel_id"]]=pp
+if len(pts)!=50:
+    base.update(status="BLOCKED",blocker="PRIOR_POINT_RANGE_INCOMPLETE",records=[],unmatched=[]);save(base);raise SystemExit(0)
+req=urllib.request.Request(HMLR_ZIP,headers={"User-Agent":"AAYS-security-public-safety-5/HMLR-direct-zip-v1","Accept":"application/zip,*/*"})
+try:
+    with urllib.request.urlopen(req,timeout=240) as resp:
+        body=resp.read(); status=int(resp.status); final_url=resp.geturl(); ctype=resp.headers.get("Content-Type")
+    z=zipfile.ZipFile(io.BytesIO(body)); members=z.namelist(); gml_name=next(n for n in members if n.lower().endswith(".gml")); gml=z.read(gml_name)
+    root=ET.fromstring(gml)
 except Exception as ex:
-    base.update(status="BLOCKED",blocker="HMLR_WMS_GFI_PARSE_FAILED",error=str(ex),response_prefix=body[:400].decode("utf-8","replace"),records=[],unmatched=[{"partition_record_id":TARGET["partition_record_id"],"reasons":["wms_gml_parse_failed"]}]);save(base);raise SystemExit(0)
-
-# Collect candidate feature elements with an exact HMLR identifier and polygon coordinates.
-cands=[]
+    base.update(status="BLOCKED",blocker="HMLR_DIRECT_ZIP_OR_GML_FAILED",error=str(ex),records=[],unmatched=[]);save(base);raise SystemExit(0)
+base["official_source"]={"publisher":"HM Land Registry","dataset":"INSPIRE Index Polygons","local_authority":"London Borough of Lambeth","source_url":HMLR_ZIP,"final_url":final_url,"http_status":status,"content_type":ctype,"zip_sha256":hashlib.sha256(body).hexdigest(),"zip_size_bytes":len(body),"gml_member":gml_name,"gml_sha256":hashlib.sha256(gml).hexdigest(),"published_window":"2026-09","data_window":"2026-08","public_no_login":True}
+pbn=[]
+for a in pts:
+    E,N=wgs_to_bng(a["lon"],a["lat"]); pbn.append(dict(a,E=E,N=N))
+hits={a["partition_record_id"]:[] for a in pts};seen=set();scanned=0
 for el in root.iter():
-    ident=text_first(el,["INSPIREID","inspireId","localId","NATIONALCADASTRALREFERENCE","LABEL"])
-    gid=el.attrib.get("{http://www.opengis.net/gml}id") or el.attrib.get("{http://www.opengis.net/gml/3.2}id")
-    ident=ident or gid
-    rings=rings_from_feature(el)
-    if not ident or not rings: continue
-    # retain only distinct candidate by identifier
-    outer=rings[0]
-    # response requested EPSG:27700; convert if coordinates look projected.
-    if max(abs(p[0]) for p in outer)>180 or max(abs(p[1]) for p in outer)>90:
-        outer_ll=[bng_to_wgs(x,y) for x,y in outer]
-    else:
-        outer_ll=[[x,y] for x,y in outer]
-    geom={"type":"Polygon","coordinates":[outer_ll]}
-    if not any(x["identifier"]==ident for x in cands): cands.append({"identifier":ident,"geometry":geom})
-
-unmatched=[];records=[]
-if len(cands)!=1:
-    unmatched.append({"partition_record_id":TARGET["partition_record_id"],"reasons":[f"unique_hmlr_wms_polygon_required:found={len(cands)}"],"candidate_ids":[x["identifier"] for x in cands]})
-else:
-    c=cands[0]; cid="hmlr-inspire:"+c["identifier"]
-    props={
-      "evidence_scope":"parcel",
-      "coverage_area_id":TARGET["coverage_area_id"],
-      "source_resolution":"LSOA monthly recorded-crime aggregation bound to one HMLR INSPIRE cadastral polygon",
-      "time_window":"202108-202307",
-      "source_url":MPS_URL,
-      "measurement_date":"2023-07",
-      "measurement_method":"official MPS LSOA CSV exact-identifier aggregation",
-      "spatial_binding_method":"HMLR INSPIRE WMS GetFeatureInfo polygon at canonical parcel point plus exact LSOA identifier",
-      "confidence_score_0_100":100,
-      "evidence_grade":"A",
-      "field_evidence":{"publisher":"Metropolitan Police Service / London Datastore","official_csv_sha256":MPS_SHA,"lsoa_code":TARGET["coverage_area_id"],"official_lsoa_row_count":TARGET["rows"],"official_crime_value_sum":TARGET["crime_sum"],"official_numeric_cells":TARGET["numeric_cells"],"hmlr_wms_response_sha256":base["official_source"]["response_sha256"],"hmlr_inspire_id":c["identifier"]},
-      "canonical_parcel_id":cid,
-      "partition_record_id":TARGET["partition_record_id"],
-      "canonical_geometry_source_url":url,
-      "canonical_geometry_provider":"HM Land Registry",
-      "canonical_geometry_dataset":"INSPIRE Index Polygons View Service",
-      "source_window_id":SOURCE_WINDOW,
-      "cursor":SOURCE_WINDOW+":record=1"
-    }
-    records=[{"type":"Feature","id":cid,"geometry":c["geometry"],"properties":props}]
+    tag=lname(el.tag).lower()
+    if tag not in ("cadastralparcel","featuremember","member","lr_poly","landregistry"): continue
+    ident=ident_of(el);rings=rings_from_feature(el)
+    if not ident or not rings or ident in seen: continue
+    seen.add(ident);scanned+=1
+    outer=rings[0];holes=rings[1:];xs=[q[0] for q in outer];ys=[q[1] for q in outer]
+    if not xs: continue
+    bb=(min(xs),min(ys),max(xs),max(ys))
+    matched=[]
+    for a in pbn:
+        if bb[0]<=a["E"]<=bb[2] and bb[1]<=a["N"]<=bb[3] and pin(a["E"],a["N"],outer) and not any(pin(a["E"],a["N"],h) for h in holes): matched.append(a)
+    if not matched: continue
+    geom={"type":"Polygon","coordinates":[[bng_to_wgs(x,y) for x,y in ring] for ring in [outer,*holes]]}
+    for a in matched: hits[a["partition_record_id"]].append({"identifier":str(ident),"geometry":geom})
+base["official_source"]["features_scanned_for_lookup"]=scanned
 
 required=["evidence_scope","coverage_area_id","source_resolution","time_window","source_url","measurement_date","measurement_method","spatial_binding_method","confidence_score_0_100","evidence_grade","field_evidence","canonical_parcel_id"]
-issues=[]
-for i,f in enumerate(records):
-    p=f.get("properties") or {}; rs=[]
-    if f.get("geometry",{}).get("type") not in ("Polygon","MultiPolygon"): rs.append("invalid_geometry")
+records=[];unmatched=[];issues=[]
+for i,a in enumerate(pts,1):
+    fp=fieldmap.get(a["partition_record_id"]); hs={h["identifier"]:h for h in hits.get(a["partition_record_id"],[])}; reasons=[]
+    if fp is None: reasons.append("MISSING_REUSED_MPS_FIELD_EVIDENCE")
+    if len(hs)==0: reasons.append("NO_UNIQUE_HMLR_INSPIRE_POLYGON_CONTAINING_CANONICAL_POINT")
+    if len(hs)>1: reasons.append("MULTIPLE_HMLR_INSPIRE_POLYGONS_CONTAIN_CANONICAL_POINT")
+    if reasons:
+        unmatched.append({"record_index":i,"partition_record_id":a["partition_record_id"],"cursor":SOURCE_WINDOW+f":record={i}","exact_reasons":reasons});continue
+    h=next(iter(hs.values()));cid=h["identifier"]
+    fe={"criterion":"security_public_safety","publisher":fp.get("official_source"),"source_url":fp.get("official_csv_url"),"official_csv_sha256":fp.get("official_csv_sha256"),"lsoa_code":fp.get("canonical_lsoa_code"),"official_lsoa_row_count":fp.get("official_lsoa_row_count"),"official_crime_value_sum":fp.get("official_crime_value_sum"),"official_numeric_cells":fp.get("official_numeric_cells"),"prior_verified_package_commit":FIELD_COMMIT}
+    props={"evidence_scope":"coverage_area","coverage_area_id":fp.get("canonical_lsoa_code"),"source_resolution":"HMLR_INSPIRE_REGISTERED_FREEHOLD_POLYGON_PLUS_MPS_LSOA_MONTHLY_CRIME","time_window":"202108-202307","source_url":fp.get("official_csv_url"),"measurement_date":"2023-07-31","measurement_method":"official MPS LSOA recorded-crime exact-identifier aggregation with HMLR INSPIRE cadastral polygon readback","spatial_binding_method":"canonical partition point contained by exactly one HMLR INSPIRE polygon; field evidence bound by exact MPS LSOA identifier","confidence_score_0_100":90,"confidence_basis":"exact official identifiers; conservative reduction for published HMLR CRS reprojection uncertainty","evidence_grade":"A","field_evidence":fe,"canonical_parcel_id":cid,"canonical_parcel_id_namespace":"HM_LAND_REGISTRY_INSPIRE","partition_record_id":a["partition_record_id"],"canonical_geometry_source_url":HMLR_ZIP,"canonical_geometry_source_sha256":base["official_source"]["zip_sha256"],"source_window_id":SOURCE_WINDOW,"cursor":SOURCE_WINDOW+f":record={i}"}
+    f={"type":"Feature","id":cid,"geometry":h["geometry"],"properties":props};bad=[]
+    if f["geometry"]["type"] not in ("Polygon","MultiPolygon"): bad.append("invalid_geometry")
     for k in required:
-        if k not in p or p[k] in (None,""): rs.append("missing:"+k)
-    if "parcel_id" in p: rs.append("forbidden:parcel_id")
-    if "accepted_parcel" in p: rs.append("forbidden:accepted_parcel")
-    if rs: issues.append({"index":i,"id":f.get("id"),"reasons":rs})
-
-base.update(status="SEMANTIC_PRECHECK_COMPLETE",processed_count=1,schema_valid_count=len(records)-len(issues),schema_invalid_count=len(issues),rejected_count=len(unmatched),records=records,unmatched=unmatched,schema_issues=issues,semantic_precheck_passed=(len(records)==1 and len(issues)==0 and len(unmatched)==0),cursor=SOURCE_WINDOW+":record=1")
+        if k not in props or props[k] in (None,""): bad.append("missing:"+k)
+    if "parcel_id" in props: bad.append("forbidden:parcel_id")
+    if "accepted_parcel" in props: bad.append("forbidden:accepted_parcel")
+    if bad: issues.append({"record_index":i,"partition_record_id":a["partition_record_id"],"exact_reasons":bad})
+    else: records.append(f)
+base.update(status="SEMANTIC_PRECHECK_COMPLETE",source_records_processed_count=50,schema_valid_count=len(records),schema_invalid_count=len(issues),unmatched_count=len(unmatched),records=records,unmatched=unmatched,schema_issues=issues,cursor=SOURCE_WINDOW+":record=50",semantic_precheck_passed=(len(records)>0 and len(issues)==0))
+if not base["semantic_precheck_passed"]: base["blocker"]="PRODUCER_SCHEMA_INVALID"
 save(base)
-print(json.dumps({"status":base["status"],"valid":base["schema_valid_count"],"unmatched":len(unmatched),"issues":len(issues),"response_sha256":base["official_source"]["response_sha256"]}))
+print(json.dumps({"valid":len(records),"unmatched":len(unmatched),"issues":len(issues),"zip_sha256":base["official_source"]["zip_sha256"]}))
+raise SystemExit(0)
