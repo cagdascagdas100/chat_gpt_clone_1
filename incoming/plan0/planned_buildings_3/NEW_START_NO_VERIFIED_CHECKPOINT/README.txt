@@ -1,3 +1,1 @@
-planned_buildings_3 TEXT_BUNDLE_V1
-Official public no-login source window processed: St Albans District Council Housing Land Supply Note February 2026, application 5/2024/2156.
-No accepted parcel/building record: exact canonical parcel identity and distinct proposed/incomplete-building polygon are absent from the inspected window.
+Official no-login evidence window: Royal Borough of Greenwich Condover Crescent. Planning reference 21/0511/F. Council page states approval for eight homes and current status under construction. No accepted parcel/building record: exact canonical_parcel_id and distinct official proposed/incomplete-building Polygon/MultiPolygon spatial binding were not exposed in the inspected window.
