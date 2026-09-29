@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   run-pending-security-task:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,7 +49,7 @@ jobs:
                 [pscustomobject]@{ File=$_.FullName; Queue=$q; Status=[string]$q.status; Name=$_.Name }
               } catch { $null }
             } |
-            Where-Object { $_ -and $_.Status -eq 'pending' -and $_.Queue.task_id -eq 'security-public-safety-5-local-spatial-join-v1-20260928' } |
+            Where-Object { $_ -and $_.Status -eq 'pending' -and $_.Queue.automation_script -match 'security_public_safety' } |
             Select-Object -First 1
           if (-not $pending) {
             'No pending security queue task.' | Set-Content -LiteralPath (Join-Path $ReportDir 'github-actions-security-queue-idle.md') -Encoding UTF8
@@ -81,7 +81,6 @@ jobs:
           @{ status='GITHUB_ACTIONS_QUEUE_DONE'; timestamp=(Get-Date).ToString('o'); queue_file=$queueFile; automation_script=$scriptFile; final_ready=$false; fake_data=$false } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $StatusDir "github-actions-security-queue-done-$stamp.json") -Encoding UTF8
 
       - name: Commit outputs
-        if: always()
         shell: pwsh
         run: |
           git add docs/chatgpt_status/aays1/queue docs/chatgpt_status/aays1/status docs/chatgpt_status/aays1/reports docs/chatgpt_status/security_public_safety/runner_outputs docs/chatgpt_status/security_public_safety/status docs/chatgpt_status/security_public_safety/reports england_map_web/data/security_public_safety outputs/england_program_parcel_matrix_20260629/security_public_safety_updates
