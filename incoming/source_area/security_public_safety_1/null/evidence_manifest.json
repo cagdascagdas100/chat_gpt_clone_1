@@ -16,19 +16,19 @@
   "continuation": true,
   "continuation_key": "4472f86d3870fb5bc61617be00f0896ad3701370eea044e94d7989c3e3c5e949",
   "previous_checkpoint_physical_rehash": {
-    "artifact": "security_public_safety_1_AAYS_SOURCE_AREA_V1_RBKC_MAPSERVER_IDENTIFY_SCHEMA_INVALID_E05009404.zip",
-    "sha256_recomputed": "c113e37f50e62b0dbea9fa6d5ed8f3f523c1f8793905fea81e8190e1d7e0546e",
-    "external_zip_sidecar_declared_sha256": "c113e37f50e62b0dbea9fa6d5ed8f3f523c1f8793905fea81e8190e1d7e0546e",
+    "artifact": "security_public_safety_1_AAYS_SOURCE_AREA_V1_RBKC_LAYER35_RETURNUPDATES_SCHEMA_INVALID_E05009404.zip",
+    "sha256_recomputed": "f80abe93953786a6466995184953af386add5c450d915d52674500ecdc4e56d0",
+    "external_zip_sidecar_declared_sha256": "f80abe93953786a6466995184953af386add5c450d915d52674500ecdc4e56d0",
     "external_zip_sidecar_status": "PASS",
     "member_sidecars_verified": true,
     "member_count": 18,
     "sha256sums_chain_status": "PASS"
   },
   "previous_checkpoint_remote": {
-    "commit_sha": "08748a357199a7f02544e3ca5116e935c359cec5",
-    "exact_zip_path": "incoming/source_area/security_public_safety_1/null/security_public_safety_1_AAYS_SOURCE_AREA_V1_RBKC_MAPSERVER_IDENTIFY_SCHEMA_INVALID_E05009404.zip",
-    "zip_blob_sha": "6a5606138b4c7d69a841fba13d6fe96213f00746",
-    "sidecar_blob_sha": "6bfda1b5e92e662184362222d424ad88a311459e",
+    "commit_sha": "8c1c6ec20440e85d576cd138748d8e64fc678f0b",
+    "exact_zip_path": "incoming/source_area/security_public_safety_1/null/security_public_safety_1_AAYS_SOURCE_AREA_V1_RBKC_LAYER35_RETURNUPDATES_SCHEMA_INVALID_E05009404.zip",
+    "zip_blob_sha": "baa02b506b3329e9433b4f06069d192a3be957cd",
+    "sidecar_blob_sha": "258edf9383da95b3017b4fac87fbe369c383dcb8",
     "status": "PASS_REMOTE_READBACK"
   },
   "github_write_capability": {
@@ -39,17 +39,18 @@
     "status": "PASS_READBACK_REUSED_NO_RETEST"
   },
   "new_source_window": {
-    "window_id": "RBKC_LBHF_ASSURE_LAYER35_QUERYANALYTIC_E05009404_20260929",
+    "window_id": "RBKC_LBHF_ASSURE_LAYER35_METADATA_E05009404_20260929",
     "records_processed": 1,
     "unused_before_this_turn": true,
     "official_public_no_login": true,
-    "method": "RBKC ArcGIS MapServer layer 35 Query Analytic with exact CODE predicate and returnGeometry=true",
+    "method": "RBKC ArcGIS MapServer layer 35 Metadata operation",
     "same_prior_window_cursor_or_failed_method_reused": false
   },
   "official_source_metadata": {
     "publisher": "Royal Borough of Kensington and Chelsea",
     "service_url": "https://www.rbkc.gov.uk/arcgis/rest/services/LBHF/ASSURE/MapServer",
     "layer_url": "https://www.rbkc.gov.uk/arcgis/rest/services/LBHF/ASSURE/MapServer/35",
+    "operation_url": "https://www.rbkc.gov.uk/arcgis/rest/services/LBHF/ASSURE/MapServer/35/metadata",
     "layer_name": "Wards",
     "layer_id": 35,
     "geometry_type": "esriGeometryPolygon",
@@ -61,7 +62,7 @@
       "geoJSON",
       "PBF"
     ],
-    "supports_query_analytic": true
+    "supported_operation": "Metadata"
   },
   "counts": {
     "new_source_records": 1,
@@ -91,7 +92,8 @@
       "field_evidence"
     ],
     "candidate_rejection_reasons": [
-      "official Query Analytic target Polygon/MultiPolygon payload not retrieved",
+      "official Metadata payload not retrieved in this runtime",
+      "target E05009404 Polygon/MultiPolygon payload not retrieved",
       "coverage_area_id cannot be bound to an actual E05009404 feature",
       "measurement_date cannot be bound to the target feature",
       "field_evidence for target feature unavailable"
@@ -100,20 +102,21 @@
     "stage": "records_geojson_semantic_precheck"
   },
   "accepted_count_semantics": "Invalid source-area candidate is not accepted and does not increment parcel accepted_count or source_area_count.",
-  "cursor": "RBKC_LBHF_ASSURE_LAYER35_QUERYANALYTIC:where=CODE%3D%27E05009404%27:returnGeometry=true:outSR=4326",
+  "cursor": "RBKC_LBHF_ASSURE_LAYER35_METADATA:target=E05009404",
   "next_cursor": null,
   "first_missing_criterion": "OFFICIAL_SOURCE_GEOMETRY_PAYLOAD_RETRIEVAL",
   "schema_mapping_required": false,
   "delivery_blockers": [
     {
-      "code": "DELIVERY_BLOCKED:SOURCE_GEOMETRY_RBKC_QUERYANALYTIC_ACCESS_REQUIRED",
-      "stage": "official_rbkc_layer35_queryanalytic",
-      "detail": "Official RBKC Wards layer 35 advertises Query Analytic support, but the exact E05009404 Query Analytic payload was inaccessible in web runtime and container DNS resolution failed. No geometry or upstream SHA-256 was fabricated."
+      "code": "DELIVERY_BLOCKED:SOURCE_GEOMETRY_RBKC_LAYER35_METADATA_ACCESS_REQUIRED",
+      "stage": "official_rbkc_layer35_metadata",
+      "detail": "Official RBKC Wards layer 35 advertises Metadata, but the exact metadata endpoint returned cache miss in web runtime and container DNS resolution failed. No target geometry or upstream payload SHA-256 was fabricated."
     },
     {
       "code": "DELIVERY_BLOCKED:PRODUCER_SCHEMA_INVALID",
       "stage": "records_geojson_semantic_precheck",
       "detail": "Strict source-area schema requires an actual target Polygon/MultiPolygon and all target-bound coverage evidence fields. Candidate lacked retrievable target geometry and target-bound evidence, so it was rejected before records.geojson."
     }
-  ]
+  ],
+  "delivery_mode": "TEXT_BUNDLE_V1"
 }
