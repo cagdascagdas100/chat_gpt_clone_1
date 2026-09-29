@@ -133,7 +133,7 @@ try:
     html=page.decode("utf-8","replace")
     m=re.search(r"<tr[^>]*>.*?London Borough of Lambeth.*?</tr>",html,re.I|re.S)
     win=m.group(0) if m else html[max(0,html.lower().find("london borough of lambeth")-1500):html.lower().find("london borough of lambeth")+3000]
-    hrefs=re.findall(r'href=["\\']([^"\\']+)["\\']',win,re.I)
+    hrefs=re.findall(r"href=[\\\"']([^\\\"']+)[\\\"']",win,re.I)
     href=next(h for h in hrefs if ".gml" in h.lower())
     gml_url=urllib.parse.urljoin(HMLR_PAGE,href)
     greq=urllib.request.Request(gml_url,headers={"User-Agent":"AAYS-security-public-safety-5/HMLR-current-GML-v1","Accept":"application/gml+xml,application/xml,text/xml,*/*"})
