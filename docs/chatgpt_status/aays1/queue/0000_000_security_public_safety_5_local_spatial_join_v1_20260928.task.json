@@ -1,15 +1,15 @@
 {
   "schema_version": 6,
   "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
-  "task_version": "4.1-local-rejection-audit",
-  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-004",
-  "idempotency_key": "sps5-lineage-86b5e932de484ad26133fa8c-may2026-npt-61624-61673-polygon-schema-v1",
+  "task_version": "5.0-hmlr-inspire-lambeth-ambiguity-resolution",
+  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-005",
+  "idempotency_key": "sps5-hmlr-inspire-lambeth-2026-09-61637-61648-61649-v1",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_5",
   "owner": null,
   "lineage_id": "86b5e932de484ad26133fa8c",
-  "status": "done",
+  "status": "pending",
   "priority": -500,
   "created_at": "2026-09-27T21:54:00+00:00",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
@@ -19,7 +19,7 @@
     "end": 76903,
     "count": 15380
   },
-  "max_source_records": 50,
+  "max_source_records": 3,
   "script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.ps1",
   "automation_script": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.ps1",
   "python_script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.py",
@@ -42,15 +42,18 @@
     ]
   },
   "new_official_source_window": {
-    "publisher": "data.police.uk",
-    "source_window_id": "data_police_npt_boundary_archive_2026_05_sps5_61624_61673_polygon_schema_v1",
-    "url": "https://data.police.uk/data/boundaries/2026-05.zip",
-    "expected_md5": "a39d88624434ff668270b82f33fb77d3",
-    "record_range": [
-      "parcel_61624",
-      "parcel_61673"
-    ],
-    "public_no_login": true
+    "publisher": "HM Land Registry",
+    "source_window_id": "hmlr_inspire_lambeth_2026_09_sps5_61637_61648_61649_v1",
+    "dataset": "INSPIRE Index Polygons",
+    "download_page": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
+    "local_authority": "London Borough of Lambeth",
+    "published_date": "2026-09-06",
+    "public_no_login": true,
+    "target_records": [
+      "parcel_61637",
+      "parcel_61648",
+      "parcel_61649"
+    ]
   },
   "allowed_paths": [
     "docs/chatgpt_status/aays1/queue/0000_000_security_public_safety_5_local_spatial_join_v1_20260928.task.json",
@@ -80,8 +83,8 @@
   "production_deploy": false,
   "person_level_data": false,
   "final_ready": false,
-  "pickup_normalization": "2026-09-29T00:35:00Z",
-  "pickup_normalization_reason": "Same SPS5 task advanced to unused Planning Data geometry_entity Lambeth method; no second task/writer.",
+  "pickup_normalization": "2026-09-29T02:25:00Z",
+  "pickup_normalization_reason": "Same SPS5 task; unused HMLR INSPIRE Lambeth GML method resolves three prior title-boundary ambiguities only.",
   "first_missing_criterion": "CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED",
   "schema_precheck": {
     "require_geometry": [
@@ -110,10 +113,9 @@
     "commit_only_valid_records": true
   },
   "reused_field_evidence": {
-    "source_window_id": "mps_recorded_crime_lsoa_202409_202608_sps5_61624_61673_v1",
+    "package_commit_sha": "6342cc858dc07de5b050ec67e458b295cb0c1921",
+    "source_window_id": "mps_recorded_crime_lsoa_resource_221142dd_202108_202307_sps5_61624_61673_v1",
     "official_csv_sha256": "255d63bd759f08d7b0dd7674a38fca25ccb824c6c3a5d75d3fb00e504a34c082",
-    "package_commit_sha": "148cafbda9f3e57f98689df3a540ccc06a355517",
-    "package_records_path": "incoming/layer24/security_public_safety_5/86b5e932de484ad26133fa8c/planning_data_title_boundary_mps_lsoa_61624_61673_20260928T221705Z/records.geojson",
     "reopen_source": false,
     "readback_only": true
   },
@@ -139,9 +141,5 @@
     "fail_closed": true,
     "invalid_batch_delivery_blocked_code": "PRODUCER_SCHEMA_INVALID"
   },
-  "local_only_audit": true,
-  "picked_at": "2026-09-29T01:53:55.8473205+00:00",
-  "completed_at": "2026-09-29T01:53:58.7033179+00:00",
-  "runner_status": "GITHUB_ACTIONS_DONE",
-  "automation_exit_code": 0
+  "local_only_audit": true
 }
