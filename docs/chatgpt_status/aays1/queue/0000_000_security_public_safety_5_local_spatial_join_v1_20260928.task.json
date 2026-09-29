@@ -1,15 +1,15 @@
 {
   "schema_version": 6,
   "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
-  "task_version": "9.0-planning-data-geometry-entity-lambeth",
-  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-009",
-  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-planning-data-geometry-entity-lambeth-61674-61723-v1",
+  "task_version": "4.0-schema-precheck-may-2026-source-area",
+  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-004",
+  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-may-2026-61624-61673-schema-v4",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_5",
   "owner": null,
   "lineage_id": "86b5e932de484ad26133fa8c",
-  "status": "done",
+  "status": "pending",
   "priority": -500,
   "created_at": "2026-09-27T21:54:00+00:00",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
@@ -42,16 +42,13 @@
     ]
   },
   "new_official_source_window": {
-    "publisher": "Planning Data / MHCLG",
-    "provider": "HM Land Registry",
-    "dataset": "title-boundary",
-    "source_window_id": "planning_data_title_boundary_geometry_entity_lambeth_sps5_61674_61723_v1",
-    "method": "Planning Data geometry_entity=626195 spatial API, geometry_relation=within, limit=50; local canonical point-to-polygon join",
-    "query_url": "https://www.planning.data.gov.uk/entity.geojson?dataset=title-boundary&geometry_entity=626195&geometry_relation=within&limit=50&offset=0",
-    "geometry_entity": 626195,
+    "publisher": "data.police.uk",
+    "source_window_id": "data_police_npt_boundary_archive_2026_05_sps5_61624_61673_v1",
+    "url": "https://data.police.uk/data/boundaries/2026-05.zip",
+    "expected_md5": "a39d88624434ff668270b82f33fb77d3",
     "record_range": [
-      "parcel_61674",
-      "parcel_61723"
+      "parcel_61624",
+      "parcel_61673"
     ],
     "max_records": 50,
     "public_no_login": true
@@ -64,13 +61,11 @@
     "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json"
   ],
   "acceptance_checks": [
-    "Physically rehash latest schema-valid Layer24 ZIP and seven internal SHA-256 sidecars before processing",
-    "Do not repeat Planning Data latitude/longitude title-boundary, custom-WKT, or HMLR INSPIRE Lambeth bulk-GML methods",
-    "Process at most 50 official title-boundary source polygons from geometry_entity=626195 with no pagination",
-    "Process only canonical targets parcel_61674 through parcel_61723",
-    "Candidate requires exactly one authoritative Polygon/MultiPolygon containing the canonical point",
-    "Candidate requires prior hash-verified MPS field evidence for its canonical LSOA; do not reopen MPS source",
-    "Before packaging, require canonical_parcel_id and all mandatory semantic evidence fields; forbid parcel_id and accepted_parcel"
+    "Parcel records: geometry must be Polygon/MultiPolygon and canonical_parcel_id must be present",
+    "Point/LineString and parcel_id aliases never satisfy parcel schema",
+    "Invalid parcel candidates go only to rejection/unmatched ledger; accepted_count remains zero",
+    "Source-area records require Polygon/MultiPolygon plus all coverage-area semantic fields",
+    "Only schema-valid source-area candidates may be packaged as AAYS_SOURCE_AREA_V1"
   ],
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
@@ -122,9 +117,5 @@
     "package_records_path": "incoming/layer24/security_public_safety_5/86b5e932de484ad26133fa8c/planning_data_title_boundary_mps_lsoa_61624_61673_20260928T221705Z/records.geojson",
     "reopen_source": false,
     "readback_only": true
-  },
-  "picked_at": "2026-09-29T00:46:03.6567511+00:00",
-  "completed_at": "2026-09-29T00:47:36.5937562+00:00",
-  "runner_status": "GITHUB_ACTIONS_DONE",
-  "automation_exit_code": 0
+  }
 }

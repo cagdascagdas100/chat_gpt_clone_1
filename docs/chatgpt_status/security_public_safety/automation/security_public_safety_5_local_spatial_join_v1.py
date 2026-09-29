@@ -1,114 +1,212 @@
 from __future__ import annotations
-import copy,hashlib,json,os,subprocess,tempfile,urllib.parse,urllib.request
+import hashlib,json,os,subprocess,tempfile,urllib.request,zipfile
+import xml.etree.ElementTree as ET
 from datetime import datetime,timezone
 from pathlib import Path
-SLOT_ID='security_public_safety_5';LINEAGE_ID='86b5e932de484ad26133fa8c';P0,P1,PC=61524,76903,15380;START_NUM=61674;MAX_RECORDS=50
-REPO=Path(os.environ.get('AAYS_REPO_ROOT') or Path(__file__).resolve().parents[4])
+
+SLOT_ID='security_public_safety_5'
+LINEAGE_ID='86b5e932de484ad26133fa8c'
+P0,P1,PC=61524,76903,15380
+START_NUM=61624
+MAX_RECORDS=50
+REPO=Path(os.environ.get('AAYS_REPO_ROOT') or '.').resolve()
 OUT=REPO/'docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json'
-CANON_BRANCH='codex/aays-single-runner-v5-20260706';CANON_REL='england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson';CANON_BLOB='bb48164e7a0af78df875f30421a6a3068c43edb8'
-PRIOR=REPO/'incoming/layer24/security_public_safety_5/86b5e932de484ad26133fa8c/planning_data_title_boundary_mps_lsoa_61624_61673_20260928T221705Z/records.geojson';PRIOR_MPS_SHA='255d63bd759f08d7b0dd7674a38fca25ccb824c6c3a5d75d3fb00e504a34c082'
-API='https://www.planning.data.gov.uk/entity.geojson';SOURCE_WINDOW='planning_data_title_boundary_geometry_entity_lambeth_sps5_61674_61723_v1';LAMBETH_ENTITY=626195
-REQ=['evidence_scope','coverage_area_id','source_resolution','time_window','source_url','measurement_date','measurement_method','spatial_binding_method','confidence_score_0_100','evidence_grade','field_evidence','canonical_parcel_id']
-def now():return datetime.now(timezone.utc).isoformat().replace('+00:00','Z')
-def git(args,timeout=900,stdout=None):return subprocess.run(['git','-C',str(REPO),*args],stdout=stdout if stdout is not None else subprocess.PIPE,stderr=subprocess.PIPE,check=False,timeout=timeout)
-def blob_sha(p):
- r=git(['hash-object',str(p)],180);return r.stdout.decode('utf-8','replace').strip() if r.returncode==0 else None
+CANON_BRANCH='codex/aays-single-runner-v5-20260706'
+CANON_REL='england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson'
+CANON_BLOB='bb48164e7a0af78df875f30421a6a3068c43edb8'
+ARCHIVE_URL='https://data.police.uk/data/boundaries/2026-05.zip'
+ARCHIVE_MD5='a39d88624434ff668270b82f33fb77d3'
+SOURCE_WINDOW='data_police_npt_boundary_archive_2026_05_sps5_61624_61673_v1'
+
+def now(): return datetime.now(timezone.utc).isoformat().replace('+00:00','Z')
+def git(args,timeout=900,stdout=None):
+    return subprocess.run(['git','-C',str(REPO),*args],stdout=stdout if stdout is not None else subprocess.PIPE,stderr=subprocess.PIPE,check=False,timeout=timeout)
+def blob_sha(path):
+    r=git(['hash-object',str(path)],180)
+    return r.stdout.decode('utf-8','replace').strip() if r.returncode==0 else None
 def materialize():
- c=Path(tempfile.gettempdir())/'aays_sps5'/Path(CANON_REL).name;c.parent.mkdir(parents=True,exist_ok=True)
- ev={'branch':CANON_BRANCH,'repo_path':CANON_REL,'required_git_blob_sha':CANON_BLOB,'verified':False}
- if c.is_file() and blob_sha(c)==CANON_BLOB:ev.update(cache_hit=True,verified=True);return c,ev
- c.unlink(missing_ok=True)
- for ref in (f'origin/{CANON_BRANCH}',CANON_BRANCH):
-  part=c.with_suffix('.part');part.unlink(missing_ok=True)
-  with part.open('wb') as fh:r=git(['show',f'{ref}:{CANON_REL}'],stdout=fh)
-  if r.returncode==0 and blob_sha(part)==CANON_BLOB:os.replace(part,c);ev.update(source_ref=ref,verified=True);return c,ev
-  part.unlink(missing_ok=True)
- r=git(['fetch','origin',CANON_BRANCH],900)
- if r.returncode==0:
-  part=c.with_suffix('.part')
-  with part.open('wb') as fh:s=git(['show',f'FETCH_HEAD:{CANON_REL}'],stdout=fh)
-  if s.returncode==0 and blob_sha(part)==CANON_BLOB:os.replace(part,c);ev.update(source_ref='FETCH_HEAD',verified=True);return c,ev
- ev['error']='EXACT_CANONICAL_BLOB_NOT_MATERIALIZED';return None,ev
+    cache=Path(tempfile.gettempdir())/'aays_sps5'/Path(CANON_REL).name
+    cache.parent.mkdir(parents=True,exist_ok=True)
+    ev={'branch':CANON_BRANCH,'repo_path':CANON_REL,'required_git_blob_sha':CANON_BLOB,'cache_path':str(cache),'verified':False}
+    if cache.is_file() and blob_sha(cache)==CANON_BLOB:
+        ev.update(cache_hit=True,verified=True); return cache,ev
+    cache.unlink(missing_ok=True)
+    for ref in (f'origin/{CANON_BRANCH}',CANON_BRANCH):
+        part=cache.with_suffix('.part'); part.unlink(missing_ok=True)
+        with part.open('wb') as fh: r=git(['show',f'{ref}:{CANON_REL}'],stdout=fh)
+        if r.returncode==0 and blob_sha(part)==CANON_BLOB:
+            os.replace(part,cache); ev.update(source_ref=ref,verified=True); return cache,ev
+        part.unlink(missing_ok=True)
+    r=git(['fetch','origin',CANON_BRANCH],900); ev['fetch_returncode']=r.returncode
+    if r.returncode==0:
+        part=cache.with_suffix('.part')
+        with part.open('wb') as fh: s=git(['show',f'FETCH_HEAD:{CANON_REL}'],stdout=fh)
+        if s.returncode==0 and blob_sha(part)==CANON_BLOB:
+            os.replace(part,cache); ev.update(source_ref='FETCH_HEAD',verified=True); return cache,ev
+        part.unlink(missing_ok=True)
+    ev['error']='EXACT_CANONICAL_BLOB_NOT_MATERIALIZED'; return None,ev
+
 def pid_num(pid):
- try:return int(pid.split('_',1)[1]) if isinstance(pid,str) and pid.startswith('parcel_') else None
- except:return None
-def get_pid(p):
- for k in ('security_parcel_id','parcel_id'):
-  v=p.get(k)
-  if isinstance(v,str) and v.startswith('parcel_'):return v
- return None
-def http_json(url):
- req=urllib.request.Request(url,headers={'User-Agent':'AAYS-security-public-safety-5/planning-data-geometry-entity-v1','Accept':'application/geo+json,application/json'})
- with urllib.request.urlopen(req,timeout=120) as resp:
-  b=resp.read();return int(resp.status),resp.geturl(),b,json.loads(b.decode('utf-8'))
+    try: return int(pid.split('_',1)[1]) if isinstance(pid,str) and pid.startswith('parcel_') else None
+    except: return None
+def get_pid(props):
+    for k in ('security_parcel_id','parcel_id'):
+        v=props.get(k)
+        if isinstance(v,str) and v.startswith('parcel_'): return v
+    return None
+def lname(tag): return tag.rsplit('}',1)[-1] if '}' in tag else tag
+def child_text(el,name):
+    for ch in el.iter():
+        if lname(ch.tag)==name and ch.text and ch.text.strip(): return ch.text.strip()
+    return None
+def parse_coords(text):
+    out=[]
+    for tok in (text or '').replace('\n',' ').replace('\t',' ').split():
+        p=tok.split(',')
+        if len(p)>=2:
+            try: out.append([float(p[0]),float(p[1])])
+            except: pass
+    return out
+def exact_identifier(pm):
+    if pm.attrib.get('id'): return pm.attrib['id'],'kml_placemark_id'
+    vals=[]
+    for el in pm.iter():
+        if lname(el.tag)=='Data':
+            k=(el.attrib.get('name') or '').strip(); v=child_text(el,'value')
+            if k and v: vals.append((k,v))
+        elif lname(el.tag)=='SimpleData':
+            k=(el.attrib.get('name') or '').strip(); v=(el.text or '').strip()
+            if k and v: vals.append((k,v))
+    for p in ('id','code','reference','ref','neighbourhood','neighborhood','ward'):
+        for k,v in vals:
+            if p in k.lower(): return v,f'extended_data:{k}'
+    return None,None
+def polygons_from_pm(pm):
+    polys=[]
+    for poly in [x for x in pm.iter() if lname(x.tag)=='Polygon']:
+        outer=None; holes=[]
+        for ob in [x for x in poly.iter() if lname(x.tag)=='outerBoundaryIs']:
+            r=parse_coords(child_text(ob,'coordinates'))
+            if len(r)>=3: outer=r; break
+        for ib in [x for x in poly.iter() if lname(x.tag)=='innerBoundaryIs']:
+            r=parse_coords(child_text(ib,'coordinates'))
+            if len(r)>=3: holes.append(r)
+        if outer:
+            if outer[0]!=outer[-1]: outer.append(outer[0])
+            for h in holes:
+                if h[0]!=h[-1]: h.append(h[0])
+            xs=[p[0] for p in outer]; ys=[p[1] for p in outer]
+            polys.append({'outer':outer,'holes':holes,'bbox':(min(xs),min(ys),max(xs),max(ys))})
+    return polys
 def point_in_ring(x,y,ring):
- inside=False;j=len(ring)-1
- for i in range(len(ring)):
-  xi,yi=ring[i][:2];xj,yj=ring[j][:2]
-  if ((yi>y)!=(yj>y)):
-   d=yj-yi
-   if d and x<(xj-xi)*(y-yi)/d+xi:inside=not inside
-  j=i
- return inside
+    inside=False; j=len(ring)-1
+    for i in range(len(ring)):
+        xi,yi=ring[i]; xj,yj=ring[j]
+        if ((yi>y)!=(yj>y)):
+            d=yj-yi
+            if d and x < (xj-xi)*(y-yi)/d+xi: inside=not inside
+        j=i
+    return inside
 def point_in_poly(x,y,p):
- return bool(p and point_in_ring(x,y,p[0]) and not any(point_in_ring(x,y,h) for h in p[1:]))
-def contains(g,x,y):
- if not g:return False
- if g.get('type')=='Polygon':return point_in_poly(x,y,g.get('coordinates') or [])
- if g.get('type')=='MultiPolygon':return any(point_in_poly(x,y,p) for p in (g.get('coordinates') or []))
- return False
-def save(x):OUT.parent.mkdir(parents=True,exist_ok=True);OUT.write_text(json.dumps(x,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-def semantic(f):
- p=f.get('properties') or {};reasons=[]
- if (f.get('geometry') or {}).get('type') not in ('Polygon','MultiPolygon'):reasons.append('geometry_must_be_Polygon_or_MultiPolygon')
- for k in REQ:
-  if k not in p or p[k] in (None,''):reasons.append('missing_required_field:'+k)
- if p.get('evidence_scope')!='parcel':reasons.append('evidence_scope_must_equal_parcel')
- if 'parcel_id' in p:reasons.append('forbidden_property:parcel_id')
- if 'accepted_parcel' in p:reasons.append('forbidden_property:accepted_parcel')
- return reasons
+    if not point_in_ring(x,y,p['outer']): return False
+    return not any(point_in_ring(x,y,h) for h in p['holes'])
+def geojson_geom(polys):
+    coords=[[p['outer'],*p['holes']] for p in polys]
+    return {'type':'Polygon','coordinates':coords[0]} if len(coords)==1 else {'type':'MultiPolygon','coordinates':coords}
+def save(x):
+    OUT.parent.mkdir(parents=True,exist_ok=True)
+    OUT.write_text(json.dumps(x,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
 def main():
- base={'schema_version':9,'slot_id':SLOT_ID,'owner':None,'partition':{'start':P0,'end':P1,'count':PC},'lineage_id':LINEAGE_ID,'generated_at':now(),'source_window_id':SOURCE_WINDOW,'first_missing_criterion':'CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED','max_source_records':MAX_RECORDS,'accepted_count_claimed':0,'final_package_written':False,'fake_data':False}
- cp,mat=materialize();base['canonical_materialization']=mat
- if not cp or not PRIOR.is_file():base.update(status='BLOCKED',blocker='CANONICAL_OR_PRIOR_EVIDENCE_MISSING');save(base);return 0
- prior=json.loads(PRIOR.read_text(encoding='utf-8-sig'));ev_by={};tmpl_by={}
- for f in prior.get('features',[]):
-  p=f.get('properties') or {};l=p.get('canonical_lsoa_code');fe=p.get('field_evidence')
-  if l and isinstance(fe,dict) and fe.get('official_csv_sha256')==PRIOR_MPS_SHA:ev_by[l]=copy.deepcopy(fe);tmpl_by[l]=p
- cg=json.loads(cp.read_text(encoding='utf-8-sig'));selected=[]
- for f in cg.get('features',[]):
-  p=f.get('properties') or {};pid=get_pid(p);n=pid_num(pid);g=f.get('geometry') or {}
-  if n is not None and START_NUM<=n<START_NUM+MAX_RECORDS and g.get('type')=='Point':
-   xy=g.get('coordinates') or []
-   if len(xy)>=2:selected.append((n,pid,float(xy[0]),float(xy[1]),p))
- selected.sort();base['target_record_count']=len(selected)
- q=urllib.parse.urlencode([('dataset','title-boundary'),('geometry_entity',str(LAMBETH_ENTITY)),('geometry_relation','within'),('limit',str(MAX_RECORDS)),('offset','0')])
- url=API+'?'+q
- try:st,final,b,obj=http_json(url)
- except Exception as ex:base.update(status='BLOCKED',blocker='PLANNING_DATA_GEOMETRY_ENTITY_QUERY_FAILED',error=str(ex),query_url=url);save(base);return 0
- base['source_query']={'url':final,'http_status':st,'response_sha256':hashlib.sha256(b).hexdigest(),'record_limit':MAX_RECORDS,'geometry_entity':LAMBETH_ENTITY}
- feats=[]
- if isinstance(obj,dict) and obj.get('type')=='FeatureCollection':feats=obj.get('features') or []
- elif isinstance(obj,dict) and isinstance(obj.get('features'),list):feats=obj['features']
- base['source_records_processed_count']=min(len(feats),MAX_RECORDS);feats=feats[:MAX_RECORDS]
- rows=[]
- for idx,(n,pid,x,y,p0) in enumerate(selected,1):
-  lsoa=p0.get('security_lsoa_code');hits=[]
-  for sf in feats:
-   g=sf.get('geometry') or {};pr=sf.get('properties') or {}
-   if g.get('type') in ('Polygon','MultiPolygon') and contains(g,x,y):hits.append((sf,pr))
-  reasons=[];feature=None
-  if len(hits)!=1:reasons.append(f'title_boundary_unique_match_required:found={len(hits)}')
-  fe=ev_by.get(lsoa);tmpl=tmpl_by.get(lsoa)
-  if not fe or not tmpl:reasons.append('prior_mps_field_evidence_missing_for_lsoa')
-  if not reasons:
-   sf,pr=hits[0];ref=str(pr.get('reference') or pr.get('entity') or sf.get('id') or '')
-   if not ref:reasons.append('title_boundary_reference_missing')
-   else:
-    fd=copy.deepcopy(fe);fd.update({'planning_data_geometry_entity_query_sha256':base['source_query']['response_sha256'],'planning_data_title_boundary_reference':ref,'planning_data_query_url':final})
-    props={'evidence_scope':'parcel','coverage_area_id':lsoa,'source_resolution':'official_MPS_LSOA_recorded_crime_joined_to_Planning_Data_HMLR_title_boundary','time_window':tmpl.get('time_window'),'source_url':tmpl.get('source_url'),'measurement_date':tmpl.get('measurement_date'),'measurement_method':tmpl.get('measurement_method'),'spatial_binding_method':'shared_canonical_point_intersects_Planning_Data_geometry_entity_title_boundary_polygon','confidence_score_0_100':100,'evidence_grade':'A','field_evidence':fd,'canonical_parcel_id':'title-boundary:'+ref,'canonical_parcel_reference':ref,'partition_record_id':pid,'canonical_lsoa_code':lsoa,'canonical_geometry_source_url':final,'canonical_geometry_provider':'Planning Data / HM Land Registry','canonical_geometry_dataset':'title-boundary','source_window_id':SOURCE_WINDOW,'cursor':f'{SOURCE_WINDOW}:record={idx}'}
-    feature={'type':'Feature','id':props['canonical_parcel_id'],'geometry':sf.get('geometry'),'properties':props};reasons.extend(semantic(feature))
-  rows.append({'record_index':idx,'partition_record_id':pid,'parcel_number':n,'canonical_point':{'type':'Point','coordinates':[x,y]},'canonical_lsoa_code':lsoa,'candidate_ready':bool(feature and not reasons),'reasons':reasons,'feature':feature})
- ready=sum(1 for r in rows if r['candidate_ready']);base.update(status='SEMANTIC_PRECHECK_COMPLETE',canonical_blob_sha=blob_sha(cp),canonical_blob_verified=blob_sha(cp)==CANON_BLOB,candidate_ready_count=ready,rejected_count=len(rows)-ready,semantic_precheck_passed=all(not semantic(r['feature']) for r in rows if r['feature']),official_source_cursor=f'{SOURCE_WINDOW}:record={len(rows)}',rows=rows,note='Only unique local point-to-polygon matches with strict semantic fields are candidate_ready.')
- save(base);print(json.dumps({'status':base['status'],'source_records':base['source_records_processed_count'],'ready':ready,'rejected':len(rows)-ready,'output':str(OUT)}));return 0
-if __name__=='__main__':raise SystemExit(main())
+    base={'schema_version':4,'slot_id':SLOT_ID,'owner':None,'partition':{'start':P0,'end':P1,'count':PC},'lineage_id':LINEAGE_ID,'generated_at':now(),'source_window_id':SOURCE_WINDOW,'max_records':MAX_RECORDS,'accepted_count_claimed':0,'source_area_count_claimed':0,'first_missing_criterion':'LOCAL_SPATIAL_JOIN_AND_CANONICAL_READBACK_REQUIRED','fake_data':False}
+    cp,mat=materialize(); base['canonical_materialization']=mat
+    if not cp:
+        base.update(status='BLOCKED',blocker='CANONICAL_BLOB_MATERIALIZATION_FAILED',rows=[],source_area_candidates=[]); save(base); return 2
+    cg=json.loads(cp.read_text(encoding='utf-8-sig'))
+    selected=[]
+    for f in cg.get('features',[]):
+        props=f.get('properties') or {}; pid=get_pid(props); n=pid_num(pid); g=f.get('geometry') or {}
+        if n is not None and START_NUM<=n<START_NUM+MAX_RECORDS:
+            selected.append((n,pid,g,props))
+    selected.sort(key=lambda x:x[0])
+    tmp=Path(tempfile.gettempdir())/'aays_sps5'/'data_police_boundaries_2026-05.zip'
+    try:
+        req=urllib.request.Request(ARCHIVE_URL,headers={'User-Agent':'AAYS-security-public-safety-5/schema-v4'})
+        md5=hashlib.md5(); sha=hashlib.sha256()
+        with urllib.request.urlopen(req,timeout=120) as resp,tmp.open('wb') as fh:
+            status=int(resp.status)
+            while True:
+                b=resp.read(1024*1024)
+                if not b: break
+                fh.write(b); md5.update(b); sha.update(b)
+    except Exception as ex:
+        base.update(status='BLOCKED',blocker='OFFICIAL_BOUNDARY_ARCHIVE_DOWNLOAD_FAILED',error=str(ex),rows=[],source_area_candidates=[]); save(base); return 2
+    md5h,shah=md5.hexdigest(),sha.hexdigest()
+    base['archive']={'url':ARCHIVE_URL,'http_status':status,'expected_md5':ARCHIVE_MD5,'md5':md5h,'sha256':shah,'size_bytes':tmp.stat().st_size,'md5_verified':md5h.lower()==ARCHIVE_MD5}
+    if status!=200 or md5h.lower()!=ARCHIVE_MD5:
+        base.update(status='BLOCKED',blocker='OFFICIAL_BOUNDARY_ARCHIVE_HASH_MISMATCH',rows=[],source_area_candidates=[]); save(base); return 2
+    boundaries=[]
+    with zipfile.ZipFile(tmp) as z:
+        for name in z.namelist():
+            if not name.lower().endswith(('.kml','.xml')): continue
+            try: root=ET.fromstring(z.read(name))
+            except: continue
+            for pm in [x for x in root.iter() if lname(x.tag)=='Placemark']:
+                ident,basis=exact_identifier(pm); polys=polygons_from_pm(pm)
+                if not ident or not polys: continue
+                boundaries.append({'identifier':ident,'basis':basis,'name':child_text(pm,'name'),'member':name,'polygons':polys})
+    rejections=[]; hit_keys={}
+    for idx,(n,pid,g,props) in enumerate(selected,1):
+        reasons=[]
+        if g.get('type') not in ('Polygon','MultiPolygon'): reasons.append(f"PARCEL_GEOMETRY_TYPE_{g.get('type')}_NOT_ALLOWED")
+        if not props.get('canonical_parcel_id'): reasons.append('MISSING_CANONICAL_PARCEL_ID')
+        hits=[]
+        if g.get('type')=='Point':
+            lng,lat=float(g['coordinates'][0]),float(g['coordinates'][1])
+            for b in boundaries:
+                if any(p['bbox'][0]<=lng<=p['bbox'][2] and p['bbox'][1]<=lat<=p['bbox'][3] and point_in_poly(lng,lat,p) for p in b['polygons']):
+                    hits.append(b)
+                    hit_keys[(b['identifier'],b['member'])]=b
+        rejections.append({'record_index':idx,'cursor':f'{SOURCE_WINDOW}:record={idx}','parcel_id_alias':pid,'parcel_number':n,'geometry_type':g.get('type'),'canonical_parcel_id':props.get('canonical_parcel_id'),'matched_boundary_ids':[h['identifier'] for h in hits],'rejection_reasons':reasons or ['SCHEMA_PRECHECK_UNEXPECTED_PASS']})
+    source_area=[]
+    for (_, _),b in sorted(hit_keys.items(),key=lambda kv:(kv[0][0],kv[0][1])):
+        geom=geojson_geom(b['polygons'])
+        props={
+          'evidence_scope':'coverage_area',
+          'coverage_area_id':b['identifier'],
+          'source_resolution':'neighbourhood_policing_team_boundary',
+          'time_window':'2026-05',
+          'source_url':ARCHIVE_URL,
+          'measurement_date':'2026-05-01',
+          'measurement_method':'official_monthly_npt_kml_boundary_archive',
+          'spatial_binding_method':'official_kml_geometry_exact_identifier',
+          'confidence_score_0_100':100,
+          'evidence_grade':'A',
+          'field_evidence':{'placemark_id':b['identifier'],'identifier_basis':b['basis'],'name':b['name'],'archive_member':b['member'],'archive_md5':md5h,'archive_sha256':shah}
+        }
+        required=['evidence_scope','coverage_area_id','source_resolution','time_window','source_url','measurement_date','measurement_method','spatial_binding_method','confidence_score_0_100','evidence_grade','field_evidence']
+        valid=geom.get('type') in ('Polygon','MultiPolygon') and all(props.get(k) is not None for k in required)
+        source_area.append({'type':'Feature','id':b['identifier'],'geometry':geom,'properties':props,'schema_valid':valid})
+    valid_source=[f for f in source_area if f['schema_valid']]
+    base.update(
+      status='SCHEMA_PRECHECK_COMPLETE',
+      canonical_blob_sha=blob_sha(cp),canonical_blob_verified=blob_sha(cp)==CANON_BLOB,
+      canonical_records_examined=len(selected),
+      parcel_schema_valid_count=0,
+      parcel_schema_invalid_count=len(rejections),
+      source_area_candidate_count=len(source_area),
+      source_area_valid_count=len(valid_source),
+      accepted_count_claimed=0,
+      source_area_count_claimed=len(valid_source),
+      official_source_cursor=f'{SOURCE_WINDOW}:record={len(selected)}',
+      next_first_missing_criterion='CANONICAL_PARCEL_POLYGON_GEOMETRY_REQUIRED',
+      rows=rejections,
+      source_area_candidates=valid_source
+    )
+    save(base)
+    print(f'CANONICAL_RECORDS_EXAMINED={len(selected)}')
+    print(f'PARCEL_SCHEMA_INVALID_COUNT={len(rejections)}')
+    print(f'SOURCE_AREA_VALID_COUNT={len(valid_source)}')
+    print(f'ARCHIVE_MD5_VERIFIED={base["archive"]["md5_verified"]}')
+    return 0 if base['canonical_blob_verified'] and len(valid_source)>0 else 2
+if __name__=='__main__': raise SystemExit(main())
