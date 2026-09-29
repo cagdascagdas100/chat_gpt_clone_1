@@ -80,14 +80,14 @@ if html is None:
 href=None
 row_match=re.search(r'<tr\\b[^>]*>.*?London Borough of Lambeth.*?</tr>',html,re.I|re.S)
 if row_match:
-    links=re.findall(r'href=["\\']([^"\\']+)["\\']',row_match.group(0),re.I)
+    links=re.findall('href="([^"]+)"',row_match.group(0),re.I)+re.findall("href='([^']+)'",row_match.group(0),re.I)
     preferred=[x for x in links if ".gml" in x.lower() or "inspire" in x.lower()]
     if preferred: href=preferred[0]
     elif links: href=links[0]
 if not href:
     idx=html.find("London Borough of Lambeth")
     frag=html[max(0,idx-4000):idx+8000] if idx>=0 else ""
-    links=re.findall(r'href=["\\']([^"\\']+)["\\']',frag,re.I)
+    links=re.findall('href="([^"]+)"',frag,re.I)+re.findall("href='([^']+)'",frag,re.I)
     preferred=[x for x in links if ".gml" in x.lower() or "inspire" in x.lower()]
     if preferred: href=preferred[0]
 if not href:
