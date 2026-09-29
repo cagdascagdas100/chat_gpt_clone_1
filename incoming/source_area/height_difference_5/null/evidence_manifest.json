@@ -7,7 +7,7 @@
   "owner": "height_difference_5",
   "partition": null,
   "lineage_id": null,
-  "delivery_block": "DELIVERY_BLOCKED:SOURCE_DATA_NO_HEIGHT_DIFFERENCE_5_CONTENT_TOKEN_MATCH_AT_CURRENT_MAIN",
+  "delivery_block": "DELIVERY_BLOCKED:SOURCE_DATA_CANDIDATE_SCAN_CAP_REACHED_NO_HEIGHT_DIFFERENCE_5_TARGET_MATCH",
   "blocker_stage": "SOURCE_DATA",
   "accepted_count": 0,
   "source_area_count": 1,
@@ -22,16 +22,18 @@
     "reason": "first_missing_criterion remains local canonical parcel polygon producer output; no external source window opened"
   },
   "delivery_target": "incoming/source_area/height_difference_5/null/",
-  "content_search_evidence": {
-    "previous_main_snapshot_sha": "fcb9b2a65665cc1313e7e69b3c00e5e447f3341e",
-    "current_main_snapshot_sha": "65d2166901867fdc9f8ae9c7c694aa3f956e84ab",
-    "ancestry_status": "ahead",
-    "ahead_by": 21,
-    "query": "height_difference_5",
-    "topn": 50,
-    "returned_results": 0,
-    "search_scope": "default branch code content",
-    "limitation": "generic filenames/content omitting the slot token are not exhaustively ruled out"
+  "local_candidate_audit": {
+    "baseline_main_sha": "65d2166901867fdc9f8ae9c7c694aa3f956e84ab",
+    "current_main_snapshot_sha": "a5e6c120acf3e033d96fec7e21c167467c6c7372",
+    "commits_processed": 16,
+    "total_changed_files_seen": 138,
+    "candidate_filter": "canonical|parcel|polygon|geojson|jsonl|layer24|height_difference|opencode",
+    "candidate_count_processed": 50,
+    "candidate_cap": 50,
+    "candidate_cap_reached": true,
+    "exact_target_prefix": "incoming/layer24/height_difference_5/null/",
+    "exact_target_match_count": 0,
+    "candidate_window_complete": false
   },
-  "first_missing_criterion": "a height_difference_5-specific local OpenCode canonical parcel polygon artefact containing exact Polygon/MultiPolygon geometry, canonical_parcel_id, and complete field evidence; current main 65d2166901867fdc9f8ae9c7c694aa3f956e84ab is 21 commits ahead of R35 snapshot fcb9b2a65665cc1313e7e69b3c00e5e447f3341e, but GitHub default-branch code-content search for the exact slot token height_difference_5 returned 0 results (topn 50); this token search does not exclude generic filenames/content that omit the slot token, so no canonical parcel acceptance is claimed; only after exact parcel readback may existing building evidence be spatially joined and official DEM/LIDAR min/max/mean/max-min be computed"
+  "first_missing_criterion": "a height_difference_5-specific local OpenCode canonical parcel polygon artefact containing exact Polygon/MultiPolygon geometry, canonical_parcel_id, and complete field evidence; a new main-delta commit-file candidate scan from 65d2166901867fdc9f8ae9c7c694aa3f956e84ab through pinned head a5e6c120acf3e033d96fec7e21c167467c6c7372 processed the first 50 generic candidate paths matching canonical|parcel|polygon|geojson|jsonl|layer24|height_difference|opencode, found zero exact target-prefix matches under incoming/layer24/height_difference_5/null/, and hit the 50-record cap, so remaining generic candidates are not claimed exhausted; only after exact parcel readback may existing building evidence be spatially joined and official DEM/LIDAR min/max/mean/max-min be computed"
 }
