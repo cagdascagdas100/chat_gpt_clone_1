@@ -16,18 +16,18 @@
   "continuation": true,
   "continuation_key": "4472f86d3870fb5bc61617be00f0896ad3701370eea044e94d7989c3e3c5e949",
   "previous_checkpoint_physical_rehash": {
-    "artifact": "security_public_safety_1_AAYS_SOURCE_AREA_V1_ONS_MAY2025_BFC_V2_MAPSERVER_QUERY_SCHEMA_INVALID_E05009404.zip",
-    "sha256_recomputed": "19c69908ac41d63ac39f8d758b5b541fed71c91d27a877199af2a6c2e4b309eb",
-    "external_zip_sidecar_declared_sha256": "19c69908ac41d63ac39f8d758b5b541fed71c91d27a877199af2a6c2e4b309eb",
+    "artifact": "security_public_safety_1_AAYS_SOURCE_AREA_V1_RBKC_WARDS35_QUERY_SCHEMA_INVALID_E05009404.zip",
+    "sha256_recomputed": "313e57dedb5dd1a76b80ec3232062c22adb6169b39edf4e91de3fcd1f980945a",
+    "external_zip_sidecar_declared_sha256": "313e57dedb5dd1a76b80ec3232062c22adb6169b39edf4e91de3fcd1f980945a",
     "external_zip_sidecar_status": "PASS",
     "member_sidecars_verified": true,
     "member_count": 18,
     "sha256sums_chain_status": "PASS"
   },
   "previous_checkpoint_remote_readback": {
-    "exact_zip_path": "incoming/source_area/security_public_safety_1/null/security_public_safety_1_AAYS_SOURCE_AREA_V1_ONS_MAY2025_BFC_V2_MAPSERVER_QUERY_SCHEMA_INVALID_E05009404.zip",
-    "zip_blob_sha": "34cb5a6d5ed43ee04a83d198290a1eea330334c0",
-    "sidecar_blob_sha": "7c3c40f146ff94c361d047fde8fd683387c0747e",
+    "exact_zip_path": "incoming/source_area/security_public_safety_1/null/security_public_safety_1_AAYS_SOURCE_AREA_V1_RBKC_WARDS35_QUERY_SCHEMA_INVALID_E05009404.zip",
+    "zip_blob_sha": "0b37e23ad1c6c13275053756ef47231e39adaa0c",
+    "sidecar_blob_sha": "6efd5469f0142e94105b702f1624074aab997b18",
     "status": "PASS_REMOTE_READBACK_MAIN"
   },
   "github_write_capability": {
@@ -38,42 +38,26 @@
     "status": "PASS_READBACK_REUSED_NO_RETEST"
   },
   "new_source_window": {
-    "window_id": "RBKC_WARDS_MAPSERVER_35_QUERY_E05009404_20260929",
+    "window_id": "RBKC_LBHF_ASSURE_WFS_2_0_E05009404_20260929",
     "records_processed": 1,
     "unused_before_this_turn": true,
     "official_public_no_login_service": true,
     "publisher": "Royal Borough of Kensington and Chelsea",
-    "method": "RBKC ArcGIS MapServer layer 35 exact CODE query",
+    "method": "RBKC ArcGIS WFS 2.0 GetCapabilities/GetFeature route, distinct from prior REST Query",
     "same_prior_window_cursor_or_failed_method_reused": false
   },
   "official_operation_basis": {
+    "mapserver_url": "https://www.rbkc.gov.uk/arcgis/rest/services/LBHF/ASSURE/MapServer",
     "layer_url": "https://www.rbkc.gov.uk/arcgis/rest/services/LBHF/ASSURE/MapServer/35",
-    "query_url": "https://www.rbkc.gov.uk/arcgis/rest/services/LBHF/ASSURE/MapServer/35/query?where=CODE%3D%27E05009404%27&outFields=OBJECTID%2CWARD%2CWARDNAME%2CCODE&returnGeometry=true&outSR=4326&f=geojson",
+    "wfs_capabilities_url": "https://www.rbkc.gov.uk/arcgis/services/LBHF/ASSURE/MapServer/WFSServer?service=WFS&request=GetCapabilities&version=2.0.0",
     "layer_name": "Wards",
     "layer_id": 35,
     "geometry_type": "esriGeometryPolygon",
-    "supported_query_formats": [
-      "JSON",
-      "geoJSON",
-      "PBF"
-    ],
     "spatial_reference": 27700,
-    "published_fields": [
-      "OBJECTID",
-      "WARD",
-      "WARDNAME",
-      "Shape",
-      "Shape.STArea()",
-      "Shape.STLength()",
-      "NO_OF_COUNCILLORS",
-      "CURRENT_CONSTITUENTS",
-      "FORECAST_CONSTITUENTS",
-      "CODE"
-    ],
+    "published_identifier_field": "CODE",
     "target_exact_identifier": "E05009404",
-    "target_name": "St Helen's",
-    "identifier_field_attempted": "CODE",
-    "web_transport_result": "Official layer metadata retrieved. Exact CODE='E05009404' GeoJSON query was not accessible via web runtime.",
+    "mapserver_root_publishes_wfs_link": true,
+    "web_transport_result": "Official MapServer root publishes WFS; WFS GetCapabilities timed out in web runtime.",
     "container_transport_result": "urllib.error.URLError: Temporary failure in name resolution for www.rbkc.gov.uk"
   },
   "counts": {
@@ -104,25 +88,25 @@
       "field_evidence"
     ],
     "candidate_rejection_reasons": [
-      "official RBKC layer metadata confirms Polygon capability but exact target query payload was not retrieved",
-      "CODE=E05009404 could not be confirmed on an actual returned feature",
-      "official target E05009404 Polygon/MultiPolygon coordinates were not retrieved",
-      "source_resolution and measurement_date were not published as target-feature attributes",
-      "coverage_area_id and field_evidence cannot be bound to an actual target geometry feature"
+      "official RBKC service publishes WFS but WFS capabilities payload was not retrieved",
+      "WFS feature type for Wards could not be resolved from an actual capabilities document",
+      "E05009404 GetFeature payload was not retrieved",
+      "official target Polygon/MultiPolygon coordinates were not retrieved",
+      "coverage_area_id, measurement_date and field_evidence cannot be bound to an actual target feature"
     ],
     "blocker_code": "DELIVERY_BLOCKED:PRODUCER_SCHEMA_INVALID",
     "stage": "records_geojson_semantic_precheck"
   },
   "accepted_count_semantics": "Invalid source-area candidate is not accepted and does not increment parcel accepted_count or source_area_count.",
-  "cursor": "RBKC_LBHF_ASSURE_WARDS_MAPSERVER_35:QUERY:where=CODE%3DE05009404:returnGeometry=true:outSR=4326",
+  "cursor": "RBKC_LBHF_ASSURE_WARDS_WFS_2_0:GETCAPABILITIES:target=E05009404",
   "next_cursor": null,
   "first_missing_criterion": "OFFICIAL_SOURCE_GEOMETRY_PAYLOAD_RETRIEVAL",
   "schema_mapping_required": false,
   "delivery_blockers": [
     {
-      "code": "DELIVERY_BLOCKED:SOURCE_GEOMETRY_RBKC_WARDS35_QUERY_ACCESS_REQUIRED",
-      "stage": "official_rbkc_wards35_exact_query",
-      "detail": "Official RBKC Wards layer 35 metadata is public and confirms polygon/GeoJSON query support, but exact CODE=E05009404 query payload was unavailable in this runtime. No geometry or target identifier match was fabricated."
+      "code": "DELIVERY_BLOCKED:SOURCE_GEOMETRY_RBKC_WFS_ACCESS_REQUIRED",
+      "stage": "official_rbkc_wfs_capabilities_getfeature",
+      "detail": "RBKC MapServer root publicly advertises WFS, but GetCapabilities timed out in web runtime and container DNS resolution failed. No WFS feature type, E05009404 feature, or geometry payload was fabricated."
     },
     {
       "code": "DELIVERY_BLOCKED:PRODUCER_SCHEMA_INVALID",
