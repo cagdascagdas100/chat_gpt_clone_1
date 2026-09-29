@@ -1,15 +1,15 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
-  "task_version": "8.0-hmlr-inspire-lambeth-bulk-gml",
-  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-008",
-  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-hmlr-inspire-lambeth-2026-09-61674-61723-v1",
+  "task_version": "9.0-planning-data-geometry-entity-lambeth",
+  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-009",
+  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-planning-data-geometry-entity-lambeth-61674-61723-v1",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_5",
   "owner": null,
   "lineage_id": "86b5e932de484ad26133fa8c",
-  "status": "blocked",
+  "status": "pending",
   "priority": -500,
   "created_at": "2026-09-27T21:54:00+00:00",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
@@ -42,13 +42,13 @@
     ]
   },
   "new_official_source_window": {
-    "publisher": "HM Land Registry",
-    "dataset": "INSPIRE Index Polygons",
-    "source_window_id": "hmlr_inspire_lambeth_2026_09_sps5_61674_61723_v1",
-    "method": "official Lambeth bulk GML download; EPSG:27700 to WGS84 reprojection; local point-in-polygon; unique INSPIRE ID",
-    "listing_url": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
-    "publication_date": "2026-09-06",
-    "local_authority": "London Borough of Lambeth",
+    "publisher": "Planning Data / MHCLG",
+    "provider": "HM Land Registry",
+    "dataset": "title-boundary",
+    "source_window_id": "planning_data_title_boundary_geometry_entity_lambeth_sps5_61674_61723_v1",
+    "method": "Planning Data geometry_entity=626195 spatial API, geometry_relation=within, limit=50; local canonical point-to-polygon join",
+    "query_url": "https://www.planning.data.gov.uk/entity.geojson?dataset=title-boundary&geometry_entity=626195&geometry_relation=within&limit=50&offset=0",
+    "geometry_entity": 626195,
     "record_range": [
       "parcel_61674",
       "parcel_61723"
@@ -65,13 +65,12 @@
   ],
   "acceptance_checks": [
     "Physically rehash latest schema-valid Layer24 ZIP and seven internal SHA-256 sidecars before processing",
-    "Do not repeat Planning Data latitude/longitude title-boundary method or custom-WKT method",
-    "Process only parcel_61674 through parcel_61723, maximum 50 canonical records",
-    "Use official HM Land Registry INSPIRE Lambeth bulk GML and hash listing/GML bytes",
-    "Reproject official EPSG:27700 polygons to WGS84 locally",
-    "Candidate requires exactly one INSPIRE polygon locally containing the canonical point",
+    "Do not repeat Planning Data latitude/longitude title-boundary, custom-WKT, or HMLR INSPIRE Lambeth bulk-GML methods",
+    "Process at most 50 official title-boundary source polygons from geometry_entity=626195 with no pagination",
+    "Process only canonical targets parcel_61674 through parcel_61723",
+    "Candidate requires exactly one authoritative Polygon/MultiPolygon containing the canonical point",
     "Candidate requires prior hash-verified MPS field evidence for its canonical LSOA; do not reopen MPS source",
-    "Before packaging, require Polygon/MultiPolygon, canonical_parcel_id, all mandatory semantic evidence fields, and forbid parcel_id/accepted_parcel"
+    "Before packaging, require canonical_parcel_id and all mandatory semantic evidence fields; forbid parcel_id and accepted_parcel"
   ],
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
@@ -87,8 +86,8 @@
   "production_deploy": false,
   "person_level_data": false,
   "final_ready": false,
-  "pickup_normalization": "2026-09-29T00:05:00Z",
-  "pickup_normalization_reason": "Same SPS5 task advanced to unused HMLR INSPIRE Lambeth bulk-GML method; no second task/writer.",
+  "pickup_normalization": "2026-09-29T00:35:00Z",
+  "pickup_normalization_reason": "Same SPS5 task advanced to unused Planning Data geometry_entity Lambeth method; no second task/writer.",
   "first_missing_criterion": "CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED",
   "schema_precheck": {
     "require_geometry": [
@@ -123,12 +122,5 @@
     "package_records_path": "incoming/layer24/security_public_safety_5/86b5e932de484ad26133fa8c/planning_data_title_boundary_mps_lsoa_61624_61673_20260928T221705Z/records.geojson",
     "reopen_source": false,
     "readback_only": true
-  },
-  "runner_status": "GITHUB_ACTIONS_BLOCKED",
-  "automation_exit_code": 2,
-  "last_run_id": 36501228326,
-  "last_job_id": 109192288097,
-  "blocker": "RUNNER_OUTPUT_NOT_PERSISTED_AFTER_EXIT_2",
-  "blocker_stage": "HMLR_INSPIRE bulk-GML runner returned exit 2; workflow skipped Commit outputs, so no persisted source-result JSON is available for safe package construction.",
-  "retry_same_window": false
+  }
 }
