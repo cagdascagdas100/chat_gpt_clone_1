@@ -1,15 +1,15 @@
 {
-  "schema_version": 11,
+  "schema_version": 9,
   "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
-  "task_version": "7.0-hmlr-inspire-wms-getfeatureinfo",
-  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-007",
-  "idempotency_key": "sps5-hmlr-inspire-wms-getfeatureinfo-9-v1",
+  "task_version": "5.0-planning-data-exact-reference",
+  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-005",
+  "idempotency_key": "sps5-61674-61723-planning-data-title-boundary-exact-reference-v1",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_5",
   "owner": null,
   "lineage_id": "86b5e932de484ad26133fa8c",
-  "status": "pending",
+  "status": "done",
   "priority": -500,
   "created_at": "2026-09-27T21:54:00+00:00",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
@@ -19,7 +19,7 @@
     "end": 76903,
     "count": 15380
   },
-  "max_source_records": 9,
+  "max_source_records": 50,
   "script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.ps1",
   "automation_script": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.ps1",
   "python_script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.py",
@@ -42,23 +42,16 @@
     ]
   },
   "new_official_source_window": {
-    "publisher": "HM Land Registry",
-    "source_window_id": "hmlr_inspire_wms_getfeatureinfo_sps5_9_v1",
-    "method": "official INSPIRE View Service WMS GetFeatureInfo GML at canonical point",
-    "service_url": "https://inspire.landregistry.gov.uk/inspire/ows",
-    "layer": "inspire:CP.CadastralParcel",
-    "target_partition_records": [
-      "parcel_61675",
-      "parcel_61676",
-      "parcel_61677",
-      "parcel_61678",
-      "parcel_61679",
-      "parcel_61680",
-      "parcel_61688",
-      "parcel_61689",
-      "parcel_61690"
+    "publisher": "Planning Data / MHCLG",
+    "provider": "HM Land Registry",
+    "source_window_id": "planning_data_title_boundary_exact_reference_sps5_61674_61723_v1",
+    "method": "exact HMLR INSPIRE reference -> title-boundary GeoJSON",
+    "api": "https://www.planning.data.gov.uk/entity.geojson",
+    "record_range": [
+      "parcel_61674",
+      "parcel_61723"
     ],
-    "max_records": 9,
+    "max_records": 50,
     "public_no_login": true
   },
   "allowed_paths": [
@@ -69,12 +62,11 @@
     "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json"
   ],
   "acceptance_checks": [
-    "Use only the 9 prior schema-valid MPS field-evidence records; do not reopen MPS source",
-    "Query official HM Land Registry INSPIRE WMS GetFeatureInfo at each canonical point",
-    "Require exactly one returned feature containing the exact target INSPIRE ID and Polygon/MultiPolygon geometry",
-    "Require canonical point inside returned polygon",
-    "Require canonical_parcel_id=hmlr-inspire:<INSPIREID> and all semantic fields; forbid parcel_id and accepted_parcel",
-    "Any invalid record blocks the entire batch with PRODUCER_SCHEMA_INVALID before ZIP/incoming write"
+    "Process only the 48 records that already have prior verified MPS field evidence; do not reopen that source",
+    "Planning Data title-boundary must return exactly one authoritative Polygon/MultiPolygon per canonical point",
+    "canonical_parcel_id must be the exact HM Land Registry INSPIRE reference returned by Planning Data",
+    "Every parcel record must include all semantic evidence fields and must not include parcel_id or accepted_parcel aliases",
+    "If any processed record is unmatched or schema-invalid, block the entire batch with PRODUCER_SCHEMA_INVALID"
   ],
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
@@ -90,8 +82,8 @@
   "production_deploy": false,
   "person_level_data": false,
   "final_ready": false,
-  "pickup_normalization": "2026-09-29T09:55:00Z",
-  "pickup_normalization_reason": "Same SPS5 task; distinct official HMLR WMS GetFeatureInfo source window after bulk-download redirect failure; no second writer/task.",
+  "pickup_normalization": "2026-09-29T05:25:00Z",
+  "pickup_normalization_reason": "Same SPS5 task; unused Planning Data title-boundary coordinate API window; 48 records with prior MPS field evidence; fail-closed semantic precheck.",
   "first_missing_criterion": "CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED",
   "schema_precheck": {
     "require_geometry": [
@@ -120,8 +112,8 @@
     "commit_only_valid_records": true
   },
   "reused_field_evidence": {
-    "snapshot_path": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_planning_data_exact_reference_61674_61723.json",
-    "snapshot_blob_sha": "0f7053992b3d3f2bcd6f4783f332535577c610dc",
+    "package_commit_sha": "148cafbda9f3e57f98689df3a540ccc06a355517",
+    "records_path": "incoming/layer24/security_public_safety_5/86b5e932de484ad26133fa8c/planning_data_title_boundary_mps_lsoa_61624_61673_20260928T221705Z/records.geojson",
     "reopen_source": false,
     "readback_only": true
   },
@@ -159,5 +151,8 @@
   ],
   "required_parcel_field": "canonical_parcel_id",
   "readback_only": true,
-  "no_source_window_repeat": true
+  "no_source_window_repeat": true,
+  "picked_at": "2026-09-29T06:48:14.9339992+00:00",
+  "completed_at": "2026-09-29T06:48:20.7815603+00:00",
+  "automation_exit_code": 0
 }
