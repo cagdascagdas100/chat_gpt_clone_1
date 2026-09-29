@@ -79,7 +79,7 @@ def find_lambeth_gml(page_bytes,base_url):
     pos=txt.lower().find("london borough of lambeth")
     if pos>=0:
         chunk=txt[max(0,pos-1800):pos+1800]
-        hrefs=re.findall(r'href=[\"\\']([^\"\\']+)[\"\\']',chunk,re.I)
+        hrefs=re.findall("href=[\\\"']([^\\\"']+)[\\\"']",chunk,re.I)
         for h in hrefs:
             if "gml" in h.lower() or "download" in h.lower():
                 return urllib.parse.urljoin(base_url,html.unescape(h))
