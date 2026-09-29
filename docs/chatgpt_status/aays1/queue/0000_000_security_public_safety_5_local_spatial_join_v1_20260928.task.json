@@ -1,15 +1,15 @@
 {
   "schema_version": 9,
   "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
-  "task_version": "4.1-canonical-rejection-readback",
-  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-004",
-  "idempotency_key": "security-public-safety-5-lineage-86b5e932de484ad26133fa8c-61624-61673-may-2026-polygon-schema-v1",
+  "task_version": "5.0-planning-data-exact-reference",
+  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-005",
+  "idempotency_key": "sps5-61674-61723-planning-data-title-boundary-exact-reference-v1",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_5",
   "owner": null,
   "lineage_id": "86b5e932de484ad26133fa8c",
-  "status": "done",
+  "status": "pending",
   "priority": -500,
   "created_at": "2026-09-27T21:54:00+00:00",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
@@ -19,7 +19,7 @@
     "end": 76903,
     "count": 15380
   },
-  "max_source_records": 48,
+  "max_source_records": 50,
   "script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.ps1",
   "automation_script": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.ps1",
   "python_script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.py",
@@ -42,13 +42,14 @@
     ]
   },
   "new_official_source_window": {
-    "publisher": "data.police.uk",
-    "source_window_id": "data_police_npt_boundary_archive_2026_05_sps5_61624_61673_polygon_schema_v1",
-    "url": "https://data.police.uk/data/boundaries/2026-05.zip",
-    "expected_md5": "a39d88624434ff668270b82f33fb77d3",
+    "publisher": "Planning Data / MHCLG",
+    "provider": "HM Land Registry",
+    "source_window_id": "planning_data_title_boundary_exact_reference_sps5_61674_61723_v1",
+    "method": "exact HMLR INSPIRE reference -> title-boundary GeoJSON",
+    "api": "https://www.planning.data.gov.uk/entity.geojson",
     "record_range": [
-      "parcel_61624",
-      "parcel_61673"
+      "parcel_61674",
+      "parcel_61723"
     ],
     "max_records": 50,
     "public_no_login": true
@@ -111,9 +112,8 @@
     "commit_only_valid_records": true
   },
   "reused_field_evidence": {
-    "package_commit_sha": "6342cc858dc07de5b050ec67e458b295cb0c1921",
-    "source_window_id": "mps_recorded_crime_lsoa_resource_221142dd_202108_202307_sps5_61624_61673_v1",
-    "official_csv_sha256": "255d63bd759f08d7b0dd7674a38fca25ccb824c6c3a5d75d3fb00e504a34c082",
+    "package_commit_sha": "148cafbda9f3e57f98689df3a540ccc06a355517",
+    "records_path": "incoming/layer24/security_public_safety_5/86b5e932de484ad26133fa8c/planning_data_title_boundary_mps_lsoa_61624_61673_20260928T221705Z/records.geojson",
     "reopen_source": false,
     "readback_only": true
   },
@@ -136,6 +136,10 @@
       "field_evidence",
       "canonical_parcel_id"
     ],
+    "forbidden_properties": [
+      "parcel_id",
+      "accepted_parcel"
+    ],
     "fail_closed": true,
     "invalid_batch_delivery_blocked_code": "PRODUCER_SCHEMA_INVALID"
   },
@@ -147,9 +151,5 @@
   ],
   "required_parcel_field": "canonical_parcel_id",
   "readback_only": true,
-  "no_source_window_repeat": true,
-  "picked_at": "2026-09-29T06:08:01.9109007+00:00",
-  "completed_at": "2026-09-29T06:10:07.4413064+00:00",
-  "runner_status": "GITHUB_ACTIONS_DONE",
-  "automation_exit_code": 0
+  "no_source_window_repeat": true
 }
