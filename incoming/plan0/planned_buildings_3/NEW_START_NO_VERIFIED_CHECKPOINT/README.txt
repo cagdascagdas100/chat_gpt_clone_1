@@ -1,1 +1,2 @@
-Official no-login evidence window: Royal Borough of Greenwich Condover Crescent. Planning reference 21/0511/F. Council page states approval for eight homes and current status under construction. No accepted parcel/building record: exact canonical_parcel_id and distinct official proposed/incomplete-building Polygon/MultiPolygon spatial binding were not exposed in the inspected window.
+TEXT_BUNDLE_V1
+No accepted parcel/building records. Candidate rejected before acceptance under required canonical identity + polygon spatial-binding rules.
