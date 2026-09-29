@@ -1,15 +1,15 @@
 {
   "schema_version": 6,
   "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
-  "task_version": "5.0-hmlr-inspire-lambeth-ambiguity-resolution",
-  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-005",
-  "idempotency_key": "sps5-hmlr-inspire-lambeth-2026-09-61637-61648-61649-v1",
+  "task_version": "6.0-hmlr-inspire-wms-gfi-single-record",
+  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260929-006",
+  "idempotency_key": "sps5-hmlr-inspire-wms-gfi-61637-v1",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_5",
   "owner": null,
   "lineage_id": "86b5e932de484ad26133fa8c",
-  "status": "blocked",
+  "status": "pending",
   "priority": -500,
   "created_at": "2026-09-27T21:54:00+00:00",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
@@ -19,7 +19,7 @@
     "end": 76903,
     "count": 15380
   },
-  "max_source_records": 3,
+  "max_source_records": 1,
   "script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.ps1",
   "automation_script": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.ps1",
   "python_script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.py",
@@ -43,16 +43,13 @@
   },
   "new_official_source_window": {
     "publisher": "HM Land Registry",
-    "source_window_id": "hmlr_inspire_lambeth_2026_09_sps5_61637_61648_61649_v1",
-    "dataset": "INSPIRE Index Polygons",
-    "download_page": "https://use-land-property-data.service.gov.uk/datasets/inspire/download",
-    "local_authority": "London Borough of Lambeth",
-    "published_date": "2026-09-06",
+    "source_window_id": "hmlr_inspire_wms_gfi_sps5_61637_v1",
+    "dataset": "INSPIRE Index Polygons View Service",
+    "endpoint": "https://inspire.landregistry.gov.uk/inspire/ows",
+    "method": "WMS 1.1.1 GetFeatureInfo application/vnd.ogc.gml",
     "public_no_login": true,
     "target_records": [
-      "parcel_61637",
-      "parcel_61648",
-      "parcel_61649"
+      "parcel_61637"
     ]
   },
   "allowed_paths": [
@@ -83,8 +80,8 @@
   "production_deploy": false,
   "person_level_data": false,
   "final_ready": false,
-  "pickup_normalization": "2026-09-29T02:25:00Z",
-  "pickup_normalization_reason": "Same SPS5 task; unused HMLR INSPIRE Lambeth GML method resolves three prior title-boundary ambiguities only.",
+  "pickup_normalization": "2026-09-29T03:00:00Z",
+  "pickup_normalization_reason": "Same SPS5 task; unused official HMLR INSPIRE WMS GetFeatureInfo window, one-record fail-closed schema probe.",
   "first_missing_criterion": "CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED",
   "schema_precheck": {
     "require_geometry": [
@@ -142,15 +139,11 @@
     "invalid_batch_delivery_blocked_code": "PRODUCER_SCHEMA_INVALID"
   },
   "local_only_audit": true,
-  "blocker_code": "HMLR_INSPIRE_GML_PARSE_FAILED",
-  "blocker_stage": "official HMLR INSPIRE Lambeth GML download -> XML parse",
-  "blocker_detail": "xml.etree.ElementTree.ParseError: not well-formed (invalid token): line 1, column 2",
-  "source_window_consumed": true,
+  "blocker_code": null,
+  "blocker_stage": null,
+  "blocker_detail": null,
+  "source_window_consumed": false,
   "source_cursor_advanced": false,
-  "last_run_id": 36513765649,
-  "last_job_id": 109231434996,
-  "last_run_head_sha": "baa6a31c65ee327c0730e6a4dba0bcbb02290aeb",
   "accepted_count_claimed": 0,
-  "blocked_at": "2026-09-29T02:43:08Z",
   "note": "Do not retry the same HMLR INSPIRE September-2026 Lambeth GML source window/method; source bytes were reached but XML parsing failed before any parcel candidate could be semantically accepted."
 }
