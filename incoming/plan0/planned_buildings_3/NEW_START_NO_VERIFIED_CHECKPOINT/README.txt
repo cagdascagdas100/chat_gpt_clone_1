@@ -1,1 +1,2 @@
-planned_buildings_3 continuation; official Cherwell 26/00044/OUT processed. No planned building accepted because exact canonical parcel identity plus machine-extractable distinct proposed/incomplete-building Polygon/MultiPolygon binding was not established.
+TEXT_BUNDLE_V1
+No accepted parcel/building records. Official source window processed: cherwell:26/01992/F
