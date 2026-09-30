@@ -1,5 +1,5 @@
 from __future__ import annotations
-import hashlib,json,os,subprocess,urllib.parse,urllib.request
+import hashlib,json,os,re,subprocess,urllib.parse,urllib.request
 from datetime import datetime,timezone
 from pathlib import Path
 
@@ -9,11 +9,10 @@ PAGE_GENERATION=1
 PARTITION=[61524,76903]
 SEMANTIC_MODE="AREA_JOIN"
 CATEGORY="AAYS_SOURCE_AREA_V1"
-SOURCE_WINDOW="data_police_metropolitan_neighbourhood_boundary_first50_sps5_20260930_v1"
-FORCE_ID="metropolitan"
-API_ROOT="https://data.police.uk/api"
-PRIOR_COMMIT="ad1ba605f7898660fedc4dfed06d45ed5a61d6bd"
-PRIOR_PATH="docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_source_area_latest.json"
+SOURCE_WINDOW="planning_data_ward_exact_reference_first50_recovery_sps5_20260930_v1"
+API="https://www.planning.data.gov.uk/entity.json"
+PRIOR_COMMIT="d5abe8c15ce772b331648ef372877ab78cd38ffa"
+PRIOR_PATH="incoming/source_area/security_public_safety_5/86b5e932de484ad26133fa8c/data_police_metropolitan_neighbourhoods_first50_20260930T185929Z/records.geojson"
 REPO=Path(os.environ.get("AAYS_REPO_ROOT") or Path(__file__).resolve().parents[4])
 OUT=REPO/"docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_source_area_latest.json"
 
@@ -26,17 +25,57 @@ def git_show(ref,path):
     if q.returncode!=0:
         raise RuntimeError(q.stderr.decode("utf-8","replace")[-1000:])
     return q.stdout
-def fetch(url):
-    req=urllib.request.Request(url,headers={"User-Agent":"AAYS-security-public-safety-5/data-police-neighbourhood-boundary-v1","Accept":"application/json"})
+def fetch_json(url):
+    req=urllib.request.Request(url,headers={"User-Agent":"AAYS-security-public-safety-5/planning-data-ward-recovery-v1","Accept":"application/json"})
     with urllib.request.urlopen(req,timeout=90) as resp:
-        body=resp.read()
-        return int(resp.status),resp.geturl(),resp.headers.get("Content-Type"),resp.headers.get("Last-Modified"),body
+        b=resp.read()
+        return int(resp.status),resp.geturl(),resp.headers.get("Content-Type"),resp.headers.get("Last-Modified"),b,json.loads(b.decode("utf-8"))
+def entity_list(obj):
+    if isinstance(obj,list): return obj
+    if not isinstance(obj,dict): return []
+    for k in ("entities","entity","results","data"):
+        v=obj.get(k)
+        if isinstance(v,list): return v
+    return []
+def parse_group(tokens,pos=0):
+    if tokens[pos]!="(": raise ValueError("group expected")
+    pos+=1; out=[]
+    if pos<len(tokens) and tokens[pos]=="(":
+        while True:
+            g,pos=parse_group(tokens,pos); out.append(g)
+            if pos>=len(tokens): raise ValueError("unexpected end")
+            if tokens[pos]==",": pos+=1; continue
+            if tokens[pos]==")": pos+=1; break
+            raise ValueError("bad nested separator")
+        return out,pos
+    while True:
+        if pos>=len(tokens) or tokens[pos] in ("(",")",","): raise ValueError("coordinate expected")
+        x=float(tokens[pos]); pos+=1
+        if pos>=len(tokens) or tokens[pos] in ("(",")",","): raise ValueError("y expected")
+        y=float(tokens[pos]); pos+=1
+        while pos<len(tokens) and tokens[pos] not in (",",")"): pos+=1
+        out.append([x,y])
+        if pos>=len(tokens): raise ValueError("unexpected end")
+        if tokens[pos]==",": pos+=1; continue
+        if tokens[pos]==")": pos+=1; break
+    return out,pos
+def wkt_geojson(wkt):
+    if not isinstance(wkt,str): raise ValueError("missing WKT")
+    s=wkt.strip()
+    if ";" in s and s.upper().startswith("SRID="): s=s.split(";",1)[1].strip()
+    m=re.match(r"^\s*(POLYGON|MULTIPOLYGON)\s*(.*)$",s,re.I|re.S)
+    if not m: raise ValueError("not polygon WKT")
+    typ=m.group(1).upper(); body=m.group(2)
+    tokens=re.findall(r"\(|\)|,|[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?",body)
+    data,pos=parse_group(tokens,0)
+    if pos!=len(tokens): raise ValueError("trailing WKT tokens")
+    return {"type":"Polygon" if typ=="POLYGON" else "MultiPolygon","coordinates":data}
 def save(o):
     OUT.parent.mkdir(parents=True,exist_ok=True)
     OUT.write_text(json.dumps(o,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
 
 base={
- "schema_version":16,
+ "schema_version":17,
  "slot_id":SLOT_ID,
  "owner":None,
  "partition":PARTITION,
@@ -57,76 +96,59 @@ base={
 }
 try:
     prior=json.loads(git_show(PRIOR_COMMIT,PRIOR_PATH).decode("utf-8-sig"))
-    prior_features=(prior.get("records_geojson") or {}).get("features") or []
-    if len(prior_features)!=50:
-        raise RuntimeError("PRIOR_VERIFIED_ID_WINDOW_COUNT_NOT_50")
+    pfs=prior.get("features") or []
+    if len(pfs)!=50:
+        raise RuntimeError("PRIOR_VERIFIED_EXACT_ID_COUNT_NOT_50")
     targets=[]
     seen=set()
-    for feat in prior_features:
+    for feat in pfs:
         p=feat.get("properties") or {}
         nid=str(p.get("coverage_area_id") or "").strip()
         name=str(p.get("coverage_area_name") or "").strip()
-        if not nid or not name or nid in seen:
-            continue
-        seen.add(nid)
-        targets.append((nid,name))
+        if nid and name and nid not in seen:
+            seen.add(nid); targets.append((nid,name))
     if len(targets)!=50:
-        raise RuntimeError("PRIOR_EXACT_ID_TARGET_COUNT_NOT_50")
-    features=[]
-    rejected=[]
-    unmatched=[]
-    requests=[]
+        raise RuntimeError("TARGET_COUNT_NOT_50")
+    features=[]; rejected=[]; unmatched=[]; requests=[]
     for idx,(nid,name) in enumerate(targets,1):
-        quoted=urllib.parse.quote(nid,safe="")
-        url=f"{API_ROOT}/{FORCE_ID}/{quoted}/boundary"
+        params=[
+          ("dataset","ward"),("reference",nid),("quality","authoritative"),("limit","5"),
+          ("field","entity"),("field","reference"),("field","name"),("field","dataset"),("field","geometry"),
+          ("field","quality"),("field","entry-date"),("field","start-date"),("field","end-date"),("field","organisation-curie")
+        ]
+        url=API+"?"+urllib.parse.urlencode(params,doseq=True)
         accessed=now()
         ev={"record_index":idx,"coverage_area_id":nid,"coverage_area_name":name,"url":url,"accessed_at_utc":accessed}
         try:
-            status,final_url,ctype,last_modified,body=fetch(url)
+            status,final_url,ctype,last_modified,body,obj=fetch_json(url)
             ev.update(http_status=status,final_url=final_url,content_type=ctype,last_modified=last_modified,response_sha256=sha(body),size_bytes=len(body))
-            if status!=200:
-                unmatched.append({**ev,"reason":"NON_200_STATUS"})
-                requests.append(ev)
-                continue
-            obj=json.loads(body.decode("utf-8"))
-            if not isinstance(obj,list) or len(obj)<3:
-                unmatched.append({**ev,"reason":"EMPTY_OR_SHORT_BOUNDARY"})
-                requests.append(ev)
-                continue
-            ring=[]
-            bad=False
-            for pt in obj:
-                if not isinstance(pt,dict):
-                    bad=True; break
-                try:
-                    lat=float(pt.get("latitude")); lon=float(pt.get("longitude"))
-                except Exception:
-                    bad=True; break
-                if not (-90<=lat<=90 and -180<=lon<=180):
-                    bad=True; break
-                ring.append([lon,lat])
-            if bad or len(ring)<3:
-                rejected.append({**ev,"reason":"INVALID_BOUNDARY_COORDINATES"})
-                requests.append(ev)
-                continue
-            if ring[0]!=ring[-1]:
-                ring.append(ring[0])
-            if len(ring)<4:
-                rejected.append({**ev,"reason":"BOUNDARY_RING_TOO_SHORT"})
-                requests.append(ev)
-                continue
-            data_date=last_modified or accessed[:10]
+            exact=[]
+            for e in entity_list(obj):
+                if not isinstance(e,dict): continue
+                if e.get("dataset")!="ward": continue
+                if str(e.get("reference") or "").strip()!=nid: continue
+                if str(e.get("quality") or "").lower()!="authoritative": continue
+                try: geom=wkt_geojson(e.get("geometry"))
+                except Exception: continue
+                exact.append((geom,e))
+            uniq={}
+            for geom,e in exact:
+                uniq[str(e.get("entity") or nid)]=(geom,e)
+            if len(uniq)!=1:
+                unmatched.append({**ev,"reason":"EXACT_AUTHORITATIVE_WARD_GEOMETRY_COUNT_"+str(len(uniq))})
+                requests.append(ev); continue
+            geom,e=next(iter(uniq.values()))
+            data_date=e.get("entry-date") or e.get("start-date") or last_modified or accessed[:10]
             props={
               "evidence_scope":"coverage_area",
               "coverage_area_id":nid,
-              "coverage_area_name":name,
-              "identifier_scheme":"DATA_POLICE_FORCE_SPECIFIC_NEIGHBOURHOOD_ID",
-              "force_id":FORCE_ID,
-              "source_resolution":"OFFICIAL_NEIGHBOURHOOD_BOUNDARY_POLYGON",
-              "time_window":"CURRENT_API_SNAPSHOT",
+              "coverage_area_name":e.get("name") or name,
+              "identifier_scheme":"ONS_WARD_CODE",
+              "source_resolution":"PLANNING_DATA_ONS_WARD_AUTHORITATIVE_GEOMETRY",
+              "time_window":"CURRENT_AUTHORITATIVE_WARD_SNAPSHOT",
               "measurement_date":data_date,
-              "measurement_date_basis":"HTTP Last-Modified header when supplied; otherwise UTC snapshot access date",
-              "measurement_method":"official data.police.uk neighbourhood boundary endpoint polygon",
+              "measurement_date_basis":"Planning Data entry-date/start-date, then HTTP Last-Modified/access fallback",
+              "measurement_method":"Planning Data exact ward reference authoritative geometry",
               "spatial_binding_method":"DEFERRED_TO_LOCAL_OPENCODE",
               "source_url":url,
               "final_url":final_url,
@@ -137,11 +159,15 @@ try:
                 "record_index":idx,
                 "prior_exact_identifier_commit":PRIOR_COMMIT,
                 "prior_exact_identifier_id":nid,
-                "boundary_point_count":len(obj),
-                "boundary_response_sha256":sha(body),
-                "http_status":status,
-                "content_type":ctype,
-                "last_modified":last_modified
+                "planning_data_entity":e.get("entity"),
+                "planning_data_reference":e.get("reference"),
+                "planning_data_name":e.get("name"),
+                "planning_data_quality":e.get("quality"),
+                "planning_data_entry_date":e.get("entry-date"),
+                "planning_data_start_date":e.get("start-date"),
+                "planning_data_end_date":e.get("end-date"),
+                "planning_data_organisation_curie":e.get("organisation-curie"),
+                "response_sha256":sha(body)
               },
               "confidence_score_0_100":100,
               "evidence_grade":"A",
@@ -150,16 +176,18 @@ try:
               "source_window_id":SOURCE_WINDOW,
               "cursor":f"{SOURCE_WINDOW}:record={idx}"
             }
-            features.append({"type":"Feature","id":f"{FORCE_ID}:{nid}","geometry":{"type":"Polygon","coordinates":[ring]},"properties":props})
+            features.append({"type":"Feature","id":f"ward:{nid}","geometry":geom,"properties":props})
             requests.append(ev)
         except Exception as ex:
             ev["error"]=str(ex)
-            unmatched.append({**ev,"reason":"BOUNDARY_FETCH_OR_PARSE_FAILED"})
+            unmatched.append({**ev,"reason":"PLANNING_DATA_WARD_FETCH_OR_PARSE_FAILED"})
             requests.append(ev)
     base.update(
       status="SOURCE_WINDOW_COMPLETE" if features else "BLOCKED",
-      source_url_template=f"{API_ROOT}/{FORCE_ID}/<neighbourhood_id>/boundary",
+      source_url_template=API+"?dataset=ward&reference=<ward_id>&quality=authoritative",
       public_no_login=True,
+      publisher="Planning Data / Ministry of Housing, Communities and Local Government",
+      provider="Office for National Statistics",
       licence="Open Government Licence v3.0",
       source_records_processed_count=len(targets),
       new_source_records=len(features),
@@ -174,13 +202,20 @@ try:
       cursor=f"{SOURCE_WINDOW}:record={len(targets)}",
       semantic_precheck_passed=(len(features)>0 and len(targets)<=50),
       delivery_blocked=None if features else "SOURCE_FETCH_OR_PARSE_FAILED",
-      prior_exact_identifier_window={
+      prior_exact_identifier_package={
         "commit_sha":PRIOR_COMMIT,
-        "source_window_id":prior.get("source_window_id"),
+        "path":PRIOR_PATH,
         "record_count":len(targets),
-        "reopened_remote_url":False
+        "remote_source_reopened":False
+      },
+      prior_boundary_push_race_recovery={
+        "commit_sha":"f910b0dfaa9b6c8d88584d52ccaaba3202e4d3f3",
+        "source_window_id":"data_police_metropolitan_neighbourhood_boundary_first50_sps5_20260930_v1",
+        "same_source_requery":False
       }
     )
+    if len(unmatched)>0:
+        base["first_missing_criterion"]="REMAINING_UNMATCHED_BOUNDARY_IDENTIFIERS_REQUIRE_UNUSED_OFFICIAL_SOURCE_WINDOW"
 except Exception as ex:
     base.update(
       status="BLOCKED",
@@ -193,7 +228,8 @@ except Exception as ex:
       records_geojson={"type":"FeatureCollection","features":[]},
       error=str(ex),
       semantic_precheck_passed=False,
-      delivery_blocked="PRIOR_READBACK_OR_SOURCE_FETCH_FAILED"
+      delivery_blocked="PRIOR_READBACK_OR_SOURCE_FETCH_FAILED",
+      first_missing_criterion="OFFICIAL_BOUNDARY_POLYGON_PAYLOAD_VIA_UNUSED_WINDOW_REQUIRED"
     )
 save(base)
 print("STATUS="+base.get("status",""))
