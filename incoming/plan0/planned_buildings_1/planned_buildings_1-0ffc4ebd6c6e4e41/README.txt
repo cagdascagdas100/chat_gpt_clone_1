@@ -1,2 +1,16 @@
-TEXT_BUNDLE_V1
-No accepted planned-building record in this window; official application evidence lacks exact machine-readable Polygon/MultiPolygon geometry for each distinct proposed/uncompleted building.
+slot_id=planned_buildings_1
+lineage_id=planned_buildings_1-0ffc4ebd6c6e4e41
+partition=plan0
+schema=PLAN0_CHATGPT_V4
+semantic_mode=DISTINCT_BUILDINGS
+source_authority=Wigan Metropolitan Borough Council
+new_source_records=25
+accepted_count=0
+rejected_count=23
+unmatched_count=2
+duplicate_count=0
+planned_building_count=0
+progress_increment=false
+delivery_mode=TEXT_BUNDLE_V1
+zip_available=true
+first_missing_criterion=official distinct proposed-building footprint geometry (Polygon/MultiPolygon) or exact building-level geometry identifier for the two source-evidenced distinct-building candidates; Wigan GIS window exposes application/site boundaries, not proposed-building footprints
