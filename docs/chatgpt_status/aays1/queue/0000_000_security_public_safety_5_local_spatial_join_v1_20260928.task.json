@@ -1,18 +1,18 @@
 {
-  "schema_version": 13,
+  "schema_version": 14,
   "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
-  "task_version": "13.0-planning-data-entity-json-exact-reference-authoritative",
-  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260930-010",
-  "idempotency_key": "sps5-planning-data-entity-json-exact-reference-authoritative-9-v1",
+  "task_version": "14.0-mps-lsoa-sep2024-aug2026-source-area-first50",
+  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260930-011",
+  "idempotency_key": "sps5-mps-lsoa-sep2024-aug2026-first50-source-area-v1",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_5",
   "owner": null,
   "lineage_id": "86b5e932de484ad26133fa8c",
   "page_generation": 1,
-  "status": "done",
+  "status": "pending",
   "priority": -500,
-  "created_at": "2026-09-30T00:40:00Z",
+  "created_at": "2026-09-30T18:47:00Z",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
   "target_branch": "main",
   "parcel_partition": {
@@ -20,41 +20,44 @@
     "end": 76903,
     "count": 15380
   },
-  "max_source_records": 9,
+  "max_source_records": 50,
+  "semantic_mode": "AREA_JOIN",
+  "category": "AAYS_SOURCE_AREA_V1",
   "script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.ps1",
   "automation_script": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.ps1",
   "python_script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.py",
-  "expected_output": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_local_spatial_join_latest.json",
-  "canonical_source": {
-    "historical_branch": "codex/aays-single-runner-v5-20260706",
-    "repo_path": "england_map_web/data/parcel_security_scores_rechecked_0_120m_spatial.geojson",
-    "required_git_blob_sha": "bb48164e7a0af78df875f30421a6a3068c43edb8",
-    "feature_count": 92283,
-    "feature_count_scope_claim": "NOT_ASSERTED_AS_ALL_ENGLAND_TOTAL",
-    "fail_closed": true
+  "expected_output": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_source_area_latest.json",
+  "prior_physical_package": {
+    "commit_sha": "b2fd12eb9d50237766bf3a00fa805578cab82455",
+    "exact_path": "incoming/layer24/security_public_safety_5/86b5e932de484ad26133fa8c/planning_data_title_boundary_exact_reference_authoritative_61675_61690_20260930T004158Z",
+    "verified_sha256_sidecars": true
   },
-  "prior_verified_evidence": {
-    "runner_output_blob_sha": "0f7053992b3d3f2bcd6f4783f332535577c610dc",
-    "target_count": 9,
-    "reopen_source": false,
-    "readback_only": true
+  "prior_source_area": {
+    "commit_sha": "eb916767b7b22e6706d2fe34c1005729a4142db6",
+    "source_window_id": "planning_data_barnet_ward_polygons_20260927",
+    "source_area_count": 3,
+    "reopen_source": false
   },
   "new_official_source_window": {
-    "publisher": "Planning Data / Ministry of Housing, Communities and Local Government",
-    "provider": "HM Land Registry",
-    "source_window_id": "planning_data_title_boundary_entity_json_exact_reference_authoritative_sps5_9_v1",
-    "dataset": "title-boundary",
-    "endpoint": "https://www.planning.data.gov.uk/entity.json",
-    "method": "exact HMLR reference + quality=authoritative + local canonical point-in-polygon validation",
+    "publisher": "Metropolitan Police Service / London Datastore",
+    "dataset": "MPS Recorded Crime: Geographic Breakdown",
+    "resource_name": "MPS LSOA Level Crime.csv",
+    "resource_version": "Sep 2024 – Aug 2026",
+    "metadata_url": "https://data.london.gov.uk/dataset/mps-recorded-crime-geographic-breakdown-exy3m",
+    "source_window_id": "mps_lsoa_crime_sep2024_aug2026_first50_sps5_v1",
     "public_no_login": true,
-    "target_count": 9
+    "process_first_csv_records": 50,
+    "parcel_spatial_join": false,
+    "local_opencode_materialization_required": true
   },
   "acceptance_checks": [
-    "Use only the nine prior verified security field-evidence targets from Git blob 0f7053992b3d3f2bcd6f4783f332535577c610dc",
-    "Query one unused official Planning Data entity.json exact-reference window; do not reopen MPS source",
-    "Require exactly one exact reference, quality=authoritative Polygon/MultiPolygon for each target",
-    "Require local canonical point-in-polygon pass against historical canonical point source with exact Git blob bb48164e7a0af78df875f30421a6a3068c43edb8",
-    "Fail closed if any target is invalid; no partial incoming package"
+    "Discover actual current non-historical MPS LSOA CSV download URL from official London Datastore metadata; metadata page is not accepted as data.",
+    "Actual source file must be public no-login and correspond to Sep 2024 – Aug 2026 MPS LSOA Level Crime.csv.",
+    "Process at most the first 50 CSV data rows.",
+    "Count unique valid ONS LSOA identifiers as source_area_count only; accepted_count and parcel progress remain zero.",
+    "Do not perform canonical parcel spatial join or materialization; defer to local OpenCode.",
+    "Record source URL, final URL, UTC access, data date, licence, file SHA-256, field evidence, evidence slice SHA at packaging, confidence and grade.",
+    "Fail closed on discovery/parser failure."
   ],
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
@@ -65,20 +68,7 @@
   "no_migration": true,
   "no_production_deploy": true,
   "fake_data": false,
-  "first_missing_criterion": "CANONICAL_PARCEL_POLYGON_AND_ID_REQUIRED",
-  "delivery_target_template": "incoming/layer24/security_public_safety_5/86b5e932de484ad26133fa8c/<BATCH_ID>/",
-  "counters_required": [
-    "source_area_count",
-    "accepted_count",
-    "materialized_parcel_count",
-    "direct_parcel_count",
-    "verified_no_building_count",
-    "unprocessed_count",
-    "planned_building_count"
-  ],
   "no_source_window_repeat": true,
-  "picked_at": "2026-09-30T00:41:57.4210379+00:00",
-  "completed_at": "2026-09-30T00:42:02.5033476+00:00",
-  "runner_status": "GITHUB_ACTIONS_DONE",
-  "automation_exit_code": 0
+  "first_missing_criterion": "LOCAL_OPENCODE_SPATIAL_JOIN_AND_MATERIALIZATION_REQUIRED",
+  "delivery_target_template": "incoming/source_area/security_public_safety_5/86b5e932de484ad26133fa8c/<BATCH_ID>/"
 }
