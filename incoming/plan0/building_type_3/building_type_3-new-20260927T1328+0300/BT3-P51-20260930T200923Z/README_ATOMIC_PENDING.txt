@@ -1,1 +1,0 @@
-P51 atomic package staging marker. This file will be superseded by the atomic Git tree commit; do not treat as delivery receipt.
