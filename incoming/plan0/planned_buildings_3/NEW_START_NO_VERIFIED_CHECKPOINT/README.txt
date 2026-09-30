@@ -1,1 +1,1 @@
-planned_buildings_3 continuation. Official Cherwell window 26/02220/F processed; no parcel accepted because canonical parcel identity plus machine-extractable proposed/incomplete-building polygon binding was not established.
+planned_buildings_3 continuation; official Cherwell 26/00086/F processed. No parcel accepted because canonical parcel identity plus machine-extractable distinct proposed/incomplete-building Polygon/MultiPolygon binding was not established.
