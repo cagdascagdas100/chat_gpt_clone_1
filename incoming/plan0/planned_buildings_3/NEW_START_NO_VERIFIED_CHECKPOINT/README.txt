@@ -1,2 +1,1 @@
-TEXT_BUNDLE_V1
-No accepted parcel/building records. Candidate rejected before acceptance under required canonical identity + polygon spatial-binding rules.
+planned_buildings_3 continuation. Official Cherwell window 26/02220/F processed; no parcel accepted because canonical parcel identity plus machine-extractable proposed/incomplete-building polygon binding was not established.
