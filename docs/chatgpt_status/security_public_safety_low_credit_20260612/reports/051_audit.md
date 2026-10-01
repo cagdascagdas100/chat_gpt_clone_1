@@ -1,9 +1,0 @@
-cycle=050
-status=blocked
-queue=050
-control=050
-script=050
-runner_tasks=049
-reports_050=missing
-powershell_required=false
-separate_runner_required=false
