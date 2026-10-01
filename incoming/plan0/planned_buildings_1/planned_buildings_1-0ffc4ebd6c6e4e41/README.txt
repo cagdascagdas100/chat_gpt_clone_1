@@ -10,4 +10,4 @@ rejected_count=0
 unmatched_count=1
 planned_building_count=0
 progress_increment=false
-first_missing_criterion=record-level georeferenced Polygon/MultiPolygon footprint for a distinct proposed building from the City of London Tall Buildings official WFS window; the official dataset states polygons are determined by building footprint or site boundary for proposed buildings, but the current connector cannot retrieve the WFS GetFeature payload, so no geometry was inferred.
+first_missing_criterion=record-level distinct proposed/incomplete building footprint; the official City of London Development Pipeline - Current source is site-level development-pipeline data and exposes X/Y plus application/proposal attributes, but does not provide a building-level footprint or distinct building geometry in the accessible metadata window, so no building was counted.
