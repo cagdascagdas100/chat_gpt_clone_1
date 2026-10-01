@@ -1,1 +1,0 @@
-window.AAYS_SF2_9_LONG_PARTS=window.AAYS_SF2_9_LONG_PARTS||[];window.AAYS_SF2_9_LONG_PARTS[7]='<p>Zusammenfassung.</p>';if(window.AAYS_SF2_9_BUILD)window.AAYS_SF2_9_BUILD();
