@@ -10,4 +10,4 @@ rejected_count=0
 unmatched_count=1
 planned_building_count=0
 progress_increment=false
-first_missing_criterion=record-level georeferenced Polygon/MultiPolygon footprint for distinct proposed buildings in Basildon application 25/00897/FULL; the official planning register exposes a dedicated PROPOSED BUILDING FOOTPRINTS PLAN and building-specific floor plans, but the current public web window does not expose the underlying drawing binary/vector coordinates, so no footprint geometry was inferred.
+first_missing_criterion=record-level georeferenced Polygon/MultiPolygon footprint for a distinct proposed building from the City of London Tall Buildings official WFS window; the official dataset states polygons are determined by building footprint or site boundary for proposed buildings, but the current connector cannot retrieve the WFS GetFeature payload, so no geometry was inferred.
