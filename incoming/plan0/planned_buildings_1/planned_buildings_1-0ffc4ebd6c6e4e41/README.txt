@@ -10,4 +10,4 @@ rejected_count=0
 unmatched_count=1
 planned_building_count=0
 progress_increment=false
-first_missing_criterion=record-level georeferenced Polygon/MultiPolygon footprint for a distinct proposed building from the GLA Former Stag Brewery public consultation file set; the official corpus exposes building-specific proposed floor plans and block-footprint parameter-plan files, but the current web transport did not return the PDF binary/vector payload, so no footprint coordinates were safely extracted.
+first_missing_criterion=record-level georeferenced Polygon/MultiPolygon footprint for distinct proposed buildings in Basildon application 25/00897/FULL; the official planning register exposes a dedicated PROPOSED BUILDING FOOTPRINTS PLAN and building-specific floor plans, but the current public web window does not expose the underlying drawing binary/vector coordinates, so no footprint geometry was inferred.
