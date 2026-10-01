@@ -1,18 +1,18 @@
 {
-  "schema_version": 17,
+  "schema_version": 18,
   "task_id": "security-public-safety-5-local-spatial-join-v1-20260928",
-  "task_version": "17.0-planning-data-ward-exact-reference-recovery-first50",
-  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20260930-014",
-  "idempotency_key": "sps5-planning-data-ward-exact-reference-first50-recovery-20260930-v1",
+  "task_version": "18.0-data-police-neighbourhood-detail-remaining3",
+  "attempt_id": "security-public-safety-5-86b5e932de484ad26133fa8c-20261001-015",
+  "idempotency_key": "sps5-data-police-neighbourhood-detail-remaining3-20261001-v1",
   "page_key": "aays1",
   "layer_page_key": "security_public_safety",
   "slot_id": "security_public_safety_5",
   "owner": null,
   "lineage_id": "86b5e932de484ad26133fa8c",
   "page_generation": 1,
-  "status": "done",
+  "status": "pending",
   "priority": -500,
-  "created_at": "2026-09-30T20:03:00Z",
+  "created_at": "2026-10-01T01:25:00Z",
   "repo_full_name": "cagdascagdas100/chat_gpt_clone_1",
   "target_branch": "main",
   "parcel_partition": {
@@ -20,7 +20,7 @@
     "end": 76903,
     "count": 15380
   },
-  "max_source_records": 50,
+  "max_source_records": 3,
   "semantic_mode": "AREA_JOIN",
   "category": "AAYS_SOURCE_AREA_V1",
   "script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.ps1",
@@ -28,36 +28,30 @@
   "python_script_path": "docs/chatgpt_status/security_public_safety/automation/security_public_safety_5_local_spatial_join_v1.py",
   "expected_output": "docs/chatgpt_status/security_public_safety/runner_outputs/security_public_safety_5_source_area_latest.json",
   "prior_physical_package": {
-    "commit_sha": "f910b0dfaa9b6c8d88584d52ccaaba3202e4d3f3",
-    "exact_path": "incoming/source_area/security_public_safety_5/86b5e932de484ad26133fa8c/data_police_metropolitan_boundary_first50_push_race_recovery_20260930T192853Z",
+    "commit_sha": "7769cddb9467e3e24b990d99057b651dff69db9f",
+    "exact_path": "incoming/source_area/security_public_safety_5/86b5e932de484ad26133fa8c/planning_data_ward_exact_reference_recovery_first50_20260930T200626Z",
     "verified_sha256_sidecars": true,
-    "source_area_count": 0,
-    "unmatched_count": 50
-  },
-  "prior_exact_identifier_package": {
-    "commit_sha": "d5abe8c15ce772b331648ef372877ab78cd38ffa",
-    "exact_path": "incoming/source_area/security_public_safety_5/86b5e932de484ad26133fa8c/data_police_metropolitan_neighbourhoods_first50_20260930T185929Z",
-    "record_count": 50,
-    "remote_source_reopen": false
+    "unmatched_ids": [
+      "E05009375N",
+      "E05009377N",
+      "E05009390N"
+    ]
   },
   "new_official_source_window": {
-    "publisher": "Planning Data / Ministry of Housing, Communities and Local Government",
-    "provider": "Office for National Statistics",
-    "dataset": "ward",
-    "source_window_id": "planning_data_ward_exact_reference_first50_recovery_sps5_20260930_v1",
-    "endpoint": "https://www.planning.data.gov.uk/entity.json",
-    "method": "exact ward reference + quality=authoritative geometry over prior verified 50 identifiers",
+    "publisher": "Single Online Home National Digital Team / police forces via data.police.uk",
+    "source_window_id": "data_police_metropolitan_neighbourhood_detail_remaining3_sps5_20261001_v1",
+    "endpoint_template": "https://data.police.uk/api/metropolitan/<neighbourhood_id>",
+    "method": "specific neighbourhood exact identifier detail",
     "public_no_login": true,
-    "target_count": 50
+    "target_count": 3
   },
   "acceptance_checks": [
-    "Do not requery data.police neighbourhood list or boundary URLs.",
-    "Read the 50 target identifiers only from the verified source-area package commit d5abe8c15ce772b331648ef372877ab78cd38ffa.",
-    "Process at most 50 exact reference queries against Planning Data ward dataset.",
-    "Require exactly one authoritative Polygon/MultiPolygon geometry for a successful source-area record.",
-    "Count successful geometries as source_area_count only; accepted_count and parcel progress remain zero.",
-    "Keep unmatched exact identifiers separate and fail closed for those records.",
-    "Defer canonical parcel spatial join and materialization to local OpenCode."
+    "Do not requery prior list or boundary endpoints.",
+    "Read exactly the three unmatched identifiers from verified commit 7769cddb9467e3e24b990d99057b651dff69db9f.",
+    "Require HTTP 200 object and returned id exactly equal to requested neighbourhood id.",
+    "Count each exact official identifier detail record as source_area_count only; accepted_count and parcel progress remain zero.",
+    "Defer canonical parcel spatial join/materialization to local OpenCode.",
+    "Record URL, final URL, UTC access, data date basis, OGL v3.0, response SHA-256, field evidence, confidence, evidence grade and fake_data=false."
   ],
   "single_shared_runner_required": true,
   "new_runner_allowed": false,
@@ -70,9 +64,5 @@
   "fake_data": false,
   "no_source_window_repeat": true,
   "first_missing_criterion": "LOCAL_OPENCODE_SPATIAL_JOIN_AND_MATERIALIZATION_REQUIRED",
-  "delivery_target_template": "incoming/source_area/security_public_safety_5/86b5e932de484ad26133fa8c/<BATCH_ID>/",
-  "picked_at": "2026-09-30T20:06:26.7522793+00:00",
-  "completed_at": "2026-09-30T20:06:41.2693743+00:00",
-  "runner_status": "GITHUB_ACTIONS_DONE",
-  "automation_exit_code": 0
+  "delivery_target_template": "incoming/source_area/security_public_safety_5/86b5e932de484ad26133fa8c/<BATCH_ID>/"
 }
