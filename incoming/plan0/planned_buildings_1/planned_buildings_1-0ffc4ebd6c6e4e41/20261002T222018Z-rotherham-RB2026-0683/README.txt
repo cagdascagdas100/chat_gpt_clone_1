@@ -1,0 +1,13 @@
+slot_id=planned_buildings_1
+lineage_id=planned_buildings_1-0ffc4ebd6c6e4e41
+partition=plan0
+semantic_mode=DISTINCT_BUILDINGS
+source_area_count=0
+new_source_records=1
+accepted_count=1
+duplicate_count=0
+rejected_count=0
+unmatched_count=0
+planned_building_count=1
+progress_increment=true
+first_missing_criterion=none for distinct planned-building semantic; official Registered/Valid application explicitly states demolition of the existing bungalow and detached garage and construction of one detached self-build bungalow and the official page states no decision; exactly one new detached self-build bungalow is counted as a planned building; demolished existing structures are not counted as new; geometry null, no point or footprint inferred
