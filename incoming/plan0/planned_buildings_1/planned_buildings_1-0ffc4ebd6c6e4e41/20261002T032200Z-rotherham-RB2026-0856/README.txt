@@ -1,0 +1,13 @@
+slot_id=planned_buildings_1
+lineage_id=planned_buildings_1-0ffc4ebd6c6e4e41
+partition=plan0
+semantic_mode=DISTINCT_BUILDINGS
+source_area_count=0
+new_source_records=1
+accepted_count=1
+duplicate_count=0
+rejected_count=0
+unmatched_count=0
+planned_building_count=1
+progress_increment=true
+first_missing_criterion=none for distinct planned-building semantic; official Registered/Valid application explicitly states demolition of the existing building and erection of one new Mosque and the official page states no decision; only the new Mosque is counted as a planned building; the demolished existing building is not counted as new; geometry null, no point or footprint inferred
