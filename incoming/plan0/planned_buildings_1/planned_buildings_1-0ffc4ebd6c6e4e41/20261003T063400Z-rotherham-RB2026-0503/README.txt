@@ -1,0 +1,13 @@
+slot_id=planned_buildings_1
+lineage_id=planned_buildings_1-0ffc4ebd6c6e4e41
+partition=plan0
+semantic_mode=DISTINCT_BUILDINGS
+source_area_count=0
+new_source_records=1
+accepted_count=2
+duplicate_count=0
+rejected_count=0
+unmatched_count=0
+planned_building_count=2
+progress_increment=true
+first_missing_criterion=none for distinct planned-building semantic; official current-applications listing explicitly states conversion of buildings to form 6 dwellings, demolition of buildings to north and erection of 2 residential dwellings, and the current official listing leaves Decision Sent Date and Decision Date blank; exactly 2 new residential dwellings are counted as planned buildings; dwellings created by conversion remain within existing buildings and are not counted as new buildings; demolished buildings and access/driveway works are not counted as new; geometry null, no point or footprint inferred
