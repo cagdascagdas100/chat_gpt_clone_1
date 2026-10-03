@@ -1,0 +1,13 @@
+slot_id=planned_buildings_1
+lineage_id=planned_buildings_1-0ffc4ebd6c6e4e41
+partition=plan0
+semantic_mode=DISTINCT_BUILDINGS
+source_area_count=0
+new_source_records=1
+accepted_count=2
+duplicate_count=0
+rejected_count=0
+unmatched_count=0
+planned_building_count=2
+progress_increment=true
+first_missing_criterion=none for distinct planned-building semantic; official Registered/Valid Listed Building Consent application explicitly states erection of 2 residential dwellings and the current official page states no decision; exactly two newly erected residential dwellings are counted as planned buildings; six dwellings formed by conversion of existing buildings and buildings described for demolition are not counted as new; geometry null, no point or footprint inferred
