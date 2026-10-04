@@ -1,0 +1,13 @@
+slot_id=planned_buildings_1
+lineage_id=planned_buildings_1-0ffc4ebd6c6e4e41
+partition=plan0
+semantic_mode=DISTINCT_BUILDINGS
+source_area_count=0
+new_source_records=1
+accepted_count=25
+duplicate_count=0
+rejected_count=0
+unmatched_count=0
+planned_building_count=25
+progress_increment=true
+first_missing_criterion=none for distinct planned-building semantic; official Valid Full Application remains at Committee Meeting with decision Pending and explicitly proposes erection of 25 dwellings; exactly 25 distinct proposed dwellings are counted; associated infrastructure is not counted as separate buildings; geometry null, no point or footprint inferred
