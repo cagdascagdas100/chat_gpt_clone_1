@@ -1,0 +1,13 @@
+slot_id=planned_buildings_1
+lineage_id=planned_buildings_1-0ffc4ebd6c6e4e41
+partition=plan0
+semantic_mode=DISTINCT_BUILDINGS
+source_area_count=0
+new_source_records=1
+accepted_count=5
+duplicate_count=0
+rejected_count=0
+unmatched_count=0
+planned_building_count=5
+progress_increment=true
+first_missing_criterion=none for distinct planned-building semantic; official Valid Outline Application remains under Officer Consideration with decision Pending and explicitly proposes a residential development of five dwellings; exactly five distinct proposed dwellings are counted; all matters reserved and no associated non-building works are counted as separate buildings; geometry null, no point or footprint inferred
