@@ -1,0 +1,13 @@
+slot_id=planned_buildings_1
+lineage_id=planned_buildings_1-0ffc4ebd6c6e4e41
+partition=plan0
+semantic_mode=DISTINCT_BUILDINGS
+source_area_count=0
+new_source_records=1
+accepted_count=2
+duplicate_count=0
+rejected_count=0
+unmatched_count=0
+planned_building_count=2
+progress_increment=true
+first_missing_criterion=none for distinct planned-building semantic; official Valid Full Application explicitly states erection of two self-build homes and the official register shows status Officer Consideration with decision Pending; the official document list separately identifies Plot 01 and Plot 02; exactly two new self-build homes are counted; associated parking, infrastructure and landscaping are not counted as buildings; geometry null, no point or footprint inferred
