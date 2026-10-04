@@ -1,0 +1,13 @@
+slot_id=planned_buildings_1
+lineage_id=planned_buildings_1-0ffc4ebd6c6e4e41
+partition=plan0
+semantic_mode=DISTINCT_BUILDINGS
+source_area_count=0
+new_source_records=1
+accepted_count=1
+duplicate_count=0
+rejected_count=0
+unmatched_count=0
+planned_building_count=1
+progress_increment=true
+first_missing_criterion=none for distinct planned-building semantic; official Valid Full Application explicitly states demolition of the existing detached dwelling with garage and erection of one detached self-build dwelling with garage, with status Officer Consideration and decision Pending; exactly one replacement detached self-build dwelling is counted as new; the existing dwelling and garage to be demolished are not counted as new, and the proposal does not establish the garage as a separate new building; geometry null, no point or footprint inferred
