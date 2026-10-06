@@ -1,0 +1,13 @@
+slot_id=planned_buildings_1
+lineage_id=planned_buildings_1-0ffc4ebd6c6e4e41
+partition=plan0
+semantic_mode=DISTINCT_BUILDINGS
+source_area_count=0
+new_source_records=1
+accepted_count=466
+duplicate_count=0
+rejected_count=2
+unmatched_count=0
+planned_building_count=466
+progress_increment=true
+first_missing_criterion=none for distinct planned-building semantic; official public no-login application RB2026/1230 explicitly identifies erection of one detached bungalow; current application index reports awaiting decision; exactly one planned bungalow is counted; geometry null, no point or footprint inferred
