@@ -1,0 +1,20 @@
+name: verify-sps1-a4ee-sidecars
+on:
+  push:
+    branches:
+      - verify/sps1-a4ee5b45-sidecars
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify exact batch sidecars
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd incoming/source_area/security_public_safety_1/null/20261002T154100Z-nhs-england-london-icbs
+          for f in checkpoint.json evidence_manifest.json receipt.json records.geojson source_evidence.json source_ledger.jsonl source_response.json unmatched.jsonl; do
+            sha256sum -c "$f.sha256"
+          done
