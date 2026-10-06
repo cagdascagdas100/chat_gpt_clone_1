@@ -1,0 +1,13 @@
+slot_id=planned_buildings_1
+lineage_id=planned_buildings_1-0ffc4ebd6c6e4e41
+partition=plan0
+semantic_mode=DISTINCT_BUILDINGS
+source_area_count=0
+new_source_records=1
+accepted_count=274
+duplicate_count=0
+rejected_count=2
+unmatched_count=0
+planned_building_count=274
+progress_increment=true
+first_missing_criterion=none for distinct planned-building semantic; official public no-login application RB2025/0136 explicitly states outline application for the erection of 2 detached dwelling houses and the official page states no decision; exactly two distinct planned dwelling houses are counted; geometry null, no point or footprint inferred
