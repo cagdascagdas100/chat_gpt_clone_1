@@ -1,0 +1,13 @@
+slot_id=planned_buildings_1
+lineage_id=planned_buildings_1-0ffc4ebd6c6e4e41
+partition=plan0
+semantic_mode=DISTINCT_BUILDINGS
+source_area_count=0
+new_source_records=1
+accepted_count=3
+duplicate_count=0
+rejected_count=0
+unmatched_count=0
+planned_building_count=3
+progress_increment=true
+first_missing_criterion=none for distinct planned-building semantic; official Granted Conditionally decision explicitly permits three dwellinghouses; permission dated 09/04/2026 requires commencement within three years; exactly three new dwellings are counted; geometry null, no point or footprint inferred
