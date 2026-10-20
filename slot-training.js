@@ -5,14 +5,14 @@ const SLOTS=/\[[^\]]*\]/gu;
 const isSlot=s=>/^\[[^\]]*\]$/u.test(s);
 const splitParts=s=>{
   const parts=[];let at=0;
-  for(const m of s.matchAll(SLOTS)){
+  for(const m of s.matchAll(/\[[^\]]*\][,.;:!?]?/gu)){
     if(m.index>at)parts.push({type:"text",value:s.slice(at,m.index)});
     parts.push({type:"slot",value:m[0]});at=m.index+m[0].length;
   }
   if(at<s.length)parts.push({type:"text",value:s.slice(at)});
   return parts;
 };
-const plain=s=>normalize(s.replace(SLOTS," "));
+const plain=s=>normalize(s.replace(/\[[^\]]*\][,.;:!?]?/gu," "));
 const slots=s=>[...s.matchAll(SLOTS)].map(m=>m[0]);
 const hintHtml=s=>{
   const hints=slots(s);
