@@ -50,64 +50,93 @@ halves=function(str){
 writingUI=function(box,{showCue=true,initialHint=false,listening=false}={}){
   currentHeader(box);
   const target=PATTERNS[current].text,parts=splitParts(target);
-  addHTML(box,'<p class="helper">Köşeli parantezlerdeki ifadeler <b>hazır verilmiştir</b>. Bu alanları yazmana gerek yok. Yalnızca boş metin bölümlerini orijinal Almanca ifadelerle doldur.</p>');
+  addHTML(box,'<p class="helper">Köşeli parantezli ifadeler <b>hazır verilmiştir</b>. Cümlenin içindeki noktalı boşluklara dokunarak yalnızca aradaki Almanca metni yaz.</p>');
   if(initialHint){
     const letters=parts.map(p=>p.type==="slot"?p.value:tokens(p.value).map(w=>w.charAt(0)+"·".repeat(Math.min(5,Math.max(0,w.length-1)))).join(" ")).join(" ");
-    addHTML(box,'<div class="chunk-label">Baş harf ipuçları (köşeli parantezler sabit)</div><div class="demo-board"><div class="first-letters">'+escapeHtml(letters)+'</div></div>');
+    addHTML(box,'<div class="chunk-label">Baş harf ipuçları</div><div class="demo-board"><div class="first-letters">'+escapeHtml(letters)+'</div></div>');
   }
   if(listening){
-    addHTML(box,'<p class="helper">Yalnızca ezberlemen gereken Almanca metin okunur. Hazır verilen köşeli parantezler seslendirilmez.</p><div class="speech-controls"><button class="btn" id="speakBtn">▶ Almanca dinlet</button><button class="btn ghost" id="stopBtn">■ Durdur</button><label for="speed">Hız</label><select id="speed"><option value="0.8">Yavaş (0.8×)</option><option value="1" selected>Normal (1×)</option><option value="1.15">Hızlı (1.15×)</option></select></div><p class="small-note" id="speechNote">Ses özelliği cihaz ve tarayıcıya göre değişebilir.</p>');
+    addHTML(box,'<p class="helper">Dinleme için yalnızca ezberlenmesi gereken Almanca sözcükler seslendirilir; köşeli parantezli ifadeler sabittir.</p><div class="speech-controls"><button class="btn" id="speakBtn">▶ Almanca dinlet</button><button class="btn ghost" id="stopBtn">■ Durdur</button><label for="speed">Hız</label><select id="speed"><option value="0.8">Yavaş (0.8×)</option><option value="1" selected>Normal (1×)</option><option value="1.15">Hızlı (1.15×)</option></select></div><p class="small-note" id="speechNote">Ses özelliği cihaz ve tarayıcıya göre değişebilir.</p>');
   }
-  addHTML(box,'<div class="field-label">Kalıbı tamamla — renkli alanlar hazır verilmiştir</div><div class="slot-composer" id="slotWriteArea"></div><div class="statusline"><div class="track"><div class="fill" id="typingFill"></div></div><span class="percent" id="typingPct">0%</span></div><div class="toolbar" id="writingActions"></div><div id="writingResult"></div>');
+  addHTML(box,'<div class="field-label">Cümlenin içindeki noktalı boşlukları doldur</div><div class="sentence-fill" id="slotWriteArea" aria-label="Almanca kalıbı cümle içinde tamamla"></div><div class="statusline"><div class="track"><div class="fill" id="typingFill"></div></div><span class="percent" id="typingPct">0%</span></div><div class="toolbar" id="writingActions"></div><div id="writingResult"></div>');
   const wrap=$('#slotWriteArea'),entries=[];let nth=0;
-  parts.forEach(p=>{
-    if(p.type==="slot"){wrap.append(el("span","locked-slot",p.value));return}
-    if(!p.value.trim())return;
-    const section=el("label","slot-write-section");
-    const heading=el("span","slot-write-label",String(++nth)+". Almanca bölüm");
-    const input=el("textarea","slot-answer");
-    input.rows=p.value.length>110?4:p.value.length>60?3:2;
-    input.setAttribute("aria-label",nth+". Almanca bölüm");
+  parts.forEach(part=>{
+    if(part.type==="slot"){
+      const fixed=el("span","locked-slot-inline",part.value);
+      fixed.setAttribute("aria-label","Hazır verilmiş ifade: "+part.value);
+      wrap.append(fixed);
+      return;
+    }
+    if(!part.value.trim()){
+      wrap.append(document.createTextNode(part.value));
+      return;
+    }
+    const input=el("span","inline-write");
+    input.setAttribute("contenteditable","true");
+    input.setAttribute("role","textbox");
+    input.setAttribute("aria-multiline","false");
+    input.setAttribute("aria-label",(++nth)+". Almanca metin bölümü");
+    input.setAttribute("data-hint","…………");
     input.setAttribute("spellcheck","false");
+    input.setAttribute("autocorrect","off");
     input.setAttribute("autocapitalize","off");
-    input.setAttribute("autocomplete","off");
-    input.placeholder="Bu bölümü ezberden yaz…";
-    section.append(heading,input);wrap.append(section);entries.push({part:p.value,input});
+    input.setAttribute("tabindex","0");
+    input.dataset.expected=part.value;
+    input.addEventListener("keydown",e=>{
+      if(e.key==="Enter"){e.preventDefault();const next=entries[entries.findIndex(v=>v.input===input)+1];if(next)next.input.focus();else document.getElementById("writingActions")?.querySelector("button")?.focus();}
+    });
+    input.addEventListener("paste",e=>{
+      e.preventDefault();
+      const txt=(e.clipboardData?.getData("text/plain")||"").replace(/[\r\n]+/gu," ");
+      const selection=window.getSelection();
+      if(selection?.rangeCount){
+        const range=selection.getRangeAt(0);
+        if(input.contains(range.commonAncestorContainer)){
+          range.deleteContents();const node=document.createTextNode(txt);range.insertNode(node);
+          range.setStartAfter(node);range.collapse(true);selection.removeAllRanges();selection.addRange(range);
+        }else input.textContent+=txt;
+      }else input.textContent+=txt;
+      input.dispatchEvent(new Event("input",{bubbles:true}));
+    });
+    input.addEventListener("input",progress);
+    wrap.append(input);
+    entries.push({part:part.value,input});
   });
   function progress(){
-    const total=entries.reduce((n,x)=>n+normalize(x.part).length,0);
-    const score=entries.reduce((n,x)=>n+textProgress(x.input.value,x.part)*normalize(x.part).length/100,0);
-    const pc=total?Math.min(100,Math.round(score/total*100)):100;
+    const total=entries.reduce((n,e)=>n+normalize(e.part).length,0);
+    const same=entries.reduce((n,e)=>n+textProgress(e.input.textContent,e.part)*normalize(e.part).length/100,0);
+    const pc=total?Math.min(100,Math.round(same/total*100)):100;
     $('#typingFill').style.width=pc+"%";$('#typingPct').textContent=pc+"%";
   }
-  entries.forEach(({input})=>input.addEventListener("input",progress));
   const actions=$('#writingActions');
-  const givenInputs=()=>entries.map(e=>e.input.value);
-  const isCorrect=()=>entries.every(e=>normalize(e.input.value)===normalize(e.part));
   function comparePanel(){
-    const assembled=(()=>{let n=0;return parts.map(p=>p.type==="slot"?p.value:!p.value.trim()?p.value:(entries[n++]?.input.value||"")).join("")})();
+    let at=0;
+    const assembled=parts.map(p=>p.type==="slot"?p.value:!p.value.trim()?p.value:(entries[at++]?.input.textContent||"")).join("");
     $('#writingResult').innerHTML='<div class="compare"><strong>ORİJİNAL KALIP — REFERANS</strong><p>'+formatted(target)+'</p><hr class="sep"><strong>SENİN CEVABIN (hazır alanlar otomatik eklendi)</strong><p class="muted">'+formatted(assembled)+'</p></div>';
   }
   actButton(actions,"Cevapları kontrol et",()=>{
-    const good=isCorrect();record(good);
-    entries.forEach(e=>e.input.classList.toggle("correct",normalize(e.input.value)===normalize(e.part)));
-    entries.forEach(e=>e.input.classList.toggle("wrong",normalize(e.input.value)!==normalize(e.part)));
-    feedback(good?"✓ Bütün yazılacak bölümler doğru. Köşeli parantezler puanlanmadı.":"Yalnızca Almanca bölümleri kontrol ettim. Yanlış bölümleri düzelt.",good?"good":"bad");
+    const good=entries.every(e=>normalize(e.input.textContent)===normalize(e.part));
+    record(good);
+    entries.forEach(e=>{
+      const right=normalize(e.input.textContent)===normalize(e.part);
+      e.input.classList.toggle("correct",right);
+      e.input.classList.toggle("wrong",!right);
+    });
+    feedback(good?"✓ Almanca cümle yapısının tamamı doğru! Köşeli parantezler değerlendirilmedi.":"Kırmızı işaretli bölümleri düzelt. Köşeli parantezleri yazmana gerek yok.",good?"good":"bad");
     if(!good)comparePanel();
   },"btn");
   actButton(actions,"Orijinali göster",comparePanel,"btn ghost");
   actButton(actions,"Tekrar başla",()=>{
-    entries.forEach(e=>{e.input.value="";e.input.classList.remove("correct","wrong")});
-    progress();$('#writingResult').replaceChildren();clearFeedback();
+    entries.forEach(e=>{e.input.textContent="";e.input.classList.remove("correct","wrong")});
+    progress();$('#writingResult').replaceChildren();clearFeedback();entries[0]?.input.focus();
   },"btn ghost");
   if(listening){
     $('#speakBtn').onclick=()=>{
       if(!("speechSynthesis" in window)){feedback("Tarayıcında sesli okuma özelliği yok.","bad");return}
       try{
-        speechSynthesis.cancel();
-        const u=new SpeechSynthesisUtterance(plain(target));u.lang="de-DE";u.rate=Number($('#speed').value);
+        speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(plain(target));u.lang="de-DE";u.rate=Number($('#speed').value);
         u.onstart=()=>$('#speechNote').textContent="🔊 Almanca metin okunuyor…";
-        u.onend=()=>$('#speechNote').textContent="Dinleme tamamlandı; istersen tekrar dinle.";
+        u.onend=()=>$('#speechNote').textContent="Dinleme tamamlandı; tekrar dinleyebilirsin.";
         u.onerror=()=>$('#speechNote').textContent="Ses açılamadı. Tarayıcı ayarlarını kontrol et.";
         speechSynthesis.speak(u);
       }catch(e){feedback("Ses özelliği çalıştırılamadı.","bad")}
