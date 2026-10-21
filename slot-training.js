@@ -50,7 +50,7 @@ halves=function(str){
 writingUI=function(box,{showCue=true,initialHint=false,listening=false}={}){
   currentHeader(box);
   const target=PATTERNS[current].text,parts=splitParts(target);
-  addHTML(box,'<p class="helper">Köşeli parantezli ifadeler <b>hazır verilmiştir</b>. Cümlenin içindeki noktalı boşluklara dokunarak yalnızca aradaki Almanca metni yaz.</p>');
+  addHTML(box,'<p class="helper">Köşeli parantezli ifadeler <b>hazır verilmiştir</b>. Noktalı boşluklara Almanca ifadeleri yaz; <b>noktalama ve büyük/küçük harf farkları yanlış sayılmaz.</b></p>');
   if(initialHint){
     const letters=parts.map(p=>p.type==="slot"?p.value:tokens(p.value).map(w=>w.charAt(0)+"·".repeat(Math.min(5,Math.max(0,w.length-1)))).join(" ")).join(" ");
     addHTML(box,'<div class="chunk-label">Baş harf ipuçları</div><div class="demo-board"><div class="first-letters">'+escapeHtml(letters)+'</div></div>');
@@ -103,8 +103,8 @@ writingUI=function(box,{showCue=true,initialHint=false,listening=false}={}){
     entries.push({part:part.value,input});
   });
   function progress(){
-    const total=entries.reduce((n,e)=>n+normalize(e.part).length,0);
-    const same=entries.reduce((n,e)=>n+textProgress(e.input.textContent,e.part)*normalize(e.part).length/100,0);
+    const total=entries.reduce((n,e)=>n+answerKey(e.part).length,0);
+    const same=entries.reduce((n,e)=>n+textProgress(e.input.textContent,e.part)*answerKey(e.part).length/100,0);
     const pc=total?Math.min(100,Math.round(same/total*100)):100;
     $('#typingFill').style.width=pc+"%";$('#typingPct').textContent=pc+"%";
   }
@@ -115,10 +115,10 @@ writingUI=function(box,{showCue=true,initialHint=false,listening=false}={}){
     $('#writingResult').innerHTML='<div class="compare"><strong>ORİJİNAL KALIP — REFERANS</strong><p>'+formatted(target)+'</p><hr class="sep"><strong>SENİN CEVABIN (hazır alanlar otomatik eklendi)</strong><p class="muted">'+formatted(assembled)+'</p></div>';
   }
   actButton(actions,"Cevapları kontrol et",()=>{
-    const good=entries.every(e=>normalize(e.input.textContent)===normalize(e.part));
+    const good=entries.every(e=>answerEquals(e.input.textContent,e.part));
     record(good);
     entries.forEach(e=>{
-      const right=normalize(e.input.textContent)===normalize(e.part);
+      const right=answerEquals(e.input.textContent,e.part);
       e.input.classList.toggle("correct",right);
       e.input.classList.toggle("wrong",!right);
     });
@@ -201,7 +201,7 @@ fullTailView=function(box){
   addHTML(box,'<p class="helper">Kalıbın devamını yaz. <b>[ ... ]</b> ifadeleri hazır verilmiştir; bunları cevaba yazma.</p>'+hintHtml(text)+'<div class="full-label">Verilen başlangıç</div><div class="full-question" id="fullTailLead"></div><label class="field-label" for="fullTailAnswer">Yalnızca Almanca devamını yaz</label><textarea class="answer" id="fullTailAnswer" placeholder="Devam eden Almanca kısmı yaz…" spellcheck="false" autocapitalize="off"></textarea><div class="toolbar" id="fullTailActions"></div><div id="fullTailResult"></div>');
   $('#fullTailLead').textContent=h[0]+" …";const field=$('#fullTailAnswer');let done=false;
   actButton($('#fullTailActions'),"Yazdığımı kontrol et",()=>{
-    if(done)return;done=true;const good=normalize(field.value)===normalize(h[1]);record(good);field.disabled=true;
+    if(done)return;done=true;const good=answerEquals(field.value,h[1]);record(good);field.disabled=true;
     feedback(good?"✓ Almanca devam doğru. Köşeli parantezler değerlendirmeye alınmadı.":"Devam kısmını tekrar karşılaştır. Hazır alanları yazmana gerek yok.",good?"good":"bad");
     $('#fullTailResult').append(el("div","full-answer-details","DOĞRU ALMANCA DEVAM:\n"+h[1]+"\n\nSENİN YAZDIĞIN:\n"+(field.value||"(boş)")));
     actButton($('#fullTailActions'),"Sonraki kalıp →",()=>selectPattern(current+1),"btn secondary");
