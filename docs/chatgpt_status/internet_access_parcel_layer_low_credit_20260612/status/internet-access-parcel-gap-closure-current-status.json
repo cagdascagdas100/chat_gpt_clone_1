@@ -1,0 +1,29 @@
+{
+  "page_key": "internet_access_parcel_layer_low_credit_20260612",
+  "task_name": "internet-access-parcel-gap-closure",
+  "status": "QUEUED_FOR_SINGLE_SHARED_RUNNER",
+  "overall_percent": 45,
+  "percent_reason": "Repo-side queue now references an automation script under this page key. Percent is still below FINAL_READY because real parcel geometry, factor table, endpoint smoke, and browser smoke evidence are not present in GitHub reports yet.",
+  "github_branch": "aays-internet-gap-20260623",
+  "github_pr": 16,
+  "automation_script": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/automation/internet-access-parcel-gap-closure.ps1",
+  "queue_file": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/queue/internet-access-parcel-gap-closure-runner-task.json",
+  "expected_runner_reports_glob": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/reports/internet-access-parcel-gap-closure-runner-output-*.md",
+  "expected_runner_status_glob": "docs/chatgpt_status/internet_access_parcel_layer_low_credit_20260612/status/internet-access-parcel-gap-closure-runner-status-*.json",
+  "power_shell_required_from_user": false,
+  "blockers": [
+    "P0_geometry_missing",
+    "P0_postcode_level_only",
+    "P1_factor_breakdown_schema_partial",
+    "P1_endpoint_empty_or_unproven"
+  ],
+  "final_ready_required_evidence": [
+    "processed/parcel_internet_access_scores.geojson has non-null renderable parcel geometry",
+    "processed/parcel_internet_access_scores.csv is parcel_id based",
+    "processed/parcel_internet_access_factor_breakdown.csv has factor/value/contribution/confidence fields",
+    "manifests/parcel_internet_access_manifest.json exists",
+    "http://127.0.0.1:8010/map/internet-access returns non-empty features",
+    "browser smoke confirms icon, color scale, parcel polygons, popup/right panel, factor table"
+  ],
+  "next_single_command": "devam et"
+}
