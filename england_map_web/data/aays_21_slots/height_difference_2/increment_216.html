@@ -1,0 +1,23 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_2 Increment 216</title><style>
+:root{color-scheme:dark;--b:#0b1118;--p:#111b27;--l:#314156;--t:#edf3fa;--m:#a9b7c8}*{box-sizing:border-box}
+body{margin:0;background:var(--b);color:var(--t);font:14px Segoe UI,Arial,sans-serif}header{padding:18px;background:var(--p);border-bottom:1px solid var(--l)}
+h1{margin:0 0 6px}p{color:var(--m)}#metrics{display:flex;gap:7px;flex-wrap:wrap;padding:12px 18px}.pill{padding:6px 9px;border:1px solid var(--l);background:#0e1823}
+.wrap{overflow:auto;padding:0 18px 20px}table{border-collapse:collapse;width:100%;min-width:1400px;font-size:12px}th,td{border:1px solid #29394c;padding:7px;vertical-align:top}
+th{position:sticky;top:0;background:#18273a;text-align:left}.completed td{background:#10251d}.blocked td{background:#2b1818}a{color:#95cdff}
+</style></head><body><header><h1>Height Difference 2 — Increment 216</h1>
+<p>84 satır: resmî internet kaynakları, üç aday kanıt matrisi, bütünlük kontrolleri ve gerçek engeller. Yeni sayısal ölçüm üretilmedi.</p></header>
+<div id="metrics"></div><div class="wrap"><h2>İşlemler</h2><table><thead><tr><th>No</th><th>Durum</th><th>Aşama</th><th>İşlem</th><th>Kaynak</th><th>Detay</th><th>Doğruluk</th><th>Blocker</th></tr></thead><tbody id="ops"></tbody></table></div>
+<div class="wrap"><h2>Resmî kaynak kayıtları</h2><table><thead><tr><th>No</th><th>Yayıncı</th><th>Kaynak</th><th>Doğrulanan sözleşme ve sınır</th><th>Doğruluk</th></tr></thead><tbody id="src"></tbody></table></div>
+<div class="wrap"><h2>Korunan adaylar</h2><table><thead><tr><th>Satır</th><th>Authority</th><th>HMLR</th><th>Fark m</th><th>Güven</th></tr></thead><tbody id="cand"></tbody></table></div>
+<script>
+const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function j(p){const r=await fetch(p+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error(p+': '+r.status);return r.json()}
+Promise.all([Promise.all(['operations_increment_216_a.json','operations_increment_216_b.json','operations_increment_216_c.json','operations_increment_216_d.json'].map(j)),j('support_state_increment_216.json')]).then(([docs,st])=>{
+ const ops=docs.flatMap(x=>x.operations||[]).sort((a,b)=>a.operation_no-b.operation_no), src=ops.filter(x=>x.stage==='OFFICIAL_SOURCE_DEEPENING');
+ document.getElementById('metrics').innerHTML=[['Tamamlanan',st.increment.completed+'/'+st.increment.operations],['Blocked',st.increment.blocked],['Resmî kaynak',st.increment.sources],['Aday kontrolü',st.increment.candidate_checks],['Bütünlük',st.increment.integrity_checks],['Kanonik',st.canonical.completed+'/'+st.canonical.planned],['Batch',st.canonical.batch_percent+'%'],['Genel',st.canonical.overall_percent+'%'],['Yeni ölçüm',st.accuracy.new_official_numeric_rows]].map(x=>'<span class="pill">'+E(x[0])+': <b>'+E(x[1])+'</b></span>').join('');
+ document.getElementById('ops').innerHTML=ops.map(o=>`<tr class="${E(o.status)}"><td>${E(o.operation_no)}</td><td>${E(o.status)}</td><td>${E(o.stage)}</td><td>${E(o.operation_type)}</td><td><a target="_blank" rel="noopener" href="${E(o.source_url)}">${E(o.source_name)}</a></td><td>${E(o.details_summary)}</td><td>${E(o.accuracy_score_4)}</td><td>${E(o.blocker)}</td></tr>`).join('');
+ document.getElementById('src').innerHTML=src.map(o=>`<tr><td>${E(o.operation_no)}</td><td>${E(o.source_name)}</td><td><a target="_blank" rel="noopener" href="${E(o.source_url)}">${E(o.source_url)}</a></td><td>${E(o.details_summary)}</td><td>${E(o.accuracy_score_4)}</td></tr>`).join('');
+ document.getElementById('cand').innerHTML=(st.candidates||[]).map(x=>`<tr><td>${E(x.row)}</td><td>${E(x.authority)}</td><td>${E(x.hmlr)}</td><td>${E(x.height_difference_m)}</td><td>${E(x.confidence_percent)}%</td></tr>`).join('');
+}).catch(e=>document.body.insertAdjacentHTML('beforeend','<pre>'+E(e.message)+'</pre>'));
+</script></body></html>

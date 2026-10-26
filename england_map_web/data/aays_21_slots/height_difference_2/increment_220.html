@@ -1,0 +1,20 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>height_difference_2 · Increment 220</title>
+<style>body{font-family:system-ui;background:#0d1117;color:#e6edf3;margin:20px}.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;margin:8px 0}.ok{color:#3fb950}.blocked{color:#f85149}.meta{color:#8b949e}code{color:#d2a8ff}</style></head>
+<body><h1>height_difference_2 · Increment 220</h1><div id="summary" class="card">Yükleniyor…</div><div id="rows"></div>
+<script>
+const files=['operations_increment_220_a.json','operations_increment_220_b.json','operations_increment_220_c.json','operations_increment_220_d.json'];
+function expand(p){
+ if(p.operations)return p.operations;
+ let n=p.operation_start,out=[];
+ if(p.generator_mode==='candidate_explicit_groups')for(const g of p.candidate_groups)for(const q of g.checks)out.push({...p.common,...q,operation_no:n++,candidate_row:g.candidate_row});
+ if(p.generator_mode==='integrity_check_sequence')for(const q of p.checks)out.push({...p.common,...q,operation_no:n++});
+ if(p.generator_mode==='blocker_sequence')for(const q of p.blockers)out.push({...p.common,...q,operation_no:n++,blocker:q.operation_type});
+ return out;
+}
+Promise.all(files.map(f=>fetch(f).then(r=>{if(!r.ok)throw new Error(f+' '+r.status);return r.json()}))).then(parts=>{
+ const ops=parts.flatMap(expand).sort((a,b)=>a.operation_no-b.operation_no);
+ const done=ops.filter(x=>x.status==='completed').length, blocked=ops.filter(x=>x.status==='blocked').length;
+ document.getElementById('summary').innerHTML=`<b>${ops.length} satır</b> · <span class="ok">${done} tamamlandı</span> · <span class="blocked">${blocked} engel</span> · Aralık ${ops[0].operation_no}–${ops.at(-1).operation_no}`;
+ document.getElementById('rows').innerHTML=ops.map(o=>`<div class="card"><b>#${o.operation_no}</b> <span class="${o.status==='blocked'?'blocked':'ok'}">${o.status.toUpperCase()}</span> · <code>${o.operation_type}</code><div>${o.details_summary}</div><div class="meta">${o.stage}${o.candidate_row?` · aday ${o.candidate_row}`:''}${o.source_name?` · ${o.source_name}`:''}</div></div>`).join('');
+}).catch(e=>document.getElementById('summary').textContent='Yükleme hatası: '+e.message);
+</script></body></html>

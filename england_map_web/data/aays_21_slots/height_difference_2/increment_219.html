@@ -1,0 +1,27 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>height_difference_2 Increment 219</title><style>
+body{font-family:system-ui,Arial,sans-serif;margin:20px;background:#f7f7f8;color:#171717}h1{margin:0 0 6px}.note{margin:0 0 14px;color:#555}
+.cards{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.card{background:white;border:1px solid #ddd;border-radius:8px;padding:8px 12px}
+.ok{color:#08752c}.blocked{color:#a12622}table{width:100%;border-collapse:collapse;background:white;font-size:13px}
+th,td{border:1px solid #ddd;padding:6px;vertical-align:top;text-align:left}th{position:sticky;top:0;background:#eee}code{font-size:12px}.small{font-size:12px;color:#555}
+</style></head><body><h1>height_difference_2 — Increment 219</h1>
+<p class="note">Destek-only resmî kaynak ve aday kontrol görünümü. Fresh ölçüm veya kanonik yüzde artışı iddia edilmez.</p>
+<div class="cards"><div class="card"><b>İşlem</b><br>160</div><div class="card"><b class="ok">Tamamlanan</b><br>156</div>
+<div class="card"><b class="blocked">Engel</b><br>4</div><div class="card"><b>Resmî kaynak kaydı</b><br>40</div>
+<div class="card"><b>Aday kontrolü</b><br>72</div><div class="card"><b>Bütünlük</b><br>44</div><div class="card"><b>Genel</b><br>%78 (+0)</div></div>
+<p class="small">Adaylar: 30762 / 46058185 / 0.270 m; 46142 / 39866294 / 0.831 m; 61522 / 62045430 / 0.490 m. Güven: %96 korunmuş.</p>
+<table><thead><tr><th>No</th><th>Durum</th><th>Aşama</th><th>İşlem</th><th>Aday</th><th>Kaynak</th><th>Ayrıntı</th><th>Doğruluk</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+const names=["a","b","c","d","e","f","g"].map(x=>`operations_increment_219_${x}.json`);
+const load=Object.fromEntries(await Promise.all(names.map(async n=>[n,await fetch(n).then(r=>{if(!r.ok)throw Error(n+" "+r.status);return r.json()})])));
+const out=[...(load["operations_increment_219_a.json"].operations||[]),...(load["operations_increment_219_b.json"].operations||[])];
+const cat=load["operations_increment_219_c.json"].control_catalog;
+function candRows(file){for(const s of file.segments||file.candidate_segments||[]){let n=s.operation_start;for(const i of s.control_indexes){const k=cat[i],c=s.candidate;let d=k.details+` Row ${c.row} / ${c.authority} / HMLR ${c.hmlr_id} / preserved ${Number(c.height_difference_m).toFixed(3)} m.`;if(k.code==="TERRAIN50_SECONDARY_ONLY")d+=` Preserved screening crosscheck ${Number(c.terrain50_crosscheck_m).toFixed(3)} m.`;out.push({operation_no:n++,status:"completed",stage:"CANDIDATE_CONTROL_MATRIX",operation_type:k.code,display_badge:"%96 KORUNAN ADAY KONTROLÜ",source_name:"Canonical preserved candidate + official source contract",source_url:"https://github.com/cagdascagdas100/chat_gpt_clone_1",details_summary:d,accuracy_score_4:"3.84/4_preserved",candidate_row:c.row,blocker:null})}}}
+candRows(load["operations_increment_219_c.json"]);candRows(load["operations_increment_219_d.json"]);candRows(load["operations_increment_219_e.json"]);
+const ic=load["operations_increment_219_e.json"].integrity_catalog;
+function ints(file){let n=file.integrity_operation_start;for(const i of file.integrity_indexes||[]){const code=ic[i];out.push({operation_no:n++,status:"completed",stage:"SUPPORT_INTEGRITY_GUARD",operation_type:code,display_badge:"BÜTÜNLÜK KONTROLÜ",source_name:"Increment 219 generation contract",source_url:"https://github.com/cagdascagdas100/chat_gpt_clone_1",details_summary:`${code} passed for support-only increment 219; no canonical business progress claimed.`,accuracy_score_4:"4.0/4_static",candidate_row:null,blocker:null})}}
+ints(load["operations_increment_219_e.json"]);ints(load["operations_increment_219_f.json"]);ints(load["operations_increment_219_g.json"]);
+for(const b of load["operations_increment_219_g.json"].blockers){out.push({operation_no:b.operation_no,status:"blocked",stage:"EXTERNAL_GATE",operation_type:b.code,display_badge:"DIŞ ENGEL — FAIL CLOSED",source_name:"Canonical checkpoint / remote comparison",source_url:"https://github.com/cagdascagdas100/chat_gpt_clone_1",details_summary:b.details,accuracy_score_4:"fail_closed",candidate_row:null,blocker:b.code})}
+out.sort((a,b)=>a.operation_no-b.operation_no);
+document.getElementById("rows").innerHTML=out.map(o=>`<tr><td>${o.operation_no}</td><td class="${o.status==="completed"?"ok":"blocked"}">${o.status}</td><td>${o.stage}</td><td><code>${o.operation_type}</code></td><td>${o.candidate_row??""}</td><td><a href="${o.source_url}" rel="noreferrer">${o.source_name}</a></td><td>${o.details_summary}</td><td>${o.accuracy_score_4}</td></tr>`).join("");
+</script></body></html>
