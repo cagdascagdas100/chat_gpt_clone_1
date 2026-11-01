@@ -7,8 +7,8 @@
 <meta name="description" content="SatzLab Kelime Arenası: 20 Almanca kalıbı kolay, orta, zor seviyelerinde süreli harf kutularıyla ezberle.">
 <title>Kelime Arenası – SatzLab</title>
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./wortspiel.css?v=1">
-<script src="./wortspiel.js?v=1" defer></script>
+<link rel="stylesheet" href="./wortspiel.css?v=2">
+<script src="./wortspiel.js?v=2" defer></script>
 </head>
 <body>
 <header class="top"><div class="nav-inner">
@@ -28,12 +28,19 @@
 <button type="button" class="level" data-level="medium" aria-pressed="false"><span class="level-dot yellow"></span>Orta <small>Dengeli</small></button>
 <button type="button" class="level" data-level="hard" aria-pressed="false"><span class="level-dot pink"></span>Zor <small>Çok boşluk</small></button>
 </div></div>
-<div class="tools-right"><button class="simple-btn" type="button" id="shuffleBtn" title="Turu yeni sırayla başlat">↻ Yeni oyun</button></div>
+<div class="order-block">
+<div class="label">SORU SIRASI</div>
+<div class="levels" id="questionOrder" role="group" aria-label="Kalıpların sıralaması">
+<button class="level active" type="button" data-order="random" aria-pressed="true">🔀 Karışık</button>
+<button class="level" type="button" data-order="sequential" aria-pressed="false">🔢 Sıralı 1–20</button>
+</div></div>
+<div class="tools-right"><button class="simple-btn" type="button" id="shuffleBtn" title="Yeni tur başlat">↻ Yeni oyun</button></div>
 </section>
 <section class="stats" aria-label="Oyun puanları">
 <div class="stat"><small>SEVİYE</small><strong id="levelDisplay">Kolay</strong></div>
 <div class="stat"><small>TUR</small><strong id="roundDisplay">1 / 20</strong></div>
 <div class="stat"><small>PUAN</small><strong id="scoreDisplay">0</strong></div>
+<div class="stat best-stat"><small>🏆 REKOR</small><strong id="bestDisplay">0</strong></div>
 <div class="stat time-stat" id="timerCard"><small>KALAN SÜRE</small><strong id="timerDisplay" aria-live="off">02:00</strong></div>
 </section>
 <section class="play-card" id="playCard" aria-label="Kelime tamamlama oyunu">
@@ -51,7 +58,12 @@
 <button class="main-action" id="nextBtn" type="button" hidden>Sonraki kalıp →</button>
 </div>
 <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+<div class="score-detail" id="scoreDetail" hidden></div>
 <div class="answer-panel" id="answerPanel" hidden><div>DOĞRU KALIP</div><p id="correctSentence"></p></div>
+</section>
+<section class="leaderboard" aria-labelledby="leaderboardTitle">
+<div class="leaderboard-title"><div><div class="label">KAYDEDİLEN REKORLAR</div><h2 id="leaderboardTitle">🏆 High Score</h2><p>Seçili zorluk ve soru sırasına ait en yüksek puanlar bu cihazda saklanır. Rekora yalnızca 20 kalıbın tamamını bitirince girilir.</p></div><span class="leaderboard-context" id="scoreContext">Kolay · Karışık</span></div>
+<ol class="leaderboard-rows" id="highScoreList"><li>Henüz tamamlanmış tur yok.</li></ol>
 </section>
 <section class="below">
 <div class="tip-card"><div class="tip-icon">⌨</div><div><h3>Nasıl oynanır?</h3><p>Her kutuya <strong>bir harf</strong> yaz. Otomatik ilerler. <kbd>Backspace</kbd> önceki harfe döner, <kbd>←</kbd> / <kbd>→</kbd> gezinir. Yanlışları değiştirebilirsin. Telefonda da klavyeyle çalışır.</p></div></div>
@@ -62,7 +74,7 @@
 <div class="finish-modal" id="finishModal" hidden role="dialog" aria-modal="true" aria-labelledby="finishTitle"><div class="finish-box">
 <div class="finish-emoji">🏆</div><div class="eyebrow">OTURUM TAMAMLANDI</div>
 <h2 id="finishTitle">Harika iş!</h2><p id="finishText"></p>
-<div class="finish-score" id="finishScore"></div>
+<div class="finish-score" id="finishScore"></div><div class="finish-extra" id="finishRecord"></div>
 <button type="button" class="main-action" id="playAgain">↻ Yeniden oyna</button>
 <a href="./index.html" class="secondary-link">Ana sayfaya dön</a>
 </div></div>
