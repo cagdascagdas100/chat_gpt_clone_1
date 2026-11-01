@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1928">
+<meta name="description" content="SatzLab Kelime Arenası: 20 Almanca kalıbı kolay, orta, zor seviyelerinde süreli harf kutularıyla ezberle.">
+<title>Kelime Arenası – SatzLab</title>
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./wortspiel.css?v=2">
+<script src="./kelime-arenasi.js" defer></script>
+<style>
+.order-message{margin:8px 0 0;padding:9px 10px;background:#e4f7ee;border:1px solid #8ed3b9;color:#0b755c;font-size:12px;line-height:1.5;border-radius:9px;font-weight:760;max-width:480px}
+#questionOrder .level[aria-pressed="true"]{background:#0d7164!important;color:#fff!important;border-color:#0b7164!important;box-shadow:0 0 0 2px #62d2b4aa}
+#questionOrder .level[aria-pressed="false"]{background:#fff!important;color:#263848!important;border-color:#dce6e8!important;box-shadow:none}
+#questionOrder .level{min-height:44px}
+@media(max-width:700px){.order-message{font-size:12px;padding:8px 9px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="nav-inner">
+<a class="brand" href="./index.html"><span class="brand-icon">S</span><span>SatzLab <em>/ Kelime Arenası</em></span></a>
+<a class="back-link" href="./index.html"><span aria-hidden="true">←</span> Ana sayfaya dön</a>
+</div></header>
+<main class="container">
+<section class="hero">
+<div class="eyebrow"><span class="live-dot"></span> YENİ EZBER OYUNU · 20 KALIP</div>
+<h1>Kelime <span>Arenası.</span></h1>
+<p>Eksik Almanca kelimeleri <strong>harf harf</strong> tamamla. Bir harf yazınca sıradaki kutuya geç. Yanlış yazarsan geri silip düzelt. Süre dolmadan kalıbı bitir.</p>
+</section>
+<section class="toolbar" aria-label="Oyun ayarları">
+<div class="level-block"><div class="label">ZORLUK SEÇ</div>
+<div class="levels" id="difficulty" role="group" aria-label="Zorluk seviyesi">
+<button type="button" class="level active" data-level="easy" aria-pressed="true"><span class="level-dot green"></span>Kolay <small>Az boşluk</small></button>
+<button type="button" class="level" data-level="medium" aria-pressed="false"><span class="level-dot yellow"></span>Orta <small>Dengeli</small></button>
+<button type="button" class="level" data-level="hard" aria-pressed="false"><span class="level-dot pink"></span>Zor <small>Çok boşluk</small></button>
+</div></div>
+<div class="order-block">
+<div class="label">SORU SIRASI</div>
+<div class="levels" id="questionOrder" role="group" aria-label="Kalıpların sıralaması">
+<button id="orderRandomBtn" class="level active" type="button" data-order="random" aria-pressed="true">🔀 Karışık</button>
+<button id="orderSequentialBtn" class="level" type="button" data-order="sequential" aria-pressed="false">🔢 Sıralı 1–20</button>
+</div><p id="orderMessage" class="order-message" role="status" aria-live="polite">✓ Karışık mod aktif: kalıplar rastgele sıralanır.</p></div>
+<div class="tools-right"><button class="simple-btn" type="button" id="shuffleBtn" title="Yeni tur başlat">↻ Yeni oyun</button></div>
+</section>
+<section class="stats" aria-label="Oyun puanları">
+<div class="stat"><small>SEVİYE</small><strong id="levelDisplay">Kolay</strong></div>
+<div class="stat"><small>TUR</small><strong id="roundDisplay">1 / 20</strong></div>
+<div class="stat"><small>PUAN</small><strong id="scoreDisplay">0</strong></div>
+<div class="stat best-stat"><small>🏆 REKOR</small><strong id="bestDisplay">0</strong></div>
+<div class="stat time-stat" id="timerCard"><small>KALAN SÜRE</small><strong id="timerDisplay" aria-live="off">02:00</strong></div>
+</section>
+<section class="play-card" id="playCard" aria-label="Kelime tamamlama oyunu">
+<div class="card-top">
+<div><div class="kicker">KALIBI TAMAMLA</div><h2 id="phraseTitle">Kalıp hazırlanıyor</h2><p class="subtitle" id="roundMeta">Köşeli parantezler ve noktalama hazır verilir.</p></div>
+<div class="progress-side"><span id="wordsProgress">0 / 0 kelime</span><div class="mini-track"><div id="wordsBar"></div></div></div>
+</div>
+<div class="clock-track" role="progressbar" aria-label="Kalan süre" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" id="timerTrack"><div id="timeBar"></div></div>
+<div class="sentence" id="sentence" aria-label="Doldurulacak Almanca cümle"></div>
+<div class="hint-row"><span class="hint-tag">📌 [ ... ]</span> Köşeli parantezler, <b>…</b>, <b>/</b> ve noktalama işaretleri <strong>her zaman görünür.</strong></div>
+<div class="action-row" id="actions">
+<button class="main-action" id="checkBtn" type="button">✓ Kontrol et</button>
+<button class="secondary-action" id="hintBtn" type="button">💡 Harf ipucu <span class="shortcut">−20 puan</span></button>
+<button class="secondary-action" id="skipBtn" type="button">Geç / Cevabı gör</button>
+<button class="main-action" id="nextBtn" type="button" hidden>Sonraki kalıp →</button>
+</div>
+<div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+<div class="score-detail" id="scoreDetail" hidden></div>
+<div class="answer-panel" id="answerPanel" hidden><div>DOĞRU KALIP</div><p id="correctSentence"></p></div>
+</section>
+<section class="leaderboard" aria-labelledby="leaderboardTitle">
+<div class="leaderboard-title"><div><div class="label">KAYDEDİLEN REKORLAR</div><h2 id="leaderboardTitle">🏆 High Score</h2><p>Seçili zorluk ve soru sırasına ait en yüksek puanlar bu cihazda saklanır. Rekora yalnızca 20 kalıbın tamamını bitirince girilir.</p></div><span class="leaderboard-context" id="scoreContext">Kolay · Karışık</span></div>
+<ol class="leaderboard-rows" id="highScoreList"><li>Henüz tamamlanmış tur yok.</li></ol>
+</section>
+<section class="below">
+<div class="tip-card"><div class="tip-icon">⌨</div><div><h3>Nasıl oynanır?</h3><p>Her kutuya <strong>bir harf</strong> yaz. Otomatik ilerler. <kbd>Backspace</kbd> önceki harfe döner, <kbd>←</kbd> / <kbd>→</kbd> gezinir. Yanlışları değiştirebilirsin. Telefonda da klavyeyle çalışır.</p></div></div>
+<div class="tip-card"><div class="tip-icon">🎯</div><div><h3>Hedef: kalıbı ezberle</h3><p>Kolayda daha az, zorda daha çok kelime gizlenir. Büyük/küçük harf farkları puanı etkilemez. Alman harflerini (ä, ö, ü, ß) doğru yazman gerekir.</p></div></div>
+</section>
+<footer>© SatzLab · Kalıplar orijinal şekilleriyle korunur · <a href="./index.html">14 etkinlikli ana uygulamaya dön</a></footer>
+</main>
+<div class="finish-modal" id="finishModal" hidden role="dialog" aria-modal="true" aria-labelledby="finishTitle"><div class="finish-box">
+<div class="finish-emoji">🏆</div><div class="eyebrow">OTURUM TAMAMLANDI</div>
+<h2 id="finishTitle">Harika iş!</h2><p id="finishText"></p>
+<div class="finish-score" id="finishScore"></div><div class="finish-extra" id="finishRecord"></div>
+<button type="button" class="main-action" id="playAgain">↻ Yeniden oyna</button>
+<a href="./index.html" class="secondary-link">Ana sayfaya dön</a>
+</div></div>
+</body>
+</html>
