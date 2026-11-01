@@ -33,14 +33,73 @@ const shuffle=arr=>{const out=[...arr];for(let i=out.length-1;i>0;i--){const n=M
 const lex=s=>[...s.matchAll(/\[[^\]]*\]|(?:\.{3}|…)|\p{L}+(?:['’]\p{L}+)*|\p{N}+|[\s\S]/gu)].map(x=>x[0]);
 const isWord=s=>/^\p{L}+(?:['’]\p{L}+)*$/u.test(s)&&!["A","B","X"].includes(s);
 let session=null,clockJob=null,round=null;
+const RECORD_KEY="satzlab_word_arena_record_book_v2";
+const PREF_KEY="satzlab_word_arena_preferences_v2";
+const isValidOrder=value=>value==="random"||value==="sequential";
+const isValidLevel=value=>Object.prototype.hasOwnProperty.call(LEVELS,value);
+const pairKey=(level,order)=>level+"__"+order;
+const bestOf=(level,order)=>recordBook[pairKey(level,order)]?.[0]?.score||0;
+const readRecords=()=>{
+ try{
+  const raw=JSON.parse(localStorage.getItem(RECORD_KEY)||"{}");
+  if(!raw||typeof raw!=="object"||Array.isArray(raw))return {};
+  const clean={};
+  for(const level of Object.keys(LEVELS)){
+   for(const order of ["random","sequential"]){
+    const key=pairKey(level,order),values=raw[key];
+    clean[key]=Array.isArray(values)?values.filter(x=>x&&Number.isSafeInteger(x.score)&&x.score>=0&&typeof x.date==="string").sort((a,b)=>b.score-a.score).slice(0,5):[];
+   }
+  }
+  return clean;
+ }catch(e){return {}}
+};
+const recordBook=readRecords();
+const readPreferences=()=>{
+ try{
+  const p=JSON.parse(localStorage.getItem(PREF_KEY)||"{}");
+  return{level:isValidLevel(p.level)?p.level:"easy",order:isValidOrder(p.order)?p.order:"random"}
+ }catch(e){return{level:"easy",order:"random"}}
+};
+const savedPreferences=readPreferences();
+const storePreferences=()=>{try{localStorage.setItem(PREF_KEY,JSON.stringify({level:session.level,order:session.order}))}catch(e){}};
+const formatScore=n=>Number(n).toLocaleString("tr-TR");
+function renderLeaderboard(){
+ if(!session)return;
+ const items=recordBook[pairKey(session.level,session.order)]||[];
+ $("bestDisplay").textContent=formatScore(bestOf(session.level,session.order));
+ $("scoreContext").textContent=LEVELS[session.level].name+" · "+(session.order==="sequential"?"Sıralı 1–20":"Karışık");
+ const list=$("highScoreList");list.replaceChildren();
+ if(!items.length){const empty=document.createElement("li");empty.textContent="Henüz tamamlanmış tur yok. İlk rekoru sen kır!";list.append(empty);return}
+ items.forEach((item,i)=>{
+  const line=document.createElement("li");line.className="has-score";
+  const label=document.createElement("span"),number=document.createElement("strong"),detail=document.createElement("small");
+  label.textContent=(i===0?"🥇":i===1?"🥈":i===2?"🥉":"#"+(i+1))+"  "+(i+1)+". rekor";
+  number.textContent=formatScore(item.score);
+  detail.textContent=item.won+" / "+PHRASES.length+" doğru · "+item.date;
+  const right=document.createElement("span");right.append(number,document.createElement("br"),detail);
+  line.append(label,right);list.append(line);
+ });
+}
+function addRecord(){
+ const key=pairKey(session.level,session.order),prior=bestOf(session.level,session.order);
+ const date=new Date().toLocaleDateString("tr-TR");
+ const values=[...(recordBook[key]||[]),{score:session.score,won:session.won,date}];
+ values.sort((a,b)=>b.score-a.score);recordBook[key]=values.slice(0,5);
+ try{localStorage.setItem(RECORD_KEY,JSON.stringify(recordBook))}catch(e){}
+ renderLeaderboard();
+ return {newBest:session.score>prior,previous:prior};
+}
+
 const setFeedback=(text,kind="info")=>{const area=$("feedback");area.textContent=text;area.className="feedback "+kind};
 const stopClock=()=>{if(clockJob!==null){clearInterval(clockJob);clockJob=null}};
 const secsFormat=n=>{const s=Math.max(0,Math.ceil(n));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")};
-function startGame(level="easy"){
- stopClock();$("finishModal").hidden=true;const config=LEVELS[level];if(!config)return;
- session={level,queue:shuffle(PHRASES.map((_,i)=>i)),position:0,score:0,won:0,skipped:0};
+function startGame(level="easy",order="random"){
+ stopClock();$("finishModal").hidden=true;const config=LEVELS[level];if(!config||!isValidOrder(order))return;
+ session={level,order,queue:order==="sequential"?PHRASES.map((_,i)=>i):shuffle(PHRASES.map((_,i)=>i)),position:0,score:0,won:0,skipped:0};
+ storePreferences();
  document.querySelectorAll("[data-level]").forEach(btn=>{const active=btn.dataset.level===level;btn.classList.toggle("active",active);btn.setAttribute("aria-pressed",String(active))});
- $("levelDisplay").textContent=config.name;$("scoreDisplay").textContent="0";startRound();
+ document.querySelectorAll("[data-order]").forEach(btn=>{const active=btn.dataset.order===order;btn.classList.toggle("active",active);btn.setAttribute("aria-pressed",String(active))});
+ $("levelDisplay").textContent=config.name;$("scoreDisplay").textContent="0";renderLeaderboard();startRound();
 }
 function buildRoundTokens(text,level){
  const parts=lex(text);const eligible=parts.map((v,i)=>isWord(v)?i:null).filter(x=>x!==null);
@@ -66,7 +125,7 @@ function startRound(){
  $("wordsBar").style.width="0%";
  $("sentence").replaceChildren();
  $("checkBtn").hidden=false;$("hintBtn").hidden=false;$("skipBtn").hidden=false;$("nextBtn").hidden=true;
- $("answerPanel").hidden=true;$("timerCard").classList.remove("danger");$("timerTrack").classList.remove("danger");
+ $("answerPanel").hidden=true;$("scoreDetail").hidden=true;$("timerCard").classList.remove("danger");$("timerTrack").classList.remove("danger");
  setFeedback("","info");
  let tokenNo=0;
  parts.forEach((part,pos)=>{
@@ -187,9 +246,16 @@ function endRound(reason){
  const settings=LEVELS[session.level],left=Math.max(0,Math.floor(round.remaining));
  if(reason==="success"){
   session.won++;
-  const earned=Math.max(0,round.groups.length*20*settings.mult+Math.ceil(left/3)-round.hintCount*20);
-  session.score+=earned;$("scoreDisplay").textContent=String(session.score);
-  setFeedback("🎉 Doğru! "+round.groups.length+" kelimeyi tamamladın. +"+earned+" puan kazandın.","ok");
+  const base=round.groups.length*20*settings.mult;
+  // Daha kısa süre = daha yüksek hız bonusu. En hızlı tamamlayan 1.5× baz puan kazanabilir.
+  const speedRatio=round.secondsTotal>0?Math.max(0,Math.min(1,left/round.secondsTotal)):0;
+  const speedBonus=Math.round(base*1.5*speedRatio);
+  const deduction=round.hintCount*20;
+  const earned=Math.max(0,base+speedBonus-deduction);
+  session.score+=earned;$("scoreDisplay").textContent=formatScore(session.score);
+  $("scoreDetail").textContent="Temel: "+formatScore(base)+" · ⚡ Hız bonusu: +"+formatScore(speedBonus)+" · Harf ipucu: −"+formatScore(deduction)+" · Tur: +"+formatScore(earned);
+  $("scoreDetail").hidden=false;
+  setFeedback("🎉 Doğru! "+round.groups.length+" kelimeyi tamamladın. ⚡ "+formatScore(speedBonus)+" hız bonusuyla +"+formatScore(earned)+" puan!","ok");
  }else{
   session.skipped++;
   setFeedback(reason==="time"?"⏳ Süre doldu. Kalıbın doğru hâlini aşağıda incele.":"Kalıbı geçtin. Doğru cevap aşağıda; tekrar çalışabilirsin.","bad");
@@ -206,23 +272,25 @@ function finishSession(){
  stopClock();const level=LEVELS[session.level].name;
  $("finishTitle").textContent="20 kalıp tamamlandı!";
  $("finishText").textContent=level+" seviyesinde "+session.won+" kalıbı süre içinde tamamladın, "+session.skipped+" kalıbı geçtin veya süre doldu.";
- $("finishScore").textContent=session.score.toLocaleString("tr-TR")+" puan";
+ const result=addRecord();
+ $("finishScore").textContent=formatScore(session.score)+" puan";
+ $("finishRecord").textContent=result.newBest?"🏆 YENİ REKOR! "+LEVELS[session.level].name+" / "+(session.order==="sequential"?"Sıralı":"Karışık"):"Bu modda en yüksek puan: "+formatScore(bestOf(session.level,session.order));
  $("finishModal").hidden=false;
- try{
-   const key="satzlab_word_arena_best_v1_"+session.level, old=Number(localStorage.getItem(key)||"0");
-   if(session.score>old)localStorage.setItem(key,String(session.score));
- }catch(e){}
 }
 $("difficulty").addEventListener("click",e=>{
  const btn=e.target.closest("[data-level]");
  if(!btn||btn.dataset.level===session?.level)return;
- startGame(btn.dataset.level);
+ startGame(btn.dataset.level,session?.order||"random");
 });
-$("shuffleBtn").addEventListener("click",()=>startGame(session?.level||"easy"));
+$("questionOrder").addEventListener("click",e=>{
+ const btn=e.target.closest("[data-order]");if(!btn||btn.dataset.order===session?.order)return;
+ startGame(session?.level||"easy",btn.dataset.order);
+});
+$("shuffleBtn").addEventListener("click",()=>startGame(session?.level||"easy",session?.order||"random"));
 $("checkBtn").addEventListener("click",checkAnswers);
 $("hintBtn").addEventListener("click",giveHint);
 $("skipBtn").addEventListener("click",()=>endRound("skip"));
 $("nextBtn").addEventListener("click",nextRound);
-$("playAgain").addEventListener("click",()=>startGame(session?.level||"easy"));
+$("playAgain").addEventListener("click",()=>startGame(session?.level||"easy",session?.order||"random"));
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)updateClock()});
-startGame("easy");
+startGame(savedPreferences.level,savedPreferences.order);
