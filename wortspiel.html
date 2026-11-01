@@ -8,7 +8,14 @@
 <title>Kelime Arenası – SatzLab</title>
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="./wortspiel.css?v=2">
-<script src="./wortspiel.js?v=2" defer></script>
+<script src="./kelime-arenasi.js" defer></script>
+<style>
+.order-message{margin:8px 0 0;padding:9px 10px;background:#e4f7ee;border:1px solid #8ed3b9;color:#0b755c;font-size:12px;line-height:1.5;border-radius:9px;font-weight:760;max-width:480px}
+#questionOrder .level[aria-pressed="true"]{background:#0d7164!important;color:#fff!important;border-color:#0b7164!important;box-shadow:0 0 0 2px #62d2b4aa}
+#questionOrder .level[aria-pressed="false"]{background:#fff!important;color:#263848!important;border-color:#dce6e8!important;box-shadow:none}
+#questionOrder .level{min-height:44px}
+@media(max-width:700px){.order-message{font-size:12px;padding:8px 9px}}
+</style>
 </head>
 <body>
 <header class="top"><div class="nav-inner">
@@ -31,9 +38,9 @@
 <div class="order-block">
 <div class="label">SORU SIRASI</div>
 <div class="levels" id="questionOrder" role="group" aria-label="Kalıpların sıralaması">
-<button class="level active" type="button" data-order="random" aria-pressed="true">🔀 Karışık</button>
-<button class="level" type="button" data-order="sequential" aria-pressed="false">🔢 Sıralı 1–20</button>
-</div></div>
+<button id="orderRandomBtn" class="level active" type="button" data-order="random" aria-pressed="true">🔀 Karışık</button>
+<button id="orderSequentialBtn" class="level" type="button" data-order="sequential" aria-pressed="false">🔢 Sıralı 1–20</button>
+</div><p id="orderMessage" class="order-message" role="status" aria-live="polite">✓ Karışık mod aktif: kalıplar rastgele sıralanır.</p></div>
 <div class="tools-right"><button class="simple-btn" type="button" id="shuffleBtn" title="Yeni tur başlat">↻ Yeni oyun</button></div>
 </section>
 <section class="stats" aria-label="Oyun puanları">
