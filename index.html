@@ -240,7 +240,7 @@ renderModes();renderList();renderActivity();updateStats();
     <p><b>4. Sınavla kontrol et:</b> Karma sınav ve 60 saniyelik sprint ile yanılgılarını gör.</p>
     <p><b>5. Aralıklı tekrar:</b> “Biliyordum” seçilen kalıp 1, 3, 7, 14 ve 30 gün sonra tekrar gelir; “Zorlandım” seçilen kalıp bugünün kuyruğuna döner.</p>
     <p><b>6. İlerleme koruması:</b> İstatistiklerin bu tarayıcıda saklanır. Başka bir cihaza geçerken “Yedekle” ve “Geri yükle” düğmelerini kullan.</p>
-    <p><b>Metin sadakati:</b> [Köşeli parantezler], Türkçe notlar, alternatifler, noktalama ve yazım biçimi kaynak metindeki haliyle tutulur. Yalnızca karşılaştırmada üst üste fazla boşluklar yok sayılır.</p>
+    <p><b>Metin sadakati:</b> [Köşeli parantezler], Türkçe notlar, alternatifler, noktalama ve yazım biçimi kaynak metindeki haliyle tutulur. Cevap değerlendirmesinde noktalama, boşluklar ve büyük/küçük harf farkları hata sayılmaz; Almanca harfler ve kelime sırası değerlendirilir.</p>
     <p><b>Seslendirme:</b> Almanca ses desteği yüklü tarayıcı ve işletim sistemine bağlıdır. Ses bulunmadığında diğer bütün çalışma modları kullanılabilir.</p>
   </div>
 </dialog>
@@ -372,9 +372,9 @@ $('#fullGuide').addEventListener('click',()=>$('#fullHelp').showModal());
 $('#fullCloseHelp').addEventListener('click',()=>$('#fullHelp').close());
 $('#fullPrint').addEventListener('click',()=>window.print());
 $('#fullDownloadText').addEventListener('click',()=>fullDownload('SatzLab_20_Guncel_Kalip.txt',PATTERNS.map((p,i)=>`${i+1}. ${p.name}\n${p.text}`).join('\n\n'),'text/plain;charset=utf-8'));
-$('#fullExport').addEventListener('click',()=>fullDownload('SatzLab_yedek_'+fullDate()+'.json',JSON.stringify({kind:'SatzLabFullBackup',version:1,exportedAt:new Date().toISOString(),progress:persisted,extras:fullMeta},null,2),'application/json;charset=utf-8'));
+$('#fullExport').addEventListener('click',()=>fullDownload('SatzLab_yedek_'+fullDate()+'.json',JSON.stringify({kind:'SatzLabFullBackup',version:2,exportedAt:new Date().toISOString(),progress:persisted,extras:fullMeta},null,2),'application/json;charset=utf-8'));
 $('#fullImport').addEventListener('click',()=>$('#fullImportInput').click());
-$('#fullImportInput').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{if(f.size>2e6)throw new Error('Dosya 2 MB sınırını aşıyor.');const j=JSON.parse(await f.text());if(j.kind!=='SatzLabFullBackup'||j.version!==1||!j.progress||typeof j.progress!=='object'||!j.extras||typeof j.extras!=='object')throw new Error('Bu bir SatzLab tam sürüm yedeği değil.');
+$('#fullImportInput').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;try{if(f.size>2e6)throw new Error('Dosya 2 MB sınırını aşıyor.');const j=JSON.parse(await f.text());if(j.kind!=='SatzLabFullBackup'||j.version!==2||!j.progress||typeof j.progress!=='object'||!j.extras||typeof j.extras!=='object')throw new Error('Bu yedek yeni 20 kalıplı SatzLab sürümüne ait değil. Önceki sürümün verileri kaybolmadı; eski tarayıcı kaydında duruyor.');
  if(!confirm('Geçerli ilerlemen yedekteki verilerle değiştirilecek. Devam edilsin mi?'))return;
  const safeCards={};for(const [k,v] of Object.entries(j.progress.cards||{})){const i=Number(k);if(Number.isInteger(i)&&i>=0&&i<PATTERNS.length&&v&&typeof v==='object')safeCards[k]={stage:Math.max(0,Math.min(5,Number(v.stage)||0)),due:Number(v.due)||0,seen:Math.max(0,Number(v.seen)||0),correct:Math.max(0,Number(v.correct)||0),misses:Math.max(0,Number(v.misses)||0)}}
  persisted={cards:safeCards,favorites:(Array.isArray(j.progress.favorites)?j.progress.favorites:[]).filter(x=>MODES.some(m=>m.id===x)),totalCorrect:Math.max(0,Number(j.progress.totalCorrect)||0),totalAttempts:Math.max(0,Number(j.progress.totalAttempts)||0)};
